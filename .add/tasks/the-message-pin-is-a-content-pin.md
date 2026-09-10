@@ -57,8 +57,8 @@ strategy: compute the digest from the current engine, pin it, delete the git bas
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/the-message-pin-is-a-content-pin.d/runs/1.md · kind: test-ids · 7/7 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by plan:checks-that-hold-in-ci · receipt /tasks/the-message-pin-is-a-content-pin.d/runs/1.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [quality · Q34 · folded] A check that cannot establish its baseline must not read that as the claim being false. `git merge-base HEAD origin/main` returns 128 on a depth-1 CI clone — the check passed locally and failed CI for a reason unrelated to what it asserts. Pin the content, or read only a ref every checkout has. (evidence: /tasks/the-message-pin-is-a-content-pin.md)

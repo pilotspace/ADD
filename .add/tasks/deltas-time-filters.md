@@ -78,8 +78,9 @@ scope: add-method/tooling/add.py · add-method/tooling/cli.py · add-method/test
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/deltas-time-filters.d/runs/2.md · kind: test-ids · 821/828 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by plan:okf-graph-time · receipt /tasks/deltas-time-filters.d/runs/2.md · 2026-09-04
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M31 · folded] The gate binds EVERY covers: referent, and an ASSUMPTION that declares a probe is a referent like any Must. Three tasks in a row gated red on exactly this — E1, then A2, then A1 — each an edge or assumption I authored, declared a probe for, and never wrote the check for. Writing the probe text is not writing the probe; cite it from CHECKS at Direction or the first gate refuses. (evidence: /tasks/deltas-time-filters.md A1 · scan-skips-receipt-evidence E1 · doctor-reads-each-body-once A2)
+- [system · S4 · folded] An engine change has TWO pins, not one: ENGINE_MD5 pins add.py and ENGINE_PKG_MD5 pins cli.py (repurposed, and its name does not say so). Four tasks in this milestone touched only add.py and passed on one re-aim; the first task to touch cli.py failed test_cli_py_matches_ENGINE_PKG_MD5 after a green add.py re-aim. Re-aim both, or find them by running tooling/test_tree_parity.py. (evidence: add-method/tooling/engine_pin.py:20,23 · /tasks/deltas-time-filters.md)

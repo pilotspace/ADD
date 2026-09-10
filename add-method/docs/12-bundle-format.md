@@ -99,8 +99,8 @@ Its body is six sections, each with one job:
 - `## PLAN` — the contract detail that becomes the frozen `gives:`, the build strategy, and the `scope:`.
 - `## EDGES` — optional enumerated boundary cases (`E<n>`) a check must cover.
 - `## CHECKS` — every Must / Reject / Edge bound by at least one check, red-first, each carrying a `covers:` referent.
-- `## EVIDENCE` — the receipt link, the gate outcome, the scope check.
-- `## LESSONS` — deltas emitted onward via `add learn <lens>`.
+- `## EVIDENCE` — a view the engine writes from the record: `receipt:` at `add run`, `refute:` at `add refute`, `gate:` at `add gate`. Never authored; a line you add beside them survives.
+- `## LESSONS` — a view harvested at close: every delta filed with `add learn <lens> --evidence /tasks/<slug>.md` that cites this task. `add doctor --sync` backfills both views on older nodes.
 
 **Atomicity:** rebuilding a task may change anything in its body, but its frontmatter `gives:` is its external interface, frozen at the freeze stamp. Changing it is a *change request* that reopens direction and flags every dependent whose `needs:` cite it as **stale**, to re-verify before its next gate.
 

@@ -60,8 +60,9 @@ scope: add-method/tooling/, add-method/tests/
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/gate-honours-or-refuses-authority.d/runs/1.md · kind: test-ids · 9/9 reported · exit 0 · 2026-09-02
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/gate-honours-or-refuses-authority.d/runs/1.md · 2026-09-02
 
 ## LESSONS
 - accepting a flag and discarding it is the one option that misleads -> add learn add
+- none filed — no lesson cites /tasks/gate-honours-or-refuses-authority.md (add learn <lens> "<lesson>" --evidence /tasks/gate-honours-or-refuses-authority.md)

@@ -103,8 +103,11 @@ strategy: write the byte-stability check and the refusal-exit-code check FIRST �
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/json-emission.d/runs/3.md · kind: test-ids · 38/38 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:okf-graph-lookup · receipt /tasks/json-emission.d/runs/3.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [method · M32 · folded] A verb-level guard fires on the whole engine source, so a feature in one verb can red a guard belonging to another. Two of this milestone's full-suite failures were exactly that shape and neither showed up in the targeted run. Run the full suite once BEFORE the receipt on any task that edits add.py — the targeted command proves the contract, the full suite finds who else reads your source. (evidence: /tasks/json-emission.md · test_evidence_ladder and test_claimed_output_guard)
+- [quality · Q16 · folded] A parametrized check binds NOTHING: pytest reports it as test_x[args0], and a covers: entry names the bare id, so the gate refused a PASS for five rules that had all been proven. Same trap as the affordance-truth milestone. If a check is bound by covers:, loop inside one test rather than parametrizing it — and put the cases in a module constant so the loop still reads as a table. (evidence: /tasks/json-emission.md · gate refused E1, M3, M4, R:FALSESUCCESS until de-parametrized)
+- [system · S10 · folded] One word for two vocabularies is a collision a scraper cannot see through. The new JSON payload named a result field 'kind' while the engine already spends 'kind' on the receipt-evidence ladder; test_stampable_rungs_are_documented read the payload literal as a receipt kind no doc named and failed correctly. The fix is to remove the collision, never to narrow the guard — a deliberately broad extractor is broad so a kind stamped in an unseen branch cannot shrink its set. Before naming a payload field, grep the engine for that key. (evidence: /tasks/json-emission.md · kind -> match, guard unchanged)

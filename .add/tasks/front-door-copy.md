@@ -54,8 +54,8 @@ scope: README.md, add-method/README.md, add-method/tests/skill/
 red-first: 1 of 4 is red at freeze, on all five phrases at once. The other 3 are GREEN by design and stay armed THROUGH the build — they guard what the edit must not destroy (the claims inside the widened sentences, the benchmark's code framing, the identity strings). Their job is to fail if the build takes the cheap route of deleting rather than widening, which is exactly the failure mode R:NEUTERED names.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/front-door-copy.d/runs/1.md · kind: test-ids · 4/4 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/front-door-copy.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/front-door-copy.md (add learn <lens> "<lesson>" --evidence /tasks/front-door-copy.md)

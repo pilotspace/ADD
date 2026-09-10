@@ -103,8 +103,10 @@ strategy: write the checks first including the over-cap refusal and the no-fallb
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/show-verb.d/runs/1.md · kind: test-ids · 12/12 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:okf-graph-lookup · receipt /tasks/show-verb.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [quality · Q14 · folded] A CLI check can pass because the VERB does not exist yet: 'add show --expand deep exits 2' was green before any of add show was written, because argparse exits 2 for an unknown subcommand too. The check looked like it proved a type rejection and proved only that the parser rejected something. Any check that asserts a FAILURE exit code needs a floor asserting the same command SUCCEEDS with a good value. (evidence: /tasks/show-verb.md)
+- [system · S7 · folded] The engine's declared floor is Python 3.10 (requires-python >=3.10) and NOTHING in the suite compiles it there, so a py3.12-only f-string shipped green locally: a backslash inside an f-string EXPRESSION part is a SyntaxError before PEP 701. The 1263-test suite runs on one interpreter and says nothing about the other two the package claims. A version floor with no compile guard is a claim, not a constraint. (evidence: /tasks/show-verb.md)

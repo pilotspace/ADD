@@ -80,8 +80,8 @@ scope: add-method/tooling/add.py, add-method/tests/engine
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/beat-read-truth.d/runs/2.md · kind: test-ids · 11/11 reported · exit 0 · 2026-09-01
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/beat-read-truth.d/runs/2.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/beat-read-truth.md (add learn <lens> "<lesson>" --evidence /tasks/beat-read-truth.md)

@@ -58,8 +58,8 @@ scope: README.md, add-method/README.md, add-method/tests/skill/
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/positioning.d/runs/1.md · kind: test-ids · 4/4 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/positioning.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/positioning.md (add learn <lens> "<lesson>" --evidence /tasks/positioning.md)

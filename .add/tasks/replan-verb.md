@@ -97,8 +97,8 @@ regression floor: add-method/tests/engine (all) + add-method/tests/skill (all) +
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/replan-verb.d/runs/2.md · kind: test-ids · 519/526 reported · exit 0 · 2026-08-11
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/replan-verb.d/runs/2.md · 2026-08-11
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/replan-verb.md (add learn <lens> "<lesson>" --evidence /tasks/replan-verb.md)

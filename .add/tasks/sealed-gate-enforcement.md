@@ -91,9 +91,11 @@ scope: add-method/tooling/{add.py,cli.py,spike_cli.py} + the four engine twins; 
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/sealed-gate-enforcement.d/runs/2.md · kind: test-ids · 15/15 reported · exit 0 · 2026-08-28
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/sealed-gate-enforcement.d/runs/2.md · 2026-08-28
 
 ## LESSONS
 - A guard that fires on a malformed thing and not on a missing one is a guard you get past by deleting -> add learn method
 - Every claim in the docs is a test that has not been written yet -> add learn quality
+- [method · M22 · folded] A guard that fires on a malformed thing and never on a missing one is a guard you get past by DELETING, not by forging — an absent section reads as clean to every consumer. Check for the ABSENCE of what is required. (evidence: /tasks/sealed-gate-enforcement.md gate PASS · runs/2.md)
+- [quality · Q6 · folded] Every capability a doc PROMISES is a test nobody wrote: the sentence "a box the AI ticked never reads as a human's" was false for two minor versions because no check bound prose to behaviour. (evidence: /tasks/sealed-gate-enforcement.md M6 · runs/2.md)

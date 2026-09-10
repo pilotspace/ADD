@@ -53,7 +53,7 @@ scope: add-method/tooling/add.py · add-method/tests/engine/test_persona_okf_slo
 - test_slots_are_placeholders_not_validation · covers: M3 · a garbage `flow:` value is recorded, not refused
 red-first: every check MUST fail first.
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by human:tindang · receipt /tasks/okf-persona-template.d/runs/2.md · 2026-08-11
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/okf-persona-template.md (add learn <lens> "<lesson>" --evidence /tasks/okf-persona-template.md)

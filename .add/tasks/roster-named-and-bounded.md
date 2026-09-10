@@ -76,8 +76,8 @@ scope: add-method/skill/add, add-method/agents, add-method/tests
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/roster-named-and-bounded.d/runs/1.md · kind: test-ids · 12/12 reported · exit 0 · 2026-09-01
+gate: PASS · authority process · by Tin Dang · receipt /tasks/roster-named-and-bounded.d/runs/1.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/roster-named-and-bounded.md (add learn <lens> "<lesson>" --evidence /tasks/roster-named-and-bounded.md)

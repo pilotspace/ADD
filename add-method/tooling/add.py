@@ -2459,6 +2459,8 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
         appends = [("verified", f'{{ by: "{_oneline(by or "process:done")}", at: {_today()}, '
                                  f'act: done, override: "{_oneline(override)}" }}')]
     _transition(root, cid, sets={"status": "done"}, appends=appends)
+    render_evidence(root, cid)          # the closed record: `none recorded` is now a fact
+    harvest_lessons(root, cid)
     tail = " (override recorded)" if appends else ""
     return True, [], f"{cid} is done{tail}\nnext: add status"
 
@@ -3839,6 +3841,10 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
             pass                    # orientation losing a convenience must never fail a receipt
     # The next verb is DERIVED, not hard-coded: at a plan-or-human floor a green owes a refute
     # before the gate (R:UNREFUTED), and the first contact with a rung should be this hint.
+    try:
+        render_evidence(root, cid)     # the view; the receipt above is the record
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     hint = _next_verb(scan(root), cid, root=root) if exit_code == 0 else f"add gate {slug}"
     return {"path": runs / f"{n}.md", "receipt": receipt, "computation": " ".join(str(c) for c in command),
             "note": f"receipt {n} recorded (exit {exit_code})\nnext: {hint}"}
@@ -4070,7 +4076,10 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     body = "".join(lines)
     raw = set_key(raw, "open_deltas", str(open_delta_count(body)))
     write(path, f"---\n{raw}\n---\n{body}")
-    return True, f"recorded on specs/{lens} as {did}\nnext: add status"
+    hint = ("" if re.search(r"tasks/[^/\s]+\.(md|d/)", str(evidence)) else
+            "\n  (a lesson lands on a task's ## LESSONS at close when its evidence cites the "
+            "task: --evidence /tasks/<slug>.md)")
+    return True, f"recorded on specs/{lens} as {did}{hint}\nnext: add status"
 
 
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -4861,8 +4870,9 @@ def placeholders_in(node: dict, *, card: bool = True) -> list:
     # `goal: <one line>` intact: approving a contract whose one-line statement of intent is
     # still the scaffold's. The goal is what a human is being asked to approve.
     #
-    # Scoped to `goal:` alone, and deliberately: EVIDENCE and LESSONS are filled by the run
-    # and the close, neither of which exists at freeze time, so demanding them here would
+    # Scoped to `goal:` alone, and deliberately: EVIDENCE and LESSONS are VIEWS written by
+    # `render_evidence` (run · refute · gate) and `harvest_lessons` (the close), neither of
+    # which exists at freeze time, so demanding them here would
     # ask for a receipt before the build that produces it (M3, A2). Depth does not exempt
     # this — a quick task states its goal too (E4).
     #
@@ -5702,12 +5712,188 @@ def refute(root, cid: str, by: str, held: bool, finding: str = None, probes: int
     _, err = _transition(root, cid, appends=[("verified", stamp)])
     if err:
         return None, err + "\nnext: add status"
+    render_evidence(root, cid)
     if held:
         return stamp, (f"refute recorded against {receipt_cid}: held ({int(probes or 0)} probe(s)) — "
                        f"NO-EXEC, no verdict\nnext: add gate {slug} PASS --by \"<name>\"")
     return stamp, (f"refute recorded against {receipt_cid}: REFUTED — {text}\n"
                    f"next: fix the build (or refreeze with the edge this exposes), add run {slug} -- <cmd>, "
                    f"then add refute {slug} again")
+
+
+
+# ================================ EVIDENCE and LESSONS — views of the record, never a store
+#
+# FORMAT §5 said "EVIDENCE receipt / gate · LESSONS harvested at done", the placeholder guard
+# skipped both sections because "the run and the close fill them", and nothing did: on this
+# bundle 88 of 113 done tasks carried `receipt: <runs/<n>.md>` beside a `verified[]` that named
+# the real receipt, and 64 carried `- <lesson> -> add learn <lens>` beside specs full of deltas
+# citing them. A promise two readers relied on and no writer kept. The sections are VIEWS — the
+# record is `verified[]`, the run files and the specs' `## Deltas`; the verb that makes a fact
+# writes its keyed line, and `doctor --sync` recomputes both for the backlog. Two rules bound the
+# writer: a line the engine did not produce is never moved (R:TWOHOMES — a human note beside the
+# view survives byte-for-byte), and a line the record does not support is never written
+# (R:MANUFACTURED — no refute stamp, no `refute:` line; `none recorded` is a fact about a closed
+# node, not an invention).
+
+EVIDENCE_KEYS = ("receipt", "refute", "gate")
+EVIDENCE_SCAFFOLD = ("<runs/<n>.md>", "<PASS | RISK-ACCEPTED | HARD-STOP>")
+LESSON_SCAFFOLD = "<lesson> -> add learn <lens>"
+HARVESTED_LINE = re.compile(r"^- (\[[a-z]+ · [A-Za-z0-9?-]+ · (?:open|folded|rejected)\]|none filed\b)")
+
+
+def _section_span(lines: list, heading: str):
+    """`(start, end)` line indexes of the body of `## <heading>` — heading-exclusive, stopping
+    at the next `## ` — or `None` when the section is absent. Mirrors `_section_of`."""
+    start = None
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            if start is not None:
+                return start, i
+            if line.strip().lower() == f"## {heading}".lower():
+                start = i + 1
+    return (start, len(lines)) if start is not None else None
+
+
+def _set_keyed_line(body: str, section: str, key: str, value: str) -> str:
+    """Replace the ONE `<key>:` line inside `## <section>` with `<key>: <value>`, or insert it in
+    `EVIDENCE_KEYS` order. Every other byte of the body is returned as it was (R:TWOHOMES)."""
+    lines = body.splitlines(keepends=True)
+    span = _section_span(lines, section)
+    if span is None:
+        return body
+    start, end = span
+    new = f"{key}: {value}\n"
+    for i in range(start, end):
+        if lines[i].startswith(f"{key}:"):
+            lines[i] = new
+            return "".join(lines)
+    order = list(EVIDENCE_KEYS)
+    after = [k for k in order[:order.index(key)]] if key in order else []
+    at = start
+    for i in range(start, end):
+        if any(lines[i].startswith(f"{k}:") for k in after):
+            at = i + 1
+    lines.insert(at, new)
+    return "".join(lines)
+
+
+def _latest_stamp(node: dict, act: str):
+    stamps = [s for s in ((node.get("fm") or {}).get("verified") or []) if isinstance(s, dict)]
+    return next((s for s in reversed(stamps) if s.get("act") == act), None)
+
+
+def render_evidence(root, cid: str, graph: dict = None) -> bool:
+    """Write the `## EVIDENCE` view from the record. `True` when a byte changed.
+
+    `receipt:` is the newest run, `refute:` the latest refute stamp, `gate:` the latest gate stamp
+    — each written only when the record holds it. On a `done` node a key the record never
+    produced reads `none recorded`: the record is closed, and its silence is a fact, not a guess.
+    """
+    root = Path(root)
+    graph = scan(root) if graph is None else graph
+    node = graph.get(cid)
+    if node is None or (node.get("fm") or {}).get("type") != "Task":
+        return False
+    path = root / cid.lstrip("/")
+    n = read(path, "T2")
+    body = n["body"]
+    if _section_span(body.splitlines(keepends=True), "EVIDENCE") is None:
+        return False
+    closed = str((node.get("fm") or {}).get("status")) == "done"
+    receipt, rcid = latest_receipt(root, cid)
+    if receipt is not None:
+        body = _set_keyed_line(body, "EVIDENCE", "receipt",
+                               f"{rcid} · kind: {receipt.get('kind')} · {receipt.get('ids')} · "
+                               f"exit {receipt.get('exit')} · {receipt.get('at')}")
+    elif closed:
+        body = _set_keyed_line(body, "EVIDENCE", "receipt", "none recorded")
+    ref = _latest_stamp(node, "refute")
+    if ref is not None:
+        body = _set_keyed_line(body, "EVIDENCE", "refute",
+                               f"{ref.get('outcome')} · {ref.get('probes', 0)} probe(s) · by {ref.get('by')} · "
+                               f"against {ref.get('receipt')} · {ref.get('at')}"
+                               + (f" · {ref['note']}" if ref.get("note") else ""))
+    gate_stamp = _latest_stamp(node, "gate")
+    if gate_stamp is not None:
+        body = _set_keyed_line(body, "EVIDENCE", "gate",
+                               f"{gate_stamp.get('outcome')} · authority {gate_stamp.get('authority')} · "
+                               f"by {gate_stamp.get('by')}"
+                               + (f" · receipt {gate_stamp['receipt']}" if gate_stamp.get("receipt") else "")
+                               + f" · {gate_stamp.get('at')}"
+                               + (f" · {gate_stamp['reason']}" if gate_stamp.get("reason") else ""))
+    elif closed:
+        body = _set_keyed_line(body, "EVIDENCE", "gate", "none recorded")
+    if body == n["body"]:
+        return False
+    write(path, f"---\n{n['raw']}\n---\n{body}")
+    return True
+
+
+def _cites_task(evidence: str, slug: str) -> bool:
+    """The citation rule: a lesson lands on a task when its evidence names the task's node
+    (`/tasks/<slug>.md`) or its sidecar (`/tasks/<slug>.d/`). A test file, a source path or a
+    receipt of another task names no task."""
+    return re.search(rf"(^|[^A-Za-z0-9_-])tasks/{re.escape(slug)}(\.md|\.d/|#|$|[\s):,])",
+                     evidence or "") is not None
+
+
+def harvest_lessons(root, cid: str) -> bool:
+    """Write the `## LESSONS` view: every delta, at any status, whose evidence cites this task.
+    Replaces the scaffold line and any previously harvested line; an authored bullet stays.
+    `True` when a byte changed. With no citing delta the section says so — `none filed` — and
+    never borrows a lesson that cites something else (R:MANUFACTURED)."""
+    root = Path(root)
+    path = root / cid.lstrip("/")
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    n = read(path, "T2")
+    lines = n["body"].splitlines(keepends=True)
+    span = _section_span(lines, "LESSONS")
+    if span is None:
+        return False
+    harvested = []
+    for status in DELTA_STATUSES:
+        items, _ = deltas(root, status)
+        for d in items:
+            m = DELTA_EVIDENCE.search(d[2])
+            if m and _cites_task(m.group(0), slug):
+                harvested.append(f"- [{d[0]} · {d.id or '-'} · {status}] {d[2]}\n")
+    if not harvested:
+        harvested = [f"- none filed — no lesson cites {cid} "
+                     f"(add learn <lens> \"<lesson>\" --evidence {cid})\n"]
+    start, end = span
+    kept = [l for l in lines[start:end]
+            if not (LESSON_SCAFFOLD in l or HARVESTED_LINE.match(l))]
+    # trailing blank lines belong to the section's tail, not to its content
+    tail = []
+    while kept and not kept[-1].strip():
+        tail.insert(0, kept.pop())
+    new = lines[:start] + kept + harvested + tail + lines[end:]
+    body = "".join(new)
+    if body == n["body"]:
+        return False
+    write(path, f"---\n{n['raw']}\n---\n{body}")
+    return True
+
+
+def evidence_scaffold(root, graph: dict = None, body_of=None) -> list:
+    """Every `done` Task still carrying an EVIDENCE or LESSONS scaffold line. `[(cid, section)]`.
+    `body_of` lets `doctor` share its one-read-per-body cache (R:SECONDSCAN)."""
+    root = Path(root)
+    graph = scan(root) if graph is None else graph
+    body_of = body_of or (lambda path: read(path, "T2")["body"])
+    out = []
+    for cid, node in sorted(graph.items()):
+        fm = node.get("fm") or {}
+        if fm.get("type") != "Task" or str(fm.get("status")) != "done":
+            continue
+        body = body_of(root / cid.lstrip("/"))
+        ev = _section_of(body, "EVIDENCE")
+        if any(s in ev for s in EVIDENCE_SCAFFOLD):
+            out.append((cid, "EVIDENCE"))
+        if LESSON_SCAFFOLD in _section_of(body, "LESSONS"):
+            out.append((cid, "LESSONS"))
+    return out
 
 
 # ============================================ gate — the verdict, and its refusals (e13)
@@ -5925,6 +6111,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         _, t_err = _transition(root, cid, appends=[("verified", stamp)])
         if t_err:
             return None, t_err + "\nnext: add status"
+        render_evidence(root, cid)
         if closes:
             done(root, cid)
             render_card(root, cid)
@@ -6125,6 +6312,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     _, t_err = _transition(root, cid, appends=[("verified", stamp)])
     if t_err:
         return None, t_err + "\nnext: add status"
+    render_evidence(root, cid)
 
     if closes:
         done(root, cid)
@@ -6608,6 +6796,10 @@ def doctor(root, graph: dict = None, paths=None) -> list:
                     f"outside it routes nothing, silently. Allowed: {' · '.join(allowed)}")
     for message in sorted(routing):
         find("info", "persona_routing_key", message)
+    for cid, section in evidence_scaffold(root, graph=graph, body_of=body_of):
+        find("info", "evidence_scaffold",
+             f"{cid.lstrip('/')}: done, but `## {section}` still carries the scaffold — the view "
+             f"is written by the verbs since 3.7; `add doctor --sync` backfills it from the record", cid)
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):
@@ -6704,6 +6896,17 @@ def doctor_sync(root) -> tuple:
             continue
         write(path, f"---\n{set_key(n['raw'], 'open_deltas', str(actual))}\n---\n{n['body']}")
         changed.append(f"specs/{path.stem} `open_deltas` -> {actual}")
+    # The EVIDENCE and LESSONS views, recomputed from the record (R:MANUFACTURED holds inside
+    # the renderers: nothing the stamps and specs do not say is written). Every Task with a
+    # record gets its EVIDENCE; the LESSONS harvest is a close-time view, so `done` only.
+    for cid, node in sorted(graph.items()):
+        fm = node.get("fm") or {}
+        if fm.get("type") != "Task":
+            continue
+        if render_evidence(root, cid, graph=graph):
+            changed.append(f"{cid.lstrip('/')} EVIDENCE")
+        if str(fm.get("status")) == "done" and harvest_lessons(root, cid):
+            changed.append(f"{cid.lstrip('/')} LESSONS")
     if (index := root / "index.md").is_file():
         rebuilt = _render_index(root, graph)
         if rebuilt and rebuilt != index.read_text(encoding="utf-8"):

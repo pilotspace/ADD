@@ -53,8 +53,9 @@ contract: the `bundle` fixture pins `add._today` to the date the suite's `as_of`
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/no-check-fails-by-calendar.d/runs/1.md · kind: test-ids · 16/16 reported · exit 0 · 2026-09-08
+gate: PASS · authority process · by plan:rules-that-hold-for-us · receipt /tasks/no-check-fails-by-calendar.d/runs/1.md · 2026-09-08
 
 ## LESSONS
 - pending
+- none filed — no lesson cites /tasks/no-check-fails-by-calendar.md (add learn <lens> "<lesson>" --evidence /tasks/no-check-fails-by-calendar.md)

@@ -61,8 +61,9 @@ contract: no engine change and no code. The deliverable is the five drained spec
 red-first: every check MUST fail first — all four are false against the bundle as it stands.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/backlog-drain.d/runs/1.md · kind: test-ids · 4/4 reported · exit 0 · 2026-09-08
+gate: PASS · authority process · by plan:loop-that-drains · receipt /tasks/backlog-drain.d/runs/1.md · 2026-09-08
 
 ## LESSONS
 - pending
+- none filed — no lesson cites /tasks/backlog-drain.md (add learn <lens> "<lesson>" --evidence /tasks/backlog-drain.md)

@@ -91,8 +91,8 @@ regression floor: add-method/tests/engine (all, unmodified) + add-method/tooling
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/sources-receipt.d/runs/2.md · kind: test-ids · 519/526 reported · exit 0 · 2026-08-11
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/sources-receipt.d/runs/2.md · 2026-08-11
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M2 · folded] edge-list frontmatter (depends_on/needs) must be BLOCK lists — inline [a, b] flow parses in the engine's T0 but not in the M0 validator; the parity oracle catches it on the live bundle (evidence: /tasks/sources-receipt.md)

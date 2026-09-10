@@ -47,7 +47,7 @@ scope: add-method/tooling/add.py · add-method/tests/engine/test_upgrade_working
 - test_minimal_bundle_still_upgrades · covers: A4,E1 · no tooling in the old bundle: upgrade succeeds, nothing restored
 red-first: every check MUST fail first.
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by human:tindang · receipt /tasks/upgrade-working-bundle.d/runs/1.md · 2026-08-11
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/upgrade-working-bundle.md (add learn <lens> "<lesson>" --evidence /tasks/upgrade-working-bundle.md)

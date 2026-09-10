@@ -63,8 +63,9 @@ scope: add-method/tooling/, add-method/tests/
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/next-lines-are-runnable.d/runs/1.md · kind: test-ids · 7/7 reported · exit 0 · 2026-09-02
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/next-lines-are-runnable.d/runs/1.md · 2026-09-02
 
 ## LESSONS
 - one table feeds fourteen call sites; a wrong idiom there is wrong everywhere -> add learn add
+- none filed — no lesson cites /tasks/next-lines-are-runnable.md (add learn <lens> "<lesson>" --evidence /tasks/next-lines-are-runnable.md)

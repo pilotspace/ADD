@@ -106,8 +106,9 @@ regression floor: `add-method/tooling/test_tree_parity.py` green (8 tests); `tes
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/okf-spec-frontmatter.d/runs/2.md · kind: test-ids · 809/816 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:okf-graph-time · receipt /tasks/okf-spec-frontmatter.d/runs/2.md · 2026-09-04
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M30 · folded] When a new decision collides with an old guard, the question is whether the guard's RULE or only its PREMISE has expired. okf_version was removed because nothing read it; re-landing it alone would have reversed that decision, so the fix was to give it a reader and re-aim the guard to pin PRESENCE. The rule 'no key that nothing reads' survived intact, and the stamp and its reader now fail separately if either is silently removed. (evidence: /tasks/okf-spec-frontmatter.md M8 · doctor okf_conformance)
+- [quality · Q11 · folded] A guard can pin the ABSENCE of a key, which makes it invisible to every grep of the engine — test_init_identity asserted 'okf_version' not in fm, so a Direction beat that grepped tooling/ for readers found nothing and concluded the key was free to add. Sweep the SUITE for a key's name before adding it, not just the source. (evidence: /tasks/okf-spec-frontmatter.md M9 · baa066ae vs okf-graph-time)

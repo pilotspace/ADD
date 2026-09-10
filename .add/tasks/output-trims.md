@@ -91,8 +91,10 @@ strategy: measure first, then cut, then re-measure — and write the R:NOWAYBACK
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/output-trims.d/runs/3.md · kind: test-ids · 47/47 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by Tin Dang · receipt /tasks/output-trims.d/runs/3.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [experience · X8 · folded] a trim that explains itself in every instance can cost more than what it removed: the first unauthored="true" marker carried a prose note and measured six bytes LARGER than the one-line scaffold it replaced — the saving only exists if the marker is shorter than the body (evidence: /tasks/output-trims.md)
+- [experience · X7 · folded] a trim that explains itself in every instance can cost more than what it removed: the first  marker carried a prose note and measured six bytes larger than the one-line scaffold it replaced (evidence: /tasks/output-trims.md)

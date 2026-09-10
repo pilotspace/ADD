@@ -70,8 +70,8 @@ scope: add-method/README.md, add-method/skill/add, add-method/tests
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/front-door-claim-truth.d/runs/2.md · kind: test-ids · 10/10 reported · exit 0 · 2026-09-01
+gate: PASS · authority process · by Tin Dang · receipt /tasks/front-door-claim-truth.d/runs/2.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/front-door-claim-truth.md (add learn <lens> "<lesson>" --evidence /tasks/front-door-claim-truth.md)

@@ -77,8 +77,8 @@ scope: add-method/src/add_method/_installer.py, add-method/bin/cli.js, add-metho
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/installer-reach-parity.d/runs/1.md · kind: test-ids · 10/10 reported · exit 0 · 2026-09-01
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/installer-reach-parity.d/runs/1.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/installer-reach-parity.md (add learn <lens> "<lesson>" --evidence /tasks/installer-reach-parity.md)

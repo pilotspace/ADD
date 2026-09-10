@@ -58,8 +58,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/
 - test_the_deleted_lane_is_gone · covers: M2, A3 · the specific function, pinned so it cannot return
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/delete-the-unwired-quick-lane.d/runs/1.md · kind: test-ids · 4/4 reported · exit 0 · 2026-09-03
+gate: PASS · authority human · by Tin Dang · receipt /tasks/delete-the-unwired-quick-lane.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - a tested bypass is one refactor away from being reachable; delete it and pin the SHAPE -> add learn add
+- none filed — no lesson cites /tasks/delete-the-unwired-quick-lane.md (add learn <lens> "<lesson>" --evidence /tasks/delete-the-unwired-quick-lane.md)

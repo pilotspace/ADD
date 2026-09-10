@@ -79,8 +79,10 @@ strategy: write the agreement check FIRST — one test that drives both verbs ov
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/one-address-per-concept.d/runs/3.md · kind: test-ids · 27/27 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by plan:okf-graph-lookup · receipt /tasks/one-address-per-concept.d/runs/3.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [quality · Q15 · folded] add search echoes the query in its header line ('N hit for "<q>":'), so a check that picks 'the line containing the query text' picks the HEADER, not a result row. The assertion then reports the renderer emitted no address when it emitted one. When asserting over rendered output, pick the row by its row shape, never by the text you searched for. (evidence: /tasks/one-address-per-concept.md · test_legacy_head_degrades_alike)
+- [system · S9 · folded] A twin set is an explicit LIST, never a glob. Mirroring an engine edit with rglob('tooling/add.py') matched 120 paths — benchmark run workspaces, two sibling git worktrees, and the archived 2.x bundle — all gitignored, so 'git status' showed 2 modified files and the damage was invisible to the usual check. Recovery worked only because each vendored bundle carries its own engine_pin.py: the pin is a self-verifying restore key, so 86 copies were restored by md5 lookup against historical blobs and 23 more by matching their untouched sibling cli.py to its commit. (evidence: /tasks/one-address-per-concept.md · rglob clobbered 120 copies, restored 109, 2 disposable tmp/smoke left)

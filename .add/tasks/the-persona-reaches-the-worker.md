@@ -54,8 +54,9 @@ scope: add-method/tooling/, add-method/tests/
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/the-persona-reaches-the-worker.d/runs/1.md · kind: test-ids · 3/3 reported · exit 0 · 2026-09-02
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/the-persona-reaches-the-worker.d/runs/1.md · 2026-09-02
 
 ## LESSONS
 - two verbs writing the same fact under different keys is a fact neither can read -> add learn add
+- none filed — no lesson cites /tasks/the-persona-reaches-the-worker.md (add learn <lens> "<lesson>" --evidence /tasks/the-persona-reaches-the-worker.md)

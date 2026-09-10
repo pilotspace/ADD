@@ -7,12 +7,12 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 51
+delta_seq: 52
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
   - M31 refines /specs/method.md#M4
-open_deltas: 0
+open_deltas: 1
 ---
 ## Now
 how work proceeds, and what a gate costs
@@ -38,6 +38,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M52 · open · 2026-09-10] A section the format PROMISES a writer for is a section nobody writes until a guard demands it: EVIDENCE and LESSONS were skipped by the placeholder guard because 'the run and the close fill them', and 88/113 done tasks carried the scaffold. Make it a view of the record (verb writes its keyed line, sync backfills) and pin it with a live-bundle count. (evidence: /tasks/evidence-and-lessons-are-views.md)
 - [ADD · M51 · folded · 2026-09-10→2026-09-10] A refute recorded by the builder (tier T1) proves presence, never independence; the memo's bench trigger counted --found and undercounted probes that changed the build under a held outcome — count probes that changed something, and require one T2 refute before designing a bench (evidence: .add/tasks/dogfood-and-measure.md)
 - [ADD · M50 · folded · 2026-09-10→2026-09-10] A stamp the gate can ORDER needs a citation, not a clock: the refute names the receipt it read, so 'after the gated run' is decided from verified[] alone — and a probe found the case-variant cid the equality test already refused (evidence: add-method/tests/engine/test_refute_gate_rung.py)
 - [ADD · M49 · folded · 2026-09-10→2026-09-10] A notary records a value as handed, but argv is where a TYPE is refused: --probes -1 was stamped verbatim because the library trusts its caller; the front door is the one place a count can be made a count (evidence: add-method/tooling/cli.py)

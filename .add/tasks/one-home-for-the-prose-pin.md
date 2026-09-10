@@ -64,8 +64,8 @@ strategy: widen `test_one_budget_one_guard.py`'s scatter rung to prose pins so t
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/one-home-for-the-prose-pin.d/runs/2.md · kind: test-ids · 254/254 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by plan:checks-that-hold-in-ci · receipt /tasks/one-home-for-the-prose-pin.d/runs/2.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [quality · Q35 · folded] A guard written broader than its rule goes red on true statements. `no budget literal moved` was implemented as `the module is byte-identical`, so adding an unrelated constant to it reported a pin bump that never happened. (evidence: /tasks/one-home-for-the-prose-pin.md)

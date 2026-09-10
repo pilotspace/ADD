@@ -88,8 +88,8 @@ strategy: write the guards first against today's engine, confirm the membership 
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/n.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/milestone-membership-is-an-edge.d/runs/3.md · kind: test-ids · 12/12 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:okf-graph-lookup · receipt /tasks/milestone-membership-is-an-edge.d/runs/3.md · 2026-09-04
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [system · S6 · folded] The `covers:` key has TWO grammars in one node: the ASSUMPTIONS sweep splits on WHITESPACE (covers: S1 S2 S3) and the CHECKS binding splits on COMMAS (covers: M2, E2). A space-separated CHECKS line parses as the single rule id 'M2 E2', which matches no referent, so every id on that line silently goes unbound — and the gate reports 'no reported passing check', which reads like a missing test rather than a punctuation error. Two separators for one key name is a trap the refusal message cannot name. (evidence: /tasks/milestone-membership-is-an-edge.md)

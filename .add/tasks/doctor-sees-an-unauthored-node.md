@@ -53,8 +53,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_doctor_sees_an_un
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/doctor-sees-an-unauthored-node.d/runs/1.md · kind: test-ids · 5/5 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by Tin Dang · receipt /tasks/doctor-sees-an-unauthored-node.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - an oracle wired to one caller is a guard for one caller; the reader that answers "is this OK" needs it most -> add learn method
+- none filed — no lesson cites /tasks/doctor-sees-an-unauthored-node.md (add learn <lens> "<lesson>" --evidence /tasks/doctor-sees-an-unauthored-node.md)

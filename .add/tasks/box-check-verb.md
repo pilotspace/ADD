@@ -156,8 +156,8 @@ regression floor: `add-method/tests/` AND `add-method/tooling/` green — the se
 red-first: every check MUST fail first — run them against today's engine, which has no `check` verb, before a line of it exists.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/box-check-verb.d/runs/2.md · kind: test-ids · 745/752 reported · exit 0 · 2026-08-28
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/box-check-verb.d/runs/2.md · 2026-08-28
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M21 · folded] The gate binds covers: referents by BARE test id, so a guard name defined in two files (test_guard_messages_name_their_target) binds to neither. Name a guard after its subject. (evidence: /tasks/box-check-verb.d/runs/2.md)

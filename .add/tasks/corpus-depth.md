@@ -57,8 +57,8 @@ scope: add-method/personas-index, add-method/scripts, add-method/tests/skill
 red-first: ONE is driven red — M4, because `--check` today prints "232 personas" and reports nothing about the 22 files it silently passed over. The other FOUR are green at freeze and declared: they guard properties that already hold, which is the point of a coverage guard over a VENDORED tree — the risk is a future `update_teacher.py` refresh, not today's state. An earlier draft of the regenerate check invented a `--stdout` mode, did not find it, and pytest.skip'd; a skipped check binds NOTHING (the engine records `skip`, never `pass`), so it was rewritten onto the `--check` mode the generator already ships.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/corpus-depth.d/runs/1.md · kind: test-ids · 5/5 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/corpus-depth.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/corpus-depth.md (add learn <lens> "<lesson>" --evidence /tasks/corpus-depth.md)

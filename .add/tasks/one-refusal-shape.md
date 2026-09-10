@@ -65,8 +65,8 @@ strategy: survey first (done: 4 of 33 verbs mix shapes, 3 of them legitimately),
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/one-refusal-shape.d/runs/1.md · kind: test-ids · 24/24 reported · exit 0 · 2026-09-08
+gate: PASS · authority process · by plan:rules-that-hold-for-us · receipt /tasks/one-refusal-shape.d/runs/1.md · 2026-09-08
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/one-refusal-shape.md (add learn <lens> "<lesson>" --evidence /tasks/one-refusal-shape.md)

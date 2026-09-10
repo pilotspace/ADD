@@ -87,9 +87,10 @@ scope: add-method/GETTING-STARTED.md, add-method/tests/skill, add-method/tooling
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/getting-started-executed.d/runs/2.md · kind: test-ids · 12/12 reported · exit 0 · 2026-09-01
+gate: PASS · authority process · by Tin Dang · receipt /tasks/getting-started-executed.d/runs/2.md · 2026-09-01
 
 ## LESSONS
 - Executing the front door found what reading it could not: the walk assumes a git working tree AND that the declared `scope:` paths exist, and said neither. A walkthrough test finds preconditions, not just wrong flags -> add learn add
 - `freeze`'s milestone-scaffold refusal returns `False` where every other refusal returns `None`. The CLI's truthiness check hides it, so it is latent, not live — but a library caller testing `node is None` reads a refused freeze as a success -> add learn add
+- none filed — no lesson cites /tasks/getting-started-executed.md (add learn <lens> "<lesson>" --evidence /tasks/getting-started-executed.md)

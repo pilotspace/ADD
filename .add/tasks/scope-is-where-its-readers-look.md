@@ -69,9 +69,10 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_scope_is_where_it
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/scope-is-where-its-readers-look.d/runs/3.md · kind: test-ids · 8/8 reported · exit 0 · 2026-09-03
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/scope-is-where-its-readers-look.d/runs/3.md · 2026-09-03
 
 ## LESSONS
 - a template slot no reader reads is worse than a missing one: it consumes the author's attention and returns nothing -> add learn method
 - I attached a second claim to a true finding without reading the guard I named: `phantom_scope` is keyed on the CARD, not on path existence, and both checks I wrote for it were vacuous. A guard's NAME is not its predicate -> add learn method
+- none filed — no lesson cites /tasks/scope-is-where-its-readers-look.md (add learn <lens> "<lesson>" --evidence /tasks/scope-is-where-its-readers-look.md)

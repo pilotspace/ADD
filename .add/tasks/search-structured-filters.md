@@ -99,8 +99,9 @@ strategy: write the checks first, including the two that pin TODAY's behaviour u
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/search-structured-filters.d/runs/1.md · kind: test-ids · 14/14 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:okf-graph-lookup · receipt /tasks/search-structured-filters.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [system · S8 · folded] A twin set is per-FILE, not per-engine: add.py has three mirrors and so does cli.py, but a scope: assembled by hand listed only two of cli.py's. The bundled twin was mirrored during build and never declared, which the gate would have caught as scope_violation. Derive the twin list from the tree, never from memory — and note that two of the six twins are gitignored, so git status cannot show you the omission. (evidence: /tasks/search-structured-filters.md)

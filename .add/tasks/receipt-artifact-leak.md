@@ -73,8 +73,9 @@ scope: add-method/skill/add, add-method/docs, add-method/GETTING-STARTED.md, add
 red-first: TWO are driven red — M1 and R:TREELEAK both fail while the docs still say `r.xml`. TWO are the EXISTING parity guards reused for M2 (qualification gate), green at freeze and declared so; they go red the moment a tree is missed. The earlier draft's M2/M3-templates/E1/R:BUNDLEPOLLUTE were cut: they existed only to serve an in-tree scratch path, which the probe showed is unnecessary.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/receipt-artifact-leak.d/runs/3.md · kind: test-ids · 11/11 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/receipt-artifact-leak.d/runs/3.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M8 · folded] an `n/a` retires a sweep DIMENSION, never an EDGE — an E<n> line is a gate referent whatever it says, so a 'dissolved' edge must be DELETED or given a check; writing 'E1 n/a' still holds the PASS (evidence: /tasks/receipt-artifact-leak.d/runs/1.md)
+- [method · M7 · folded] a task's scope: MUST include the directory its own CHECKS live in — otherwise a defective check cannot be repaired during build, and the only in-scope 'fix' is to reshape the artifact around the broken test (evidence: /tasks/receipt-artifact-leak.md scope: omits add-method/tests/skill)

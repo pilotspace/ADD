@@ -459,8 +459,8 @@ A `Task` body has eight `## ` sections, in order:
 ## PLAN         contract / scope
 ## EDGES        E<n> — boundary and failure cases a check must cover (optional)
 ## CHECKS       one line per check, each bound by `covers:` (§8.3)
-## EVIDENCE     receipt / gate
-## LESSONS      harvested at done
+## EVIDENCE     a view written by the verbs — `receipt:` at run, `refute:` at refute, `gate:` at gate
+## LESSONS      a view harvested at done — every delta whose evidence cites this task; `doctor --sync` backfills both
 ```
 
 Section lookup is by exact `## <name>` heading, heading-exclusive, and stops at the next

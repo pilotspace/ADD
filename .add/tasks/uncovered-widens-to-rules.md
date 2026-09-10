@@ -66,8 +66,9 @@ strategy: measure first (done, at direction: 0 of 105), then one line, then the 
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/uncovered-widens-to-rules.d/runs/2.md · kind: test-ids · 24/24 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by plan:refuse-in-one-voice · receipt /tasks/uncovered-widens-to-rules.d/runs/2.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M46 · folded] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)
+- [quality · Q33 · folded] A check that pins a COUNT (`1 uncovered`) is pinned to its fixture's shape as much as to the rule. Widen the producer and the count moves — the repair is to re-aim the FIXTURE so the number is again about one thing, never to edit the expected number. (evidence: /tasks/uncovered-widens-to-rules.md)

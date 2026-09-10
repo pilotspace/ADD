@@ -85,8 +85,9 @@ port: `add.refute(root, cid, by, held, finding, probes, note)` — the tests dri
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/refute-verb.d/runs/2.md · kind: test-ids · 9/9 reported · exit 0 · 2026-09-10
+refute: held · 3 probe(s) · by builder:claude (same session, tier T1) · against /tasks/refute-verb.d/runs/2.md · 2026-09-10 · P1 refute on a Milestone via argv → R:NOTATASK exit 1, no stamp · P2 --probes -1 was recorded as given — a silence, not a frozen rule; argparse now refuses a negative count · P3 a finding with a double quote and a newline parses back as one flow-map note
+gate: PASS · authority plan · by plan:evidence-over-tests · receipt /tasks/refute-verb.d/runs/2.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/refute-verb.md (add learn <lens> "<lesson>" --evidence /tasks/refute-verb.md)

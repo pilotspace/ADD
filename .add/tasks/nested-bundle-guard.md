@@ -84,8 +84,8 @@ scope: add-method/tooling/add.py, add-method/tests/engine
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/nested-bundle-guard.d/runs/1.md · kind: test-ids · 12/12 reported · exit 0 · 2026-09-01
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/nested-bundle-guard.d/runs/1.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/nested-bundle-guard.md (add learn <lens> "<lesson>" --evidence /tasks/nested-bundle-guard.md)

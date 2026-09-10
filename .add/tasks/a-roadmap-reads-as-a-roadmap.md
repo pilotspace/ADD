@@ -89,8 +89,9 @@ strategy: checks red first, including one asserting the status tally and the `do
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/a-roadmap-reads-as-a-roadmap.d/runs/3.md · kind: test-ids · 16/16 reported · exit 0 · 2026-09-08
+gate: PASS · authority plan · by plan:rules-that-hold-for-us · receipt /tasks/a-roadmap-reads-as-a-roadmap.d/runs/3.md · 2026-09-08
 
 ## LESSONS
 - pending
+- none filed — no lesson cites /tasks/a-roadmap-reads-as-a-roadmap.md (add learn <lens> "<lesson>" --evidence /tasks/a-roadmap-reads-as-a-roadmap.md)

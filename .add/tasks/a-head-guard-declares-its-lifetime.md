@@ -65,8 +65,9 @@ strategy: widen the enumerator first and let it report all eight sites red, then
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/a-head-guard-declares-its-lifetime.d/runs/1.md · kind: test-ids · 6/6 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by plan:checks-that-hold-in-ci · receipt /tasks/a-head-guard-declares-its-lifetime.d/runs/1.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M48 · folded] A guard comparing the working tree to HEAD is a live-editing TRIPWIRE, not an invariant: it fires while the edit is made and is inert once committed. That is a legitimate lifetime — the defect is leaving it unlabelled, so a green CI reads as the claim having held. (evidence: /tasks/a-head-guard-declares-its-lifetime.md)
+- [system · S14 · folded] A rule enforced over one spelling of a shape is a rule the other spellings do not have. The scope guard enumerated `git diff` because that is what the two retired guards used; seven more sites read a ref through `git show` and one through `merge-base`, all satisfied by `git commit`. (evidence: /tasks/a-head-guard-declares-its-lifetime.md)

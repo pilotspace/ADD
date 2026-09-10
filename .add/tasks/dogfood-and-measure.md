@@ -57,8 +57,8 @@ judged at the gate against ## FINDINGS, not by pytest.
 - F4 (answers M4) · Read literally, the memo's trigger fires: found-refutes across the milestone = 0 ("zero found refutes on a whole milestone means the probes are decorative"). Read against F2 it is wrong-shaped: a probe that changed the build or the spec was recorded `held` because the rung reads outcome against FROZEN rules, so `--found` undercounts what probes do. The right trigger counts probes that changed something (here 1 of 6) and requires at least one T2 refute before any bench is designed — every refute here was the builder reading its own green, the weakest tier, and the design's central claim (independence catches the shared misunderstanding) is UNMEASURED. Decision: no bench yet. The next real milestone runs its refutes at T2 (a fresh `add-advisor` session per task) and reports probes-that-changed-something; a bench is designed only if that number is 0 across the milestone · (evidence: this node F2 · https://claude.ai/code/artifact/facb60e5-a047-4db3-8edc-90312dc251c7 §10)
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by plan:evidence-over-tests · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M51 · folded] A refute recorded by the builder (tier T1) proves presence, never independence; the memo's bench trigger counted --found and undercounted probes that changed the build under a held outcome — count probes that changed something, and require one T2 refute before designing a bench (evidence: .add/tasks/dogfood-and-measure.md)

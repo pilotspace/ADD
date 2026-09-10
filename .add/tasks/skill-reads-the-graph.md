@@ -82,8 +82,9 @@ strategy: write the checks first — including the two pins as checks, so an ove
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/skill-reads-the-graph.d/runs/1.md · kind: test-ids · 8/8 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by plan:okf-graph-lookup · receipt /tasks/skill-reads-the-graph.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- none filed — no lesson cites /tasks/skill-reads-the-graph.md (add learn <lens> "<lesson>" --evidence /tasks/skill-reads-the-graph.md)

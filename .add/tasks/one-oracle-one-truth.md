@@ -79,8 +79,9 @@ strategy: checks red first, including one that asserts all four placeholder read
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/one-oracle-one-truth.d/runs/1.md · kind: test-ids · 6/6 reported · exit 0 · 2026-09-08
+gate: PASS · authority plan · by plan:loop-that-drains · receipt /tasks/one-oracle-one-truth.d/runs/1.md · 2026-09-08
 
 ## LESSONS
 - pending
+- none filed — no lesson cites /tasks/one-oracle-one-truth.md (add learn <lens> "<lesson>" --evidence /tasks/one-oracle-one-truth.md)

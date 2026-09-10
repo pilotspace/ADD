@@ -96,8 +96,8 @@ strategy: the derivation first (it is what every other piece reads), then the mi
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/a-plan-says-what-it-wants.d/runs/1.md · kind: test-ids · 296/296 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by process:auto · receipt /tasks/a-plan-says-what-it-wants.d/runs/1.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/a-plan-says-what-it-wants.md (add learn <lens> "<lesson>" --evidence /tasks/a-plan-says-what-it-wants.md)

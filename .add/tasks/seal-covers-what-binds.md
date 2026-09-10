@@ -67,8 +67,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_seal_covers_what_
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/seal-covers-what-binds.d/runs/2.md · kind: test-ids · 8/8 reported · exit 0 · 2026-09-02
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/seal-covers-what-binds.d/runs/2.md · 2026-09-02
 
 ## LESSONS
 - what a gate BINDS and what a freeze SEALS must be the same set, or the cheapest repair is to delete the obligation -> add learn add
+- none filed — no lesson cites /tasks/seal-covers-what-binds.md (add learn <lens> "<lesson>" --evidence /tasks/seal-covers-what-binds.md)

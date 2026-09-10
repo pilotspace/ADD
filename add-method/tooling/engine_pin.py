@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "056d04ff6c80a49026b982a58b7b22a6"  # re-aimed @ refute-gate-rung: the gate reads the refute stamp (R:UNREFUTED · R:REFUTED); the verify hint names `add refute`. prior: 6bab8f20… @ refute-verb
+ENGINE_MD5 = "bd4b4090ebe5e61fb2f7e06f63fd30f0"  # re-aimed @ evidence-and-lessons-are-views: EVIDENCE and LESSONS become engine-written views (render_evidence · harvest_lessons · doctor --sync backfill). prior: 056d04ff… @ refute-gate-rung
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "f2ce7c3dbff8915f9458d14bfb2dfef3"  # re-aimed @ refute-verb: the refute parser. prior: de742b6d… @ a-plan-says-what-it-wants

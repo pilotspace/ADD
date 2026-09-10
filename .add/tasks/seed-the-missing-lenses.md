@@ -61,8 +61,9 @@ scope: add-method/tooling/templates/personas, add-method/tests/engine/test_seed_
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/seed-the-missing-lenses.d/runs/1.md · kind: test-ids · 6/6 reported · exit 0 · 2026-09-03
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/seed-the-missing-lenses.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - a fix authored into this repo's own bundle is not a fix that ships; the seeded template is the artifact -> add learn method
+- none filed — no lesson cites /tasks/seed-the-missing-lenses.md (add learn <lens> "<lesson>" --evidence /tasks/seed-the-missing-lenses.md)

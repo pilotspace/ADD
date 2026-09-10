@@ -66,8 +66,8 @@ strategy: write the checks red against the current engine first, then the helper
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/brief-names-the-candidate-lens.d/runs/1.md · kind: test-ids · 11/11 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by plan:personas-load-by-fit · receipt /tasks/brief-names-the-candidate-lens.d/runs/1.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/brief-names-the-candidate-lens.md (add learn <lens> "<lesson>" --evidence /tasks/brief-names-the-candidate-lens.md)

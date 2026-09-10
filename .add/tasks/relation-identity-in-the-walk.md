@@ -84,8 +84,9 @@ strategy: write the two-relations-one-target check FIRST against the LIVE bundle
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/relation-identity-in-the-walk.d/runs/2.md · kind: test-ids · 40/40 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:walk-truth · receipt /tasks/relation-identity-in-the-walk.d/runs/2.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- none filed — no lesson cites /tasks/relation-identity-in-the-walk.md (add learn <lens> "<lesson>" --evidence /tasks/relation-identity-in-the-walk.md)

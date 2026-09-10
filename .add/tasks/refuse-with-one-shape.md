@@ -69,8 +69,8 @@ strategy: the enumerating check first, so it names its own 38; then verb by verb
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/refuse-with-one-shape.d/runs/1.md · kind: test-ids · 1446/1453 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by plan:refuse-in-one-voice · receipt /tasks/refuse-with-one-shape.d/runs/1.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/refuse-with-one-shape.md (add learn <lens> "<lesson>" --evidence /tasks/refuse-with-one-shape.md)

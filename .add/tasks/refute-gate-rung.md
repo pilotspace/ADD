@@ -78,8 +78,9 @@ port: `add.gate(root, cid, "PASS", by)` and `add._next_verb(graph, cid)` — the
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/refute-gate-rung.d/runs/2.md · kind: test-ids · 9/9 reported · exit 0 · 2026-09-10
+refute: held · 3 probe(s) · by builder:claude (same session, tier T1) · against /tasks/refute-gate-rung.d/runs/2.md · 2026-09-10 · P1 a refute stamp citing the receipt cid in a different case cites nothing → R:UNREFUTED · P2 a quick-depth data node's hint after a run names the gate, never refute · P3 refuted, held, refuted on one run reads as refuted (latest wins)
+gate: PASS · authority plan · by plan:evidence-over-tests · receipt /tasks/refute-gate-rung.d/runs/2.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/refute-gate-rung.md (add learn <lens> "<lesson>" --evidence /tasks/refute-gate-rung.md)

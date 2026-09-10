@@ -63,8 +63,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_slug_names_one_no
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/slug-is-unique-across-types.d/runs/2.md · kind: test-ids · 5/5 reported · exit 0 · 2026-09-02
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/slug-is-unique-across-types.d/runs/2.md · 2026-09-02
 
 ## LESSONS
 - a per-directory uniqueness check is not uniqueness when the addressing scheme is flat -> add learn sdd
+- none filed — no lesson cites /tasks/slug-is-unique-across-types.md (add learn <lens> "<lesson>" --evidence /tasks/slug-is-unique-across-types.md)
