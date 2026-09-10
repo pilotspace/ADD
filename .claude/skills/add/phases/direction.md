@@ -161,9 +161,9 @@ assumption, every Reject and every filled edge into a numbered question carrying
 and the cost if wrong; `freeze` refuses until each is `confirm`, `correct` or `defer` (R:UNINTERVIEWED).
 Every other refusal checks the DOCUMENT — this one checks the CONVERSATION.
 
-Put the questions to the human for real, one decision at a time, in their own words. **Never record an
-answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is cleared by editing
-the item, which moves the digest and re-opens the pass; `defer` does — a human may accept a risk knowingly.
+Put the questions to the human for real, one decision at a time, in their own words.
+**Never record an answer you were not given** (R:SELFANSWER). `correct` does not complete an interview: it is
+cleared by editing the item, which moves the digest and re-opens the pass; `defer` does — a human may accept a risk knowingly.
 Reword an interviewed assumption or edge and the interview goes stale; edit a Must and it does not.
 
 ## When Direction reveals a gap

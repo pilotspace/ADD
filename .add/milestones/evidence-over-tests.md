@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: Evidence over tests — trust on independent evidence against frozen intent
-status: direction
+status: done
 generated: { by: add/3.6.0, at: 2026-09-10 }
 verified:
   - { by: "plan:evidence-over-tests design memo, go by Tin Dang 2026-09-10", at: 2026-09-10, act: freeze, authority: plan, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
@@ -10,7 +10,7 @@ advised_by: method-steward
 ## CARD
 goal: a task is trusted because independent evidence held against its frozen intent, and the record shows who tried to refute it
 why: the book says "one check per Must" and "trust comes from passing tests" while the gate enforces ≥1 discriminating check per referent and §10 concedes a check can assert nothing — and the one act that reads a green against its intent, the refute, is prose in verify.md that nothing records. A 2026 research pass (Vaccari ATs · Example Mapping · SpecBench visible-suite overfitting · TDFlow · mutation-vs-coverage) says the same AI writing rule, check and code shares one misunderstanding three times; the fix is a readable oracle a human confirms and an independent read the record can show
-next: add todo --milestone evidence-over-tests
+next: add milestone-done evidence-over-tests
 
 ## SCOPE
 In:  the Direction prose that sizes CHECKS (skill direction.md · SKILL.md · docs 03/12/appendix c,e), the Build line that freezes tests, an evidence router keyed on kind × computed floor, three JUnit-emitting recipes in domains.md, a new `add refute` verb and `act: refute` stamp, two PASS-only gate refusals at floor ≥ plan, filled edges compiled into `add interview`, the verify tier ladder and probe derivation rule, and one budgeted explore that measures the result on real work.
@@ -25,13 +25,20 @@ risks:
   - the phase files carry byte and sha pins; direction.md +1.6 KB must be funded by compressing its duplicated ASSUMPTIONS prose, not by raising a ceiling
 
 ## EXIT
-- [ ] no shipped tree says "one check per Must" — every binding referent is named by ≥1 check that would fail on the most plausible wrong implementation, and one check may cover several   (← direct: checks-bind-not-count)
-- [ ] for code, the default frozen check is an acceptance check through the port, the readable example is a filled E-edge in Given/When/Then that an acceptance check covers, and build.md freezes only BOUND checks   (← direct: acceptance-first-checks)
-- [ ] direction.md carries the evidence router (kind × floor → modes) and domains.md carries property · contract · mutation-on-changed-code recipes that each earn `test-ids` when run   (← direct: evidence-router-and-recipes)
-- [ ] `add refute` records `act: refute` with outcome, probes and the receipt it read; `add interview` compiles filled edges as questions   (← refute-verb)
-- [ ] `add gate PASS` refuses R:UNREFUTED / R:REFUTED at standard|deep × floor ≥ plan, binds PASS only, and quick · process · explore are exempt   (← refute-gate-rung)
-- [ ] verify.md and add-advisor.md state the closed probe derivation list and the T0–T4 tier ladder once, parity-pinned   (← direct: verify-tiers-and-probes)
-- [ ] one real milestone ran under the new rules and the numbers (bound checks per Must · refutes found · human minutes at freeze) decide the bench   (← dogfood-and-measure)
+- [x] no shipped tree says "one check per Must" — every binding referent is named by ≥1 check that would fail on the most plausible wrong implementation, and one check may cover several   (← direct: checks-bind-not-count)
+- [x] for code, the default frozen check is an acceptance check through the port, the readable example is a filled E-edge in Given/When/Then that an acceptance check covers, and build.md freezes only BOUND checks   (← direct: acceptance-first-checks)
+- [x] direction.md carries the evidence router (kind × floor → modes) and domains.md carries property · contract · mutation-on-changed-code recipes that each earn `test-ids` when run   (← direct: evidence-router-and-recipes)
+- [x] `add refute` records `act: refute` with outcome, probes and the receipt it read; `add interview` compiles filled edges as questions   (← refute-verb)
+- [x] `add gate PASS` refuses R:UNREFUTED / R:REFUTED at standard|deep × floor ≥ plan, binds PASS only, and quick · process · explore are exempt   (← refute-gate-rung)
+- [x] verify.md and add-advisor.md state the closed probe derivation list and the T0–T4 tier ladder once, parity-pinned   (← direct: verify-tiers-and-probes)
+- [x] one real milestone ran under the new rules and the numbers (bound checks per Must · refutes found · human minutes at freeze) decide the bench   (← dogfood-and-measure)
 
 ## CLOSE
-evidence: <one row per task>
+evidence:
+  - direct C1 · commit 3d922b5c · tests/skill/test_checks_bind_not_count.py (red first, 2 of 3)
+  - direct C2 · commit c2ec838c · tests/skill/test_acceptance_first_checks.py (red first, 7 of 7)
+  - direct C3 · commit 93c6089c · tests/skill/test_evidence_router_and_recipes.py (red first, 7 of 7; three recipes earn test-ids in a real bundle)
+  - refute-verb · commit 52f5f89e · receipt runs/2.md · refute held (3 probes, T1) · gate PASS at plan
+  - refute-gate-rung · commit 08ab1461 · receipt runs/2.md · refute held (3 probes, T1) · gate PASS through the rung it ships
+  - direct C6 · commit 6c024213 · tests/skill/test_verify_tiers_and_probes.py (red first, 4 of 5)
+  - dogfood-and-measure · explore · gate PASS on sources (4/4) · decision: no bench yet; next milestone refutes at T2
