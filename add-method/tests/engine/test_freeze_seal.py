@@ -165,11 +165,19 @@ def test_gate_refuses_a_pass_when_checks_drifted_after_freeze(bundle, draft):
 
 
 def test_a_refreeze_reseals_and_the_gate_proceeds(bundle, draft):
-    """covers: M3, E3 — a deliberate change is allowed; it just has to be recorded."""
+    """covers: M3, E3 — a deliberate change is allowed; it just has to be recorded.
+
+    RE-AIMED (uncovered-widens-to-rules): the reworded CHECKS used to drop the R:OVERADMIT line
+    entirely, which was harmless while the R:UNCOVERED rung ignored Rejects. It no longer does,
+    and a refreeze refused for an uncovered Reject would prove nothing about resealing — so the
+    rewording now keeps both checks and changes only the words after the `·`.
+    """
     cid, _ = add.new(bundle, "Task", "resealed", title="Resealed")
     draft(bundle, cid)
     add.freeze(bundle, cid, by="human:tindang")
-    draft(bundle, cid, checks="- test_atomic_admit · covers: M1 · a deliberate rewording")
+    draft(bundle, cid, checks=(
+        "- test_atomic_admit · covers: M1 · a deliberate rewording\n"
+        "- test_no_overadmit · covers: R:OVERADMIT · the last token goes to exactly one caller"))
 
     node, note = add.freeze(bundle, cid, by="human:tindang")
     assert node is not None, f"a refreeze of an authored node was refused: {note!r}"

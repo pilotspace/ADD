@@ -7,10 +7,10 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 31
+delta_seq: 33
 relations:
   - Q9 refines /specs/method.md#M21
-open_deltas: 0
+open_deltas: 2
 ---
 ## Now
 what counts as proof
@@ -30,6 +30,8 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q33 · open · 2026-09-10] A check that pins a COUNT (`1 uncovered`) is pinned to its fixture's shape as much as to the rule. Widen the producer and the count moves — the repair is to re-aim the FIXTURE so the number is again about one thing, never to edit the expected number. (evidence: /tasks/uncovered-widens-to-rules.md)
+- [TDD · Q32 · open · 2026-09-10] A survey shaped by one return arity misses the verbs that do not share it: the AST pass looked at 2-tuples and reported 35 sites, while `done` hid two more behind a 3-tuple — the count was wrong in the direction that reads as complete (evidence: add.done 3-tuple · refuse-with-one-shape)
 - [TDD · Q31 · folded · 2026-09-10→2026-09-10] A rule written as a TYPE LIST leaves the gaps a PREDICATE would not: 'stateless Spec and Persona are collapsed' exempted Project and index from the rule authored to remove them, so on a finished bundle they were two of the three rows shown (evidence: constant() · status-answers-what-needs-me)
 - [TDD · Q30 · folded · 2026-09-08→2026-09-08] SKILL.md's sha256 prose pin is held in TWO files — test_surface.py holds it and test_skill_reads_the_graph.py pins test_surface's copy of it. Same class as the budget scatter, one instance further on: a re-aim must edit both or neither (evidence: test_prose_pin_was_re_aimed · one-budget-one-guard overrun probe)
 - [TDD · Q29 · folded · 2026-09-08→2026-09-08] The scatter that hides is the one with no literal: a module-level `LINE_PIN = 176` asserted via a name carries no number for a literal scan to find — four modules held the budget that way, and three then pinned each OTHER's source text, so one number could only be re-pinned everywhere at once or nowhere. A shared-constant guard must flag the re-declaration, not only the assertion (evidence: test_one_budget_one_guard._budget_uses · one-budget-one-guard)

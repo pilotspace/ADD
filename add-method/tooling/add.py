@@ -5157,15 +5157,26 @@ def covers(node: dict) -> dict:
 
 
 def uncovered_obligations(node: dict) -> list:
-    """FILLED edges and PROBED assumptions that no CHECKS `covers:` list names. Sorted.
+    """Every authored obligation that no CHECKS `covers:` list names — Musts, Rejects, filled
+    edges, probed assumptions. Sorted.
 
-    Calls the two functions `referents_of` composes — never a copy of the rule (R:SECOND_TRUTH),
-    so `freeze` and `gate` can never disagree about what an obligation is. And deliberately NOT
-    the third: `rules_of` stays out until the cost of widening to Musts and Rejects is MEASURED
-    rather than estimated (R:WIDENED). Narrow and true beats wide and guessed.
+    Calls the three functions `referents_of` composes — never a copy of the rule
+    (R:SECOND_TRUTH), so `freeze` and `gate` can never disagree about what an obligation is.
+
+    `rules_of` was held out until the cost of widening was MEASURED rather than estimated. It was
+    measured over this bundle at direction: **0 of 105** nodes carrying RULES have an uncovered
+    Must or Reject, and 21 carry no RULES at all. They cannot be uncovered — the GATE already
+    refuses one, so nothing could ever have shipped that way. The widening therefore costs
+    nothing and buys only the TIMING, which was the whole point: the gate is the wrong place to
+    learn a Must has no check, because by then the build is done and the fix is one line of
+    authoring that should have been asked for while the author still had the file open
+    -> "R:LATEREFUSAL".
+
+    The gate rung is unchanged and stays: `freeze` runs earlier and cannot see a check deleted
+    after the seal.
     """
     mapped = covers(node)
-    return sorted(set(edges_of(node) + probed_assumptions(node)) - set(mapped))
+    return sorted(set(referents_of(node)) - set(mapped))
 
 
 def bind(node: dict, reported: dict) -> tuple:

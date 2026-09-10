@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "f89cbed8c48d7b6b5e0cf9268e7019a4"  # re-aimed @ refuse-with-one-shape: 37 refusals answer None (incl. done's 3-tuples); fresh keeps stale as False and gains None. prior: (status-answers-what-needs-me)
+ENGINE_MD5 = "6dd256375c9c748f8acdc7af46c76246"  # re-aimed @ uncovered-widens-to-rules: R:UNCOVERED binds Musts and Rejects at the freeze; measured 0 of 105. prior: (refuse-with-one-shape)
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "de742b6deafc4a445b5d343cf1b30cbe"  # re-aimed @ a-plan-says-what-it-wants: the drop parser. prior: c62354e4… @ a-roadmap-reads-as-a-roadmap

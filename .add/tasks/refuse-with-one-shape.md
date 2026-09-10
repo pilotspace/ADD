@@ -1,7 +1,7 @@
 ---
 type: Task
 title: every verb refuses with None
-status: direction
+status: done
 depth: standard
 milestone: refuse-in-one-voice
 scope:
@@ -16,11 +16,14 @@ verified:
   - { by: "plan:refuse-in-one-voice", at: 2026-09-10, act: freeze, authority: process, direction: "sha256:cffd60e4bde3de5d", binding: "sha256:e37997c610d7465f" }
   - { by: "builder", at: 2026-09-10, act: replan, authority: process, note: "A2's survey missed two things the sweep found. (1) `done` returns 3-TUPLES, so a sweep looking at 2-tuples could not see its two False refusals — 37 sites, not 35. (2) Six verbs answer an empty COLLECTION from a query that ran (deltas, search, interview, todo, locate, neighborhood); that is an answer, not a refusal, and my caller sweep wrongly tightened 10 of those assertions to `is None` before the suite caught it. RESULT_VERBS now covers both shapes: a boolean no, and an empty collection." }
   - { by: "plan:refuse-in-one-voice", at: 2026-09-10, act: refreeze, authority: process, direction: "sha256:cffd60e4bde3de5d", binding: "sha256:e37997c610d7465f" }
+  - { by: "cli", at: 2026-09-10, act: brief, authority: process, brief: "sha256:e534e2cfe471edcc" }
+  - { by: "process:run", at: 2026-09-10, act: run, authority: process, outcome: PASS, receipt: /tasks/refuse-with-one-shape.d/runs/1.md }
+  - { by: "plan:refuse-in-one-voice", at: 2026-09-10, act: gate, authority: process, outcome: PASS, receipt: /tasks/refuse-with-one-shape.d/runs/1.md, brief: "sha256:4272ad690771a06f" }
 ---
 ## CARD
 goal: a caller writing `if x is None` sees every refusal the engine can give, from any verb
 why: two checks in one branch were GREEN only because `freeze` refused with `False`, and `False is not None`. Eleven verbs still answer that way, so the class is live — and the caller crossing two verbs is the one who pays, because each verb is self-consistent and none of them looks wrong on its own
-beat: direction · next: add freeze refuse-with-one-shape
+beat: done · next: add status
 
 ## RULES
 <must>
