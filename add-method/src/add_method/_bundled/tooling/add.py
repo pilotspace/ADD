@@ -5286,6 +5286,58 @@ def brief_budget(depth: str) -> int:
     return BRIEF_BUDGET.get(str(depth or "standard"), BRIEF_BUDGET["standard"])
 
 
+# The roster's own beat -> `flow:` surface map, exactly as `agents/add-worker.md` §2 states it for a
+# SPAWNED agent. Keeping one map means the sequential path cannot route a node to a different lens
+# than a delegated one would — which was the whole defect: the selector existed only on the spawn.
+LENS_SURFACE = {"direction": "design", "build": "build", "verify": "verify"}
+# Verify takes a `flow: verify` lens first and falls back to `advisor` when none declares verify —
+# again `add-worker.md` §2's rule, not a second one invented here.
+LENS_FALLBACK = {"verify": "advisor"}
+
+
+def _lens_terms(raw) -> list:
+    """A frontmatter list field as terms, whether it arrived as `a, b` or as a real list."""
+    items = raw if isinstance(raw, (list, tuple)) else str(raw or "").replace("\u00b7", ",").split(",")
+    return [str(t).strip() for t in items if str(t).strip()]
+
+
+def persona_candidates(graph: dict, node: dict, phase: str) -> list:
+    """Roster entries that FIT this node's beat and kind: `(slug, task-kinds)`, sorted by slug.
+
+    PRESENTS, never selects. The engine emits the fitting set and stops — ranking, choosing and
+    loading a lens stay the orchestrating agent's judgment, which is `personas.md`'s NO-EXEC floor
+    and not an obstacle to route around. Sorted by SLUG for the same reason: an alphabetical list
+    is visibly not a ranking, and any other order would be the engine expressing a preference it
+    has no basis for (R:ENGINEPICKS).
+
+    Only frontmatter is read. A candidate's body never opens, so a brief cannot grow by the size
+    of a persona it did not pick, and D-4 ("the corpus is referenced, never vendored") holds
+    structurally rather than by a filter someone could forget.
+    """
+    fm = node["fm"] or {}
+    kind = str(fm.get("kind") or "").strip()
+
+    def fitting(surface: str) -> list:
+        if not surface:
+            return []
+        out = []
+        for cid, n in graph.items():
+            pfm = n["fm"] or {}
+            if pfm.get("type") != "Persona" or surface not in _lens_terms(pfm.get("flow")):
+                continue
+            kinds = _lens_terms(pfm.get("task-kinds"))
+            # `kind:` is OPTIONAL on a Task. Gating the fit on a field most nodes never set would
+            # leave the roster dark for most of a bundle, so an absent kind skips the kind gate
+            # and `flow:` alone decides.
+            if kind and kinds and kind not in kinds:
+                continue
+            out.append((_wave_slug(cid), ", ".join(kinds)))
+        return sorted(out)
+
+    return fitting(LENS_SURFACE.get(str(phase), "")) \
+        or fitting(LENS_FALLBACK.get(str(phase), ""))
+
+
 def bind_sections(root) -> list:
     """The five specs' `Decisions that bind`, sorted — the ONLY spec section a brief may cite.
 
@@ -5416,8 +5468,21 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
             # had no note" — and the receipt recorded neither. The check that was supposed to
             # guard this passed only because its fixture's slug was the literal word `unlensed`,
             # which the brief echoed back; with any other slug it matched nothing.
-            out.append('  <persona ref="none" note="no lens resolved for this node — '
-                       'the generic reading is in force" />')
+            # ...and name who COULD fit. The lens could only ever reach a node through `add
+            # advise`, a verb no next-hint on the normal path names — the todo row refuses a
+            # second verb by design (A12) — so 175 of this bundle's 190 lifecycle nodes carried
+            # none. This closes that circle at the one surface that is already the agent's
+            # instructions. With nothing to offer it stays byte-identical to what it always was.
+            cands = persona_candidates(graph, node, phase)
+            note = "no lens resolved for this node — the generic reading is in force"
+            if not cands:
+                out.append(f'  <persona ref="none" note="{note}" />')
+            else:
+                out.append(f'  <persona ref="none" note="{note} until one is recorded">')
+                out += [f'    <candidate ref="personas/{ps}" task-kinds="{ks}"/>'
+                        for ps, ks in cands]
+                out.append(f'    <next>add advise {slug} --persona &lt;slug&gt;</next>')
+                out.append("  </persona>")
         out.append("  <context>")
         for dcid, card in cards:
             if card is None:
