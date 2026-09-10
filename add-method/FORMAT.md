@@ -690,13 +690,22 @@ is decidable from list order alone (§7 makes the same argument for `brief`):
 
 ```
 { by, at, act: refute, authority: process, outcome: held | refuted, probes: <n>,
-  receipt: <run cid>, note: "<what was tried — or the input that broke it>" }
+  receipt: <run cid>, tier: T1 | T2 | T3, note: "<what was tried — or the input that broke it>",
+  changed: "<what the probes moved in the build or the spec while the outcome still held>" }
 ```
 
 `outcome: refuted` MUST carry the finding: a refutation with no input is a category, not evidence.
 The stamp binds PRESENCE — a named party tried, when, against which run, with how many probes. It
 does not bind honesty or the quality of the probes; that limit is §10's, restated here so the stamp
 is never read as a correctness proof. It writes no verdict and moves no floor.
+
+`tier:` and `changed:` are present exactly when given — never defaulted, since a default would
+invent a claim nobody made. `tier:` is the CLAIM of who read the green (T1 the building session ·
+T2 a fresh session · T3 a human; T0 is nobody and T4 a CI recipe, so neither is recordable —
+`R:BADTIER`); the flag makes independence countable, `by:` beside it says whether the claim is
+true. `changed:` names what the probes moved while the outcome still held — a `held` that changed
+the build is the yield `--found` alone undercounts, and it is what a bench trigger reads. The gate
+reads neither key: `_refute_of` weighs presence and outcome only (law 3).
 
 The gate READS it: at `standard|deep` depth on a Task whose computed floor (§3.1) is `plan` or
 `human`, a `PASS` is refused while no refute stamp cites the gated receipt (`R:UNREFUTED`), and

@@ -3255,7 +3255,7 @@ def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
         stamps = fm.get("verified") or []
         last_run = _latest_run_cid(stamps)
         if last_run and _refute_of(stamps, last_run) is None:
-            return f'add refute {slug} --by "<name>" --held|--found "<input>"'
+            return f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>"'
     hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
     # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
     # is a sentence shaped like a command; a cold agent following it types angle brackets into a
@@ -5668,8 +5668,17 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
                     f"\nnext: add run {slug} -- <cmd>")
 
 
+REFUTE_TIERS = ("T1", "T2", "T3")
+# The tiers a SESSION can sign for. T0 is nobody — no stamp exists to carry it; T4 is a protected
+# holdout the builder cannot read, which a prompt cannot provide and so a stamp must not claim
+# (verify.md's ladder: "a CI recipe, not shipped"). The engine records the tier as a CLAIM, exactly
+# as it records `by:` — dogfood-and-measure F2 found both refutes on the shipping milestone were the
+# builder's own read with the tier written in free text inside `--by`, uncountable. A flag makes the
+# claim countable; only `by:` beside it says whether it is true.
+
+
 def refute(root, cid: str, by: str, held: bool, finding: str = None, probes: int = 0,
-           note: str = None) -> tuple:
+           note: str = None, tier: str = None, changed: str = None) -> tuple:
     """Record a refute-read of a green: who tried to break it, against which receipt, what they
     found. NO-EXEC — a lens on a green exactly as `advise` is a lens on a beat. `(stamp, note)`.
 
@@ -5678,8 +5687,21 @@ def refute(root, cid: str, by: str, held: bool, finding: str = None, probes: int
     PRESENCE: a named party tried, when, against which run, with how many probes. It cannot bind
     honesty or the quality of the probes (FORMAT §10); the tier ladder and the persona do that.
     It writes no verdict, moves no `status:`, lowers no floor (R:NOVERDICT).
+
+    `tier:` and `changed:` are recorded when given and absent otherwise — never defaulted, since a
+    default would invent a claim nobody made. `changed:` names what the probes moved in the build or
+    the spec while the outcome still HELD (no frozen rule forbade it): dogfood-and-measure F4 found
+    `--found` alone undercounts what probes do, and the bench trigger reads this key. The gate reads
+    neither (`_refute_of`, law 3: a notary that weighed a tier would be a guard).
     """
     root = Path(root)
+    # Membership on the RAW value — the T2 refute of this task found the library stripping
+    # `" T2 "` to a stamp argparse refuses; the two doors now agree. `""` stays absent (A4).
+    tier = tier if tier else None
+    if tier is not None and tier not in REFUTE_TIERS:
+        return None, (f'`--tier {tier}` names no session that can sign — a tier is one of '
+                      f'{" | ".join(REFUTE_TIERS)} (T0 is nobody, T4 is a CI recipe) -> "R:BADTIER"'
+                      f"\nnext: add refute {cid.rsplit('/', 1)[-1][:-3]} --tier T2 …")
     graph = scan(root)
     node = graph.get(cid)
     if node is None:
@@ -5706,9 +5728,12 @@ def refute(root, cid: str, by: str, held: bool, finding: str = None, probes: int
                       f'\nnext: add refute {slug} --found "<the input the bound checks never exercise>"')
     text = finding if not held else (note or "").strip()
     text = _oneline(text).replace('"', "'")
+    moved = _oneline((changed or "").strip()).replace('"', "'")
     stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: refute, authority: process, '
              f'outcome: {"held" if held else "refuted"}, probes: {int(probes or 0)}, '
-             f'receipt: {receipt_cid}' + (f', note: "{text}"' if text else "") + " }")
+             f'receipt: {receipt_cid}' + (f", tier: {tier}" if tier else "")
+             + (f', note: "{text}"' if text else "")
+             + (f', changed: "{moved}"' if moved else "") + " }")
     _, err = _transition(root, cid, appends=[("verified", stamp)])
     if err:
         return None, err + "\nnext: add status"
@@ -5811,9 +5836,11 @@ def render_evidence(root, cid: str, graph: dict = None) -> bool:
     ref = _latest_stamp(node, "refute")
     if ref is not None:
         body = _set_keyed_line(body, "EVIDENCE", "refute",
-                               f"{ref.get('outcome')} · {ref.get('probes', 0)} probe(s) · by {ref.get('by')} · "
-                               f"against {ref.get('receipt')} · {ref.get('at')}"
-                               + (f" · {ref['note']}" if ref.get("note") else ""))
+                               f"{ref.get('outcome')} · {ref.get('probes', 0)} probe(s)"
+                               + (f" · tier {ref['tier']}" if ref.get("tier") else "")
+                               + f" · by {ref.get('by')} · against {ref.get('receipt')} · {ref.get('at')}"
+                               + (f" · {ref['note']}" if ref.get("note") else "")
+                               + (f" · changed: {ref['changed']}" if ref.get("changed") else ""))
     gate_stamp = _latest_stamp(node, "gate")
     if gate_stamp is not None:
         body = _set_keyed_line(body, "EVIDENCE", "gate",
@@ -6276,8 +6303,8 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         if outcome is None:
             return refuse("no refute cites this receipt — the green was never read against its "
                           'frozen intent, so it is reported, not earned -> "R:UNREFUTED"',
-                          f'add refute {slug} --by "<name>" --held|--found "<input>" '
-                          f"(probes derived from RULES/EDGES only), then add gate {slug} PASS")
+                          f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>" '
+                          f"(a fresh session; probes derived from RULES/EDGES only), then add gate {slug} PASS")
         if outcome == "refuted":
             return refuse("the latest refute of this receipt found an input that breaks it "
                           '-> "R:REFUTED"',

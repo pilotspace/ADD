@@ -136,7 +136,7 @@ gates, security stays HARD-STOP. Read-only research fans out; one write serializ
 ```bash
 add status                                   # resume · --all full · --check conformance
 add init --profile code "<name>"             # create a .add/ bundle — code | doc ONLY (see domains.md)
-add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides the rest
+add upgrade                                  # 2.x bundle? archive it whole, init 3.0 — MIGRATION.md guides
 add new Task <slug> --title "..." --depth quick|standard|deep [--sensitivity security|data|architecture] [--kind explore] [--milestone m] [--scope a,b]
 add brief <slug>                             # the composed XML prompt for the active beat
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
@@ -144,12 +144,12 @@ add locate <path>                            # which node's scope owns a path
 add show <ref> [--expand N]                  # one node WHOLE + its relations, N levels (max 5)
 add search ["<term>"] [--type/--status/--milestone V] [--as-of <d>]  # by text, or by field
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
-add refute <slug> --by "<name>" --held|--found "<input>" [--probes N]   # a refute-read of a green, on the record
-add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json, re-vendors a stale engine
+add refute <slug> --by "<name>" --held|--found "<input>" [--probes N] [--tier T2] [--changed "<what>"]   # the refute-read, recorded
+add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json + re-vendors the engine
 add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
 add replan <slug> --note "<what changed>"    # a steering turn on a frozen task — seal intact
-add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · an explicit report path before the -- wins
+add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · a report path before the -- wins
 add gate <slug> PASS --by "<name>"           # verdict — PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a spec
 add fold <lens> "<match>" [--reject | --bind "<decision>"]    # the human's verdict on one lesson

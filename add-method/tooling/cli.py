@@ -195,6 +195,8 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--found", metavar="INPUT", help="the input / state / interleaving that makes the green wrong")
     s.add_argument("--probes", type=_count, default=0, help="how many derived probes were run (recorded, never judged)")
     s.add_argument("--note", help="what was tried (held) — a refuted outcome carries its finding instead")
+    s.add_argument("--tier", choices=["T1", "T2", "T3"], help="who read the green — T1 the building session · T2 a fresh session · T3 a human (a claim the record can count; absent when not given)")
+    s.add_argument("--changed", metavar="WHAT", help="what the probes changed in the build or the spec while the outcome still held — the bench trigger reads this")
 
     s = sub.add_parser("locate", help="reverse lookup — which node's scope owns a path (read-only)")
     s.add_argument("path", help="the file or directory path to locate")
@@ -417,7 +419,8 @@ def dispatch(args, run_cmd) -> int:
 
     if args.verb == "refute":
         stamp, note = add.refute(root, _resolve(root, args.ref), by=args.by, held=args.held,
-                                 finding=args.found, probes=args.probes, note=args.note)
+                                 finding=args.found, probes=args.probes, note=args.note,
+                                 tier=args.tier, changed=args.changed)
         print(note)
         return 0 if stamp else 1
 

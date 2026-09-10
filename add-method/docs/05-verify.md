@@ -74,7 +74,7 @@ Plausibility hides all three, which is why this is *evidence*, not impression: a
 
 ## The gate — one recorded outcome
 
-Every verification ends with exactly one recorded outcome, carrying an accountable owner — never a silent pass. At a plan-or-human floor the gate first demands that someone tried to refute the green: `add refute <slug> --by "<name>" --held|--found "<input>"` records who read the receipt against the frozen intent and what they found, and a `PASS` is refused without it (`R:UNREFUTED`) or over a standing refutation (`R:REFUTED`). Quick depth, the process floor and the explore lane are exempt.
+Every verification ends with exactly one recorded outcome, carrying an accountable owner — never a silent pass. At a plan-or-human floor the gate first demands that someone tried to refute the green: `add refute <slug> --by "<name>" --held|--found "<input>" --tier T2` records who read the receipt against the frozen intent and what they found — `--tier` makes the ladder rung a claim the record can count, and `--changed "<what>"` records what a probe moved in the build or the spec while the outcome still held (a `held` that changed something is yield, and `--found` alone undercounts it) — and a `PASS` is refused without it (`R:UNREFUTED`) or over a standing refutation (`R:REFUTED`). Quick depth, the process floor and the explore lane are exempt.
 
 ```
 add gate <slug> PASS --by "<name>"
