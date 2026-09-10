@@ -568,6 +568,26 @@ Derived from `add.py:1674-1680`, `validate_bundle.py:61-70`.
 
 ---
 
+### §6.2 The single-mode notice
+
+direction.md's router asks that a Must at a `plan` or `human` floor carry two checks of
+different mode. Measured on the milestone that wrote the rule: 0 of 10. So `freeze` READS the
+mode word — the first token after the second `·` of a `## CHECKS` line, from the closed set
+`acceptance · property · contract · static · unit · e2e · manual` — and, under the refute rung's
+arming (§8.4: `standard|deep`, computed floor `plan|human`, not `explore`), appends one line to
+its success note naming every Must whose covering checks carry exactly one known mode, each id
+with its one mode beside it (`carries` for a single Must):
+
+```
+notice: M1 (acceptance), M3 (contract) carry one evidence mode — a plan-floor Must carries two (direction.md § router)
+```
+
+It is a notice and never refuses: the stamp is written first, and `add todo` carries the same
+count as a hint while the author still has the file open. A check with no mode word claims no
+mode and is not counted; Rejects, edges and probed assumptions are never listed. The gate reads
+no mode word at all — this is the one place the engine looks at one, and only to name, never to
+judge. The count is what decides whether the rule is promoted to a refusal or dropped.
+
 ## §7 The brief
 
 `brief` composes the read-set for one node without any bulk read.

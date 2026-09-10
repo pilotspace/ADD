@@ -2366,8 +2366,18 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                      f'binding: "{binding_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
-    return node, (f"{act} recorded at authority `{authority}`"
-                  f"\nnext: add brief {slug} — record the build entry, then build "
+    # A NOTICE, never a refusal (two-mode-notice): armed exactly where the refute rung arms, so
+    # the mechanical lane never pays for a rule aimed at payments. The stamp above is already
+    # written; this line only names what the router asks for and the author can still add.
+    notice = ""
+    if _rung_bound(graph, cid, entry.get("fm") or {}):
+        single = single_mode_musts(entry)
+        if single:
+            notice = (f"\nnotice: {', '.join(f'{m} ({w})' for m, w in single)} "
+                      f"{'carries' if len(single) == 1 else 'carry'} one evidence mode — a plan-floor "
+                      f"Must carries two (direction.md § router)")
+    return node, (f"{act} recorded at authority `{authority}`" + notice
+                  + f"\nnext: add brief {slug} — record the build entry, then build "
                   f"(`add run {slug} -- <cmd>`)")
 
 
@@ -3325,6 +3335,8 @@ def todo(root, milestone: str = None) -> tuple:
                     bits.append(f"{left} unswept pair{'s' if left > 1 else ''}")
                 if (nocov := len(uncovered_obligations(node_t2))):
                     bits.append(f"{nocov} uncovered")
+                if _rung_bound(graph, cid, graph[cid]["fm"] or {}) and (one := len(single_mode_musts(graph[cid]))):
+                    bits.append(f"{one} single-mode Must{'s' if one > 1 else ''}")
                 if bits:
                     hint = f"  ({' · '.join(bits)})"
         lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
@@ -5212,6 +5224,66 @@ def covers(node: dict) -> dict:
         for rule in (r.strip() for r in re.split(r"[,\s]+", match.group(2))):
             if rule:
                 out.setdefault(rule, []).append(check)
+    return out
+
+
+CHECK_MODES = ("acceptance", "property", "contract", "static", "unit", "e2e", "manual")
+# The closed set direction.md's router names. Closed on purpose: an open set would let `unit-ish`
+# count as a second kind of evidence. The engine never PARSES a mode for the gate — it reads one
+# only to NAME the plan-floor Musts still on a single mode at the freeze (two-mode-notice).
+
+
+def _check_lines(node: dict) -> list:
+    """`[(check_id, [rule, …], mode | None), …]` — one entry per CHECKS line `covers()` parses, in
+    order. The mode is the first token after the second `·`, stripped of surrounding backticks or
+    parentheses (direction.md renders the list in backticks), lowercased, when it is in
+    `CHECK_MODES`. Keyed by LINE, not by id: the T2 refute of two-mode-notice found that two lines
+    sharing one id let the last line's mode overwrite the first's, so a Must met by `contract`
+    was named as single-mode and a violator's mode was misreported — the count the rule's fate
+    rests on, corrupted both ways."""
+    body = read(node["path"], "T2")["body"]
+    out = []
+    for line in _section_of(body, "CHECKS").splitlines():
+        match = COVERS_IN_CHECK.match(line.strip())
+        if not match:
+            continue
+        parts = [s.strip() for s in line.strip().split("·")]
+        word = (parts[2].split() or [""])[0].strip("`()").lower() if len(parts) > 2 else ""
+        rules = [r for r in re.split(r"[,\s]+", match.group(2)) if r]
+        out.append((match.group(1), rules, word if word in CHECK_MODES else None))
+    return out
+
+
+def check_modes(node: dict) -> dict:
+    """`{check_id: mode | None}` — the mode word of each CHECKS line by its id; when one id is
+    written on several lines the LAST line's word wins here, which is why `single_mode_musts`
+    reads `_check_lines` and never this map."""
+    return {cid: mode for cid, _, mode in _check_lines(node)}
+
+
+def single_mode_musts(node: dict) -> list:
+    """`[(M<n>, mode), …]` — the Musts whose covering checks carry exactly ONE known mode.
+
+    dogfood-and-measure F1: the session that wrote "at a plan floor a Must carries two checks of
+    different mode" froze 0 of 10 such Musts one task later — prose nobody follows binds nothing.
+    A Must with no known mode is not listed (the author claimed none, and listing it would push
+    for a WORD, not a second kind of evidence); two or more modes is the rule met. Musts only.
+    """
+    by_rule = {}
+    for _, rules, mode in _check_lines(node):
+        for rule in rules:
+            by_rule.setdefault(rule, set())
+            if mode:
+                by_rule[rule].add(mode)
+    out = []
+    # `dict.fromkeys`: authored order, each id once — the third T2 refute declared `M1` on two
+    # RULES lines and the notice named it twice while `uncovered_obligations` (set-based) did not.
+    for rule in dict.fromkeys(rules_of(node)):
+        if not re.fullmatch(r"M\d+", rule):
+            continue
+        known = sorted(by_rule.get(rule, set()))
+        if len(known) == 1:
+            out.append((rule, known[0]))
     return out
 
 

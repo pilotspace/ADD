@@ -85,11 +85,11 @@ ONCE (`## GROUND`); tasks **project** from it. Take the **lens** with it: the `.
   two checks of different mode (§ router). A `Must`/`Reject` encoded in **no** check means RULES is
   not understood — **stop and say so**. Minor behaviors are build guidance, not gated checks.
   For code the **default frozen check is an acceptance check**: business-readable, run through the
-  port with deterministic adapters behind it, and it covers at least one filled edge — the example and
-  the check stay bound through `covers:`. A unit check is frozen only when it is the cheapest
-  discriminating evidence for a rule, never because a rule exists. Open the free text after the
-  second `·` with a mode word — `acceptance · property · contract · static · unit · e2e · manual` —
-  the engine never parses it; the router (§ PLAN) says which modes a change kind earns.
+  port with deterministic adapters behind it, and it covers at least one filled edge — example and
+  check stay bound through `covers:`. A unit check is frozen only when it is the cheapest
+  discriminating evidence for a rule, never because one exists. Open the free text after the second
+  `·` with a mode word — `acceptance · property · contract · static · unit · e2e · manual` — the gate
+  never reads it; `freeze` names the plan-floor Musts still on one mode (a notice, never a refusal); the router (§ PLAN) says which modes a change kind earns.
 
 `covers:` grammar (FORMAT §6.1): at `quick` depth a referent is `goal` or `G<n>` (nth `gives:`); at
 `standard|deep` it is `M<n>` (a Must), `R:<CODE>` (a Reject), `E<n>` (a filled edge) or `A<n>` (an
