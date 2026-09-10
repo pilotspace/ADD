@@ -108,9 +108,9 @@ One task = one atomic node. Three beats, one human decision:
 Emit **lessons** as you learn them, tagged by the spec they sharpen (`ddd · sdd · udd · tdd · add`);
 the close DRAINS the ones it filed (`loop.md`, `deltas.md`). Present every human decision — intake ·
 freeze · gate · close — as a guided choice with the goal→done→plan arc (`gate.md`). A project-fit
-persona is opt-in (`personas.md`) and never lowers a gate; delegate a beat to one when it wants an
-expert (`streams.md`) — the delegate advises, never freezes or gates, security stays HARD-STOP.
-Read-only research fans out freely — facts merge; one write taints the stream back to serialized.
+persona loads by FIT at every beat — the ROSTER is what is opt-in (`personas.md`) — and never lowers
+a gate; delegate to one when a beat wants an expert (`streams.md`): it advises, never freezes or
+gates, security stays HARD-STOP. Read-only research fans out; one write serializes the stream.
 
 ## Non-negotiable rules (from the method)
 

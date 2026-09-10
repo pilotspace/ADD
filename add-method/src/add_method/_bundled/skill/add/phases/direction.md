@@ -21,7 +21,9 @@ silent skip. Keep it to one line; a full section would just re-weigh the bundle.
 Before drafting, gather the real code the task touches — actual files, symbols, signatures,
 conventions — into a lean grounding map, and surface the **anchors** the contract will cite. In a
 milestone, ground is gathered ONCE on the milestone (`## GROUND`); tasks **project** from it and never
-re-ground the repo. Aim the bundle at reality, not assumption.
+re-ground the repo. Aim the bundle at reality, not assumption. Take the **lens** with it: the
+`.add/personas/` entry whose `flow:` names design and whose `task-kinds:` covers the node's `kind:`;
+no fit → `.add/personas-index/use-when.md`; none there → proceed. Record it: `add advise <slug> --persona <p>`.
 
 ## The five sections (all in the node body)
 

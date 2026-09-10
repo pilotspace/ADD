@@ -161,7 +161,7 @@ def test_skill_tree_prose_unedited_by_this_task():
     finding to report, never prose to fix. Pins SKILL.md and intake.md to their sha256 as
     measured when this task was authored — proof this task's own tests never touched them."""
     pinned = {
-        "SKILL.md": "b44842dd377fe20c2a1f0cf785ade882fcaba7749b24314dc4041cb9194b7de3",   # re-aimed @ a-plan-says-what-it-wants: drop joins the wired surface and the cookbook, funded by compressing the Engine paragraph and three cookbook comments. prior: (3.6.0 version stamp)
+        "SKILL.md": "952d73c513844724c5f817e139cf7bf7febbeefd1be4c478b7792967f2511f19",   # re-aimed @ persona-loads-on-every-path: the persona sentence stops calling the LOAD opt-in — the ROSTER is what is optional — funded in place (176/176 lines, 13258/13258 bytes). prior: b44842dd…
         "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # re-aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
     }
     for name, want in pinned.items():

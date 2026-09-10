@@ -1,19 +1,17 @@
 # Streams — delegate a beat to a persona subagent (the advisor pattern)
 
-ADD's engine is the hands' *notary*; **you** are the hands. When a beat's work wants an expert the
-main thread isn't the best-placed to do — a security refute-read, a backend contract, a UX pass —
-delegate it to **one best-fit persona subagent** and fold its verdict back. This is opt-in and
-additive: a task that delegates nothing behaves exactly as the 3-beat loop already does.
+ADD's engine is the hands' *notary*; **you** are the hands. When a beat wants an expert the main
+thread is not best placed to be — a security refute-read, a backend contract, a UX pass — delegate
+it to **one best-fit persona subagent** and fold its verdict back. Additive: a task that delegates
+nothing behaves exactly as the 3-beat loop already does.
 
 > **Two modes.** *Single-advisor* (this section): one persona subagent per beat, run to a returned
-> verdict — when a beat wants one expert lens. *Parallel streams* (§ Parallel streams, below): N
-> mutually-independent tasks built at once, each in its own git worktree, joined losslessly — when a
-> milestone's frontier is several tasks that do not depend on each other. Both keep the four floors;
-> neither lets a subagent own a gate.
+> verdict. *Parallel streams* (below): N mutually-independent tasks built at once, each in its own
+> worktree, joined losslessly. Both keep the four floors; neither lets a subagent own a gate.
 
 The engine stays **NO-EXEC**: it never spawns, never reads a persona on the build path. `add brief
---for-subagent` *composes* the deterministic core; **the skill wraps and spawns**; the engine only
-records that the returned verdict is present. Selection, spawn, and fold are your judgment.
+--for-subagent` *composes* the core; **the skill wraps and spawns**; the engine records only that
+the verdict is present. Selection, spawn and fold are your judgment.
 
 ## The four floors — a subagent never buys these back
 
@@ -35,11 +33,10 @@ A delegate is expertise and hands, never permission. Whatever persona it wears:
 ```bash
 add brief <slug> --for-subagent > /tmp/<slug>.core.xml
 ```
-This is the budgeted, hashed `<task standalone="true">` — objective, the node's `<persona>` (if the
-node names one), dependency cards, frozen `needs`, the specs' *decisions-that-bind*, the verbatim
-`<subject>`, and a `<close>add run … then add gate …</close>`. Refs resolve **at brief time**, so it
-already carries current scope. **Never hand-edit it** — it is content-addressed; edit the node and
-re-brief instead.
+The budgeted, hashed `<task standalone="true">` — objective, the node's `<persona>` (if it names
+one), dependency cards, frozen `needs`, the specs' *decisions-that-bind*, the verbatim `<subject>`,
+and a `<close>add run … then add gate …</close>`. Refs resolve **at brief time**, so it carries
+current scope. **Never hand-edit it** — it is content-addressed; edit the node and re-brief.
 
 ### 2 · Wrap it in the Rule-5 envelope
 The core is the *payload*; the envelope is the *orchestration*. Wrap — never replace — the core:
@@ -113,10 +110,10 @@ decides; when still tied, ask the human — never run two in v1.
 
 ## When delegation is the wrong tool
 
-Delegating has a real cost (a full subagent drive ≈ 1.5–2× the inline cost — the census measured it).
-Delegate when the beat genuinely wants expertise or a fresh adversarial read; **do not** delegate a
-one-liner the main thread can do, and never delegate the human decision itself. The advisor sharpens
-the work; the gate, the freeze, and the floor stay exactly where the 3-beat loop put them.
+Delegating costs (a full subagent drive ≈ 1.5–2× inline — the census measured it). Delegate when the
+beat wants expertise or a fresh adversarial read; **do not** delegate a one-liner the main thread can
+do, nor the human decision itself. The advisor sharpens the work; gate, freeze and floor stay where
+the 3-beat loop put them.
 
 ## Read fan-out — facts merge, decisions serialize
 
@@ -126,21 +123,18 @@ proof**. The wave machinery below exists to serialize DECISIONS; reads return fa
 — contradictory findings surface to the human at the fold, the same divergence rule join uses.
 
 Read-only is pinned to the **spawn instruction**, not to good intentions: a delegate whose prompt
-asks for any edit is a writer, and one write instruction anywhere taints the whole delegate — that
-spawn is wave-gated (builds carry implicit decisions; parallel writers need the disjoint-scope
-proof below). Findings fold with their read time — a reader that ran beside a build observed a
-moving tree.
+asks for any edit is a writer, and one write instruction taints the whole delegate — that spawn is
+wave-gated (parallel writers need the disjoint-scope proof below). Findings fold with their read
+time: a reader that ran beside a build observed a moving tree.
 
-The floors hold at any fan-out width: no reader owns a gate; findings fold back through the main
-thread, which records them against the beat; and a security finding from ANY reader is a
-HARD-STOP, exactly as from the main thread.
+The floors hold at any fan-out width: no reader owns a gate, findings fold back through the main
+thread that records them, and a security finding from ANY reader is a HARD-STOP.
 
 ## Parallel streams — build the whole frontier at once
 
-When a milestone's frontier is **several tasks that do not depend on each other**, build them
-concurrently instead of one at a time. The engine stays NO-EXEC: it **plans** the wave and **joins**
-the results; **you** create the worktrees and spawn the builders. Four steps — plan → isolate →
-build → join.
+When a milestone's frontier is **several tasks that do not depend on each other**, build them at
+once. The engine stays NO-EXEC: it **plans** the wave and **joins** the results; **you** create the
+worktrees and spawn the builders. Four steps — plan → isolate → build → join.
 
 ### 1 · Plan the wave (the engine proves it is safe to parallelise)
 ```bash
@@ -156,14 +150,14 @@ never fan out into a race:
 
 ### 2 · Isolate — one git worktree per stream
 Give each stream its own `git worktree` on its own branch, forked from the join point, each with its
-own `.add/`. Because the wave guaranteed **disjoint scope**, the streams only ever touch different
-files — so the build phase **cannot race**; the only reconciliation is the join.
+own `.add/`. The wave guaranteed **disjoint scope**, so streams only ever touch different files —
+the build **cannot race**, and the only reconciliation is the join.
 
 ### 3 · Build each stream to its gate
 Spawn one `Agent()` per stream (the single-advisor envelope above, or drive it directly). Each runs
-its **own full 3-beat loop** inside its worktree — direction is already frozen, so it builds to green
-and runs `add gate <slug>` **in its worktree**. A stream that hits a security or unmet-Must finding
-gates **HARD-STOP** there; it does not merge.
+its **own full 3-beat loop** in its worktree — direction is already frozen, so it builds to green and
+runs `add gate <slug>` **there**. A stream hitting a security or unmet-Must finding gates
+**HARD-STOP** and does not merge.
 
 ### 4 · Join — fold the worktrees back losslessly
 ```bash

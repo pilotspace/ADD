@@ -7,7 +7,9 @@ Everything you need is fixed. Build runs fast and safe because Direction already
 `add brief <slug>` is Build's FIRST verb, not a convenience: on a frozen task it records an
 `act: brief` stamp — the sealed direction becoming the working prompt — and the gate refuses
 a PASS whose receipts predate that entry (a brief compiled after the build entered nothing;
-the fix is a re-run under it). Compile it, work from it. `depth: quick` is exempt.
+the fix is a re-run under it). Compile it, work from it. `depth: quick` is exempt. The **lens** rides
+in with it: the `.add/personas/` entry whose `flow:` names build and whose `task-kinds:` covers the
+node's `kind:`; no fit → `.add/personas-index/use-when.md`; none there → proceed. `add advise <slug> --persona <p>`.
 
 ## The one job
 
