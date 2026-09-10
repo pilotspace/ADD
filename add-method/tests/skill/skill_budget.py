@@ -34,6 +34,6 @@ SURFACE_BUDGET = 1500
 # when a human deliberately edits the prose, in the same commit, with the reason on its line.
 # Owner: tests/skill/test_surface.py::test_skill_tree_prose_unedited_by_this_task
 PROSE_PINS = {
-    "SKILL.md": "51d076ad0bbc723734e445d5a19a1b2974bbca68d11c88191462a05aa1b11081",   # aimed @ evidence-over-tests C1: CHECKS sized as ≥1 discriminating check per referent, never a quota
+    "SKILL.md": "51d076ad0bbc723734e445d5a19a1b2974bbca68d11c88191462a05aa1b11081",   # aimed @ evidence-over-tests C1: CHECKS sized as ≥1 discriminating check per referent, never a quota · prior: 952d73c513844724c5f817e139cf7bf7febbeefd1be4c478b7792967f2511f19
     "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
 }

@@ -178,9 +178,11 @@ Run these now, with no implementation: all fail. That is the correct, honest sta
 
 Beyond the Reject rules, sweep the recurring gaps that apply and add an `E<n>` check for each (or rule it out on purpose): boundary, duplicate/idempotent, ownership, stale/out-of-order, partial failure, concurrency, malformed input, limits/volume. A case earns a check when getting it wrong is a defect a reader would call a bug; otherwise reference it in prose as build guidance.
 
-### Acceptance mode — for non-code tasks
+### Acceptance first — the readable example, then the check
 
-Not every task ships code. A documentation task, a release, or an infrastructure change has no unit to exercise; forcing an executable test onto it is ceremony. For these (`kind: docs · release · infra`, or when the human declares acceptance mode), CHECKS becomes a **failing-first acceptance list** — short, concrete, verifiable pass/fail evidence, red before the artifact exists and green once it does:
+For code, the **default frozen check is an acceptance check**: business-readable, exercised through the application's port with deterministic adapters behind it, and bound to a filled `E<n>` written as *Given · When · Then* — the example a non-technical owner can read and confirm. A unit check is frozen only when it is the cheapest discriminating evidence for a rule, never because a rule exists; every other unit test belongs to Build and is disposable. The free text on each CHECKS line opens with a mode word from a closed list — `acceptance · property · contract · static · unit · e2e · manual` — which the engine never parses and the evidence router (§ PLAN) selects by change kind and floor.
+
+Not every task ships code. A documentation task, a release, or an infrastructure change has no unit to exercise; forcing an executable test onto it is ceremony. For these (`kind: docs · release · infra`), CHECKS is the `manual` mode — a **failing-first acceptance list**, short, concrete, verifiable pass/fail evidence, red before the artifact exists and green once it does:
 
 ```
 ## CHECKS — acceptance (failing-first)
@@ -189,7 +191,7 @@ Not every task ships code. A documentation task, a release, or an infrastructure
 - [ ] every internal link resolves                                   # covers: M3
 ```
 
-Only the *form* is relaxed. Everything else holds — red before build, every rule bound by a check, evidence not internals, and a person confirms it at the gate. A coding task keeps the executable red suite; the two modes never mix within one task.
+Only the *form* is relaxed. Everything else holds — red before build, every rule bound by a check, evidence not internals, and a person confirms it at the gate. `manual` is the weakest rung on purpose: the receipt records `command-exit`, not `test-ids`, and says so.
 
 ---
 
