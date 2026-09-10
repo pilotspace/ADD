@@ -12,12 +12,14 @@ relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
   - M31 refines /specs/method.md#M4
-open_deltas: 2
+open_deltas: 0
 ---
 ## Now
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- None is the refusal for every engine verb; a verb that ANSWERS a question keeps its boolean, and an empty collection from a query that ran is an answer, not a refusal. (from: /specs/method.md#M45)
+- When a check exists only to hold a narrowing until a measurement lands, name the measurement in the check itself; the day it lands, RETIRE the check in place with a record block rather than leaving it to assert against its own condition. (from: /specs/method.md#M46)
 - A hint carrying a slot the engine could have filled is a defect; a slot only the human can fill is guidance. Where a verb is handed a value, it records it and replays it. (from: /specs/method.md#M44)
 - A close inspects what it holds. A milestone refuses to close over unauthored members, exactly as it refuses over undrained lessons — abandonment is a decision somebody makes, never a side effect of closing. (from: /specs/method.md#M43)
 - Every status the engine reads has a verb that writes it. A value only a reader knows is vocabulary that exists in prose and nowhere in the loop. (from: /specs/method.md#M42)
@@ -33,8 +35,8 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
-- [ADD · M46 · open · 2026-09-10] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)
-- [ADD · M45 · open · 2026-09-10] One sweep, two vocabularies: `None` is the refusal, but a verb that ANSWERS a question keeps its falsy answer — `fresh` says False for stale and None for unmeasurable, and six verbs answer an empty collection from a query that ran. Collapsing those into the refusal shape destroys the only thing those verbs are for (evidence: refuse-with-one-shape · RESULT_VERBS)
+- [ADD · M46 · folded · 2026-09-10→2026-09-10] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)
+- [ADD · M45 · folded · 2026-09-10→2026-09-10] One sweep, two vocabularies: `None` is the refusal, but a verb that ANSWERS a question keeps its falsy answer — `fresh` says False for stale and None for unmeasurable, and six verbs answer an empty collection from a query that ran. Collapsing those into the refusal shape destroys the only thing those verbs are for (evidence: refuse-with-one-shape · RESULT_VERBS)
 - [ADD · M44 · folded · 2026-09-10→2026-09-10] A notary cannot INVENT a value, but it can REMEMBER one it was handed: the build hint carried an unrunnable <test cmd> forever, while run received the real command on every call — recording it turned a template into the command that actually worked in this project (evidence: _last_test_cmd · status-answers-what-needs-me)
 - [ADD · M43 · folded · 2026-09-10→2026-09-10] A closing verb that never looks at what it holds MANUFACTURES the abandonment it reports: `milestone-done` tallied exit criteria only, so a milestone closed and its queued tasks stopped being anybody's, silently — the same shape as R:UNDRAINED for lessons, one level up (evidence: R:SILENTABANDON · a-plan-says-what-it-wants)
 - [ADD · M42 · folded · 2026-09-10→2026-09-10] A word the engine READS that no verb can WRITE is vocabulary living only in the reader: `dropped` was a status three code paths handled and nothing could ever set, so withdrawing work meant deleting a file or letting it rot — and neither leaves a reason (evidence: add drop · a-plan-says-what-it-wants)

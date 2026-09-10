@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: the loop refuses in one voice, and early
-status: direction
+status: done
 generated: { by: add/3.6.0, at: 2026-09-10 }
 verified: []
 ---
@@ -11,19 +11,19 @@ why: two checks in one branch were GREEN only because `freeze` refused with `Fal
 next: add new task <slug>
 
 ## SCOPE
-In:  <what>
-Out: <what not>
+In:  the falsy first element every engine verb returns on a refusal, the checks that assert on it, and the R:UNCOVERED rung that decides which authored obligations owe a check.
+Out: the refusal MESSAGES (untouched, byte for byte), `cli.py`'s exit codes (which read the same element by truthiness and are unaffected), and the gate rung, which still refuses a check deleted after the seal.
 
 ## GROUND
-touches: <paths>
+touches: add-method/tooling/add.py (+ 3 twins) · add-method/tests/engine/
 risks:
-  - <the one that would hurt>
+  - a caller that tests the refusal by truthiness passes under BOTH shapes, so the change looks safe and the check that was already vacuous stays vacuous — the reason M6 enumerates the callers instead of trusting the suite
 
 ## EXIT
-- [ ] every verb in the engine refuses with `None`, and a check enumerates them so a new verb cannot answer differently   (a task)
-- [ ] `freeze` refuses a Must or a Reject that no check covers, naming it — the same rung that already binds edges and probed assumptions   (a task)
-- [ ] no check anywhere asserts a refusal by truthiness where identity is what it means   (all)
-- [ ] the full suite is green, and the two changes are separable in history   (all)
+- [x] every verb in the engine refuses with `None`, and a check enumerates them so a new verb cannot answer differently   (a task)
+- [x] `freeze` refuses a Must or a Reject that no check covers, naming it — the same rung that already binds edges and probed assumptions   (a task)
+- [x] no check anywhere asserts a refusal by truthiness where identity is what it means   (all)
+- [x] the full suite is green, and the two changes are separable in history   (all)
 
 ## CLOSE
 evidence: recorded at close
