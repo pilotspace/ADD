@@ -29,7 +29,7 @@ phase guides. The full reasoning — *why* every rule exists — is
   Foundation (context):  DDD  ·  SDD  ·  UDD
   Engine (this skill):   TDD  ⇄  ADD
   Flow per task:  Direction (spec · scenarios · contract · red tests → ONE freeze)
-                  → Build (red → green)  → Verify (evidence-scored gate)  ↻
+                  → Build (red → green)  → Verify (fresh receipt · refute-read · gate)  ↻
 ```
 
 ## Quick Start
@@ -54,7 +54,8 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
-- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
+- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared checks passing on a fresh receipt *and* a session that did not build it trying to break the green; at a plan-or-human floor the gate refuses a PASS nobody tried to refute. Never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
+- 🎯 **Evidence, not test count** — every binding rule is named by a check written to fail on the most plausible wrong implementation; acceptance checks through a port are the default for code, and property, contract and mutation checkers ride the same receipt. The freeze names any rule still resting on one kind of evidence.
 - 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 28-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
 - 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are recorded, and lessons land on the spec they belong to.
@@ -62,7 +63,7 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 - 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves; monorepo or multi-repo in one team.
 - 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
-> _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
+> _Direction before speed. Trust comes from evidence that survived a refute — not from reading code and finding it plausible._
 
 ## How much ceremony? — the ladder
 
@@ -128,8 +129,9 @@ already use. ADD ships two agents — `add-worker` (the execution shell) and `ad
 (the second mind it spawns to propose a plan, pressure-test a draft, or decide a delegable
 ambiguity) — in the same `.claude/agents/` mechanism as any other subagent; they coexist
 with a distilled persona or a built-in expert with zero conflict, nothing is replaced.
-Prefer `add-worker` for anything phase-shaped (verify mode for the adversarial refute-read,
-build mode for a red→green batch) and let it consult `add-advisor` when confidence is thin;
+Prefer `add-worker` for anything phase-shaped (build mode for a red→green batch, verify mode
+for the gate) and let it consult `add-advisor` when confidence is thin — at a plan-or-human floor
+`add-advisor` in refute mode is the fresh session the gate asks for before a PASS;
 reach for another specialist when a piece needs deep domain expertise the phase guide
 doesn't carry. **The gates hold no matter who did the work** — a delegated subagent
 proposes; the orchestrating agent records.
@@ -216,7 +218,7 @@ python3 .add/tooling/cli.py status      # where am I? (resume point)
 ## The non-negotiables
 
 1. **Direction before speed** — no Build until spec, scenarios, contract, and *red* tests exist.
-2. **Trust evidence, not inspection** — a feature is trusted because its tests pass and the non-functional risks (concurrency, security, architecture) were checked.
+2. **Trust evidence, not inspection** — a feature is trusted because its bound checks pass on a fresh receipt, a session that did not build it tried to break the green, and the residue (concurrency, security, architecture) was examined. A green proves the checks you declared ran — never that they were enough.
 3. **Never weaken a test or edit a frozen contract** to make the build pass.
 4. **No silent skips** — every Verify records `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`. Security findings are always `HARD-STOP`.
 5. **Ask, don't guess.**

@@ -63,7 +63,8 @@ ANCHORS = {
     "README.md": {
         "stops re-breaking last month's work": "skill:loop.md",
         "Stop babysitting the build": "verb:freeze",
-        "Know it's correct without reading every line": "verb:gate",
+        "Know it's correct without reading every line": "verb:refute",
+        "Evidence, not test count": "engine:CHECK_MODES",
         "Pay ceremony only where it buys something": "verb:gate",
         "Never ship a security hole on autopilot": "engine:SENSITIVITY_FLOOR",
         "The method adapts to *your* codebase": "verb:learn",
@@ -76,7 +77,8 @@ ANCHORS = {
     "add-method/README.md": {
         "stops re-breaking last month's work": "skill:loop.md",
         "Stop babysitting the build": "verb:freeze",
-        "Know it's correct without reading every line": "verb:gate",
+        "Know it's correct without reading every line": "verb:refute",
+        "Evidence, not test count": "engine:CHECK_MODES",
         "Pay ceremony only where it buys something": "verb:gate",
         "Never ship a security hole on autopilot": "engine:SENSITIVITY_FLOOR",
         "The method adapts to *your* codebase": "verb:learn",
