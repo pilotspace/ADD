@@ -304,9 +304,9 @@ needs:
 
 The consumer's `needs:` cannot resolve until the producer's `gives:` is frozen, so
 the slice is **ordered by the frozen contract** rather than split across two
-milestones. A `needs:` pointing at a `gives:` that was never frozen surfaces as an
-`edge_unresolved` finding *before* the frontend builds against a shape that does not
-exist. If the producer later refreezes a changed shape, every node citing the old
+milestones. A `needs:` pointing at a `gives:` that was never frozen pins `?` — nothing to compare, so
+nothing is flagged — and a `needs:` whose node file does not exist surfaces as an
+`edge_unresolved` finding. If the producer later refreezes a changed shape, every node citing the old
 fragment is flagged stale (`needs_stale` in `doctor` and `todo`) and, at a plan-or-human floor, its gate refuses `R:STALENEEDS` until it refreezes against the new shape.
 
 ### Each task verifies on its own bar

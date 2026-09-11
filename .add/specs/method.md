@@ -7,12 +7,12 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 53
+delta_seq: 54
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
   - M31 refines /specs/method.md#M4
-open_deltas: 1
+open_deltas: 2
 ---
 ## Now
 how work proceeds, and what a gate costs
@@ -39,6 +39,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M54 · open · 2026-09-11] a value a verb interpolates into a stamp takes _oneline's discipline, and a value a verb SERIALIZES (the needs: pin string) needs the same alphabet — eight T2 reads found the pin's delimiters one character at a time; and the frontmatter BLOCK-list parser swallows the rest of the frontmatter when an item carries { or ' — filed, not fixed (the eighth read's side note) (evidence: /tasks/consumers-go-stale.d/runs/21.md)
 - [ADD · M53 · open · 2026-09-11] The orchestrator followed the red suite's own output into the build and recorded six receipts on an UNFROZEN node before freezing; run records on any node and only the gate refuses R:UNSEALED, so the T2 advisor was the first reader to notice. Take the beat from add status, never from the last command's output (evidence: /tasks/regression-floor.md)
 - [ADD · M52 · folded · 2026-09-10→2026-09-11] A section the format PROMISES a writer for is a section nobody writes until a guard demands it: EVIDENCE and LESSONS were skipped by the placeholder guard because 'the run and the close fill them', and 88/113 done tasks carried the scaffold. Make it a view of the record (verb writes its keyed line, sync backfills) and pin it with a live-bundle count. (evidence: /tasks/evidence-and-lessons-are-views.md)
 - [ADD · M51 · folded · 2026-09-10→2026-09-10] A refute recorded by the builder (tier T1) proves presence, never independence; the memo's bench trigger counted --found and undercounted probes that changed the build under a held outcome — count probes that changed something, and require one T2 refute before designing a bench (evidence: .add/tasks/dogfood-and-measure.md)

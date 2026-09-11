@@ -461,3 +461,18 @@ def test_note_and_readers_share_one_consumer_source(pair):
     assert "needs stale" not in str(add.todo(bundle)[1])
     node, note = add.freeze(bundle, p, by="plan")
     assert node is not None and "stale" not in note
+
+
+def test_stale_fix_text_names_the_brief_and_appendix_d_tells_the_truth(pair):
+    """Direct follow-up to the tenth T2 read: the R:STALENEEDS recipe skipped `add brief` (the refreeze
+    re-seals the direction, so the gate would next refuse R:UNBRIEFED), and appendix-d promised an
+    `edge_unresolved` finding for a never-frozen provider that E10 pins `?` in silence."""
+    root, bundle, p, c = pair
+    _to_verify(root, bundle, c)
+    _move_provider(bundle, p)
+    res, msg = add.gate(bundle, c, "PASS", by="plan")
+    assert res is None and "R:STALENEEDS" in msg
+    assert "add freeze c, add brief c" in msg, f"the fix text forecasts a chain the gate refuses: {msg!r}"
+    d = (REPO / "docs" / "appendix-d-worked-example.md").read_text(encoding="utf-8")
+    assert "never frozen pins `?`" in d and "surfaces as an\n`edge_unresolved` finding *before*" not in d, \
+        "appendix-d still promises an edge_unresolved finding for a never-frozen provider"

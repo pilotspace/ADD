@@ -6665,7 +6665,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         if (stale := stale_needs(graph, cid)):
             named = ", ".join(f"{t}#gives ({p} → {c})" for t, p, c in stale)
             return refuse(f"a `#gives` this task froze on has moved — {named} -> \"R:STALENEEDS\"",
-                          f"read the new fragment, add freeze {slug} to re-cross, rebuild, add run {slug} "
+                          f"read the new fragment, add freeze {slug}, add brief {slug}, rebuild, add run {slug} "
                           f"-- <cmd>, refute, then add gate {slug} PASS")
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
