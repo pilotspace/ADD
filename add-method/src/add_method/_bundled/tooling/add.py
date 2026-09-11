@@ -1815,7 +1815,8 @@ BODIES = {
             "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. "
             "`· probe: <what shipped behavior must show>` declares a reading checkable: "
             "cite its A id from CHECKS and the gate holds the PASS to it.\n\n"
-            "## PLAN\ncontract: <the shape this publishes>\n\n"
+            "## PLAN\ncontract: <the shape this publishes>\n"
+            "regression: <full | affected · <cmd> · <why> — or none · <why>>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
             "## EVIDENCE\nreceipt: <runs/<n>.md>\ngate: <PASS | RISK-ACCEPTED | HARD-STOP>\n\n"
@@ -2354,6 +2355,14 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                           f"decisions no human has been shown: {shown}"
                           f' -> "R:UNINTERVIEWED"' + forward)
 
+    # R:NOFLOOR (regression-floor) — the host suite is a decision the PLAN records, never a memory:
+    # the 3.2 cut shipped a task green over a red host because the floor lived in prose. Armed
+    # exactly where the refute rung arms, so the mechanical lane, quick depth and an explore never pay.
+    if _rung_bound(graph, cid, entry.get("fm") or {}) and regression_floor(node_t2) is None:
+        return None, (f"cannot freeze `{slug}` — `## PLAN` carries no regression floor: a rung-bound task "
+                      f'says what host suite runs beside its own checks -> "R:NOFLOOR"\nnext: add one line '
+                      f"to ## PLAN — `regression: full | affected · <cmd> · <why>` or `regression: none · "
+                      f"<why>` — then add freeze {slug}")
     authority, floor_err = claimed_authority(authority, authority_for(graph, cid), "freeze", slug)
     if floor_err:
         return None, f"cannot freeze `{slug}` — " + floor_err
@@ -3167,7 +3176,11 @@ def _beat_of(node, t2=None, graph=None) -> str:
     if st in ("done", "dropped", "archived") or st in ("build", "verify"):
         return st
     stamps = [s for s in (fm.get("verified") or []) if isinstance(s, dict)]
-    if any(s.get("act") == "run" for s in stamps):
+    # A floor stamp (`floor: regression`) never closes the build beat: the narrow run is the
+    # receipt that binds CHECKS, and a floor-first run read as `verify` made `status` point at
+    # the gate with no narrow receipt at all (found by the second T2 refute of regression-floor,
+    # R:FLOORASGATE, E9) — the same filter `_latest_run_cid` and `latest_receipt` apply.
+    if any(s.get("act") == "run" and not s.get("floor") for s in stamps):
         return "verify"
     if _is_frozen(node):
         return "build"
@@ -3215,9 +3228,14 @@ def _refute_of(stamps: list, receipt_cid: str):
 
 
 def _latest_run_cid(stamps: list):
-    """The receipt cid of the newest `act: run` stamp, or None — read from the record, not the disk."""
+    """The receipt cid of the newest NARROW `act: run` stamp, or None — read from the record, not the disk.
+
+    A floor stamp (`floor: regression`) is skipped, exactly as `latest_receipt` skips the floor
+    receipt: the T2 refute of regression-floor found this reader taking the floor as the latest
+    run, so the hint demanded a refute the gate never asked for (R:FLOORASGATE, E7).
+    """
     return next((str(s.get("receipt") or "") for s in reversed(stamps)
-                 if isinstance(s, dict) and s.get("act") == "run"), None)
+                 if isinstance(s, dict) and s.get("act") == "run" and not s.get("floor")), None)
 
 
 def _rung_bound(graph: dict, cid: str, fm: dict) -> bool:
@@ -3226,6 +3244,30 @@ def _rung_bound(graph: dict, cid: str, fm: dict) -> bool:
         and str(fm.get("depth") or "standard") != "quick" \
         and str(fm.get("kind") or "") != "explore" \
         and authority_for(graph, cid) in ("plan", "human")
+
+
+FLOOR_LINE = re.compile(r"^regression:\s*(full|affected|none)\s*·\s*(.*)$", re.M)
+
+
+def regression_floor(node: dict):
+    """`{mode, cmd, why}` from the PLAN's `regression:` line (regression-floor), or None.
+
+    `full | affected · <cmd> · <why>` or `none · <why>`. A template line (`<…>`), a mode with no
+    command, or a `none` with no why is no floor — the freeze demands the decision, never the
+    slot. `affected` is the AUTHOR's claim about the command: the engine records the word and
+    runs what it is handed, and cannot tell a three-test run from a full one (FORMAT §8.5).
+    """
+    m = FLOOR_LINE.search(_section_of((node or {}).get("body") or "", "PLAN"))
+    if not m:
+        return None
+    mode, rest = m.group(1), m.group(2).strip()
+    if "<" in rest:
+        return None
+    if mode == "none":
+        return {"mode": mode, "cmd": "", "why": rest} if rest else None
+    cmd, _, why = rest.partition("·")
+    cmd, why = cmd.strip(), why.strip()
+    return {"mode": mode, "cmd": cmd, "why": why} if (cmd and why) else None
 
 
 def _last_test_cmd(root) -> str:
@@ -3258,6 +3300,15 @@ def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     # that produced the word, not by a per-row hint.
     if beat in ("scaffold",) + SCAFFOLD_KINDS:
         return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
+    # The floor rung's affordance (regression-floor): a declared host suite with no fresh green
+    # receipt is named first, with the PLAN's own command — only when the caller holds the body
+    # (`todo` does); `status` scans at T0 and the gate names the same line on refusal.
+    if beat == "verify" and t2 is not None and root is not None and _rung_bound(graph, cid, fm):
+        floor = regression_floor(t2)
+        if floor and floor["mode"] in ("full", "affected"):
+            fr, _ = latest_floor_receipt(root, cid)
+            if fr is None or str(fr.get("exit")) != "0" or not fresh(fr, Path(root).parent)[0]:
+                return f"add run {slug} --floor -- {floor['cmd']}"
     # The refute rung's affordance: at the verify beat a rung-bound task points at `add refute`
     # until a refute cites its latest run — the gate would refuse R:UNREFUTED otherwise, and the
     # first contact with a rung should be a hint, not a refusal.
@@ -3741,7 +3792,8 @@ def _sniff_report(command: list):
     return found or None
 
 
-def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, junit=None) -> dict:
+def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, junit=None,
+        floor: bool = False) -> dict:
     """Execute the agent's own command, notarise the result as a Run node.
 
     Never executes anything the caller did not supply. A non-zero exit and a timeout are
@@ -3849,6 +3901,7 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
                "ids": f"{sum(v == 'pass' for v in ids.values())}/{len(ids)} reported" if ids else "unknown",
                "exit": exit_code,
                "freshness": "content" if digest else "mtime", "at": _today(),
+               **({"floor": "regression"} if floor else {}),
                **({"head": head} if head else {}),
                **({"committed": committed} if committed is not None else {}),
                "stdout": stdout.strip().splitlines()[-1] if stdout.strip() else "",
@@ -3871,13 +3924,17 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # F3: bind the receipt to the task. A receipt no stamp points at is unreachable evidence.
     _transition(root, cid, appends=[("verified",
         f'{{ by: "process:run", at: {_today()}, act: run, authority: process, '
+        f'{"floor: regression, " if floor else ""}'
         f'outcome: {"PASS" if exit_code == 0 else "FAIL"}, receipt: {cid_run} }}')])
     # REMEMBER the command. A notary cannot know a project's test command, but it is handed one
     # on every run — so the build hint stops being `<test cmd>` after the first receipt and starts
     # replaying what actually worked here. Recorded, never guessed; a failing run is still the
     # command this project uses, so the exit code does not gate the memory.
+    # A FLOOR run is not the project's narrow test command: remembering it made the next build
+    # hint replay the full suite as the narrow receipt (found by the T2 refute of regression-floor,
+    # R:FLOORASGATE, E8). The narrow command is the one worth replaying; the floor's lives in PLAN.
     index = root / "index.md"
-    if index.is_file():
+    if index.is_file() and not floor:
         try:
             n_idx = read(index, "T2")
             write(index, f"---\n{set_key(n_idx['raw'], 'test_cmd', ' '.join(str(c) for c in command))}"
@@ -6073,16 +6130,33 @@ def orphans(root, graph: dict = None) -> list:
                   if (node["fm"] or {}).get("type") == "Run" and cid.lstrip("/") not in cited)
 
 
-def latest_receipt(root, cid: str) -> tuple:
-    """`(receipt_dict, cid)` for the newest receipt of a task, or `(None, None)`."""
+def _latest_receipt_where(root, cid: str, floor: bool) -> tuple:
+    """Newest receipt of a task that IS (floor=True) or IS NOT a regression-floor receipt."""
     root = Path(root)
     slug = cid.rsplit("/", 1)[-1][:-3]
     runs = sorted((root / f"tasks/{slug}.d/runs").glob("*.md"),
                   key=lambda p: int(p.stem) if p.stem.isdigit() else 0)
-    if not runs:
-        return None, None
-    fm = read(runs[-1], "T0")["fm"] or {}
-    return fm.get("receipt"), "/" + str(runs[-1].relative_to(root))
+    for p in reversed(runs):
+        fm = read(p, "T0")["fm"] or {}
+        receipt = fm.get("receipt") or {}
+        if bool(receipt.get("floor")) == floor:
+            return fm.get("receipt"), "/" + str(p.relative_to(root))
+    return None, None
+
+
+def latest_receipt(root, cid: str) -> tuple:
+    """`(receipt_dict, cid)` for the newest NARROW receipt of a task, or `(None, None)`.
+
+    A regression-floor receipt (`floor: regression`, regression-floor) is never the gated one:
+    the full suite passed off as the bound narrow run would lose the narrow run's binding behind
+    it (R:FLOORASGATE). `latest_floor_receipt` answers for the floor.
+    """
+    return _latest_receipt_where(root, cid, floor=False)
+
+
+def latest_floor_receipt(root, cid: str) -> tuple:
+    """`(receipt_dict, cid)` for the newest regression-floor receipt, or `(None, None)`."""
+    return _latest_receipt_where(root, cid, floor=True)
 
 
 INTEGRITY_REFUSALS = (
@@ -6104,6 +6178,9 @@ EVIDENCE_REFUSALS = (
     # the refute rung: same class, same argument — signing for an unrefuted green is what
     # RISK-ACCEPTED is for, and HARD-STOP must never get harder to write down.
     "unrefuted",
+    # the floor rung (regression-floor): same class — a host suite never run is what a signed
+    # RISK-ACCEPTED exists to record, and HARD-STOP must never get harder to write down.
+    "floor_unrun",
 )
 
 
@@ -6415,6 +6492,24 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           '-> "R:REFUTED"',
                           f"fix the build (or refreeze with the edge it exposed), add run {slug} "
                           f"-- <cmd>, then add refute {slug} again")
+
+    # The floor rung (regression-floor) — a declared host suite that never ran, ran stale or ran
+    # red is not evidence the change left the host standing. Evidence-class like the refute rung
+    # and armed with it; the fix is the PLAN's own command, replayed, never guessed.
+    if sealed and _binds("floor_unrun", verdict) and _rung_bound(graph, cid, sfm):
+        floor = regression_floor(read(graph[cid]["path"], "T2"))
+        if floor and floor["mode"] in ("full", "affected"):
+            fr, fcid = latest_floor_receipt(root, cid)
+            fix = f"add run {slug} --floor -- {floor['cmd']}, then add gate {slug} PASS"
+            if fr is None:
+                return refuse(f"`## PLAN` declares `regression: {floor['mode']}` and the floor was "
+                              'never run -> "R:FLOORUNRUN"', fix)
+            if str(fr.get("exit")) != "0":
+                return refuse(f"the floor run {fcid} FAILED (exit {fr.get('exit')}) — the host did "
+                              'not stand -> "R:FLOORUNRUN"', fix)
+            ok, why = fresh(fr, root.parent)
+            if not ok:
+                return refuse(f"the floor receipt {fcid} is stale — {why} -> \"R:FLOORUNRUN\"", fix)
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}

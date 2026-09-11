@@ -36,6 +36,7 @@ def _authored(root, slug="t", **fields):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 the lister")
+    t = t.replace("regression: <full | affected · <cmd> · <why> — or none · <why>>", "regression: none · fixture")  # regression-floor: fixtures freeze without a host suite
     # `freeze` refuses a template `goal:` — the ONE approval is an approval OF the
     # goal, so a fixture that reaches a post-freeze state has to state one.
     t = t.replace("goal: <one line>", "goal: the fixture's stated one line.")
@@ -405,6 +406,7 @@ def test_no_existing_refusal_was_narrowed():
         "stale_receipt", "failed_run", "unbound_covers", "hollow_explore", "no_security_lens",
         "unbriefed",
         "unrefuted",   # evidence-over-tests: the refute rung, evidence-class like unbriefed
+        "floor_unrun", # regression-floor: the floor rung, evidence-class like unrefuted
     }, f"a refusal was dropped or added: {sorted(classified)}"
     assert not (set(add.INTEGRITY_REFUSALS) & set(add.EVIDENCE_REFUSALS)), "a refusal is in both tiers"
     try:

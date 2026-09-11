@@ -44,6 +44,10 @@ beat: build · next: add run
 - R:BAD something forbidden -> "BAD"
 </reject>
 
+## PLAN
+contract: fixture
+regression: none · fixture
+
 ## CHECKS
 - test_one · covers: M1, R:BAD · proves the rule and the reject
 red-first: every check MUST fail first.

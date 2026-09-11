@@ -113,6 +113,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--cwd")
     s.add_argument("--timeout", type=int, help="ceiling in seconds for the wrapped command "
                    "(default 900 — a build-heavy receipt command needs more)")
+    s.add_argument("--floor", action="store_true",
+                   help="a regression-floor receipt — the host suite the PLAN declares, beside the bound checks")
 
     s = sub.add_parser("gate", help="the verdict: PASS · RISK-ACCEPTED · HARD-STOP")
     s.add_argument("ref")
@@ -308,7 +310,7 @@ def dispatch(args, run_cmd) -> int:
         cwd = args.cwd or (root.parent if root.name == ".add" else root)
         result = add.run(root, _resolve(root, args.ref), run_cmd,
                          cwd=Path(cwd), timeout=args.timeout or add.RUN_TIMEOUT,
-                         junit=Path(args.junitxml) if args.junitxml else None)
+                         junit=Path(args.junitxml) if args.junitxml else None, floor=args.floor)
         print(result["note"])
         return 0 if result["receipt"]["exit"] == 0 else 1
 

@@ -39,6 +39,10 @@ beat: build · next: add run
 - A5 [order] covers: S1 · n/a · fixture
 - A6 [experience] covers: S1 · n/a · fixture
 
+## PLAN
+contract: fixture
+regression: none · fixture
+
 ## CHECKS
 - test_one · covers: M1 · acceptance · the rule
 - test_two · covers: R:BAD · acceptance · the reject

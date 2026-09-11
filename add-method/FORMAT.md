@@ -456,7 +456,7 @@ A `Task` body has eight `## ` sections, in order:
 ## CARD         goal / why / beat · next
 ## RULES        <must> M<n> … </must> and <reject> R:<NAME> … -> "<NAME>" </reject>
 ## ASSUMPTIONS  A<n> — what the spec does NOT say, the reading taken, the cost if wrong
-## PLAN         contract / scope
+## PLAN         contract / scope / the regression floor (§8.5)
 ## EDGES        E<n> — boundary and failure cases a check must cover (optional)
 ## CHECKS       one line per check, each bound by `covers:` (§8.3)
 ## EVIDENCE     a view written by the verbs — `receipt:` at run, `refute:` at refute, `gate:` at gate
@@ -641,7 +641,7 @@ Required evidence by beat (`add.py:1899`):
 |---|---|
 | `direction` | none |
 | `build` | `run-receipt` |
-| `verify` | `run-receipt`, `covers-bound` |
+| `verify` | `run-receipt`, `covers-bound`, and a fresh green floor receipt when the PLAN declares one (§8.5) |
 
 ### §8.1 Freshness and the scope digest
 
@@ -745,6 +745,40 @@ while the latest citing stamp reads `outcome: refuted` (`R:REFUTED`). Both are e
 a `process` floor and `kind: explore` are exempt.
 
 Derived from `add.py:refute`, `add.py:_refute_of`, `add.py:gate`.
+
+### §8.5 The regression floor
+
+A task's own checks prove the change; they do not prove the host still stands. The host suite
+is therefore a **decision the PLAN records**, on one line:
+
+```
+regression: full · <command> · <why>
+regression: affected · <command> · <why>
+regression: none · <why>
+```
+
+`·` separates the fields, so a floor command may not contain it. `full` and `affected` name a
+command; `none` names only a reason. `affected` is the author's claim about the command — the
+engine records the word and runs what it is handed, and cannot tell a three-test run from a full
+one. A template line, a mode with no command, or a `none` with no why is **no floor**.
+
+Two rungs read it, both armed exactly where §8.4's refute rung arms (`standard|deep`, computed
+floor `plan|human`, not `explore`), so the mechanical lane never pays:
+
+- **`freeze` refuses a rung-bound task with no floor** (`R:NOFLOOR`) and names the line to add.
+- **`gate PASS` refuses a declared `full|affected` floor that was never run, ran stale, or ran
+  red** (`R:FLOORUNRUN`), naming which, with the PLAN's own command as the fix. Evidence-class:
+  `RISK-ACCEPTED` and `HARD-STOP` are never refused by it.
+
+The floor is recorded by `add run <slug> --floor -- <command>`: an ordinary receipt (§8.1–§8.2
+apply unchanged — digest, freshness, exit, kind) carrying one more key, `floor: regression`, and
+a run stamp carrying the same. **`latest_receipt` never returns a floor receipt**: the full
+suite passed off as the gated narrow run would lose the narrow run's binding behind it
+(`R:FLOORASGATE`); `latest_floor_receipt` answers for the floor. Freshness is the same digest
+rule as the gated receipt, so the two receipts the gate reads cite one tree; either may be
+recorded first.
+
+Derived from `add.py:regression_floor`, `add.py:freeze`, `add.py:run`, `add.py:latest_floor_receipt`, `add.py:gate`.
 
 ---
 

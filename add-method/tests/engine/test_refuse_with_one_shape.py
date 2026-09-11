@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "981619eaad210c563757a0ae8a7e1c810b547b84f7cb50f3020effa1e1df8285"  # re-aimed @ refute-tier-and-changed: one refusal message joins with `refute()` (BADTIER) — no existing message reworded. prior: a7fa8b83… @ refute-verb
-MESSAGE_COUNT = 106  # re-aimed @ refute-tier-and-changed: +BADTIER. prior: 105 @ refute-verb
+MESSAGE_DIGEST = "1c319f90068b6de346859ede1720370cf02090f1442777749856baa995b35af1"  # re-aimed @ regression-floor: one refusal message joins with `freeze()` (NOFLOOR) — no existing message reworded. prior: 981619ea… @ refute-tier-and-changed
+MESSAGE_COUNT = 107  # re-aimed @ regression-floor: +NOFLOOR. prior: 106 @ refute-tier-and-changed
 
 
 def _message_digest() -> tuple:

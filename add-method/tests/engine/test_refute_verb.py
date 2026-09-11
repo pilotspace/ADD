@@ -44,6 +44,10 @@ beat: build · next: add run
 - E1 Given A(owner me, 100) and B(owner me, 0) · When transfer(A→B, 30) · Then A=70, B=30, result ok
 - E2 <a boundary or failure case a check must cover — optional>
 
+## PLAN
+contract: fixture
+regression: none · fixture
+
 ## CHECKS
 - test_one · covers: M1, E1 · acceptance · runs E1 through the port
 - test_two · covers: R:BAD · acceptance · the reject, both balances unchanged

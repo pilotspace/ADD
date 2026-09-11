@@ -39,6 +39,7 @@ beat: direction · next: add freeze
 - A6 [experience] covers: S1 · n/a · fixture
 
 ## PLAN
+regression: none · fixture
 contract: S1
 budget: ~5 tool calls
 

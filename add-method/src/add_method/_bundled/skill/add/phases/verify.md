@@ -26,15 +26,18 @@ Two properties the gate will demand:
 The gate also demands the build was **entered**: an `act: brief` stamp between the freeze and this
 receipt's run (`phases/build.md`); briefing after the fact buys nothing — re-run under the brief.
 
+**The floor is a second receipt.** A PLAN declaring `regression: full|affected` owes `add run <slug> --floor
+-- <its command>` — the host suite, recorded `floor: regression`, never mistaken for the narrow one; at floor
+≥ plan the gate refuses a PASS whose floor was never run, ran stale or ran red (R:FLOORUNRUN). Either first; one tree.
+
 **Keep the receipt command narrow.** The gate demands exactly the checks `## CHECKS` binds — wrap the
 **narrowest command that reports every bound check** (one file, one marker, one target); the full suite
 rides CI or a backgrounded run, and a slow unbound check stays out of the receipt loop. The wrapped
 command's ceiling is **900 s**; a legitimately slow bound check raises it with `--timeout <s>` — a
 timeout is *recorded* as exit 124 and the gate refuses the PASS.
 
-Evidence kinds the engine can stamp, strongest first: `test-ids` (a runner reported the IDs your
-`covers:` names) > `command-exit` (exit 0, nothing bound). A findings-only explore gates on `sources`.
-A weaker kind is a *visible* weakening (the receipt records which it earned), never a silent one.
+Evidence kinds, strongest first: `test-ids` (a runner reported the IDs your `covers:` names) > `command-exit`
+(exit 0, nothing bound); a findings-only explore gates on `sources`. A weaker kind is visible on the receipt, never silent.
 
 ## 2 · Check the residue — three lenses
 
@@ -42,8 +45,6 @@ Automation covers the checks; it does not cover everything. Examine, by hand, th
 - **security** — always escalates to a human; a finding is a **HARD-STOP**, whatever the evidence says.
 - **concurrency** — races, ordering, atomicity under load.
 - **architecture** — boundary and dependency violations a passing test won't reveal.
-
-This residue stays at human speed: as fast as automated verification carries you, no faster on the rest.
 
 **The refute-read.** Before a verdict, read the green as a skeptic and RECORD it: `add refute <slug>
 --by "<name>" --tier T2 --held|--found "<input>" --probes N`. A green that survives is *earned*; one never read against
@@ -89,6 +90,6 @@ Present the gate via `gate.md`.
 
 ## 4 · Observe → learn
 
-Emit any lesson as a tagged delta (`deltas.md`) — it sharpens a 5-DD spec at close. Reuse the checks as
-production monitors; a production failure becomes a filled `E<n>` with a bound acceptance check on the next
-node that touches the surface (`loop.md`). A milestone is done when its **goal** is met, not merely its tasks.
+Emit any lesson as a tagged delta (`deltas.md`) — it sharpens a 5-DD spec at close. Reuse the checks as production
+monitors; a production failure becomes a filled `E<n>` with a bound acceptance check on the next node that touches
+the surface (`loop.md`). A milestone is done when its **goal** is met, not merely its tasks.

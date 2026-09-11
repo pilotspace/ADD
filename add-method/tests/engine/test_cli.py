@@ -42,7 +42,7 @@ def test_run_timeout_flag_reaches_the_engine(tmp_path, monkeypatch):
     _run(tmp_path, "new", "Task", "slow", "--title", "slow")
     seen = {}
 
-    def fake(root, cid, command, cwd=None, timeout=add.RUN_TIMEOUT, junit=None):
+    def fake(root, cid, command, cwd=None, timeout=add.RUN_TIMEOUT, junit=None, floor=False):
         seen["timeout"] = timeout
         return {"note": "ok", "receipt": {"exit": 0}}
 

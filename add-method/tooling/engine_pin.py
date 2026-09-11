@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "acb7e8728566dbf2177a378960aad28c"  # re-aimed @ receipt-anchored-to-head: run records head: (HEAD at start) and committed: (scope blobs vs HEAD tree) · _committed_to_head. prior: 909e2ce0… @ two-mode-notice
+ENGINE_MD5 = "38cda3a2fcdc56936e97758e4da6bee4"  # re-aimed @ regression-floor: regression_floor · R:NOFLOOR at freeze · run(floor=) · latest_floor_receipt · R:FLOORUNRUN at gate · the verify hint · T2 found: _latest_run_cid, test_cmd and _beat_of skip a floor run. prior: (receipt-anchored-to-head)n_floor · R:NOFLOOR at freeze · run(floor=) · latest_floor_receipt · R:FLOORUNRUN at gate · the verify hint · T2 found: _latest_run_cid and test_cmd skip a floor run. prior: (receipt-anchored-to-head)n_floor · R:NOFLOOR at freeze · run(floor=) · latest_floor_receipt · R:FLOORUNRUN at gate · the verify hint. prior: (receipt-anchored-to-head)
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "b3c4372a9528332cf5c77160e90a8788"  # re-aimed @ refute-tier-and-changed: --tier choices and --changed on the refute parser. prior: f2ce7c3d… @ refute-verb
+ENGINE_PKG_MD5 = "a6b9eb04c240193d0a2c50eb5973b9d7"  # re-aimed @ regression-floor: --floor on the run parser. prior: b3c4372a… @ refute-tier-and-changed

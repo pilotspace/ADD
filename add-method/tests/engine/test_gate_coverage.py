@@ -39,6 +39,10 @@ beat: build · next: add run
 - R:BAD something forbidden -> "BAD"
 </reject>
 
+## PLAN
+contract: fixture
+regression: none · fixture
+
 ## CHECKS
 - test_one · covers: M1 · proves the first
 - test_two · covers: M2, R:BAD · proves the second and the reject
