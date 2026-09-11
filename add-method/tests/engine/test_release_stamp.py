@@ -264,3 +264,15 @@ def test_closing_gate_must_postdate_the_reopen(released):
     add.write(p, f"---\n{add.set_key(n['raw'], 'status', 'done')}\n---\n{n['body']}")
     stamps, note = add.release(bundle, "v1", ["m"], by="Tin")
     assert stamps is None and "R:UNANCHORED" in note and "no member anchors" in note, note
+
+
+def test_a_cited_receipt_must_be_the_members_own(released):
+    """Direct follow-up to the fourth T2 read: a gate stamp hand-edited to cite another task's receipt
+    (or a path outside the bundle) anchored the member on a digest it never earned."""
+    root, bundle, mcid, t = released
+    p = bundle / t.lstrip("/")
+    for foreign in ("/tasks/u.d/runs/1.md", "/../../../../etc/hosts"):
+        p.write_text(p.read_text().replace("receipt: /tasks/t.d/runs/1.md", f"receipt: {foreign}"))
+        stamps, note = add.release(bundle, "v1", ["m"], by="Tin")
+        assert stamps is None and "R:UNANCHORED" in note and "own" in note and foreign in note, f"{foreign}: {note!r}"
+        p.write_text(p.read_text().replace(f"receipt: {foreign}", "receipt: /tasks/t.d/runs/1.md"))

@@ -3944,6 +3944,11 @@ def _anchor(root, graph: dict, mcid: str, tree: str) -> tuple:
         if rcid is None:
             skipped.append(cid.rsplit("/", 1)[-1][:-3])
             continue
+        # A cited receipt must be the member's OWN — under `<slug>.d/runs/` — so a hand-edited
+        # stamp can neither borrow another task's digest nor read outside the bundle.
+        own = f"/tasks/{cid.rsplit('/', 1)[-1][:-3]}.d/runs/"
+        if not rcid.startswith(own) or "/../" in rcid or not re.fullmatch(r"\d+\.md", rcid[len(own):]):
+            return False, f"{cid} is unanchorable — its gate cites {rcid}, not a receipt of its own ({own}<n>.md)", [], [], []
         rpath = root / rcid.lstrip("/")
         receipt = (read(rpath, "T0")["fm"] or {}).get("receipt") if rpath.is_file() else None
         if not isinstance(receipt, dict):
