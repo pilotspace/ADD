@@ -105,8 +105,8 @@ to prove it did. A change that fits no rung cleanly sizes UP to the next one.
 ## Change-request — touching already-frozen scope
 
 If the request modifies a **frozen** contract or a shipped promise, it is not new scope — it is a
-change-request back to Direction of the affected node (§3.5: the old `gives:` stays, a `refreeze` stamp
-lands, dependents that `need:` it are flagged stale). Never fork the truth into a parallel node.
+change-request back to Direction of the affected node (FORMAT §3.5: the old `gives:` stays, a `refreeze` stamp
+lands, dependents that `need:` it are flagged stale — `needs_stale` in doctor and todo, R:STALENEEDS at a rung-bound consumer's gate). Never fork the truth into a parallel node.
 
 ## What you emit (the proposal)
 

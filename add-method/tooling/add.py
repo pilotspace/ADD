@@ -2369,12 +2369,31 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
                             if isinstance(s, dict)) else "freeze"
+    # consumers-go-stale (FORMAT §3.5): the stamp pins the published surface alone and, on a
+    # consumer, what it read from each `#gives` it needs — so a moved contract is a digest
+    # comparison any later reader can make, with no clock and no stored back-reference.
+    prev_gives = next((str(x.get("gives")) for x in reversed(stamps)
+                       if isinstance(x, dict) and x.get("act") in ("freeze", "refreeze") and "gives" in x), None)
+    new_gives = gives_digest(node_t2)
+    pins = needs_pins(graph, cid)
     node, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{_oneline(by)}", at: {_today()}, act: {act}, authority: {authority}, '
                      f'direction: "{direction_digest(node_t2)}", '
-                     f'binding: "{binding_digest(node_t2)}" }}')])
+                     f'binding: "{binding_digest(node_t2)}", gives: "{new_gives}"'
+                     + (f', needs: "{pins}"' if pins else "") + " }")])
     if err:
         return None, err + "\nnext: add status"
+    stale_note = ""
+    if act == "refreeze" and prev_gives and prev_gives != new_gives:
+        # The M3 comparison, not a `prev != new` proxy: name exactly the open consumers whose pin
+        # differs from the digest just stamped — a round trip back to a pinned digest names none
+        # (found by the fourth T2 refute).
+        cons = [c for c in consumers_of(graph, cid)
+                if (pin := _pins_of(graph, c).get(cid)) and pin != _short(new_gives)]
+        if cons:
+            slugs = [c.rsplit("/", 1)[-1][:-3] for c in cons]
+            stale_note = (f"\nnotice: `gives:` moved — consumers now stale: {', '.join(slugs)} — each "
+                          f"re-crosses ({' · '.join(f'add freeze {x}' for x in slugs)})")
     # A NOTICE, never a refusal (two-mode-notice): armed exactly where the refute rung arms, so
     # the mechanical lane never pays for a rule aimed at payments. The stamp above is already
     # written; this line only names what the router asks for and the author can still add.
@@ -2385,7 +2404,7 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
             notice = (f"\nnotice: {', '.join(f'{m} ({w})' for m, w in single)} "
                       f"{'carries' if len(single) == 1 else 'carry'} one evidence mode — a plan-floor "
                       f"Must carries two (direction.md § router)")
-    return node, (f"{act} recorded at authority `{authority}`" + notice
+    return node, (f"{act} recorded at authority `{authority}`" + notice + stale_note
                   + f"\nnext: add brief {slug} — record the build entry, then build "
                   f"(`add run {slug} -- <cmd>`)")
 
@@ -3270,6 +3289,127 @@ def regression_floor(node: dict):
     return {"mode": mode, "cmd": cmd, "why": why} if (cmd and why) else None
 
 
+def gives_digest(node: dict) -> str:
+    """The digest over a node's canonical `gives:` list alone (consumers-go-stale, FORMAT §3.5)."""
+    gives = (node.get("fm") or {}).get("gives") or []
+    gives = [gives] if isinstance(gives, str) else gives           # a scalar is one surface (E15)
+    return "sha256:" + hashlib.sha256(_canon("\n".join(str(g) for g in gives)).encode()).hexdigest()[:16]
+
+
+def _short(digest: str) -> str:
+    return str(digest or "").split(":")[-1][:8]
+
+
+def stamped_gives(graph: dict, cid: str):
+    """The `gives:` digest a node's latest (re)freeze stamp attests — None when no stamp carries one.
+
+    This is the ONE unit every pin reader compares against (found by the fourth T2 refute): the
+    live `gives:` list is a draft until a freeze seals it, so a provider not yet frozen, or frozen
+    before the key existed, pins `?`, and a `gives:` edited without a refreeze moves nothing.
+    """
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    return next((str(x["gives"]) for x in reversed(fm.get("verified") or [])
+                 if isinstance(x, dict) and x.get("act") in ("freeze", "refreeze") and x.get("gives")), None)
+
+
+def _pins_of(graph: dict, cid: str) -> dict:
+    """`{provider_cid: pinned8}` from the node's latest (re)freeze stamp — `?` pins and non-`#gives` dropped.
+
+    Empty when the stamp carries no `needs:` key (written before the pin existed — answers
+    nothing) or the node is not an open Task.
+    """
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    stamps = [x for x in (fm.get("verified") or []) if isinstance(x, dict) and x.get("act") in ("freeze", "refreeze")]
+    if not stamps or "needs" not in stamps[-1] or not _open_task(graph, cid):
+        return {}
+    out = {}
+    for entry in str(stamps[-1].get("needs") or "").split(","):
+        # The pin is the text after the LAST `=`: a ref whose own text carried a delimiter was
+        # pinned `?` by the writer, and that `?` must read back as `?` (found by the fifth T2
+        # refute — `partition` on the first `=` read a pasted digest as attested).
+        # … and only an exact `<ref>=<sha8|?>` token counts, `<ref>` carrying no `=` — the writer
+        # stripped every delimiter from a ref it could not attest (E16), so any other shape is
+        # text nobody stamped.
+        m = re.fullmatch(r"([^=,\"'{}\[\]\s]*)=([0-9a-f]{8}|\?)", entry.strip())
+        if m and m.group(2) != "?" and m.group(1).endswith("#gives"):
+            out.setdefault(_norm(cid, m.group(1)), m.group(2))
+    return out
+
+
+# The pin's delimiters (`,` `=`), the stamp line's (`"` `'` `{` `}` `[` `]`) and whitespace: a ref
+# carrying any of them cannot be attested, and is written with them stripped (E16, E17).
+_PIN_UNSAFE = re.compile(r"""[,="'{}\[\]\s]""")
+
+
+def needs_pins(graph: dict, cid: str) -> str:
+    """`"<target>#gives=<sha8>[,…]"` — what a consumer froze on, or "" when it declares no `needs:`.
+
+    Only a `#gives` fragment is a frozen contract; any other need (an explore's `#findings`, a
+    bare file) is pinned `?` and never reported stale. A target the graph cannot resolve, or one
+    with no freeze stamp attesting a `gives:` digest, is `?` too.
+    """
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    needs = fm.get("needs") or []
+    out = []
+    # Each distinct (resolved node, FRAGMENT) once, under its first-written spelling: a provider
+    # named twice, or under two spellings `_norm` resolves alike, is one pair — decided in the
+    # writer so no reader has to heal it (found by the second and third T2 refutes: M1, E7, E8).
+    # The fragment is part of the key: `#findings` and `#gives` on one node are two pins, and a
+    # delimiter-carrying spelling never shadows an honest one (sixth T2 refute, E14).
+    seen = {}
+    for ref in (str(r).strip() for r in (needs if isinstance(needs, list) else [needs])):
+        node_key = _norm(cid, ref) if ".md" in ref else None
+        key = (node_key, ref.partition("#")[2]) if node_key else ref
+        seen.setdefault(key, ref)
+    for ref in seen.values():
+        target = _norm(cid, ref) if ".md" in ref else None
+        # A ref carrying a pin delimiter (`,` or `=`) cannot be serialized, so it cannot be
+        # attested: pinned `?` however it resolves (E13).
+        serializable = not _PIN_UNSAFE.search(ref)
+        attested = stamped_gives(graph, target) if serializable and ref.endswith("#gives") and target in graph else None
+        # An unserializable ref is written with those characters STRIPPED, so no token in the
+        # stamp string ever carries an inner `,` or `=` for a reader to split on (E16), nor a
+        # `"` or `{` for the flow-map parser to trip on — the pin takes the discipline every
+        # interpolated value takes through `_oneline` (E17, eighth T2 refute).
+        out.append(f"{ref}={_short(attested)}" if attested else f"{_PIN_UNSAFE.sub('', ref)}=?")
+    return ",".join(out)
+
+
+def stale_needs(graph: dict, cid: str) -> list:
+    """`[(provider_cid, pinned8, current8)]` — every `#gives` this node froze on that has since moved.
+
+    Read from the node's latest (re)freeze stamp: a stamp with no `needs:` key was written before
+    the pin existed and answers nothing (never a finding, never a refusal). Compared against the
+    provider's STAMPED digest (`stamped_gives`), never its live list. Digests decide, never dates
+    — two nodes' stamps are not one chronology (R:CLOCKPIN).
+    """
+    out = []
+    for target, pinned in _pins_of(graph, cid).items():
+        current = stamped_gives(graph, target)
+        if current and _short(current) != pinned:
+            out.append((target, pinned, _short(current)))
+    # Sorted at the SOURCE, so every reader — doctor, todo, the gate — names each provider once,
+    # in cid order; the pin's written order decides nothing (found by the T2 refutes: A5/E6 the
+    # order, M3/E7 the unit — `_pins_of` keeps the first pin per resolved target).
+    return sorted(out)
+
+
+def consumers_of(graph: dict, cid: str) -> list:
+    """Every open Task whose latest freeze stamp PINS this node's `#gives` — walked from the graph, never stored.
+
+    Sourced from the stamp, like every other pin reader, never from the live `needs:` list: that
+    list is unsealed and a draft until a freeze pins it, so the refreeze note and `doctor` name
+    the same consumers whatever a hand edit did in between (found by the ninth T2 refute, E18).
+    """
+    return sorted(c for c in graph if cid in _pins_of(graph, c))
+
+
+def _open_task(graph: dict, cid: str) -> bool:
+    """A Task that can still take `add freeze` — not done, dropped or archived (E9)."""
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    return fm.get("type") == "Task" and str(fm.get("status") or "") not in ("done", "dropped", "archived")
+
+
 def _last_test_cmd(root) -> str:
     """The last command `run` was given in this bundle, or "" — remembered, never guessed."""
     index = Path(root) / "index.md"
@@ -3390,6 +3530,11 @@ def todo(root, milestone: str = None) -> tuple:
                     bits.append(f"{one} single-mode Must{'s' if one > 1 else ''}")
                 if bits:
                     hint = f"  ({' · '.join(bits)})"
+        # consumers-go-stale: at any beat, a consumer whose pinned `#gives` moved says so and names
+        # the verb; appended after the beat's own hint so a tuned chain keeps its first word.
+        for provider, _p, _c in stale_needs(graph, cid):
+            hint += (f"  (needs stale: {provider.rsplit('/', 1)[-1][:-3]}#gives moved — "
+                     f"add freeze {cid.rsplit('/', 1)[-1][:-3]})")
         lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
     where = f" under `{milestone}`" if milestone else ""
     return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
@@ -6181,6 +6326,8 @@ EVIDENCE_REFUSALS = (
     # the floor rung (regression-floor): same class — a host suite never run is what a signed
     # RISK-ACCEPTED exists to record, and HARD-STOP must never get harder to write down.
     "floor_unrun",
+    # consumers-go-stale: same class — a consumer of a moved contract can sign for it knowingly.
+    "stale_needs",
 )
 
 
@@ -6511,6 +6658,16 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
             if not ok:
                 return refuse(f"the floor receipt {fcid} is stale — {why} -> \"R:FLOORUNRUN\"", fix)
 
+    # The stale-needs rung (consumers-go-stale, FORMAT §3.5) — a consumer verified against a
+    # contract that has since moved is evidence about the old shape. Evidence-class, armed with
+    # the refute rung; the provider is never touched by what its consumers pinned.
+    if sealed and _binds("stale_needs", verdict) and _rung_bound(graph, cid, sfm):
+        if (stale := stale_needs(graph, cid)):
+            named = ", ".join(f"{t}#gives ({p} → {c})" for t, p, c in stale)
+            return refuse(f"a `#gives` this task froze on has moved — {named} -> \"R:STALENEEDS\"",
+                          f"read the new fragment, add freeze {slug} to re-cross, rebuild, add run {slug} "
+                          f"-- <cmd>, refute, then add gate {slug} PASS")
+
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}
     reported.update({i: "fail" for i in (receipt.get("failed") or [])})
@@ -6807,6 +6964,17 @@ def doctor(root, graph: dict = None, paths=None) -> list:
         find("info", "okf_conformance",
              f"declared OKF v{okf_declared} — {len(described)}/{len(specs)} Spec nodes carry "
              f"`description:`", "/index.md")
+
+    # consumers-go-stale (FORMAT §3.5): a consumer that froze on a `#gives` whose digest has since
+    # moved. `warn`, one per (consumer, provider), sorted by consumer so two runs are byte-identical;
+    # a stamp with no pin (pre-3.7) reports nothing.
+    for cid, node in sorted(graph.items()):
+        if (node.get("fm") or {}).get("type") != "Task":
+            continue
+        for provider, pinned, current in stale_needs(graph, cid):
+            find("warn", "needs_stale",
+                 f"{cid} froze on {provider}#gives {pinned}, now {current} — re-read the fragment, "
+                 f"then add freeze {cid.rsplit('/', 1)[-1][:-3]}", cid)
 
     def _target_findings(src, ref, target):
         """Containment first, then §3.3 — the ONE target reader both edge families share.

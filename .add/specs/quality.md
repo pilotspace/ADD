@@ -7,10 +7,10 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 37
+delta_seq: 38
 relations:
   - Q9 refines /specs/method.md#M21
-open_deltas: 2
+open_deltas: 3
 ---
 ## Now
 what counts as proof
@@ -34,6 +34,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q38 · open · 2026-09-11] The unit of a pin is the RESOLVED target, never its written text: three T2 reads found order, duplicates and two spellings, each a property decided on the pin string in the writer while the readers healed it. Dedupe and order where the pin is MADE, keyed on _norm(), and vary the SPELLING in the bound check (evidence: /tasks/consumers-go-stale.md)
 - [TDD · Q37 · open · 2026-09-11] When a rule quantifies over 'every reader of the latest run', its check must enumerate the readers: three T2 reads found _latest_run_cid, the test_cmd memory and _beat_of one at a time, each the same class the bound suite had proved only for latest_receipt (evidence: /tasks/regression-floor.md)
 - [TDD · Q36 · open · 2026-09-11] a check that reads its subject from the live bundle retires itself the moment the bundle is fixed — construct the defect in the fixture (re-seed the scaffold into a copy), then prove the check red by withholding the sync (evidence: add-method/tests/engine/test_evidence_and_lessons_views.py)
 - [TDD · Q35 · folded · 2026-09-10→2026-09-10] A guard written broader than its rule goes red on true statements. `no budget literal moved` was implemented as `the module is byte-identical`, so adding an unrelated constant to it reported a pin bump that never happened. (evidence: /tasks/one-home-for-the-prose-pin.md)

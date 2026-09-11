@@ -141,7 +141,7 @@ names, and error cases. In ABF-1 it is not a separate file type — it is the `g
 frozen at the freeze stamp.
 
 **Change request** — the path for altering already-frozen scope: return the affected
-node to Direction and refreeze, so dependents citing the old shape are flagged stale.
+node to Direction and refreeze, so dependents citing the old shape are flagged stale (`needs_stale` in `doctor` and `todo`; a rung-bound consumer's gate refuses `R:STALENEEDS` until it refreezes — FORMAT §3.5).
 Never fork the truth into a parallel node.
 
 ## Evidence

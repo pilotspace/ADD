@@ -375,6 +375,60 @@ apart will read the second as the first.
 
 Derived from `add.py:neighborhood`.
 
+### §3.5 The refreeze and its consumers
+
+A second `freeze` on a sealed node is a **refreeze**: the old `gives:` stays in the record, a
+`refreeze` stamp lands, and `verified:` stays append-only — so list order is chronology and
+no clock is consulted. A refreeze is how a frozen contract moves: never a silent edit.
+
+Every freeze and refreeze stamp carries two more keys:
+
+```
+gives: "sha256:<16hex>"                        the digest over this node's canonical gives: list alone
+needs: "/tasks/p.md#gives=<sha8>,/tasks/x.md#findings=?"   what a consumer read, per needs: entry
+```
+
+`gives:` is the published surface as it stood. `needs:` is written only when the node declares
+`needs:`, and pins each `#gives` target's digest **as the consumer read it at its own freeze** —
+a pin taken at the provider's freeze would say nothing about what the consumer built on. What
+it reads is the provider's **stamped** digest — the `gives:` key of its latest freeze or refreeze
+stamp — never the live list: a provider not yet frozen, or frozen before this key existed, is
+pinned `?`, and a `gives:` edited without a refreeze moves no pin. Any other need (an explore's
+`#findings`, a bare file, a target the graph cannot resolve, a ref whose text carries a pin or
+stamp delimiter — `,` `=` `"` `'` `{` `}` `[` `]` or whitespace — and so cannot be serialized,
+written with those characters stripped) is pinned `?`, because
+only `gives:` is a frozen contract the direction digest seals; no token in the string carries an
+inner delimiter, and a reader accepts only exact `<ref>=<sha8|?>` tokens. **The unit of a pin
+is the resolved target and its fragment**: a provider named twice, or under two spellings that
+resolve alike, is pinned once, under the first spelling written; two fragments of one node are
+two pins — decided in the writer, never healed by a reader. A scalar `gives:` is one surface.
+
+Three readers compare pins to the provider's stamped digest — **digests, never dates**: two
+nodes' stamps are not one chronology. All three, and the refreeze note, speak only of **open**
+consumers (not `done`, `dropped` or `archived`): `add freeze` is not a verb a closed task can take.
+
+- **`doctor`** emits one `warn` finding `needs_stale` per (consumer, provider) pair whose pinned
+  digest differs, naming both nodes and both digests, sorted by consumer.
+- **`todo`** appends `(needs stale: <provider>#gives moved — add freeze <slug>)` to the consumer's
+  row at any beat.
+- **the consumer's `gate PASS`** refuses `R:STALENEEDS` at §8.4's arming (`standard|deep`, computed
+  floor `plan|human`, not `explore`), naming the provider and the fix: read the new fragment and
+  `add freeze` again — the re-cross. Evidence-class: `RISK-ACCEPTED` and `HARD-STOP` are never
+  refused by it.
+
+The refreeze that moved a `gives:` names, in its own success note, the open consumers whose pin
+differs from the digest it just stamped — the same comparison, so a round trip names none. **The provider is never refused or delayed by what its consumers pinned** — it cannot
+know their intent. Consumers are found by walking every open Task's latest freeze stamp for a pin on this node at
+read time — the one source the note, `doctor`, `todo` and the gate share; the live `needs:` list
+is unsealed and a draft until a freeze pins it — never from a
+stored back-reference (law 1).
+
+A stamp with no `needs:` key was written before the pin existed. It answers nothing: no finding,
+no refusal — a reader MUST treat the absence as *unknown*. Its next refreeze writes the pin.
+
+Derived from `add.py:freeze`, `add.py:needs_pins`, `add.py:stale_needs`, `add.py:consumers_of`,
+`add.py:doctor`, `add.py:todo`, `add.py:gate`.
+
 ---
 
 ## §4 Read tiers
@@ -776,7 +830,9 @@ a run stamp carrying the same. **`latest_receipt` never returns a floor receipt*
 suite passed off as the gated narrow run would lose the narrow run's binding behind it
 (`R:FLOORASGATE`); `latest_floor_receipt` answers for the floor. Freshness is the same digest
 rule as the gated receipt, so the two receipts the gate reads cite one tree; either may be
-recorded first.
+recorded first. The hint that replays the floor command is `todo`'s, which holds the body;
+`status` and `run`'s note read stamps only and print the beat's default, and the gate names
+the command on refusal. A floor declared on an exempt rung is recorded and never read.
 
 Derived from `add.py:regression_floor`, `add.py:freeze`, `add.py:run`, `add.py:latest_floor_receipt`, `add.py:gate`.
 

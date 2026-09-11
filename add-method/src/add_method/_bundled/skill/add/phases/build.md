@@ -24,7 +24,7 @@ looks done", but "the suite the human froze now passes".
    asks — the gate asks whether the bound checks pass and whether the green survived a refute.
 2. **Move no frozen `gives:`.** Its internals may change freely; its external interface may not. A real
    interface change is a change-request back to Direction (a `refreeze` stamp; dependents that `need:`
-   it go stale) — never a silent edit.
+   it go stale — `needs_stale` in doctor and todo, R:STALENEEDS at their gate) — never a silent edit.
 3. **Stay inside `scope:`.** The paths in the node's `scope:` are the freshness set the gate will hash.
    Touching a path outside scope means the node is mis-scoped — fix the scope in Direction, don't sneak
    the edit.

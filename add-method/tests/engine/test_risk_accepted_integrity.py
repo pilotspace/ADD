@@ -407,6 +407,7 @@ def test_no_existing_refusal_was_narrowed():
         "unbriefed",
         "unrefuted",   # evidence-over-tests: the refute rung, evidence-class like unbriefed
         "floor_unrun", # regression-floor: the floor rung, evidence-class like unrefuted
+        "stale_needs", # consumers-go-stale: the stale-needs rung, evidence-class like floor_unrun
     }, f"a refusal was dropped or added: {sorted(classified)}"
     assert not (set(add.INTEGRITY_REFUSALS) & set(add.EVIDENCE_REFUSALS)), "a refusal is in both tiers"
     try:
