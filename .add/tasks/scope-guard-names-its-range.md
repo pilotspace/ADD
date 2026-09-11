@@ -59,8 +59,8 @@ strategy: write the meta-check first and let it name its own offenders; retire w
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/scope-guard-names-its-range.d/runs/1.md · kind: test-ids · 29/31 reported · exit 0 · 2026-09-08
+gate: PASS · authority process · by plan:rules-that-hold-for-us · receipt /tasks/scope-guard-names-its-range.d/runs/1.md · 2026-09-08
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/scope-guard-names-its-range.md (add learn <lens> "<lesson>" --evidence /tasks/scope-guard-names-its-range.md)

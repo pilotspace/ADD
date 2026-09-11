@@ -59,8 +59,8 @@ scope: add-method/BEYOND-CODE.md, add-method/tests/skill/
 red-first: every check MUST fail first — the document does not exist yet, and each check reads it before asserting anything, so a missing file is a failure rather than a vacuous pass.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/beyond-code-walkthrough.d/runs/1.md · kind: test-ids · 5/5 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/beyond-code-walkthrough.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/beyond-code-walkthrough.md (add learn <lens> "<lesson>" --evidence /tasks/beyond-code-walkthrough.md)

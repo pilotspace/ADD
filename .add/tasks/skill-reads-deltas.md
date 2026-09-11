@@ -65,8 +65,9 @@ strategy: fund the addition inside SKILL.md's fixed 176-line pin by lengthening 
 red-first: every check MUST fail first — proven by reverting the two touched files (`git stash push --keep-index -- <the 6 files>`) and re-running the suite: `test_skill_router_routes_task_and_milestone_through_deltas` and `test_intake_ref_routes_task_and_milestone_through_deltas` failed for the documented reason (no `add deltas` mention in the Task/Project bullets); the other three passed throughout, as pre-existing invariants this task must not break, not new behavior it introduces (`git stash pop` restored the edit before continuing).
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/skill-reads-deltas.d/runs/1.md · kind: test-ids · 5/5 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by plan:okf-graph-time · receipt /tasks/skill-reads-deltas.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - SKILL.md's byte budget is a LINE count (`len(text.splitlines())`), not a character count — a bullet can be funded for free by lengthening an existing physical line instead of deleting prose, which is a stronger "fund by compressing" move than trimming words -> add learn add
+- none filed — no lesson cites /tasks/skill-reads-deltas.md (add learn <lens> "<lesson>" --evidence /tasks/skill-reads-deltas.md)

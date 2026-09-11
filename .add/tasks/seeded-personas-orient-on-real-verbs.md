@@ -56,8 +56,9 @@ scope: add-method/tooling/, add-method/tests/
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/seeded-personas-orient-on-real-verbs.d/runs/1.md · kind: test-ids · 4/4 reported · exit 0 · 2026-09-02
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/seeded-personas-orient-on-real-verbs.d/runs/1.md · 2026-09-02
 
 ## LESSONS
 - an instruction that fails silently is worse than one that errors -> add learn add
+- none filed — no lesson cites /tasks/seeded-personas-orient-on-real-verbs.md (add learn <lens> "<lesson>" --evidence /tasks/seeded-personas-orient-on-real-verbs.md)

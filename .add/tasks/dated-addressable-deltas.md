@@ -120,8 +120,8 @@ regression floor: 35 pre-existing tests are green today across test_delta_gramma
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/dated-addressable-deltas.d/runs/2.md · kind: test-ids · 793/800 reported · exit 0 · 2026-09-03
+gate: PASS · authority plan · by plan:okf-graph-time · receipt /tasks/dated-addressable-deltas.d/runs/2.md · 2026-09-03
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/dated-addressable-deltas.md (add learn <lens> "<lesson>" --evidence /tasks/dated-addressable-deltas.md)

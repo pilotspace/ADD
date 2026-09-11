@@ -10,12 +10,10 @@ still means the same thing in finance as in code.
 
 ## 1 · Earn a real receipt — write the checker
 
-When no test runner exists for your domain, **write one**. `add run` parses JUnit XML and does not
-care what produced it, so any script that compares a measured value against a threshold your frozen
-`## RULES` already state earns the top rung — `kind: test-ids`, every `covers:` referent bound.
-
-The threshold belongs in the frozen Must, never inside the checker. That is what keeps this honest:
-the human approves the number at freeze, and the checker only compares against it.
+When no test runner exists for your domain, **write one**. `add run` parses JUnit XML and does not care
+what produced it: a script comparing a measured value against a threshold your frozen `## RULES` state
+earns the top rung — `kind: test-ids`, every `covers:` bound. The threshold lives in the Must, never in
+the checker: the human approves the number at freeze, the checker only compares.
 
 <!-- checker-recipe -->
 ```python
@@ -46,20 +44,23 @@ add run <slug> -- \
   python3 checks/recon.py --junitxml="${TMPDIR:-/tmp}/add-run.xml"
 ```
 
-**Declare the artifact in `scope:`.** A digested data file makes the receipt `freshness: content` —
-edit the ledger after the run and the gate refuses the stale green. **Without a git-tracked artifact
-freshness falls back to mtime**, and the receipt says so; do not claim stale-green protection you
-did not earn.
+**Declare the artifact in `scope:`.** A digested, git-tracked artifact makes the receipt `freshness:
+content`; without one **freshness falls back to mtime** and the receipt says so — claim no stale-green
+protection you did not earn. The shape covers eval scores, backtests, contrast ratios, citation
+resolution — not taste (brand voice, polish), which gates weakly on purpose. Three more shapes ship as
+scripts beside this file, same rung, each threshold a frozen Must passed on the command line, never baked in:
 
-The same shape covers eval scores, reconciliation deltas, backtest returns, contrast ratios,
-plan-diff summaries, and citation resolution (a reference that resolves to nothing is a failing
-case, not a warning). It does **not** cover taste — brand voice, visual polish, prose elegance.
-Those gate weakly on purpose; that is the evidence ladder being honest, not a gap to paper over.
+```bash
+python3 <skill>/scripts/property_check.py r.xml 2026            # an invariant over 500 generated cases; seed = reproducer
+python3 <skill>/scripts/contract_check.py r.xml                 # the consumer's pact.json against the provider's handle()
+python3 <skill>/scripts/mutation_check.py r.xml 0.8 src pytest -q   # mutants only in changed src/ files; ≥ 0.8 killed
+```
+
+Copy one into `checks/`, aim it at your port, cite its test id from `## CHECKS`; mutation runs once at Verify, never in the build loop.
 
 ## 2 · Your domain's word, ADD's floor
 
-Floors are computed by the engine and the set is closed. Map your vocabulary **onto** it, upward
-only — never rename anything into it.
+Floors are computed by the engine and the set is closed. Map your vocabulary **onto** it, upward only.
 
 | Domain word | Floor | Why |
 |---|---|---|
@@ -74,12 +75,10 @@ size up**. Absence from the table is never evidence that no floor applies.
 
 ## 3 · Frame the bundle — re-author the lenses
 
-Only `code` and `doc` ship as profiles, and `init` refuses any other name — a profile is a set of
-spec lenses that has to exist, not a label your domain can assert into being.
+Only `code` and `doc` ship as profiles, and `init` refuses any other name — a profile has to exist.
 
-Start from `add init --profile doc "<name>"` — its four lenses already assume no test runner —
-then rewrite each spec's `## Now` line in your domain's language, **before** creating the first
-task, so no contract freezes against code-framed lenses.
+Start from `add init --profile doc "<name>"` — its four lenses already assume no test runner — then rewrite
+each spec's `## Now` line in your domain's language **before** the first task, so no contract freezes against code-framed lenses.
 
 | Lens | Rewrite `## Now` to |
 |---|---|
@@ -88,5 +87,4 @@ task, so no contract freezes against code-framed lenses.
 | quality | what counts as proof here — name the checker |
 | method | how drafts proceed to a verdict, and what one costs |
 
-Never overwrite a spec a human already edited — `init`'s own rule is that a human's file outranks
-a template, and re-authoring inherits it.
+Never overwrite a spec a human already edited — a human's file outranks a template (`init`'s own rule).

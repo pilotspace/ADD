@@ -78,8 +78,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_done_reads_the_ve
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/done-reads-the-verdict.d/runs/2.md · kind: test-ids · 14/14 reported · exit 0 · 2026-09-03
+gate: PASS · authority human · by Tin Dang · receipt /tasks/done-reads-the-verdict.d/runs/2.md · 2026-09-03
 
 ## LESSONS
 - a guard that asks whether a stamp is well-formed has not asked whether what it attests is true -> add learn add
+- none filed — no lesson cites /tasks/done-reads-the-verdict.md (add learn <lens> "<lesson>" --evidence /tasks/done-reads-the-verdict.md)

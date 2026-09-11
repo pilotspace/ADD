@@ -64,8 +64,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_run_reads_the_pat
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/run-reads-the-path-it-was-handed.d/runs/2.md · kind: test-ids · 7/7 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by Tin Dang · receipt /tasks/run-reads-the-path-it-was-handed.d/runs/2.md · 2026-09-03
 
 ## LESSONS
 - when a flag restates something the engine was already handed, the flag is the bug -> add learn method
+- none filed — no lesson cites /tasks/run-reads-the-path-it-was-handed.md (add learn <lens> "<lesson>" --evidence /tasks/run-reads-the-path-it-was-handed.md)

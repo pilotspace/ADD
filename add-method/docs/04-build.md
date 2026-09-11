@@ -44,7 +44,7 @@ For the running example, the feature-specific safety rule is *"make the balance 
 
 The build runs fast because Direction fixed *what* correct means. It stays safe because three lines hold, and crossing any of them is not a shortcut — it is a signal that the work has left its lane:
 
-- **Change no check.** A check that is hard to pass is telling you something about the code, not about the check. Weakening or deleting it to reach green inverts the method: the code would then be judging itself.
+- **Change no bound check.** A test named in `## CHECKS` is frozen; a hard one is telling you something about the code, not about the check, and weakening or deleting it to reach green inverts the method: the code would then be judging itself. Every other test is yours — write it to debug, delete it when it stops paying. Red-green-refactor is a technique you may use; it is never what the gate asks for.
 - **Move no frozen `gives:` contract.** The build implements *against* the frozen interface. Its internals may change freely; its external shape may not. A genuine need to change the contract is a change request that returns to Direction, not a silent edit here.
 - **Stay inside `scope:`.** The paths in the node's `scope:` are the freshness set the gate will hash. Touching a path outside it means the node is mis-scoped — fix the scope in Direction, do not sneak the edit.
 

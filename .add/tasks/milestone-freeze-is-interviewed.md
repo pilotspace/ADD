@@ -80,8 +80,9 @@ strategy: checks red first, including one that proves the plan-authority path st
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/milestone-freeze-is-interviewed.d/runs/1.md · kind: test-ids · 8/8 reported · exit 0 · 2026-09-08
+gate: PASS · authority plan · by plan:loop-that-drains · receipt /tasks/milestone-freeze-is-interviewed.d/runs/1.md · 2026-09-08
 
 ## LESSONS
 - pending
+- none filed — no lesson cites /tasks/milestone-freeze-is-interviewed.md (add learn <lens> "<lesson>" --evidence /tasks/milestone-freeze-is-interviewed.md)

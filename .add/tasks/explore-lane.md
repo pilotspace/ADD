@@ -88,8 +88,9 @@ regression floor: add-method/tests/skill (all) + add-method/tooling/test_tree_pa
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/explore-lane.d/runs/2.md · kind: test-ids · 42/42 reported · exit 0 · 2026-08-11
+gate: PASS · authority process · by Tin Dang · receipt /tasks/explore-lane.d/runs/2.md · 2026-08-11
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M1 · folded] any angle-bracketed text in a gives: entry — even inside a backticked example path — reads as unauthored scaffold and blocks freeze; keep gives: literals bracket-free (evidence: /tasks/explore-lane.md)
+- [quality · Q1 · folded] the gate coverage map binds EVERY referent — probed A-lines and E-lines included; write covers: complete at Direction or the first gate refuses on rules your suite already proves (evidence: /tasks/explore-lane.d/runs/2.md)

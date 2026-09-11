@@ -54,8 +54,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_a_silence_states_
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/a-silence-states-its-reason.d/runs/1.md · kind: test-ids · 6/6 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by Tin Dang · receipt /tasks/a-silence-states-its-reason.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - when a docstring states a stricter rule than its code, the docstring is the specification someone already reviewed -> add learn method
+- none filed — no lesson cites /tasks/a-silence-states-its-reason.md (add learn <lens> "<lesson>" --evidence /tasks/a-silence-states-its-reason.md)

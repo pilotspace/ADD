@@ -61,8 +61,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine/test_the_explore_scaff
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/the-explore-scaffold-is-an-explore.d/runs/1.md · kind: test-ids · 6/6 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by Tin Dang · receipt /tasks/the-explore-scaffold-is-an-explore.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - a lane with guards but no scaffold is a lane whose first user meets a refusal instead of a prompt -> add learn method
+- none filed — no lesson cites /tasks/the-explore-scaffold-is-an-explore.md (add learn <lens> "<lesson>" --evidence /tasks/the-explore-scaffold-is-an-explore.md)

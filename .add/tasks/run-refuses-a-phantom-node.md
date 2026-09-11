@@ -54,8 +54,9 @@ scope: add-method/tooling/, add-method/tests/
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/run-refuses-a-phantom-node.d/runs/1.md · kind: test-ids · 9/9 reported · exit 0 · 2026-09-02
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/run-refuses-a-phantom-node.d/runs/1.md · 2026-09-02
 
 ## LESSONS
 - `or {}` on a lookup turns a missing subject into an invented one -> add learn add
+- none filed — no lesson cites /tasks/run-refuses-a-phantom-node.md (add learn <lens> "<lesson>" --evidence /tasks/run-refuses-a-phantom-node.md)

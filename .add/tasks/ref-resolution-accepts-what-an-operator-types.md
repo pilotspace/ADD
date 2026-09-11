@@ -76,8 +76,9 @@ strategy: write the false-refusal check against the LIVE shape first — `okf-gr
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/ref-resolution-accepts-what-an-operator-types.d/runs/1.md · kind: test-ids · 19/19 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by plan:walk-truth · receipt /tasks/ref-resolution-accepts-what-an-operator-types.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [quality · Q18 · folded] A fixture that cannot build the state it is testing fails SILENTLY into a weaker test. Three times in one task: add.new refuses a duplicate slug so the basename-collision fixture had one node not two; add.freeze refuses a scaffolded node so the 'sealed' fixture was never sealed; and the original vacuous seal test died on a missing gate stamp for exactly that reason. Every one PASSED or looked plausible. A fixture builder must assert its own postcondition — the setup is the half of a check nothing else guards. (evidence: /tasks/checks-that-cannot-fail.md · /tasks/ref-resolution-accepts-what-an-operator-types.md)

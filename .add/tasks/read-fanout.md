@@ -69,8 +69,8 @@ regression floor: add-method/tests/skill (all) + add-method/tooling/test_tree_pa
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/read-fanout.d/runs/1.md · kind: test-ids · 57/57 reported · exit 0 · 2026-08-11
+gate: PASS · authority process · by Tin Dang · receipt /tasks/read-fanout.d/runs/1.md · 2026-08-11
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/read-fanout.md (add learn <lens> "<lesson>" --evidence /tasks/read-fanout.md)

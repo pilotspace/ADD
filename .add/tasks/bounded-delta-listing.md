@@ -78,8 +78,9 @@ strategy: write the line-length check FIRST, over the LIVE bundle, so the red is
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/bounded-delta-listing.d/runs/1.md · kind: test-ids · 33/33 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by plan:read-cost · receipt /tasks/bounded-delta-listing.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- none filed — no lesson cites /tasks/bounded-delta-listing.md (add learn <lens> "<lesson>" --evidence /tasks/bounded-delta-listing.md)

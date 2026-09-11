@@ -141,8 +141,8 @@ regression floor: `add-method/tests/` AND `add-method/tooling/` green (two roots
 red-first: every check MUST fail first. The two guards are run against the unedited tree before any text changes.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/direct-lane-size-gate.d/runs/4.md · kind: test-ids · 728/735 reported · exit 0 · 2026-08-28
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/direct-lane-size-gate.d/runs/4.md · 2026-08-28
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M18 · folded] `cli.py --root ..` from a subdir writes receipts to <root>/tasks/, not <root>/.add/tasks/, and runs the command from the root — a repo-root pytest collected 580 errors. Drive from the bundle root and steer the command with --cwd. (evidence: /tasks/direct-lane-size-gate.d/runs/1.md)

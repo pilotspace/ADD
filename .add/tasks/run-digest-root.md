@@ -49,7 +49,7 @@ scope: add-method/tooling/add.py · add-method/tests/engine/test_run_digest_root
 - test_scopeless_nodes_stay_silent · covers: M2 · no scope, no note — the doc lane is untouched
 red-first: every check MUST fail first.
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by human:tindang · receipt /tasks/run-digest-root.d/runs/1.md · 2026-08-11
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/run-digest-root.md (add learn <lens> "<lesson>" --evidence /tasks/run-digest-root.md)

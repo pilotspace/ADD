@@ -87,8 +87,10 @@ red-first: every check MUST fail first — EXCEPT the two E-checks, added at the
 citation form: BARE test names. The first freeze cited `path.py::name`, which `cite_hits` resolves neither as a qualified ID nor as a bare name, so nothing bound and the gate refused all eight referents.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/domain-evidence-recipe.d/runs/3.md · kind: test-ids · 16/16 reported · exit 0 · 2026-08-12
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/domain-evidence-recipe.d/runs/3.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M6 · folded] a frozen contract on a not-yet-done task is repaired by a bare re-freeze (the engine records act: refreeze with a fresh direction hash) — reopen refuses a non-done task and replan seals untouched, and no skill doc names the real path (evidence: /tasks/domain-evidence-recipe.md verified[])
+- [method · M4 · folded] the gate binds EVERY covers referent, EDGES included — an E<n> authored with no covering check refuses the PASS just as a Must would (evidence: /tasks/domain-evidence-recipe.d/runs/2.md)
+- [system · S1 · folded] a skill-surface addition has a three-tree blast radius; a scope narrower than that ships a red suite and the architecture residue lens is what catches it (evidence: /tasks/domain-evidence-recipe.d/runs/2.md)

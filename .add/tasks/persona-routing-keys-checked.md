@@ -68,8 +68,8 @@ scope: add-method/tooling/add.py, .add/personas, add-method/tests
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/persona-routing-keys-checked.d/runs/1.md · kind: test-ids · 10/10 reported · exit 0 · 2026-09-01
+gate: PASS · authority process · by Tin Dang · receipt /tasks/persona-routing-keys-checked.d/runs/1.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/persona-routing-keys-checked.md (add learn <lens> "<lesson>" --evidence /tasks/persona-routing-keys-checked.md)

@@ -95,8 +95,9 @@ strategy: checks red first; the `bind` write reuses the existing section machine
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/deltas-drain-at-close.d/runs/1.md · kind: test-ids · 12/12 reported · exit 0 · 2026-09-08
+gate: PASS · authority plan · by plan:loop-that-drains · receipt /tasks/deltas-drain-at-close.d/runs/1.md · 2026-09-08
 
 ## LESSONS
 - pending
+- none filed — no lesson cites /tasks/deltas-drain-at-close.md (add learn <lens> "<lesson>" --evidence /tasks/deltas-drain-at-close.md)

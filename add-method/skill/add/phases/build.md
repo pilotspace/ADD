@@ -18,8 +18,10 @@ looks done", but "the suite the human froze now passes".
 
 ## The three lines you may not cross
 
-1. **Change no check.** A check that is hard to pass is telling you something about the code, not about
-   the check. Weakening it to get green inverts the method.
+1. **Change no bound check.** A test named in `## CHECKS` is frozen; a hard one is telling you something
+   about the code, and weakening it inverts the method. Every other test is yours: write it to debug,
+   delete it when it stops paying. Red-green-refactor is a technique you may use, never what the gate
+   asks — the gate asks whether the bound checks pass and whether the green survived a refute.
 2. **Move no frozen `gives:`.** Its internals may change freely; its external interface may not. A real
    interface change is a change-request back to Direction (a `refreeze` stamp; dependents that `need:`
    it go stale) — never a silent edit.

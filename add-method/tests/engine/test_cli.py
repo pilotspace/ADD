@@ -20,7 +20,7 @@ import cli  # noqa: E402
 WIRED = {"init", "status", "new", "freeze", "run", "gate", "done", "brief", "learn", "show",
          "milestone-done", "deltas", "fold", "reopen", "drop", "milestone-archive", "doctor",
          "wave", "join",
-         "advise", "locate", "todo", "upgrade", "replan", "check", "interview", "search"}
+         "advise", "locate", "todo", "upgrade", "replan", "check", "interview", "search", "refute"}
 
 
 def _run(root, *argv):

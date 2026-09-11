@@ -117,8 +117,10 @@ scope: add-method/tooling/add.py, add-method/tooling/cli.py, add-method/tests/en
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/freeze-interview.d/runs/3.md · kind: test-ids · 25/25 reported · exit 0 · 2026-09-01
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/freeze-interview.d/runs/3.md · 2026-09-01
 
 ## LESSONS
 - Eight refusals checked the document and none checked the conversation; when a gate exists to protect a human decision, check that the decision was PUT to them -> add learn add
+- [method · M28 · folded] A new verb is never one edit: it ripples into the CLI verb-set registry, the book command reference, both READMEs' verb counts, and five SKILL.md budget pins — one of which is literally R:BUDGET_BUMP, so fund the addition by compressing the prose beside it. (evidence: /tasks/freeze-interview.md)
+- [method · M27 · rejected] Eight freeze refusals checked the DOCUMENT and none checked the CONVERSATION. When a gate exists to protect a human decision, check that the decision was actually PUT to them — the assumption sweep made the AI write down what it decided, and nothing made it ask. (evidence: /tasks/freeze-interview.md)

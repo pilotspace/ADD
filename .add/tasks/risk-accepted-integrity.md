@@ -98,8 +98,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/risk-accepted-integrity.d/runs/2.md · kind: test-ids · 20/20 reported · exit 0 · 2026-09-01
+gate: PASS · authority human · by Tin Dang · receipt /tasks/risk-accepted-integrity.d/runs/2.md · 2026-09-01
 
 ## LESSONS
 - A guard written for one verdict is a guard for one verdict; when a refusal protects the RECORD rather than the EVIDENCE, condition it on the node, never on the verdict -> add learn add
+- [method · M26 · folded] A guard written for one verdict is a guard for one verdict. When a refusal protects the RECORD rather than the EVIDENCE, condition it on the node, never on the verdict — sixteen sites each written verdict == PASS let RISK-ACCEPTED walk a never-frozen scaffold to done in three calls. (evidence: /tasks/risk-accepted-integrity.md)

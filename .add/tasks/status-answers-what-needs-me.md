@@ -86,8 +86,8 @@ strategy: partition first (every rule reads it), then ordering, then the two hin
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/status-answers-what-needs-me.d/runs/2.md · kind: test-ids · 66/66 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by process:auto · receipt /tasks/status-answers-what-needs-me.d/runs/2.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/status-answers-what-needs-me.md (add learn <lens> "<lesson>" --evidence /tasks/status-answers-what-needs-me.md)

@@ -64,8 +64,8 @@ contract: two new test functions plus one private helper added to `add-method/te
 red-first: every check MUST fail first, or — for the two check shapes that are ratchets/regressions pinned to the CURRENT measured state and so expected green on first run (`test_skill_byte_budget_holds`; the three new introspective proofs `test_line_pin_survives_unreplaced_by_this_task`, `test_byte_pin_scoped_to_source_tree_only`, `test_skill_tree_prose_unedited_by_this_task`) — proven non-vacuous by a temporary perturbation of the subject (a wrong literal, a wrong hash, an injected disqualifying string), confirming the assertion fires, then restoring the true value. Evidence: byte-budget perturbation run live against the suite (see receipt 1); the three introspective proofs perturbed via an isolated interpreter run outside the file (never landed on disk) — see the task's Return for the transcript.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/budget-pin-measures-cost.d/runs/3.md · kind: test-ids · 16/16 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by plan:okf-graph-time · receipt /tasks/budget-pin-measures-cost.d/runs/3.md · 2026-09-03
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/budget-pin-measures-cost.md (add learn <lens> "<lesson>" --evidence /tasks/budget-pin-measures-cost.md)

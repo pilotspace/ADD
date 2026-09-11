@@ -55,8 +55,9 @@ contract: `doctor`'s `unadvised_sensitive` loop skips a node whose `status:` is 
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/doctor-nudges-what-you-can-act-on.d/runs/1.md · kind: test-ids · 5/5 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by Tin Dang · receipt /tasks/doctor-nudges-what-you-can-act-on.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - a report is read as a worklist whether or not it was written as one -> add learn method
+- none filed — no lesson cites /tasks/doctor-nudges-what-you-can-act-on.md (add learn <lens> "<lesson>" --evidence /tasks/doctor-nudges-what-you-can-act-on.md)

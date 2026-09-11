@@ -62,8 +62,8 @@ widened after freeze: the reachability check found a REAL uncollected suite on i
 red-first: 3 of 4 are red at freeze — `conftest.py` does not exist at the package root, so there is nothing to discover roots, nothing to print, and nothing to inspect for an off switch. The reachability check is red for a subtler reason worth stating: without the discovery helper it cannot enumerate roots at all, which is the same gap that let `tooling/` stay invisible. The fourth is green VACUOUSLY — nothing prints today, so a full run trivially prints no notice — and that is the honest reason, not a claim it is proving anything yet. It stays armed through the build as the one check that fails if the notice fires on a complete run, which is how M4 dies.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/partial-run-visible.d/runs/2.md · kind: test-ids · 714/721 reported · exit 0 · 2026-08-12
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/partial-run-visible.d/runs/2.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [quality · Q5 · folded] A green suite is only evidence about the tests that RAN. The command that runs a subset must not produce output shaped like the command that runs everything — an uncollected suite reports as a smaller number, and a smaller number reads as success. (evidence: /tasks/partial-run-visible.md)

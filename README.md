@@ -63,8 +63,9 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, so a fresh session resumes with the full picture instead of a drifting memory. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify on its own and only comes back when it matters.
-- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared tests passing, never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
-- 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 27-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
+- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared checks passing on a fresh receipt *and* a session that did not build it trying to break the green; at a plan-or-human floor the gate refuses a PASS nobody tried to refute. Never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
+- 🎯 **Evidence, not test count** — every binding rule is named by a check written to fail on the most plausible wrong implementation; acceptance checks through a port are the default for code, and property, contract and mutation checkers ride the same receipt. The freeze names any rule still resting on one kind of evidence.
+- 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 28-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode, even the fully-autonomous ones.
 - 🧠 **The method adapts to *your* codebase** — a persona proposes each task's approach, outcomes are recorded, and the lessons land on the spec they belong to.
 - 🧭 **The agent reasons before it drafts** — a second mind pressure-tests the plan before the freeze, and returns a recommendation with its confidence per dimension instead of a confident-sounding paragraph. Fluent ≠ true.
@@ -73,7 +74,7 @@ Every faculty is a file on disk and a command that shows it — never a promise:
 - 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves.
 - 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
 
-> _Direction before speed. Trust comes from passing tests — not from reading code and finding it plausible._
+> _Direction before speed. Trust comes from evidence that survived a refute — not from reading code and finding it plausible._
 
 <sub>**Fine print:** benchmark cells are single-rep (direction, not statistical proof). On this friendly single-app workload a strong model under spec-kit also passed the restart floors, and ran cheaper — the report's revised edition retracts our own earlier "collapse" claim after we found the meter defect behind it. ADD's case rests on the context-rot result and the structural guarantees — not on a rival's failure.</sub>
 
@@ -87,7 +88,7 @@ trade — you spend minutes on direction to buy trust that holds across mileston
 |---|---|---|
 | **First feature** | fastest — start typing | one Direction pass first, then builds |
 | **Across milestones** | quality decays; old promises silently break | frozen contracts + red suites re-run; trust holds |
-| **What you verify** | you re-read the diff and hope | pre-declared tests pass, or the gate refuses |
+| **What you verify** | you re-read the diff and hope | pre-declared checks pass and a fresh session failed to refute them, or the gate refuses |
 | **Resuming later** | re-explain the goal, re-read the repo | one command, read back off the `.add/` bundle, lossless |
 | **Cost** | near-zero ceremony up front | one bounded direction pass per milestone — minutes, not a doc tree |
 | **Best for** | throwaway scripts, one-shots, spikes | evolving products, multiple milestones, teams |
@@ -168,8 +169,8 @@ pick up exactly where you left off — no context rot.
 **One task · three beats · one file.** Every feature is a single task file at
 **`.add/tasks/<slug>.md`** that fills in section by section as the agent walks three
 beats — **Direction** (rules → assumptions → frozen contract → red checks, the *one*
-human approval), **Build** (red → green, scope-fenced), **Verify** (evidence-scored
-gate: `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`). The decisions are what you keep — the
+human approval), **Build** (red → green, scope-fenced), **Verify** (a fresh receipt, a
+refute-read by a session that did not build, then the gate: `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`). The decisions are what you keep — the
 output is disposable.
 
 ![Foundation Domain Documents](add-foundation.png)

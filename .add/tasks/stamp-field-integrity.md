@@ -76,8 +76,9 @@ scope: add-method/tooling/add.py, add-method/tests/engine
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/stamp-field-integrity.d/runs/2.md · kind: test-ids · 11/11 reported · exit 0 · 2026-09-01
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/stamp-field-integrity.d/runs/2.md · 2026-09-01
 
 ## LESSONS
 - A normaliser is only as good as the set of writers that call it: `_oneline` was correct and applied to one field of seven -> add learn add
+- [method · M29 · folded] A normaliser is only as good as the set of writers that call it. _oneline was correct and applied to one field of seven for a year; when a helper exists to make a value safe, enumerate its call sites FROM THE SOURCE in a check, because a hand list is how the seventh writer gets missed. (evidence: /tasks/stamp-field-integrity.md)

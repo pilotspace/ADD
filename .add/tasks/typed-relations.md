@@ -168,8 +168,8 @@ because no CLI surface changes.
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/typed-relations.d/runs/3.md · kind: test-ids · 1215/1222 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:okf-graph-time · receipt /tasks/typed-relations.d/runs/3.md · 2026-09-04
 
 ## LESSONS
 - a vocabulary term is earned by an instance the corpus SUPPORTS, not by an instance you authored: `supersedes` shipped a migration edge (M28 over M19) that a refute-read disputed and a measurement killed — the phantom-verb fixture M19 enumerates still exists, so M28 never replaced it. R:DEADVOCAB binds the term to a live instance; nothing bound the instance to the corpus, so the check passed while the term died -> add learn method
@@ -177,3 +177,4 @@ gate: <PASS | RISK-ACCEPTED | HARD-STOP>
 - a parity check over a CLEAN corpus compares `[]` with `[]`: the live-bundle oracle for R:DIVERGE stayed green with BOTH relation readers deleted. A parity claim needs values that each produce a finding, plus controls that must stay silent — otherwise it proves the two tools agree about nothing -> add learn quality
 - two parsers of one format diverge on what neither was written to handle: the engine strips a YAML ` #` comment and the M0 validator did not, so `M1 refines #M2` was two fields in one and three in the other, and a bare `- ` was `{}` here and `[]` there. Byte-identical VALUES is the claim; equal code paths is not -> add learn system
 - a stated REASON is a claim and rots like any other: FORMAT §3.3 justified the resolution ladder with "the two sets cannot intersect", which `DELTA_ID`'s own `[A-Za-z]` makes false. The behaviour was right and the reason was wrong, which is worse than silence for the second-engine implementer the assumption named as the reader -> add learn method
+- [quality · Q12 · folded] An adversarial sweep for a NEW feature is the cheapest audit of the OLD one: proving a relations: entry could not escape the bundle found that edge_out_of_bundle — one of three FATAL codes — was already not firing for depends_on:, because os.path.normpath cannot ascend above / and an escaping path normalised back inside. Sweep the existing family with the new family's adversarial inputs. (evidence: /tasks/typed-relations.md · doctor before: edge_unresolved(info), after: edge_out_of_bundle(error))

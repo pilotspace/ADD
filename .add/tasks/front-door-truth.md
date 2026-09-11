@@ -73,8 +73,11 @@ scope: README.md, add-method/README.md, add-method/tests/skill/
 red-first: 5 of 7 are red at freeze — the four false claims plus the alt text. `test_expectations_are_derived_not_pinned` and `test_extractors_fail_loud_on_empty` are GREEN at freeze and cannot honestly be red: their subject is the extractor authored in this same beat, not the READMEs, so they guard a future regression in my own instrument rather than a present defect. Recorded here so the record does not imply a red they never had.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/front-door-truth.d/runs/3.md · kind: test-ids · 9/9 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/front-door-truth.d/runs/3.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M13 · folded] reopen refuses anything not done, so a task caught mid-build repairs by re-freeze; reopen is for a task already CLOSED — and it takes --to plus --reason, which puts the miss on the permanent record instead of hiding it in a silent second gate (evidence: .add/tasks/front-door-truth.md)
+- [method · M12 · folded] a gate PASS proves the checks you DECLARED ran and bound — it cannot prove the rule was fully covered. M5 said 'every engine command a README shows' and its check executed only <engine>.py <verb> forms, so the same commit that fixed four false claims shipped a fifth (npx init --profile doc) straight through a green gate. When a rule quantifies over a set, enumerate the set in the check (evidence: .add/tasks/front-door-truth.md)
+- [method · M11 · folded] gate refuses with R:UNBRIEFED when no `brief` ran since the last (re)freeze — a refreeze invalidates the compiled prompt, so the repair order is refreeze -> brief -> run -> gate, not refreeze -> run -> gate (evidence: .add/tasks/front-door-truth.md)
+- [method · M10 · folded] a doc that shows a command must have that command EXECUTED by a check — the root README told readers to run `add.py status` three times, which exits 0 and prints nothing because add.py is the library the CLI dispatches into; the package README said so on its own install table while the root README contradicted it (evidence: .add/tasks/front-door-truth.md)

@@ -74,8 +74,9 @@ strategy: write the byte-identical check first — it is the one that would have
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/brief-is-not-read-only.d/runs/1.md · kind: test-ids · 9/9 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by plan:read-cost · receipt /tasks/brief-is-not-read-only.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- none filed — no lesson cites /tasks/brief-is-not-read-only.md (add learn <lens> "<lesson>" --evidence /tasks/brief-is-not-read-only.md)

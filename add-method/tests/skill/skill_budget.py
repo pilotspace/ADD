@@ -34,6 +34,6 @@ SURFACE_BUDGET = 1500
 # when a human deliberately edits the prose, in the same commit, with the reason on its line.
 # Owner: tests/skill/test_surface.py::test_skill_tree_prose_unedited_by_this_task
 PROSE_PINS = {
-    "SKILL.md": "952d73c513844724c5f817e139cf7bf7febbeefd1be4c478b7792967f2511f19",   # aimed @ persona-loads-on-every-path: the persona sentence stops calling the LOAD opt-in — the ROSTER is what is optional — funded in place (176/176 lines, 13258/13258 bytes). prior: b44842dd…
+    "SKILL.md": "edccc3300f5e48020fd5bdf0935c1a96020b90c1c9f67edc6f45e38c44f298b4",   # aimed @ t2-refute-default: the VERIFY step names the T2 spawn. prior: eacf1c6d… @ refute-tier-and-changed
     "intake.md": "ee78c0816e09eba20be82535b7e8729c42a715589743508c2dcd5f4155e95e41",   # aimed @ skill-reads-the-graph: the loop reads the graph before it plans. prior: db288507…
 }

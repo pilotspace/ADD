@@ -86,8 +86,10 @@ strategy: write the two-sided walk check FIRST against the live bundle's M4/M8/M
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/concepts-are-endpoints.d/runs/1.md · kind: test-ids · 84/86 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/concepts-are-endpoints.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [method · M36 · folded] a repaired half is not a repaired edge: walk-truth fixed which lesson DECLARED a relation and left the target end resolving to the file, so the concept graph was declarable and citable but traversable from neither direction — when an edge has two ends, the check must walk from both (evidence: /tasks/concepts-are-endpoints.d/runs/1.md)
+- [quality · Q20 · folded] a demo is a test the suite never wrote: the M4 gap survived two milestones and 1367 green checks, and surfaced the first time the verbs were run end-to-end against the live bundle for a human to read (evidence: /tasks/concepts-are-endpoints.d/runs/1.md)

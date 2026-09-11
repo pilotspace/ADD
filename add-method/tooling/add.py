@@ -2366,8 +2366,18 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                      f'binding: "{binding_digest(node_t2)}" }}')])
     if err:
         return None, err + "\nnext: add status"
-    return node, (f"{act} recorded at authority `{authority}`"
-                  f"\nnext: add brief {slug} — record the build entry, then build "
+    # A NOTICE, never a refusal (two-mode-notice): armed exactly where the refute rung arms, so
+    # the mechanical lane never pays for a rule aimed at payments. The stamp above is already
+    # written; this line only names what the router asks for and the author can still add.
+    notice = ""
+    if _rung_bound(graph, cid, entry.get("fm") or {}):
+        single = single_mode_musts(entry)
+        if single:
+            notice = (f"\nnotice: {', '.join(f'{m} ({w})' for m, w in single)} "
+                      f"{'carries' if len(single) == 1 else 'carry'} one evidence mode — a plan-floor "
+                      f"Must carries two (direction.md § router)")
+    return node, (f"{act} recorded at authority `{authority}`" + notice
+                  + f"\nnext: add brief {slug} — record the build entry, then build "
                   f"(`add run {slug} -- <cmd>`)")
 
 
@@ -2459,6 +2469,8 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
         appends = [("verified", f'{{ by: "{_oneline(by or "process:done")}", at: {_today()}, '
                                  f'act: done, override: "{_oneline(override)}" }}')]
     _transition(root, cid, sets={"status": "done"}, appends=appends)
+    render_evidence(root, cid)          # the closed record: `none recorded` is now a fact
+    harvest_lessons(root, cid)
     tail = " (override recorded)" if appends else ""
     return True, [], f"{cid} is done{tail}\nnext: add status"
 
@@ -3186,6 +3198,36 @@ def _brief_entered(stamps: list, receipt_cid: str = None) -> bool:
                for i, s in enumerate(stamps))
 
 
+def _refute_of(stamps: list, receipt_cid: str):
+    """The outcome of the LATEST `act: refute` stamp citing `receipt_cid`, or None when no stamp does.
+
+    A refute names the receipt it read (FORMAT §8.4), so "after the gated run" is decided by the
+    citation, not by a clock: a refute of an earlier green entered nothing for this one, and a
+    stamp with no `receipt:` cites nothing. Reads presence and outcome only — never `probes:`, the
+    note, or who signed (law 3: a notary that judged a probe would be a guard).
+    """
+    outcome = None
+    for s in stamps:
+        if isinstance(s, dict) and s.get("act") == "refute" \
+                and receipt_cid and str(s.get("receipt", "")) == receipt_cid:
+            outcome = str(s.get("outcome") or "")
+    return outcome
+
+
+def _latest_run_cid(stamps: list):
+    """The receipt cid of the newest `act: run` stamp, or None — read from the record, not the disk."""
+    return next((str(s.get("receipt") or "") for s in reversed(stamps)
+                 if isinstance(s, dict) and s.get("act") == "run"), None)
+
+
+def _rung_bound(graph: dict, cid: str, fm: dict) -> bool:
+    """Does the refute rung bind this node? standard|deep × computed floor plan|human × not explore."""
+    return fm.get("type") == "Task" \
+        and str(fm.get("depth") or "standard") != "quick" \
+        and str(fm.get("kind") or "") != "explore" \
+        and authority_for(graph, cid) in ("plan", "human")
+
+
 def _last_test_cmd(root) -> str:
     """The last command `run` was given in this bundle, or "" — remembered, never guessed."""
     index = Path(root) / "index.md"
@@ -3216,6 +3258,14 @@ def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     # that produced the word, not by a per-row hint.
     if beat in ("scaffold",) + SCAFFOLD_KINDS:
         return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
+    # The refute rung's affordance: at the verify beat a rung-bound task points at `add refute`
+    # until a refute cites its latest run — the gate would refuse R:UNREFUTED otherwise, and the
+    # first contact with a rung should be a hint, not a refusal.
+    if beat == "verify" and _rung_bound(graph, cid, fm):
+        stamps = fm.get("verified") or []
+        last_run = _latest_run_cid(stamps)
+        if last_run and _refute_of(stamps, last_run) is None:
+            return f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>"'
     hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
     # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
     # is a sentence shaped like a command; a cold agent following it types angle brackets into a
@@ -3285,6 +3335,8 @@ def todo(root, milestone: str = None) -> tuple:
                     bits.append(f"{left} unswept pair{'s' if left > 1 else ''}")
                 if (nocov := len(uncovered_obligations(node_t2))):
                     bits.append(f"{nocov} uncovered")
+                if _rung_bound(graph, cid, graph[cid]["fm"] or {}) and (one := len(single_mode_musts(graph[cid]))):
+                    bits.append(f"{one} single-mode Must{'s' if one > 1 else ''}")
                 if bits:
                     hint = f"  ({' · '.join(bits)})"
         lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
@@ -3799,8 +3851,15 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
                          f"\n---\n{n_idx['body']}")
         except (OSError, ValueError, KeyError, TypeError):
             pass                    # orientation losing a convenience must never fail a receipt
+    # The next verb is DERIVED, not hard-coded: at a plan-or-human floor a green owes a refute
+    # before the gate (R:UNREFUTED), and the first contact with a rung should be this hint.
+    try:
+        render_evidence(root, cid)     # the view; the receipt above is the record
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    hint = _next_verb(scan(root), cid, root=root) if exit_code == 0 else f"add gate {slug}"
     return {"path": runs / f"{n}.md", "receipt": receipt, "computation": " ".join(str(c) for c in command),
-            "note": f"receipt {n} recorded (exit {exit_code})\nnext: add gate {slug}"}
+            "note": f"receipt {n} recorded (exit {exit_code})\nnext: {hint}"}
 
 
 # The living spec ↔ its 5-DD competency tag (deltas.md). A delta's tag names the competency the
@@ -4029,7 +4088,10 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     body = "".join(lines)
     raw = set_key(raw, "open_deltas", str(open_delta_count(body)))
     write(path, f"---\n{raw}\n---\n{body}")
-    return True, f"recorded on specs/{lens} as {did}\nnext: add status"
+    hint = ("" if re.search(r"tasks/[^/\s]+\.(md|d/)", str(evidence)) else
+            "\n  (a lesson lands on a task's ## LESSONS at close when its evidence cites the "
+            "task: --evidence /tasks/<slug>.md)")
+    return True, f"recorded on specs/{lens} as {did}{hint}\nnext: add status"
 
 
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -4820,8 +4882,9 @@ def placeholders_in(node: dict, *, card: bool = True) -> list:
     # `goal: <one line>` intact: approving a contract whose one-line statement of intent is
     # still the scaffold's. The goal is what a human is being asked to approve.
     #
-    # Scoped to `goal:` alone, and deliberately: EVIDENCE and LESSONS are filled by the run
-    # and the close, neither of which exists at freeze time, so demanding them here would
+    # Scoped to `goal:` alone, and deliberately: EVIDENCE and LESSONS are VIEWS written by
+    # `render_evidence` (run · refute · gate) and `harvest_lessons` (the close), neither of
+    # which exists at freeze time, so demanding them here would
     # ask for a receipt before the build that produces it (M3, A2). Depth does not exempt
     # this — a quick task states its goal too (E4).
     #
@@ -4892,7 +4955,7 @@ INTERVIEW_VERDICTS = ("confirm", "correct", "defer")
 
 
 def _open_decisions(node: dict) -> list:
-    """The decisions a human never made but will be held to: non-`n/a` assumptions, then Rejects.
+    """The decisions a human never made but will be held to: non-`n/a` assumptions, filled edges, then Rejects.
 
     An `n/a` retirement already states its own reason, and a Must came FROM the human — re-asking
     either is noise, and an interview people learn to click through buys nothing.
@@ -4924,6 +4987,14 @@ def _open_decisions(node: dict) -> list:
                     "cost": re.sub(r"^if wrong,?\s*", "",
                                    (cost.group(1) if cost else "").strip(), flags=re.I),
                     "text": line.strip()})
+    # The readable example: a FILLED `E<n>` is a claim the human never made in those words — the
+    # AI wrote the Given/When/Then — so it is put to them like an assumption. The scaffold line is
+    # not (same placeholder rule `edges_of` uses); backticked spans are code, not placeholders.
+    for line in _section_of(body, "EDGES").splitlines():
+        m = re.match(r"\s*-\s*(E\d+)\s+(.*)", line)
+        if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
+            out.append({"id": m.group(1), "of": "edge", "dim": "edge",
+                        "reading": m.group(2).strip(), "cost": "", "text": line.strip()})
     for line in _section_of(body, "RULES").splitlines():
         m = re.match(r"\s*-\s*(R:[A-Z0-9_]+)\s+(.*)", line)
         if m:
@@ -5009,7 +5080,7 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
                  f"answer each `{' | '.join(INTERVIEW_VERDICTS)}`:"]
         for d in decisions:
             lines.append(f"\n{d['id']} [{d['dim']}]")
-            lines.append(f"  I took: {d['reading']}")
+            lines.append(f"  {'Example' if d['of'] == 'edge' else 'I took'}: {d['reading']}")
             if d["cost"]:
                 lines.append(f"  If wrong: {d['cost']}")
         lines.append(f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"<name>\"")
@@ -5153,6 +5224,66 @@ def covers(node: dict) -> dict:
         for rule in (r.strip() for r in re.split(r"[,\s]+", match.group(2))):
             if rule:
                 out.setdefault(rule, []).append(check)
+    return out
+
+
+CHECK_MODES = ("acceptance", "property", "contract", "static", "unit", "e2e", "manual")
+# The closed set direction.md's router names. Closed on purpose: an open set would let `unit-ish`
+# count as a second kind of evidence. The engine never PARSES a mode for the gate — it reads one
+# only to NAME the plan-floor Musts still on a single mode at the freeze (two-mode-notice).
+
+
+def _check_lines(node: dict) -> list:
+    """`[(check_id, [rule, …], mode | None), …]` — one entry per CHECKS line `covers()` parses, in
+    order. The mode is the first token after the second `·`, stripped of surrounding backticks or
+    parentheses (direction.md renders the list in backticks), lowercased, when it is in
+    `CHECK_MODES`. Keyed by LINE, not by id: the T2 refute of two-mode-notice found that two lines
+    sharing one id let the last line's mode overwrite the first's, so a Must met by `contract`
+    was named as single-mode and a violator's mode was misreported — the count the rule's fate
+    rests on, corrupted both ways."""
+    body = read(node["path"], "T2")["body"]
+    out = []
+    for line in _section_of(body, "CHECKS").splitlines():
+        match = COVERS_IN_CHECK.match(line.strip())
+        if not match:
+            continue
+        parts = [s.strip() for s in line.strip().split("·")]
+        word = (parts[2].split() or [""])[0].strip("`()").lower() if len(parts) > 2 else ""
+        rules = [r for r in re.split(r"[,\s]+", match.group(2)) if r]
+        out.append((match.group(1), rules, word if word in CHECK_MODES else None))
+    return out
+
+
+def check_modes(node: dict) -> dict:
+    """`{check_id: mode | None}` — the mode word of each CHECKS line by its id; when one id is
+    written on several lines the LAST line's word wins here, which is why `single_mode_musts`
+    reads `_check_lines` and never this map."""
+    return {cid: mode for cid, _, mode in _check_lines(node)}
+
+
+def single_mode_musts(node: dict) -> list:
+    """`[(M<n>, mode), …]` — the Musts whose covering checks carry exactly ONE known mode.
+
+    dogfood-and-measure F1: the session that wrote "at a plan floor a Must carries two checks of
+    different mode" froze 0 of 10 such Musts one task later — prose nobody follows binds nothing.
+    A Must with no known mode is not listed (the author claimed none, and listing it would push
+    for a WORD, not a second kind of evidence); two or more modes is the rule met. Musts only.
+    """
+    by_rule = {}
+    for _, rules, mode in _check_lines(node):
+        for rule in rules:
+            by_rule.setdefault(rule, set())
+            if mode:
+                by_rule[rule].add(mode)
+    out = []
+    # `dict.fromkeys`: authored order, each id once — the third T2 refute declared `M1` on two
+    # RULES lines and the notice named it twice while `uncovered_obligations` (set-based) did not.
+    for rule in dict.fromkeys(rules_of(node)):
+        if not re.fullmatch(r"M\d+", rule):
+            continue
+        known = sorted(by_rule.get(rule, set()))
+        if len(known) == 1:
+            out.append((rule, known[0]))
     return out
 
 
@@ -5609,6 +5740,261 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
                     f"\nnext: add run {slug} -- <cmd>")
 
 
+REFUTE_TIERS = ("T1", "T2", "T3")
+# The tiers a SESSION can sign for. T0 is nobody — no stamp exists to carry it; T4 is a protected
+# holdout the builder cannot read, which a prompt cannot provide and so a stamp must not claim
+# (verify.md's ladder: "a CI recipe, not shipped"). The engine records the tier as a CLAIM, exactly
+# as it records `by:` — dogfood-and-measure F2 found both refutes on the shipping milestone were the
+# builder's own read with the tier written in free text inside `--by`, uncountable. A flag makes the
+# claim countable; only `by:` beside it says whether it is true.
+
+
+def refute(root, cid: str, by: str, held: bool, finding: str = None, probes: int = 0,
+           note: str = None, tier: str = None, changed: str = None) -> tuple:
+    """Record a refute-read of a green: who tried to break it, against which receipt, what they
+    found. NO-EXEC — a lens on a green exactly as `advise` is a lens on a beat. `(stamp, note)`.
+
+    The stamp names the receipt it read (`receipt:`), so its place in the chronology is decidable
+    from `verified[]` order alone — the argument `brief_stamp` makes for the build entry. It binds
+    PRESENCE: a named party tried, when, against which run, with how many probes. It cannot bind
+    honesty or the quality of the probes (FORMAT §10); the tier ladder and the persona do that.
+    It writes no verdict, moves no `status:`, lowers no floor (R:NOVERDICT).
+
+    `tier:` and `changed:` are recorded when given and absent otherwise — never defaulted, since a
+    default would invent a claim nobody made. `changed:` names what the probes moved in the build or
+    the spec while the outcome still HELD (no frozen rule forbade it): dogfood-and-measure F4 found
+    `--found` alone undercounts what probes do, and the bench trigger reads this key. The gate reads
+    neither (`_refute_of`, law 3: a notary that weighed a tier would be a guard).
+    """
+    root = Path(root)
+    # Membership on the RAW value — the T2 refute of this task found the library stripping
+    # `" T2 "` to a stamp argparse refuses; the two doors now agree. `""` stays absent (A4).
+    tier = tier if tier else None
+    if tier is not None and tier not in REFUTE_TIERS:
+        return None, (f'`--tier {tier}` names no session that can sign — a tier is one of '
+                      f'{" | ".join(REFUTE_TIERS)} (T0 is nobody, T4 is a CI recipe) -> "R:BADTIER"'
+                      f"\nnext: add refute {cid.rsplit('/', 1)[-1][:-3]} --tier T2 …")
+    graph = scan(root)
+    node = graph.get(cid)
+    if node is None:
+        return None, f"no such node: {cid}\nnext: add status"
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    fm = node.get("fm") or {}
+    if fm.get("type") != "Task":
+        return None, (f'R:NOTATASK only a Task carries a run receipt to refute — `{cid}` is a '
+                      f'{fm.get("type")} -> "R:NOTATASK"\nnext: add status')
+    if not _is_frozen(node):
+        return None, (f"`{slug}` was never frozen — there is no approved intent to read the green "
+                      f'against -> "R:UNSEALED"\nnext: add freeze {slug}, build, add run {slug}, then refute')
+    receipt, receipt_cid = latest_receipt(root, cid)
+    if receipt is None:
+        return None, (f"`{slug}` has no run receipt — a refute reads a green, and nothing has run "
+                      f'-> "R:NORECEIPT"\nnext: add run {slug} -- <cmd>, then add refute {slug}')
+    finding = (finding or "").strip()
+    if held and finding:
+        return None, ('one outcome: `--held` says no input broke it, `--found` names the one that did '
+                      f'-> "R:NOFINDING"\nnext: add refute {slug} --held, or --found "<input>"')
+    if not held and not finding:
+        return None, ('a refutation names the input/state/interleaving that makes the green wrong — '
+                      f'a bare "it fails" is a category, not evidence -> "R:NOFINDING"'
+                      f'\nnext: add refute {slug} --found "<the input the bound checks never exercise>"')
+    text = finding if not held else (note or "").strip()
+    text = _oneline(text).replace('"', "'")
+    moved = _oneline((changed or "").strip()).replace('"', "'")
+    stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: refute, authority: process, '
+             f'outcome: {"held" if held else "refuted"}, probes: {int(probes or 0)}, '
+             f'receipt: {receipt_cid}' + (f", tier: {tier}" if tier else "")
+             + (f', note: "{text}"' if text else "")
+             + (f', changed: "{moved}"' if moved else "") + " }")
+    _, err = _transition(root, cid, appends=[("verified", stamp)])
+    if err:
+        return None, err + "\nnext: add status"
+    render_evidence(root, cid)
+    if held:
+        return stamp, (f"refute recorded against {receipt_cid}: held ({int(probes or 0)} probe(s)) — "
+                       f"NO-EXEC, no verdict\nnext: add gate {slug} PASS --by \"<name>\"")
+    return stamp, (f"refute recorded against {receipt_cid}: REFUTED — {text}\n"
+                   f"next: fix the build (or refreeze with the edge this exposes), add run {slug} -- <cmd>, "
+                   f"then add refute {slug} again")
+
+
+
+# ================================ EVIDENCE and LESSONS — views of the record, never a store
+#
+# FORMAT §5 said "EVIDENCE receipt / gate · LESSONS harvested at done", the placeholder guard
+# skipped both sections because "the run and the close fill them", and nothing did: on this
+# bundle 88 of 113 done tasks carried `receipt: <runs/<n>.md>` beside a `verified[]` that named
+# the real receipt, and 64 carried `- <lesson> -> add learn <lens>` beside specs full of deltas
+# citing them. A promise two readers relied on and no writer kept. The sections are VIEWS — the
+# record is `verified[]`, the run files and the specs' `## Deltas`; the verb that makes a fact
+# writes its keyed line, and `doctor --sync` recomputes both for the backlog. Two rules bound the
+# writer: a line the engine did not produce is never moved (R:TWOHOMES — a human note beside the
+# view survives byte-for-byte), and a line the record does not support is never written
+# (R:MANUFACTURED — no refute stamp, no `refute:` line; `none recorded` is a fact about a closed
+# node, not an invention).
+
+EVIDENCE_KEYS = ("receipt", "refute", "gate")
+EVIDENCE_SCAFFOLD = ("<runs/<n>.md>", "<PASS | RISK-ACCEPTED | HARD-STOP>")
+LESSON_SCAFFOLD = "<lesson> -> add learn <lens>"
+HARVESTED_LINE = re.compile(r"^- (\[[a-z]+ · [A-Za-z0-9?-]+ · (?:open|folded|rejected)\]|none filed\b)")
+
+
+def _section_span(lines: list, heading: str):
+    """`(start, end)` line indexes of the body of `## <heading>` — heading-exclusive, stopping
+    at the next `## ` — or `None` when the section is absent. Mirrors `_section_of`."""
+    start = None
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            if start is not None:
+                return start, i
+            if line.strip().lower() == f"## {heading}".lower():
+                start = i + 1
+    return (start, len(lines)) if start is not None else None
+
+
+def _set_keyed_line(body: str, section: str, key: str, value: str) -> str:
+    """Replace the ONE `<key>:` line inside `## <section>` with `<key>: <value>`, or insert it in
+    `EVIDENCE_KEYS` order. Every other byte of the body is returned as it was (R:TWOHOMES)."""
+    lines = body.splitlines(keepends=True)
+    span = _section_span(lines, section)
+    if span is None:
+        return body
+    start, end = span
+    new = f"{key}: {value}\n"
+    for i in range(start, end):
+        if lines[i].startswith(f"{key}:"):
+            lines[i] = new
+            return "".join(lines)
+    order = list(EVIDENCE_KEYS)
+    after = [k for k in order[:order.index(key)]] if key in order else []
+    at = start
+    for i in range(start, end):
+        if any(lines[i].startswith(f"{k}:") for k in after):
+            at = i + 1
+    lines.insert(at, new)
+    return "".join(lines)
+
+
+def _latest_stamp(node: dict, act: str):
+    stamps = [s for s in ((node.get("fm") or {}).get("verified") or []) if isinstance(s, dict)]
+    return next((s for s in reversed(stamps) if s.get("act") == act), None)
+
+
+def render_evidence(root, cid: str, graph: dict = None) -> bool:
+    """Write the `## EVIDENCE` view from the record. `True` when a byte changed.
+
+    `receipt:` is the newest run, `refute:` the latest refute stamp, `gate:` the latest gate stamp
+    — each written only when the record holds it. On a `done` node a key the record never
+    produced reads `none recorded`: the record is closed, and its silence is a fact, not a guess.
+    """
+    root = Path(root)
+    graph = scan(root) if graph is None else graph
+    node = graph.get(cid)
+    if node is None or (node.get("fm") or {}).get("type") != "Task":
+        return False
+    path = root / cid.lstrip("/")
+    n = read(path, "T2")
+    body = n["body"]
+    if _section_span(body.splitlines(keepends=True), "EVIDENCE") is None:
+        return False
+    closed = str((node.get("fm") or {}).get("status")) == "done"
+    receipt, rcid = latest_receipt(root, cid)
+    if receipt is not None:
+        body = _set_keyed_line(body, "EVIDENCE", "receipt",
+                               f"{rcid} · kind: {receipt.get('kind')} · {receipt.get('ids')} · "
+                               f"exit {receipt.get('exit')} · {receipt.get('at')}")
+    elif closed:
+        body = _set_keyed_line(body, "EVIDENCE", "receipt", "none recorded")
+    ref = _latest_stamp(node, "refute")
+    if ref is not None:
+        body = _set_keyed_line(body, "EVIDENCE", "refute",
+                               f"{ref.get('outcome')} · {ref.get('probes', 0)} probe(s)"
+                               + (f" · tier {ref['tier']}" if ref.get("tier") else "")
+                               + f" · by {ref.get('by')} · against {ref.get('receipt')} · {ref.get('at')}"
+                               + (f" · {ref['note']}" if ref.get("note") else "")
+                               + (f" · changed: {ref['changed']}" if ref.get("changed") else ""))
+    gate_stamp = _latest_stamp(node, "gate")
+    if gate_stamp is not None:
+        body = _set_keyed_line(body, "EVIDENCE", "gate",
+                               f"{gate_stamp.get('outcome')} · authority {gate_stamp.get('authority')} · "
+                               f"by {gate_stamp.get('by')}"
+                               + (f" · receipt {gate_stamp['receipt']}" if gate_stamp.get("receipt") else "")
+                               + f" · {gate_stamp.get('at')}"
+                               + (f" · {gate_stamp['reason']}" if gate_stamp.get("reason") else ""))
+    elif closed:
+        body = _set_keyed_line(body, "EVIDENCE", "gate", "none recorded")
+    if body == n["body"]:
+        return False
+    write(path, f"---\n{n['raw']}\n---\n{body}")
+    return True
+
+
+def _cites_task(evidence: str, slug: str) -> bool:
+    """The citation rule: a lesson lands on a task when its evidence names the task's node
+    (`/tasks/<slug>.md`) or its sidecar (`/tasks/<slug>.d/`). A test file, a source path or a
+    receipt of another task names no task."""
+    return re.search(rf"(^|[^A-Za-z0-9_-])tasks/{re.escape(slug)}(\.md|\.d/|#|$|[\s):,])",
+                     evidence or "") is not None
+
+
+def harvest_lessons(root, cid: str) -> bool:
+    """Write the `## LESSONS` view: every delta, at any status, whose evidence cites this task.
+    Replaces the scaffold line and any previously harvested line; an authored bullet stays.
+    `True` when a byte changed. With no citing delta the section says so — `none filed` — and
+    never borrows a lesson that cites something else (R:MANUFACTURED)."""
+    root = Path(root)
+    path = root / cid.lstrip("/")
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    n = read(path, "T2")
+    lines = n["body"].splitlines(keepends=True)
+    span = _section_span(lines, "LESSONS")
+    if span is None:
+        return False
+    harvested = []
+    for status in DELTA_STATUSES:
+        items, _ = deltas(root, status)
+        for d in items:
+            m = DELTA_EVIDENCE.search(d[2])
+            if m and _cites_task(m.group(0), slug):
+                harvested.append(f"- [{d[0]} · {d.id or '-'} · {status}] {d[2]}\n")
+    if not harvested:
+        harvested = [f"- none filed — no lesson cites {cid} "
+                     f"(add learn <lens> \"<lesson>\" --evidence {cid})\n"]
+    start, end = span
+    kept = [l for l in lines[start:end]
+            if not (LESSON_SCAFFOLD in l or HARVESTED_LINE.match(l))]
+    # trailing blank lines belong to the section's tail, not to its content
+    tail = []
+    while kept and not kept[-1].strip():
+        tail.insert(0, kept.pop())
+    new = lines[:start] + kept + harvested + tail + lines[end:]
+    body = "".join(new)
+    if body == n["body"]:
+        return False
+    write(path, f"---\n{n['raw']}\n---\n{body}")
+    return True
+
+
+def evidence_scaffold(root, graph: dict = None, body_of=None) -> list:
+    """Every `done` Task still carrying an EVIDENCE or LESSONS scaffold line. `[(cid, section)]`.
+    `body_of` lets `doctor` share its one-read-per-body cache (R:SECONDSCAN)."""
+    root = Path(root)
+    graph = scan(root) if graph is None else graph
+    body_of = body_of or (lambda path: read(path, "T2")["body"])
+    out = []
+    for cid, node in sorted(graph.items()):
+        fm = node.get("fm") or {}
+        if fm.get("type") != "Task" or str(fm.get("status")) != "done":
+            continue
+        body = body_of(root / cid.lstrip("/"))
+        ev = _section_of(body, "EVIDENCE")
+        if any(s in ev for s in EVIDENCE_SCAFFOLD):
+            out.append((cid, "EVIDENCE"))
+        if LESSON_SCAFFOLD in _section_of(body, "LESSONS"):
+            out.append((cid, "LESSONS"))
+    return out
+
+
 # ============================================ gate — the verdict, and its refusals (e13)
 #
 # This verb should have existed since e4. Every gate in this project's history was recorded by
@@ -5682,6 +6068,9 @@ EVIDENCE_REFUSALS = (
     # prompt, which is a fact about the run, and the seal, the drift check and the placeholder guard
     # all still bind every verdict, so the RECORD cannot be forged either way.
     "unbriefed",
+    # the refute rung: same class, same argument — signing for an unrefuted green is what
+    # RISK-ACCEPTED is for, and HARD-STOP must never get harder to write down.
+    "unrefuted",
 )
 
 
@@ -5821,6 +6210,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
         _, t_err = _transition(root, cid, appends=[("verified", stamp)])
         if t_err:
             return None, t_err + "\nnext: add status"
+        render_evidence(root, cid)
         if closes:
             done(root, cid)
             render_card(root, cid)
@@ -5975,6 +6365,24 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           f"add brief {slug} to record the entry, then re-run "
                           f"(add run {slug} -- <cmd>) and add gate {slug} PASS")
 
+    # The refute rung (evidence-over-tests) — a green nobody tried to break is REPORTED, not
+    # earned. At a plan-or-higher floor the gate demands a refute stamp citing THIS receipt
+    # (R:UNREFUTED) whose outcome is not `refuted` (R:REFUTED). Evidence-class, like `unbriefed`:
+    # RISK-ACCEPTED is precisely for signing an unrefuted green knowingly. Quick depth, the
+    # process floor and the explore lane are exempt — the rung is aimed at payments, not renames.
+    if sealed and _binds("unrefuted", verdict) and _rung_bound(graph, cid, sfm):
+        outcome = _refute_of(sfm.get("verified") or [], receipt_cid)
+        if outcome is None:
+            return refuse("no refute cites this receipt — the green was never read against its "
+                          'frozen intent, so it is reported, not earned -> "R:UNREFUTED"',
+                          f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>" '
+                          f"(a fresh session; probes derived from RULES/EDGES only), then add gate {slug} PASS")
+        if outcome == "refuted":
+            return refuse("the latest refute of this receipt found an input that breaks it "
+                          '-> "R:REFUTED"',
+                          f"fix the build (or refreeze with the edge it exposed), add run {slug} "
+                          f"-- <cmd>, then add refute {slug} again")
+
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}
     reported.update({i: "fail" for i in (receipt.get("failed") or [])})
@@ -6003,6 +6411,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     _, t_err = _transition(root, cid, appends=[("verified", stamp)])
     if t_err:
         return None, t_err + "\nnext: add status"
+    render_evidence(root, cid)
 
     if closes:
         done(root, cid)
@@ -6486,6 +6895,10 @@ def doctor(root, graph: dict = None, paths=None) -> list:
                     f"outside it routes nothing, silently. Allowed: {' · '.join(allowed)}")
     for message in sorted(routing):
         find("info", "persona_routing_key", message)
+    for cid, section in evidence_scaffold(root, graph=graph, body_of=body_of):
+        find("info", "evidence_scaffold",
+             f"{cid.lstrip('/')}: done, but `## {section}` still carries the scaffold — the view "
+             f"is written by the verbs since 3.7; `add doctor --sync` backfills it from the record", cid)
     for receipt in orphans(root, graph=graph):
         find("error", "orphan_receipt", receipt, receipt)
     if (tdrift := tooling_drift(root, graph)):
@@ -6582,6 +6995,17 @@ def doctor_sync(root) -> tuple:
             continue
         write(path, f"---\n{set_key(n['raw'], 'open_deltas', str(actual))}\n---\n{n['body']}")
         changed.append(f"specs/{path.stem} `open_deltas` -> {actual}")
+    # The EVIDENCE and LESSONS views, recomputed from the record (R:MANUFACTURED holds inside
+    # the renderers: nothing the stamps and specs do not say is written). Every Task with a
+    # record gets its EVIDENCE; the LESSONS harvest is a close-time view, so `done` only.
+    for cid, node in sorted(graph.items()):
+        fm = node.get("fm") or {}
+        if fm.get("type") != "Task":
+            continue
+        if render_evidence(root, cid, graph=graph):
+            changed.append(f"{cid.lstrip('/')} EVIDENCE")
+        if str(fm.get("status")) == "done" and harvest_lessons(root, cid):
+            changed.append(f"{cid.lstrip('/')} LESSONS")
     if (index := root / "index.md").is_file():
         rebuilt = _render_index(root, graph)
         if rebuilt and rebuilt != index.read_text(encoding="utf-8"):

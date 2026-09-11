@@ -48,7 +48,7 @@ scope: blog/introducing-add-30.md · add-method/tests/book/test_launch_blog.py
 - test_post_names_no_unwired_verb · covers: M3 · every `add <verb>` in the post is in cli.build_parser()
 red-first: every check MUST fail first.
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by human:tindang · receipt /tasks/launch-blog.d/runs/1.md · 2026-08-11
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/launch-blog.md (add learn <lens> "<lesson>" --evidence /tasks/launch-blog.md)

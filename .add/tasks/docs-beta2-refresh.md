@@ -65,7 +65,7 @@ scope: the six docs pages above plus tests/book/test_beta2_coverage.py
 - test_scoped_pages_stay_buildable · covers: M4 · nav membership + resolving links — the portable proxy for `mkdocs build --strict` (also run directly: exit 0)
 red-first: every check MUST fail first.
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by human:tindang · receipt /tasks/docs-beta2-refresh.d/runs/2.md · 2026-08-11
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/docs-beta2-refresh.md (add learn <lens> "<lesson>" --evidence /tasks/docs-beta2-refresh.md)

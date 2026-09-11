@@ -58,8 +58,8 @@ scope: add-method/skill/add, add-method/src/add_method/_bundled/skill/add, .clau
 red-first: TWO are driven red — M1 fails on `artifact-hash`/`human-observed`, M2 fails on the undocumented `sources`. FOUR are guards, declared: R:PINSTRINGS and E1 are properties of the extractor and went green as soon as it was authored (they are Direction artefacts, not build outcomes), and the two parity tests catch a missed tree. NOTE the extractor was itself wrong on its first run — an unanchored ternary pattern swept up freshness values (`content`/`mtime`) and manufactured five phantom failures; anchoring every pattern on `kind` fixed it. A derived guard is only as honest as its anchor.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/ladder-honesty.d/runs/1.md · kind: test-ids · 12/12 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/ladder-honesty.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/ladder-honesty.md (add learn <lens> "<lesson>" --evidence /tasks/ladder-honesty.md)

@@ -49,8 +49,8 @@ scope: add-method/skill/add/persona-author/references/contract.md · add-method/
 - test_pattern_vocabulary_survives · covers: A2 · qualification gate stays in patterns.md and SKILL.md — the scrub is scoped to engine truth
 red-first: every check MUST fail first.
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by human:tindang · receipt /tasks/persona-author-30.d/runs/2.md · 2026-08-11
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/persona-author-30.md (add learn <lens> "<lesson>" --evidence /tasks/persona-author-30.md)

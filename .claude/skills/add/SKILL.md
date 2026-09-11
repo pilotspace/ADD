@@ -28,10 +28,10 @@ installer drops in, which stamps `tooling_engine:`; `status --check` warns if it
 **First run in a fresh project** (no `.add/tooling/` yet): materialize it once with the package
 installer — `pilotspace-add init "<name>"` (pip), `add init "<name>"` / `npx @pilotspace/add init
 "<name>"` (npm), or `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init "<name>" --no-skill` as the Claude
-Code plugin — then drive from `.add/tooling/cli.py`. State lives in the `.add/` bundle — files are
-the database, `graph.json` a rebuildable cache. The engine records; it never runs the method or
-spawns an agent. The full loop surface — `fold · reopen · drop · deltas · search · show · check ·
-milestone-archive` — is wired.
+Code plugin — then drive `.add/tooling/cli.py`. State lives in `.add/` — files are the
+database, `graph.json` a rebuildable cache. The engine records; it never runs the method or
+spawns an agent. The full loop surface (`fold · reopen · drop · deltas · search · show · check ·
+milestone-archive`) is wired.
 
 ## Always start here (orient — do not skip)
 
@@ -84,8 +84,8 @@ One task = one atomic node. Three beats, one human decision:
      `found: <what>` + its evidence on the line.
    - `## PLAN` — contract shape (authored into `gives:`/`needs:` frontmatter) · strategy ·
      `--kind explore`'s required `budget:`. `scope:` is FRONTMATTER (`--scope a,b`), never here.
-   - `## CHECKS` — one per Must and per Reject, each with a `covers:` key binding EVERY referent
-     you name: Musts, Rejects, probed assumptions, edges. Run them **red for the right reason**.
+   - `## CHECKS` — at least one check per referent you name (Musts, Rejects, probed assumptions,
+     edges), `covers:`-bound, built to fail on the plausible wrong implementation. Run them **red**.
    - `freeze` REFUSES a template slot, an unauthored `gives:`, an unswept `(dim, surface)` pair, a
      FILLED edge or PROBED assumption no `covers:` names (**R:UNCOVERED** — bind it, never delete it),
      or — at a human floor, and on any Milestone stamped `--authority human` — a decision no human
@@ -100,10 +100,10 @@ One task = one atomic node. Three beats, one human decision:
 3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
    · architecture — **security HARD-STOP**), then `add run <slug> -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"`
    for a fresh, bound receipt — `run` reads the report path your command names. Wrap the **narrowest
-   command that reports every bound check**; the full suite rides CI (run it anyway before any receipt
-   touching the engine). **No runner for your domain? Write one** — `run` parses JUnit XML and does not
-   care what produced it (`domains.md`). Then **`add gate <slug> PASS --by "<name>"`** — a **PASS
-   auto-closes** the task. `add done` is only for closing after a signed `RISK-ACCEPTED`.
+   command that reports every bound check**; the full suite rides CI (run it before any engine receipt).
+   **No runner? Write one** — `run` parses any JUnit XML (`domains.md`). At floor ≥ plan SPAWN
+   `add-advisor` in refute mode (T2), record its line, then **`add gate <slug> PASS --by "<name>"`** —
+   a **PASS auto-closes** the task. `add done` is only for closing after a signed `RISK-ACCEPTED`.
 
 Emit **lessons** as you learn them, tagged by the spec they sharpen (`ddd · sdd · udd · tdd · add`);
 the close DRAINS the ones it filed (`loop.md`, `deltas.md`). Present every human decision — intake ·
@@ -136,23 +136,24 @@ gates, security stays HARD-STOP. Read-only research fans out; one write serializ
 ```bash
 add status                                   # resume · --all full · --check conformance
 add init --profile code "<name>"             # create a .add/ bundle — code | doc ONLY (see domains.md)
-add upgrade                                  # 2.x bundle? archive it whole, init 3.0, MIGRATION.md guides the rest
+add upgrade                                  # 2.x bundle? archive it whole, init 3.0 — MIGRATION.md guides
 add new Task <slug> --title "..." --depth quick|standard|deep [--sensitivity security|data|architecture] [--kind explore] [--milestone m] [--scope a,b]
 add brief <slug>                             # the composed XML prompt for the active beat
 add todo [--milestone m]                     # the open worklist by beat, each with its next verb
-add locate <path>                            # which node's scope owns this file
+add locate <path>                            # whose scope owns a path
 add show <ref> [--expand N]                  # one node WHOLE + its relations, N levels (max 5)
 add search ["<term>"] [--type/--status/--milestone V] [--as-of <d>]  # by text, or by field
 add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
-add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json, re-vendors a stale engine
+add refute <slug> --by "<name>" --held|--found "<input>" [--probes N] [--tier T2] [--changed "<what>"]   # the refute-read, recorded
+add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json + re-vendors the engine
 add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
 add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
-add replan <slug> --note "<what changed>"    # record a steering turn on a frozen task — seal intact
-add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · an explicit report path before the -- wins
+add replan <slug> --note "<what changed>"    # a steering turn on a frozen task — seal intact
+add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · a report path before the -- wins
 add gate <slug> PASS --by "<name>"           # verdict — PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
 add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a spec
 add fold <lens> "<match>" [--reject | --bind "<decision>"]    # the human's verdict on one lesson
-add drop <slug> --reason "<why>"             # withdraw a task from the plan — the reason stays on the node
+add drop <slug> --reason "<why>"             # withdraw a task — the reason stays on the node
 add milestone-done <slug>                    # close — refuses an unchecked box, an open delta, or an unauthored task
 ```
 
@@ -163,14 +164,12 @@ Depth tunes **ceremony**, not the authority floor. The floor is computed by the 
 else `process` — never from depth.
 
 - **quick** — CARD · CHECKS · EVIDENCE; at a green, `covers`-bound receipt the AI may record the PASS
-  itself at `process` authority (an explicit pass you run, not an engine auto-verdict), unless the
-  sensitivity floor is higher.
+  itself at `process` authority — an explicit pass you run — unless the sensitivity floor is higher.
 - **standard** — the full node; evidence-gated, at whatever authority the floor computes.
 - **deep** — full node + milestone strategy, lowest-confidence-first; a human owns freeze whenever the
   floor (or your judgment) calls for it.
 
-A coined term you cannot decode is in `terms.md` — load it once, not every session.
-The method's **why** lives in `FORMAT.md` (the ABF-1 bundle format, in the ADD source repo) —
-**referenced, never inlined** (load the State; reference the Story). Read it only when a decision is
-genuinely unclear. The AIDD book is deeper background and is **external** (not shipped with the skill)
-— treat it as optional; never block waiting to open a file the skill does not ship.
+A coined term you cannot decode is in `terms.md` — load it once. The method's **why** lives in
+`FORMAT.md` (the ABF-1 bundle format, in the ADD source repo) — **referenced, never inlined** (load the
+State; reference the Story); read it only when genuinely unclear. The AIDD book is deeper,
+**external** background (not shipped with the skill) — optional; never block waiting to open a file the skill does not ship.

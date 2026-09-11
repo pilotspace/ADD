@@ -55,8 +55,9 @@ scope: add-method/tooling/add.py, add-method/tooling/cli.py, add-method/tests/en
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/join-refuses-what-it-cannot-read.d/runs/1.md · kind: test-ids · 5/5 reported · exit 0 · 2026-09-03
+gate: PASS · authority process · by Tin Dang · receipt /tasks/join-refuses-what-it-cannot-read.d/runs/1.md · 2026-09-03
 
 ## LESSONS
 - a verb that iterates a collection reports success over an empty one, and an unread input is empty -> add learn method
+- none filed — no lesson cites /tasks/join-refuses-what-it-cannot-read.md (add learn <lens> "<lesson>" --evidence /tasks/join-refuses-what-it-cannot-read.md)

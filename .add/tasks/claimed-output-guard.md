@@ -117,8 +117,8 @@ regression floor: both test roots green — `add-method/tests/` and `add-method/
 red-first: every check MUST fail first. The guard is authored and run RED against the unrepaired tree before any sentence is corrected — a guard that has never refused is not evidence.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/claimed-output-guard.d/runs/2.md · kind: test-ids · 818/825 reported · exit 0 · 2026-09-01
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/claimed-output-guard.d/runs/2.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [quality · Q9 · folded] The gate binds covers: referents by BARE test id, so a PARAMETRIZED check binds NOTHING — pytest reports it as test_x[param]. A green parametrized check can leave its rule unbound while reading as covered. A module name (test_tree_parity) binds nothing either; cite the real test function names. (evidence: /tasks/claimed-output-guard.md gate)

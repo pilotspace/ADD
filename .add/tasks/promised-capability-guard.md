@@ -59,8 +59,8 @@ scope: README.md, add-method/README.md, add-method/tests/skill/test_promised_cap
 red-first: 2 of 4 are red at freeze — the by-name refusal, which reports three unbackable bullets across the two lists, and the retirement check, which reports all five surviving phrases. The anchor-resolution check is GREEN at freeze and that is a property of it, not a gap: every anchor authored into the registry resolves today, which is what registering one means. It turns red the moment a capability leaves the shipped surface, which is the failure it exists to catch and the one nothing caught before. The fourth is GREEN by design and armed through the build: it fails if the build reaches green by deleting bullets rather than retiring the unbackable ones, which is what R:CULL names.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/promised-capability-guard.d/runs/1.md · kind: test-ids · 700/707 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/promised-capability-guard.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/promised-capability-guard.md (add learn <lens> "<lesson>" --evidence /tasks/promised-capability-guard.md)

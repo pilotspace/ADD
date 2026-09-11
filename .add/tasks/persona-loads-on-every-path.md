@@ -69,8 +69,8 @@ strategy: write the check first against the unedited guides (three misses), then
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/persona-loads-on-every-path.d/runs/1.md · kind: test-ids · 251/251 reported · exit 0 · 2026-09-10
+gate: PASS · authority process · by plan:personas-load-by-fit · receipt /tasks/persona-loads-on-every-path.d/runs/1.md · 2026-09-10
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [system · S13 · folded] `opt-in` described two different things and only one of them was true: the ROSTER is optional (a bundle may have none), the LOAD is not (if a persona fits, it loads). One word covering a subject and its object is how a capability turns itself off. (evidence: /tasks/persona-loads-on-every-path.md)

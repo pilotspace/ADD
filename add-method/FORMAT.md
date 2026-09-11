@@ -459,8 +459,8 @@ A `Task` body has eight `## ` sections, in order:
 ## PLAN         contract / scope
 ## EDGES        E<n> — boundary and failure cases a check must cover (optional)
 ## CHECKS       one line per check, each bound by `covers:` (§8.3)
-## EVIDENCE     receipt / gate
-## LESSONS      harvested at done
+## EVIDENCE     a view written by the verbs — `receipt:` at run, `refute:` at refute, `gate:` at gate
+## LESSONS      a view harvested at done — every delta whose evidence cites this task; `doctor --sync` backfills both
 ```
 
 Section lookup is by exact `## <name>` heading, heading-exclusive, and stops at the next
@@ -567,6 +567,26 @@ state one grammar; the test is what keeps them one.
 Derived from `add.py:1674-1680`, `validate_bundle.py:61-70`.
 
 ---
+
+### §6.2 The single-mode notice
+
+direction.md's router asks that a Must at a `plan` or `human` floor carry two checks of
+different mode. Measured on the milestone that wrote the rule: 0 of 10. So `freeze` READS the
+mode word — the first token after the second `·` of a `## CHECKS` line, from the closed set
+`acceptance · property · contract · static · unit · e2e · manual` — and, under the refute rung's
+arming (§8.4: `standard|deep`, computed floor `plan|human`, not `explore`), appends one line to
+its success note naming every Must whose covering checks carry exactly one known mode, each id
+with its one mode beside it (`carries` for a single Must):
+
+```
+notice: M1 (acceptance), M3 (contract) carry one evidence mode — a plan-floor Must carries two (direction.md § router)
+```
+
+It is a notice and never refuses: the stamp is written first, and `add todo` carries the same
+count as a hint while the author still has the file open. A check with no mode word claims no
+mode and is not counted; Rejects, edges and probed assumptions are never listed. The gate reads
+no mode word at all — this is the one place the engine looks at one, and only to name, never to
+judge. The count is what decides whether the rule is promoted to a refusal or dropped.
 
 ## §7 The brief
 
@@ -681,6 +701,39 @@ them (observed on `tasks/build-evidence-binding.md`: 4 of that bundle's 7
 Multiple referents are comma-separated and each is validated independently against §6.1.
 
 Derived from `validate_bundle.py:64-70`, `add.py:1680`.
+
+### §8.4 The refute stamp
+
+A green no one has tried to break is *reported*, not *earned*. `add refute` records the attempt
+as one `verified[]` stamp, and the stamp names the receipt it read so its place in the chronology
+is decidable from list order alone (§7 makes the same argument for `brief`):
+
+```
+{ by, at, act: refute, authority: process, outcome: held | refuted, probes: <n>,
+  receipt: <run cid>, tier: T1 | T2 | T3, note: "<what was tried — or the input that broke it>",
+  changed: "<what the probes moved in the build or the spec while the outcome still held>" }
+```
+
+`outcome: refuted` MUST carry the finding: a refutation with no input is a category, not evidence.
+The stamp binds PRESENCE — a named party tried, when, against which run, with how many probes. It
+does not bind honesty or the quality of the probes; that limit is §10's, restated here so the stamp
+is never read as a correctness proof. It writes no verdict and moves no floor.
+
+`tier:` and `changed:` are present exactly when given — never defaulted, since a default would
+invent a claim nobody made. `tier:` is the CLAIM of who read the green (T1 the building session ·
+T2 a fresh session · T3 a human; T0 is nobody and T4 a CI recipe, so neither is recordable —
+`R:BADTIER`); the flag makes independence countable, `by:` beside it says whether the claim is
+true. `changed:` names what the probes moved while the outcome still held — a `held` that changed
+the build is the yield `--found` alone undercounts, and it is what a bench trigger reads. The gate
+reads neither key: `_refute_of` weighs presence and outcome only (law 3).
+
+The gate READS it: at `standard|deep` depth on a Task whose computed floor (§3.1) is `plan` or
+`human`, a `PASS` is refused while no refute stamp cites the gated receipt (`R:UNREFUTED`), and
+while the latest citing stamp reads `outcome: refuted` (`R:REFUTED`). Both are evidence-class
+(§8, like `unbriefed`): `RISK-ACCEPTED` and `HARD-STOP` are never refused by them. `depth: quick`,
+a `process` floor and `kind: explore` are exempt.
+
+Derived from `add.py:refute`, `add.py:_refute_of`, `add.py:gate`.
 
 ---
 

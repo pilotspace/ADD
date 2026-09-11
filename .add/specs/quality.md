@@ -7,10 +7,10 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 35
+delta_seq: 36
 relations:
   - Q9 refines /specs/method.md#M21
-open_deltas: 0
+open_deltas: 1
 ---
 ## Now
 what counts as proof
@@ -34,6 +34,7 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [TDD · Q36 · open · 2026-09-11] a check that reads its subject from the live bundle retires itself the moment the bundle is fixed — construct the defect in the fixture (re-seed the scaffold into a copy), then prove the check red by withholding the sync (evidence: add-method/tests/engine/test_evidence_and_lessons_views.py)
 - [TDD · Q35 · folded · 2026-09-10→2026-09-10] A guard written broader than its rule goes red on true statements. `no budget literal moved` was implemented as `the module is byte-identical`, so adding an unrelated constant to it reported a pin bump that never happened. (evidence: /tasks/one-home-for-the-prose-pin.md)
 - [TDD · Q34 · folded · 2026-09-10→2026-09-10] A check that cannot establish its baseline must not read that as the claim being false. `git merge-base HEAD origin/main` returns 128 on a depth-1 CI clone — the check passed locally and failed CI for a reason unrelated to what it asserts. Pin the content, or read only a ref every checkout has. (evidence: /tasks/the-message-pin-is-a-content-pin.md)
 - [TDD · Q33 · folded · 2026-09-10→2026-09-10] A check that pins a COUNT (`1 uncovered`) is pinned to its fixture's shape as much as to the rule. Widen the producer and the count moves — the repair is to re-aim the FIXTURE so the number is again about one thing, never to edit the expected number. (evidence: /tasks/uncovered-widens-to-rules.md)

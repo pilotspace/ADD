@@ -83,8 +83,8 @@ scope: add-method/tooling/, add-method/src/add_method/_bundled/tooling/, add-met
 red-first: 3 of 6 are red at freeze — the vocabulary, the refusal and the scaffold line, all failing because the sixth dimension does not exist yet. The prose check is GREEN today and this is a property of it, not a gap: it derives what it expects from the engine's own list, so while the engine still says five, prose that says five is correct. It turns red on the first engine edit and stays red until the last living surface follows — which is the behaviour wanted from it. The remaining 2 are GREEN by design and stay armed through the build: the quick-depth exemption with the authority floor, and the dated announcements. Their job is to fail if the build widens past its contract, which is what M4 and R:REWRITE name.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/experience-sweep.d/runs/5.md · kind: test-ids · 700/707 reported · exit 0 · 2026-08-12
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/experience-sweep.d/runs/5.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/experience-sweep.md (add learn <lens> "<lesson>" --evidence /tasks/experience-sweep.md)

@@ -99,8 +99,9 @@ strategy: engine first with checks red, then the four-way twin mirror and the `e
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/orientation-sees-carried-work.d/runs/3.md · kind: test-ids · 35/35 reported · exit 0 · 2026-09-08
+gate: PASS · authority plan · by plan:loop-that-drains · receipt /tasks/orientation-sees-carried-work.d/runs/3.md · 2026-09-08
 
 ## LESSONS
 - pending
+- [method · M38 · rejected] M31 fired a FOURTH time, on the milestone authored to stop it: E1 was a filled edge asserted by a real check whose covers: named M4 and E2 and not E1, so the gate refused after a full build and three receipts. Knowing the failure and having written the lesson changes nothing at Direction — the refusal has to move to freeze, which is what freeze-binds-what-you-authored exists to do. Until it ships, bind every filled edge from CHECKS as the LAST act of authoring, not the first act of gating. (evidence: /tasks/orientation-sees-carried-work.md — gate refused 'these rules have no reported passing check: E1', repaired by re-freeze + re-brief + receipt 3)

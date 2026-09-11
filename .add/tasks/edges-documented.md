@@ -72,8 +72,8 @@ scope: add-method/skill/add, add-method/tests/skill
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/edges-documented.d/runs/1.md · kind: test-ids · 10/10 reported · exit 0 · 2026-09-01
+gate: PASS · authority process · by Tin Dang · receipt /tasks/edges-documented.d/runs/1.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/edges-documented.md (add learn <lens> "<lesson>" --evidence /tasks/edges-documented.md)

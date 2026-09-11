@@ -107,6 +107,7 @@ def test_security_pass_without_lens_refuses(tmp_path):
 def test_security_pass_with_lens_is_recorded(tmp_path):
     """covers: M1 — the same security node with `advised_by:` set gates PASS."""
     root, cid = _repo_with_node(tmp_path, "security", lens={"advised_by": "sec-rev"})
+    add.refute(root, cid, by="v", held=True)          # the refute rung binds at a human floor too
     ok, note = add.gate(root, cid, "PASS", by="human:tindang")
     assert ok is True, note
 
@@ -114,5 +115,6 @@ def test_security_pass_with_lens_is_recorded(tmp_path):
 def test_nonsecurity_pass_without_lens_is_untouched(tmp_path):
     """covers: M1 — an architecture node with no lens still gates PASS (the floor is security-only)."""
     root, cid = _repo_with_node(tmp_path, "architecture")
+    add.refute(root, cid, by="v", held=True)          # plan floor: the refute rung, not the lens floor
     ok, note = add.gate(root, cid, "PASS", by="human:tindang")
     assert ok is True, note

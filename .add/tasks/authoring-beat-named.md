@@ -133,8 +133,9 @@ regression floor: both test roots green — `add-method/tests/` and `add-method/
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/authoring-beat-named.d/runs/3.md · kind: test-ids · 797/804 reported · exit 0 · 2026-09-01
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/authoring-beat-named.d/runs/3.md · 2026-09-01
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M25 · folded] A node authored before a merge goes STALE and must be re-measured before it is frozen: nine add.py line anchors had drifted, a check pinned a verb count that had changed, and a milestone criterion described a guard scope the maintainer had since narrowed. Trust a nodes prose about the engine only after driving the engine. (evidence: /tasks/authoring-beat-named.md)
+- [method · M24 · rejected] An unrecognised sensitivity value silently degrades the authority floor instead of refusing: SENSITIVITY_FLOOR maps mechanical|data|architecture|security, and .get(sens, "process") turns any other word into the LOWEST floor. Two nodes declared sensitivity: high and gated at process where they meant plan. Same class as the rest of this branch — an unknown reads as clean. (evidence: authority_for add.py:1293 · .add/tasks/authoring-beat-named.md)

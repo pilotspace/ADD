@@ -139,9 +139,26 @@ Scenario: insufficient funds          # covers: R:insufficient_funds
 
 The `And no balance changes` line does real work: it specifies that a rejected transfer leaves the world untouched — a property the AI could easily violate by deducting before checking.
 
-### One check per rule, each with a `covers:` referent
+### The evidence router — which modes a change earns
 
-Author **one check per Must, per Reject, and per edge case that changes behavior.** Each check carries a `covers:` key naming the rule it proves — `M<n>` for a Must, `R:<code>` for a Reject, `E<n>` for an enumerated edge. A Must or Reject encoded in **no** check means the rules are not understood — stop and say so. Minor variants are build guidance, not gated checks.
+Not every rule is best proven by an example. The router keys on the change kind and the engine's computed authority floor (`process · plan · human`), so nothing new is declared. It is preferred, not enforced: the floor still computes from sensitivity, and a divergence is recorded on the PLAN line rather than hidden.
+
+| change kind | default frozen evidence | added at floor ≥ plan | usually not frozen |
+|---|---|---|---|
+| mechanical · refactor | existing regression + static/architecture check | diff-scope check | new acceptance checks |
+| small business rule | 1–3 acceptance examples | a property, if an invariant is nameable | a new unit suite |
+| algorithm · pricing · ranking | acceptance examples | properties + mutation on changed code | dozens of hand-picked edges |
+| API · event boundary (a consumed `gives:`) | acceptance + consumer contract | one integration smoke | a broad E2E suite |
+| data migration | data invariants as properties | rehearsal + rollback proof | unit-only evidence |
+| UI workflow | domain-level acceptance per screen state | 1–2 browser E2E + an accessibility check | every scenario through a browser |
+| concurrency | acceptance | invariant under stress / schedule probes | an example-only suite |
+| auth · payment · security (floor human) | acceptance + negative examples | properties + adversarial probes + a refute by a fresh session | builder-visible checks alone |
+
+A property, a consumer contract and a mutation score on changed code are all the same shape as the reconciliation checker in the skill's `domains.md`: a script that emits JUnit, whose threshold is a frozen Must and whose test id a `covers:` line names. Mutation runs once at Verify on the files the diff touched inside `scope:`, never inside the build loop.
+
+### Every rule bound by a check that would fail without it
+
+Bind **every Must, every Reject, and every edge case that changes behavior to at least one check — each written to fail on the most plausible wrong implementation.** A check exists to discriminate, never to fill a quota: one check may cover several rules when it genuinely discriminates each, and a high-consequence rule may need two checks of different kind — at a plan-or-human floor the freeze prints a notice naming any Must still on one evidence mode (a notice, never a refusal; `add todo` carries the count). Each check carries a `covers:` key naming the rule it proves — `M<n>` for a Must, `R:<code>` for a Reject, `E<n>` for an enumerated edge. A Must or Reject encoded in **no** check means the rules are not understood — stop and say so. Minor variants are build guidance, not gated checks.
 
 The `covers:` binding is enforced at the **gate**: it refuses a PASS while any `M<n>` or `R:<code>` is covered by no check, or when the named checks did not demonstrably pass on a fresh receipt. Freeze only stamps the node approved; the coverage proof is checked when the verdict is recorded. Coverage is a binding, not a label.
 
@@ -178,9 +195,11 @@ Run these now, with no implementation: all fail. That is the correct, honest sta
 
 Beyond the Reject rules, sweep the recurring gaps that apply and add an `E<n>` check for each (or rule it out on purpose): boundary, duplicate/idempotent, ownership, stale/out-of-order, partial failure, concurrency, malformed input, limits/volume. A case earns a check when getting it wrong is a defect a reader would call a bug; otherwise reference it in prose as build guidance.
 
-### Acceptance mode — for non-code tasks
+### Acceptance first — the readable example, then the check
 
-Not every task ships code. A documentation task, a release, or an infrastructure change has no unit to exercise; forcing an executable test onto it is ceremony. For these (`kind: docs · release · infra`, or when the human declares acceptance mode), CHECKS becomes a **failing-first acceptance list** — short, concrete, verifiable pass/fail evidence, red before the artifact exists and green once it does:
+For code, the **default frozen check is an acceptance check**: business-readable, exercised through the application's port with deterministic adapters behind it, and bound to a filled `E<n>` written as *Given · When · Then* — the example a non-technical owner can read and confirm. A unit check is frozen only when it is the cheapest discriminating evidence for a rule, never because a rule exists; every other unit test belongs to Build and is disposable. The free text on each CHECKS line opens with a mode word from a closed list — `acceptance · property · contract · static · unit · e2e · manual` — which the engine never parses and the evidence router (§ PLAN) selects by change kind and floor.
+
+Not every task ships code. A documentation task, a release, or an infrastructure change has no unit to exercise; forcing an executable test onto it is ceremony. For these (`kind: docs · release · infra`), CHECKS is the `manual` mode — a **failing-first acceptance list**, short, concrete, verifiable pass/fail evidence, red before the artifact exists and green once it does:
 
 ```
 ## CHECKS — acceptance (failing-first)
@@ -189,7 +208,7 @@ Not every task ships code. A documentation task, a release, or an infrastructure
 - [ ] every internal link resolves                                   # covers: M3
 ```
 
-Only the *form* is relaxed. Everything else holds — red before build, one check per rule, evidence not internals, and a person confirms it at the gate. A coding task keeps the executable red suite; the two modes never mix within one task.
+Only the *form* is relaxed. Everything else holds — red before build, every rule bound by a check, evidence not internals, and a person confirms it at the gate. `manual` is the weakest rung on purpose: the receipt records `command-exit`, not `test-ids`, and says so.
 
 ---
 
@@ -213,7 +232,7 @@ Direction is done when:
 - [ ] Every required behavior is a Must; every rejection is a named error code; the success state-change is stated.
 - [ ] The assumptions are ordered lowest-confidence first, with the one `⚠` flag carrying *why* + *cost* — or, for trivial scope, an honest "none material" that still names the single biggest risk.
 - [ ] The contract shape is authored into `gives:`, versioned in intent, and every rejection has a contracted response.
-- [ ] There is one check per Must, per Reject, and per behavior-changing edge — each with a `covers:` referent.
+- [ ] Every Must, Reject and behavior-changing edge is named by at least one check that would fail without it — each with a `covers:` referent.
 - [ ] The suite (or the acceptance list) runs in the pipeline and is **red for the right reason**.
 - [ ] Checks assert observable behavior, not internals.
 
@@ -235,4 +254,4 @@ The freeze stamps direction closed — it approves the whole node at once. Rejec
 
 The lowest-confidence flag is **node-wide**: at this one decision point the AI leads with *"of everything I'm asking you to freeze, this one point is most likely wrong"* — and it may point at an uncovered edge or the contract shape, not only a Must. The authority floor is set by the task's sensitivity: mechanical work carries a light floor, but anything touching **data**, **architecture**, or **security** is held to a human at the freeze, and **security is never derived and never batched** (see [09 Governance](./09-governance.md)).
 
-> **When the feature has a user interface.** Extend Direction with a quick design: the user flows (happy path and main alternatives) and every screen state — loading, empty, error, success. Correct logic behind a confusing or incomplete interface is still a poor product, and undesigned states are exactly where an AI will improvise something ugly. Those states become CHECKS in acceptance mode where no unit test fits.
+> **When the feature has a user interface.** Extend Direction with a quick design: the user flows (happy path and main alternatives) and every screen state — loading, empty, error, success. Correct logic behind a confusing or incomplete interface is still a poor product, and undesigned states are exactly where an AI will improvise something ugly. Each of those states is a filled edge with an acceptance check bound to it — the default frozen check for code, run through the port, never a browser test per state.

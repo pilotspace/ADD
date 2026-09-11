@@ -89,8 +89,9 @@ strategy: build the two adjacency maps once from `edges()` and `relations()` —
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/graph-neighborhood.d/runs/1.md · kind: test-ids · 12/12 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:okf-graph-lookup · receipt /tasks/graph-neighborhood.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- none filed — no lesson cites /tasks/graph-neighborhood.md (add learn <lens> "<lesson>" --evidence /tasks/graph-neighborhood.md)

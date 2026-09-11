@@ -163,10 +163,10 @@ def test_show_is_wired_and_advertised(bundle):
 def test_every_registry_learned_the_show_verb():
     """covers: M6, A4 — the five sites, enumerated because a count pin names no verb."""
     readme = (REPO / "README.md").read_text(encoding="utf-8")
-    assert "27 verbs" in readme, "the package README still claims the old verb count"
+    assert "28 verbs" in readme, "the package README still claims the old verb count"
 
     pin = (REPO / "tests" / "engine" / "test_authoring_beat.py").read_text(encoding="utf-8")
-    assert "== 27" in pin, "the CLI-surface count pin was not re-aimed"
+    assert "== 28" in pin, "the CLI-surface count pin was not re-aimed"
 
     reference = (REPO / "docs" / "13-command-reference.md").read_text(encoding="utf-8")
     assert "add show" in reference, "the book command reference does not name the verb"

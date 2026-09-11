@@ -92,8 +92,9 @@ strategy: write the paste-the-address check FIRST, driving the exact string `del
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/address-dereferences.d/runs/2.md · kind: test-ids · 39/39 reported · exit 0 · 2026-09-04
+gate: PASS · authority plan · by plan:read-cost · receipt /tasks/address-dereferences.d/runs/2.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- none filed — no lesson cites /tasks/address-dereferences.md (add learn <lens> "<lesson>" --evidence /tasks/address-dereferences.md)

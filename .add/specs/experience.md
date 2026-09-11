@@ -7,8 +7,8 @@ description: who drives the loop and what it feels like at each beat — the ope
 tags: [operator, listing, refusal, preview]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 12
-open_deltas: 0
+delta_seq: 13
+open_deltas: 1
 ---
 ## Now
 who uses it and what they feel
@@ -23,6 +23,7 @@ who uses it and what they feel
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [UDD · X13 · open · 2026-09-11] a README's trust tagline is the sentence readers quote; a milestone that changes what trust means must rewrite it in the same branch, or the front door contradicts the method it advertises (evidence: README.md)
 - [UDD · X12 · folded · 2026-09-10→2026-09-10] An orientation verb that answers 'what exists' instead of 'what needs me' degrades at both ends of a bundle's life: on a finished board it showed PROJECT, index and an archived milestone; on a large one it withheld 85 percent behind a hint that named the flag already in force (evidence: status-answers-what-needs-me)
 - [UDD · X11 · folded · 2026-09-10→2026-09-10] A count answers 'how many' and a reader is asking 'which ones': one number said 38 unauthored; `38 queued · 2 adrift` says which two need a decision. Splitting an existing count by a derivable property costs no new state and changes what the reader does next (evidence: status headline split · a-plan-says-what-it-wants)
 - [UDD · X10 · folded · 2026-09-08→2026-09-08] A warning that counts is not a warning that names: `doctor` reported 38 scaffolds and `todo` counted them, but no orientation verb rendered the authored `title:`, so a 40-node bundle read as 40 anonymous slugs and the human concluded the tool had missed the work (evidence: yowo PR #16 · a-roadmap-reads-as-a-roadmap)

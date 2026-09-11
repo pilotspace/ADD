@@ -71,8 +71,8 @@ scope: add-method/tooling/add.py · add-method/tests/engine/test_scan_skips_rece
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/scan-skips-receipt-evidence.d/runs/3.md · kind: test-ids · 792/799 reported · exit 0 · 2026-09-03
+gate: PASS · authority plan · by plan:engine-perf-diagnosis · receipt /tasks/scan-skips-receipt-evidence.d/runs/3.md · 2026-09-03
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/scan-skips-receipt-evidence.md (add learn <lens> "<lesson>" --evidence /tasks/scan-skips-receipt-evidence.md)

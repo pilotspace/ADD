@@ -66,8 +66,8 @@ scope: add-method/skill/add, add-method/src/add_method/_bundled/skill/add, .clau
 red-first: THREE are driven red — M1, M2 and M3 all fail against today's router (the ellipsis is there, domains.md is orphaned, no checker sentence exists). The rest are guards, declared: R:BUDGETBUST's two are the EXISTING pins (they go red only if the edit overspends, which is their job), E1's asserts an exemption that must survive the new rule, and the two parity tests catch a missed tree.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/skill-pointer-truth.d/runs/1.md · kind: test-ids · 18/18 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/skill-pointer-truth.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/skill-pointer-truth.md (add learn <lens> "<lesson>" --evidence /tasks/skill-pointer-truth.md)

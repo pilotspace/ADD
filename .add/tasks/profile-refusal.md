@@ -69,8 +69,8 @@ scope: add-method/tooling/, add-method/src/add_method/_bundled/tooling/, add-met
 red-first: 3 of 7 are red at freeze — the silent fallback, the partial bundle it leaves, and the unshipped-profile comment. The other 4 are GREEN by design: they guard behaviour this change must NOT break (every shipped profile still initialises, a bare `init` still defaults to `code`, the twins stay identical, no floor moves). A regression guard on a breaking CLI change cannot be red first without breaking the thing it protects. Two check defects were found by running them red and fixed before freeze: the floor check conflated sensitivity NAMES with authority VALUES and failed on the legitimate `mechanical` key, and the comment check matched a claim that WRAPS across two comment lines, so it read green while the claim stood.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/profile-refusal.d/runs/2.md · kind: test-ids · 8/8 reported · exit 0 · 2026-08-12
+gate: PASS · authority plan · by Tin Dang · receipt /tasks/profile-refusal.d/runs/2.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [quality · Q4 · folded] an assumption is worth writing only if you will go DISPROVE it: A1 assumed the installers pass --profile through. Ten minutes of reading bin/cli.js showed its 'profile' is agent detection and the flag is ignored — with its value silently becoming the target directory. The assumption cost a shipped falsehood because it was recorded and then trusted rather than tested (evidence: .add/tasks/profile-refusal.md)

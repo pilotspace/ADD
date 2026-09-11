@@ -64,8 +64,8 @@ scope: add-method/tooling/add.py · add-method/tests/engine/test_doctor_body_cac
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/doctor-reads-each-body-once.d/runs/2.md · kind: test-ids · 798/805 reported · exit 0 · 2026-09-03
+gate: PASS · authority plan · by plan:engine-perf-diagnosis · receipt /tasks/doctor-reads-each-body-once.d/runs/2.md · 2026-09-03
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [quality · Q10 · folded] A benchmark harness that copies the file under test between arms pays a bytecode-recompile tax on every run — 31ms for a 4731-line engine — which inflates both arms and flattens the ratio. Measure the instrument first: the same binary under two labels gave medians 21ms apart but mins within 0.1ms, so min is the statistic and median is noise. Three successive readings of one change gave -27%, -17% and -24%; only the last had a verified control. (evidence: /tasks/doctor-reads-each-body-once.md · interleaved A/B, warm .pyc both arms)

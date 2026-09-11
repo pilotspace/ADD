@@ -46,7 +46,7 @@ scope: add-method/tooling/cli.py · add-method/tests/engine/test_scope_append.py
 - test_scope_is_the_only_plural_flag · covers: A1 · the probe: no other `new` flag advertises plural values
 red-first: every check MUST fail first.
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: none recorded
+gate: PASS · authority process · by human:tindang · receipt /tasks/scope-flag-append.d/runs/1.md · 2026-08-11
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/scope-flag-append.md (add learn <lens> "<lesson>" --evidence /tasks/scope-flag-append.md)

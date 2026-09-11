@@ -84,8 +84,9 @@ strategy: checks red first, including one that asserts the rung and the gate agr
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: pending
-gate: pending
+receipt: /tasks/freeze-binds-what-you-authored.d/runs/2.md · kind: test-ids · 23/23 reported · exit 0 · 2026-09-08
+gate: PASS · authority plan · by plan:loop-that-drains · receipt /tasks/freeze-binds-what-you-authored.d/runs/2.md · 2026-09-08
 
 ## LESSONS
 - pending
+- [quality · Q25 · folded] a parametrized check binds NOTHING and neither does a module: JUnit reports a parametrized case as name[param], and the gate resolves a covers: citation by the BARE function name, so freeze-binds-what-you-authored gated red on A2 and E5 while its own tests were green. Cite one plain test function and loop its cases from a module constant inside the body. (evidence: /tasks/freeze-binds-what-you-authored.md — gate refused 'no reported passing check: A2, E5' on test_freeze_refuses_an_uncovered_probe[standard]/[quick], green after de-parametrizing)

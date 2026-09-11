@@ -78,8 +78,8 @@ strategy: the meta-check first, so it names its own offenders; then strip them.
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/one-budget-one-guard.d/runs/1.md · kind: test-ids · 275/275 reported · exit 0 · 2026-09-08
+gate: PASS · authority process · by plan:rules-that-hold-for-us · receipt /tasks/one-budget-one-guard.d/runs/1.md · 2026-09-08
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- none filed — no lesson cites /tasks/one-budget-one-guard.md (add learn <lens> "<lesson>" --evidence /tasks/one-budget-one-guard.md)

@@ -79,8 +79,10 @@ strategy: prove unreachability across all four corpora BEFORE deleting anything,
 red-first: every check MUST fail first.
 
 ## EVIDENCE
-receipt: runs/n.md
-gate: PASS | RISK-ACCEPTED | HARD-STOP
+receipt: /tasks/source-dead-code.d/runs/1.md · kind: test-ids · 63/63 reported · exit 0 · 2026-09-04
+gate: PASS · authority process · by Tin Dang · receipt /tasks/source-dead-code.d/runs/1.md · 2026-09-04
 
 ## LESSONS
 - a lesson -> add learn lens
+- [method · M35 · folded] a survey that greps one file is not a measurement: read-cost was planned on ~101 removable lines and the AST plus all four reachable corpora found 17 — size a removal by parsing, and record the correction where the plan can see it (evidence: /tasks/source-dead-code.md)
+- [quality · Q19 · folded] a dead predicate with passing tests is worse than no predicate: delta_carried_on documented a CLOSED-CLOSED interval and claimed --as-of was wired to it, and three green assertions held that false wiring in place for as long as nothing called it (evidence: /tasks/source-dead-code.md)

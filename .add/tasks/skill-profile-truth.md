@@ -59,8 +59,8 @@ scope: add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .cl
 red-first: 1 of 4 is red at freeze, on all 9 instances (2 files × 3 trees, plus the two-line claim in `domains.md`). The other 3 are GREEN by design — they guard what the rewrite must not break: the trees already agree, both shipped profiles are already named, and the surface is already inside budget. One check defect was found and fixed before freeze: the budget check re-derived its own measurement with a plain `rglob` and reported 2068 against a 1500 pin that `test_surface.py` passes comfortably, because it counted the nested `persona-author/` sub-skill that carries its own budget. A second opinion about a pinned number is a contradiction, not a check — it now calls `test_surface._own_docs()` directly.
 
 ## EVIDENCE
-receipt: <runs/<n>.md>
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
+receipt: /tasks/skill-profile-truth.d/runs/1.md · kind: test-ids · 5/5 reported · exit 0 · 2026-08-12
+gate: PASS · authority process · by Tin Dang · receipt /tasks/skill-profile-truth.d/runs/1.md · 2026-08-12
 
 ## LESSONS
-- <lesson> -> add learn <lens>
+- [method · M14 · folded] an engine change invalidates PROSE, and the skill is prose: profile-refusal made init refuse, which turned two shipped skill sentences false across three trees within minutes. The dangerous instance was the one used as a RULE'S REASON — domains.md said 'do not invent a profile BECAUSE it fails silently'; the rule survived, its reason did not, and a reader who tests a false reason has cause to discard the rule (evidence: .add/tasks/skill-profile-truth.md)

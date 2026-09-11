@@ -137,6 +137,7 @@ def test_path_floored_node_passes_with_a_lens(tmp_path):
     """covers: M2 — the floor binds lens PRESENCE; a lensed path-floored node still passes."""
     root, cid = _repo_with_node(tmp_path, "src/auth/login.py", ["src/auth/**"],
                                 lens={"advised_by": "sec-reviewer"})
+    add.refute(root, cid, by="v", held=True)          # the refute rung binds at a human floor too
     ok, note = add.gate(root, cid, "PASS", by="human:tindang")
     assert ok is True, f"a lensed path-floored node must still pass: {note}"
 

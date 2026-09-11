@@ -73,6 +73,7 @@ Apply a reasoning lens to a beat. A persona advises; it never lowers a gate.
 | verb | what it does | example |
 |---|---|---|
 | `advise` | record a persona lens on a sequential beat (NO-EXEC; feeds the coverage floor). `--persona` required | `add advise reject-overlap --persona concurrency-hawk` |
+| `refute` | record that someone tried to refute a green — who tried to break it, against which receipt, what they found (NO-EXEC; no verdict). `--by` required; one of `--held` or `--found "<input>"`; `--probes N`, `--note`; `--tier T1\|T2\|T3` (who read it — a claim the record can count) and `--changed "<what>"` (what a probe moved while the outcome held) are recorded when given, never defaulted | `add refute reject-overlap --by "advisor:method-steward" --held --probes 3 --tier T2` |
 
 Personas also drive the parallel verbs above — `wave`/`join` assign personas to the streams they fan out.
 

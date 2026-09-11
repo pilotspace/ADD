@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 48
+delta_seq: 52
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -18,6 +18,8 @@ open_deltas: 0
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- EVIDENCE and LESSONS are engine-written views since c9b4febe; the general rule stands: a promised section gets a writer in the same task that promises it, or a guard that refuses its absence (from: /specs/method.md#M52)
+- A stamp the gate must order cites the receipt it read; chronology is decided from verified[] alone, never from a clock. (from: /specs/method.md#M50)
 - A working-tree-vs-HEAD guard is a live-editing tripwire and must say so in its own source; a durable claim is pinned to content instead. (from: /specs/method.md#M48)
 - An instruction only exists on the paths that LOAD the file holding it. When a rule must hold on more than one path, enumerate the copies in a check rather than trusting one canonical statement to reach them. (from: /specs/method.md#M47)
 - None is the refusal for every engine verb; a verb that ANSWERS a question keeps its boolean, and an empty collection from a query that ran is an answer, not a refusal. (from: /specs/method.md#M45)
@@ -37,6 +39,10 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M52 · folded · 2026-09-10→2026-09-11] A section the format PROMISES a writer for is a section nobody writes until a guard demands it: EVIDENCE and LESSONS were skipped by the placeholder guard because 'the run and the close fill them', and 88/113 done tasks carried the scaffold. Make it a view of the record (verb writes its keyed line, sync backfills) and pin it with a live-bundle count. (evidence: /tasks/evidence-and-lessons-are-views.md)
+- [ADD · M51 · folded · 2026-09-10→2026-09-10] A refute recorded by the builder (tier T1) proves presence, never independence; the memo's bench trigger counted --found and undercounted probes that changed the build under a held outcome — count probes that changed something, and require one T2 refute before designing a bench (evidence: .add/tasks/dogfood-and-measure.md)
+- [ADD · M50 · folded · 2026-09-10→2026-09-10] A stamp the gate can ORDER needs a citation, not a clock: the refute names the receipt it read, so 'after the gated run' is decided from verified[] alone — and a probe found the case-variant cid the equality test already refused (evidence: add-method/tests/engine/test_refute_gate_rung.py)
+- [ADD · M49 · folded · 2026-09-10→2026-09-10] A notary records a value as handed, but argv is where a TYPE is refused: --probes -1 was stamped verbatim because the library trusts its caller; the front door is the one place a count can be made a count (evidence: add-method/tooling/cli.py)
 - [ADD · M48 · folded · 2026-09-10→2026-09-10] A guard comparing the working tree to HEAD is a live-editing TRIPWIRE, not an invariant: it fires while the edit is made and is inert once committed. That is a legitimate lifetime — the defect is leaving it unlabelled, so a green CI reads as the claim having held. (evidence: /tasks/a-head-guard-declares-its-lifetime.md)
 - [ADD · M47 · folded · 2026-09-10→2026-09-10] The mandate was in the right words in the wrong file: agents/add-worker.md §2 states the persona selector perfectly and loads ONLY on a spawn. A rule that lives in a file one path loads is not a rule the method has — it is a rule that path has. Check WHICH files carry an instruction, not whether it is written. (evidence: /milestones/personas-load-by-fit.md)
 - [ADD · M46 · folded · 2026-09-10→2026-09-10] A rung held NARROW 'until the cost is measured' is a debt with a due date. When the measurement lands, retire the check that asserts the narrowing — kept, it asserts against its own condition being met. (evidence: /tasks/uncovered-widens-to-rules.md)

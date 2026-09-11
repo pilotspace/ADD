@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "ff80f9b36ab6a0baeaacea4c6b754854"  # re-aimed @ brief-names-the-candidate-lens: an unlensed brief names the roster entries that fit, and selects none. prior: 6dd25637… @ uncovered-widens-to-rules
+ENGINE_MD5 = "909e2ce0d6f2d8874b6e8efe7d337936"  # re-aimed @ two-mode-notice: check_modes · single_mode_musts (per line, deduped rule ids, backtick-tolerant) · the freeze notice and the todo count. prior: 5571b7d1… @ refute-tier-and-changed
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "de742b6deafc4a445b5d343cf1b30cbe"  # re-aimed @ a-plan-says-what-it-wants: the drop parser. prior: c62354e4… @ a-roadmap-reads-as-a-roadmap
+ENGINE_PKG_MD5 = "b3c4372a9528332cf5c77160e90a8788"  # re-aimed @ refute-tier-and-changed: --tier choices and --changed on the refute parser. prior: f2ce7c3d… @ refute-verb
