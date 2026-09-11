@@ -664,7 +664,18 @@ file at the time of the run.
 
 A file that has vanished since the run is a difference, not an absence.
 
-Derived from `add.py:1468-1490`.
+**The anchor.** Inside a git working tree that has a commit, a receipt also records
+`head: <sha>` — the commit `HEAD` named when the run *started*, before the command could
+move it — and, over a non-empty digest, `committed: true | false`: `true` exactly when
+every `scope_digest` entry carries the blob `HEAD`'s tree holds at that path. `committed`
+is decided by those blobs and nothing else — a dirty file outside scope does not flip it,
+and it is never derived from whole-tree cleanliness. Outside git, or on an unborn branch
+(a git dir and no commit yet), **neither key is written** and the receipt's `note:` names
+the cause; a reader MUST treat an absent key as *unknown*, never as `false` — a receipt
+written before these keys existed lacks them the same way. This is what lets a release
+cite the tree a receipt verified rather than reconstruct it.
+
+Derived from `add.py:run`, `add.py:_committed_to_head`.
 
 ### §8.2 The receipt kind ladder
 

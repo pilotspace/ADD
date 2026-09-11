@@ -3666,6 +3666,22 @@ def scope_digest(root, scope: list) -> list:
     return out
 
 
+def _committed_to_head(root, digest: list) -> bool:
+    """True iff every `{path, blob}` in `digest` is the blob HEAD's tree holds at that path.
+
+    One `ls-tree` over the digest's paths, output relative to `root` exactly as the digest is.
+    A path HEAD does not hold (untracked, or added since) is a difference, so it answers False.
+    """
+    listed = _git(root, "ls-tree", "-r", "-z", "HEAD", "--", *[str(d["path"]) for d in digest],
+                  strip=False)
+    held = {}
+    for rec in (listed or "").split("\0"):
+        if "\t" in rec:
+            meta, path = rec.split("\t", 1)
+            held[path] = meta.split()[2]
+    return all(held.get(str(d["path"])) == str(d["blob"]).replace("sha1:", "", 1) for d in digest)
+
+
 def fresh(receipt: dict, root) -> tuple:
     """`(ok, why)` — THREE states, and the third is the point.
 
@@ -3749,6 +3765,16 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # gate refused a PASS with a message naming neither the cause nor the fix. `cwd` stays what
     # it says: the command's working directory, nothing more.
     digest = scope_digest(root.parent, scope)
+    # The anchor (receipt-anchored-to-head): HEAD at run START, before the command can move it,
+    # and whether every scope blob is the blob HEAD holds at that path. Read from git as observed
+    # — never derived from `git status` (R:COMMITTEDBYCLAIM: dirt outside scope is not this
+    # receipt's business) and never written when `rev-parse HEAD` did not answer (R:INVENTEDHEAD:
+    # an unborn branch has a git dir and no commit). Absent is UNKNOWN to every reader, and
+    # `committed` is written only over a non-empty digest — agreement over nothing is the
+    # vacuous-check shape.
+    in_git = _git(root.parent, "rev-parse", "--git-dir") is not None
+    head = _git(root.parent, "rev-parse", "HEAD") if in_git else None
+    committed = _committed_to_head(root.parent, digest) if (head and digest) else None
 
     # A2/A3: the flag is an OVERRIDE, so it is consulted first and a sniffed value can never
     # beat a stated one — a runner may write its report where the command line never names it.
@@ -3788,6 +3814,9 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
         degrade = ("scope: declared but no digest recorded — the bundle parent is not a git "
                    "working tree, or the scope paths do not exist there; freshness degrades to mtime")
         note = f"{note}; {degrade}" if note else degrade
+    if scope and in_git and head is None:
+        unborn = "head: the tree has no commit yet — no head recorded, committed unknown"
+        note = f"{note}; {unborn}" if note else unborn
 
     slug = cid.rsplit("/", 1)[-1][:-3]
     runs = root / f"tasks/{slug}.d/runs"
@@ -3820,11 +3849,15 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
                "ids": f"{sum(v == 'pass' for v in ids.values())}/{len(ids)} reported" if ids else "unknown",
                "exit": exit_code,
                "freshness": "content" if digest else "mtime", "at": _today(),
+               **({"head": head} if head else {}),
+               **({"committed": committed} if committed is not None else {}),
                "stdout": stdout.strip().splitlines()[-1] if stdout.strip() else "",
                "note": note}
     body = (f"---\ntype: Run\nruntime: process\ntask: {cid}\n"
             f'computation: "{" ".join(str(c) for c in command)}"\n'
-            f"receipt:\n" + "".join(f"  {k}: {v!r}\n" if k in ("stdout", "note") else f"  {k}: {v}\n"
+            f"receipt:\n" + "".join(f"  {k}: {v!r}\n" if k in ("stdout", "note")
+                                    else f"  {k}: {str(v).lower()}\n" if k == "committed"
+                                    else f"  {k}: {v}\n"
                                     for k, v in receipt.items()) +
             ("  passed:\n" + "".join(f"    - {i}\n" for i in passed) if passed else "") +
             ("  failed:\n" + "".join(f"    - {i}\n" for i in failed) if failed else "") +
