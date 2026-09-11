@@ -187,14 +187,14 @@ def test_refute_is_wired_and_counted(repo):
     sub = next(a for a in cli.build_parser()._actions
                if getattr(a, "choices", None) and isinstance(a.choices, dict))
     assert "refute" in sub.choices, sorted(sub.choices)
-    assert len(sub.choices) == 28, sorted(sub.choices)
+    assert len(sub.choices) == 29, sorted(sub.choices)   # re-aimed @ release-stamp
     wired = (REPO / "tests" / "engine" / "test_cli.py").read_text(encoding="utf-8")
     assert '"refute"' in wired[wired.find("WIRED = {"):wired.find("}", wired.find("WIRED = {"))]
-    for rel, needle in (("tests/skill/test_search_registry.py", "n == 28"),
-                        ("tests/engine/test_show_verb.py", "28 verbs"),
-                        ("tests/engine/test_authoring_beat.py", "== 28"),
-                        ("README.md", "28 verbs")):
-        assert needle in (REPO / rel).read_text(encoding="utf-8"), f"{rel}: pin not re-aimed to 28"
+    for rel, needle in (("tests/skill/test_search_registry.py", "n == 29"),
+                        ("tests/engine/test_show_verb.py", "29 verbs"),
+                        ("tests/engine/test_authoring_beat.py", "== 29"),
+                        ("README.md", "29 verbs")):   # re-aimed @ release-stamp: 28 -> 29
+        assert needle in (REPO / rel).read_text(encoding="utf-8"), f"{rel}: pin not re-aimed to 29"
     fmt = (REPO / "FORMAT.md").read_text(encoding="utf-8")
     assert re.search(r"^### §8\.4 .*refute", fmt, re.M), "FORMAT §8.4 does not state the refute stamp"
     assert "act: refute" in fmt

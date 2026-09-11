@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "1c319f90068b6de346859ede1720370cf02090f1442777749856baa995b35af1"  # re-aimed @ regression-floor: one refusal message joins with `freeze()` (NOFLOOR) — no existing message reworded. prior: 981619ea… @ refute-tier-and-changed
-MESSAGE_COUNT = 107  # re-aimed @ regression-floor: +NOFLOOR. prior: 106 @ refute-tier-and-changed
+MESSAGE_DIGEST = "7d81bd4a4775b4dfe2218d0d181bb09dd3dae01bed47a0a589a9521a614745b7"  # re-aimed @ release-stamp: two refusal messages join with `release()` (NOSUCHTAG, NOTDONE/UNANCHORED) — no existing message reworded. prior: 1c319f90… @ regression-floor
+MESSAGE_COUNT = 109  # re-aimed @ release-stamp: +release refusals. prior: 107 @ regression-floor
 
 
 def _message_digest() -> tuple:

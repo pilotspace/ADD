@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "cf3b418a9b304426b73ba4befea2a33c"  # re-aimed @ consumers-go-stale: stamped_gives · _pins_of · needs_pins (pins the provider's STAMPED digest, deduped by resolved target) · stale_needs (sorted, open tasks only) · consumers_of · the refreeze note names only consumers whose pin differs · needs_stale in doctor and todo · R:STALENEEDS at gate · a ref carrying `,`/`=` pins `?` and reads back as `?` · the pin's unit is (node, fragment) and a scalar gives: is one surface · an unattestable ref is written delimiter-stripped and the reader takes exact tokens only · _PIN_UNSAFE covers the stamp line's own alphabet · consumers_of reads the stamp, not live edges — nine T2 founds · the R:STALENEEDS recipe names add brief. prior: (regression-floor) regression_floor · R:NOFLOOR at freeze · run(floor=) · latest_floor_receipt · R:FLOORUNRUN at gate
+ENGINE_MD5 = "0748ef18ac91d98d06046967619f184a"  # re-aimed @ release-stamp: release · _anchor · _tag_tree · _tree_blobs (shared with _committed_to_head) · status tag suffix · show release lines · anchor = the newest CLOSING gate's receipt, after the last reopen, empty anchor refuses, the note names not-done members, row clamp (three T2 founds). prior: (consumers-go-stale) stamped_gives · _pins_of · needs_pins · stale_needs · consumers_of — nine T2 founds
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "a6b9eb04c240193d0a2c50eb5973b9d7"  # re-aimed @ regression-floor: --floor on the run parser. prior: b3c4372a… @ refute-tier-and-changed
+ENGINE_PKG_MD5 = "775585d7990114d53823b706b4989e9b"  # re-aimed @ release-stamp: the release parser and dispatch. prior: a6b9eb04… @ regression-floor

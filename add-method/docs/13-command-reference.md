@@ -54,6 +54,7 @@ Group tasks into one user-request scope; close it on met exit criteria.
 | `milestone-done` | close a milestone — refuses while any `## EXIT` box is unchecked | `add milestone-done auth-layer` |
 | `check` | mark (or `--off` unmark) a checklist box by 1-based index, and record who did it. `--section` narrows to one `## SECTION`; `--all` takes every box | `add check auth-layer 2 --by "Ada"` |
 | `milestone-archive` | retire a done milestone — refuses one that is not done | `add milestone-archive auth-layer` |
+| `release` | bind a tag's tree to the receipts that verified it — appends `act: release` (tag, tree sha, receipt cids) to a done milestone after READ-ONLY git (`rev-parse`, `ls-tree`) proves the tag's tree holds every scope blob the members' gated receipts recorded; refuses `R:UNANCHORED` naming the task, the path and both blobs, `R:NOTDONE`, `R:NOSUCHTAG`. `--milestone` (repeatable) and `--by` required; `--artifact name@digest` and `--build ref` are recorded verbatim, never verified. The engine never tags, publishes or deploys | `add release v3.7.0 --milestone loop-that-closes --by "Tin" --artifact add-method@sha256:… --build gha://run/42` |
 | `deltas` | list open deltas across the specs — the carried inventory. `--status open\|folded\|rejected` | `add deltas --status open` |
 | `fold` | retag a named open delta folded (human consolidation) into a spec `domain\|system\|experience\|quality\|method` | `add fold domain "half-open"` |
 

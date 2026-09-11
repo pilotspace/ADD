@@ -12,7 +12,7 @@ record) · 2 a usage error (argparse). The dispatch judges nothing; the engine d
 Every verb the skill refers to is wired to a real engine function:
     init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
     deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo ·
-    search · show · refute
+    search · show · refute · release
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -199,6 +199,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--note", help="what was tried (held) — a refuted outcome carries its finding instead")
     s.add_argument("--tier", choices=["T1", "T2", "T3"], help="who read the green — T1 the building session · T2 a fresh session · T3 a human (a claim the record can count; absent when not given)")
     s.add_argument("--changed", metavar="WHAT", help="what the probes changed in the build or the spec while the outcome still held — the bench trigger reads this")
+
+    s = sub.add_parser("release", help="bind a tag's tree to the receipts that verified it — appends act: release to a done milestone after read-only git proves the tree holds every gated scope blob (R:UNANCHORED otherwise); the engine never tags, publishes or deploys")
+    s.add_argument("tag", help="the tag (any git tree-ish) the human already cut")
+    s.add_argument("--milestone", action="append", required=True, metavar="M", help="a done milestone to stamp (repeatable)")
+    s.add_argument("--by", required=True, help="who records the release")
+    s.add_argument("--artifact", metavar="NAME@DIGEST", help="recorded verbatim, never verified")
+    s.add_argument("--build", metavar="REF", help="the build/pipeline run that produced the artifact — recorded verbatim, never verified")
 
     s = sub.add_parser("locate", help="reverse lookup — which node's scope owns a path (read-only)")
     s.add_argument("path", help="the file or directory path to locate")
@@ -425,6 +432,12 @@ def dispatch(args, run_cmd) -> int:
                                  tier=args.tier, changed=args.changed)
         print(note)
         return 0 if stamp else 1
+
+    if args.verb == "release":
+        stamps, note = add.release(root, args.tag, args.milestone, by=args.by,
+                                   artifact=args.artifact, build=args.build)
+        print(note)
+        return 0 if stamps else 1
 
     if args.verb == "locate":
         _hits, note = add.locate(root, args.path, all=args.all)

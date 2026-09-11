@@ -836,6 +836,46 @@ the command on refusal. A floor declared on an exempt rung is recorded and never
 
 Derived from `add.py:regression_floor`, `add.py:freeze`, `add.py:run`, `add.py:latest_floor_receipt`, `add.py:gate`.
 
+### §8.6 The release stamp
+
+A `PASS` proves a source state and a receipt names the commit it observed (§8.1); nothing yet
+said which tree a **tag** shipped. `add release <tag> --milestone <m> --by <name>` appends one
+stamp to each named milestone that is `done` or `archived` (`R:NOTDONE` otherwise):
+
+```
+{ by, at, act: release, authority: process, tag: "v3.7.0", tree: <the tag's tree sha>,
+  receipts: "/tasks/a.d/runs/3.md,/tasks/b.d/runs/1.md"[, artifact: "…"][, build: "…"] }
+```
+
+**The anchor.** For every member Task (`milestone:` names the slug, cid order) with status
+`done`, the receipt its newest CLOSING gate stamp cites (`act: gate`, outcome `PASS` or
+`RISK-ACCEPTED` — the verdicts `done` reads; a later `HARD-STOP` is a finding and entitles
+nothing) that postdates the member's last `act: reopen` (a reopen resets the gate, so a verdict
+before it anchors nothing) — never the latest run, which may postdate the verdict, and never a
+floor receipt (§8.5) — is
+read and each of its `scope_digest` blobs is compared to the blob the tag's tree holds at that
+path — one `ls-tree` over the tag. One mismatch or absent path refuses `R:UNANCHORED`, naming the
+task, the path and both blobs; a done member whose gated receipt carries no content digest, or
+whose cited receipt is gone, is unanchorable and refuses by name; a member with no closing gate
+stamp citing a receipt (an explore, a hand-marked done) is skipped by name in the success note,
+and a member that is not `done` is named there too, with its status — the note is what did not
+anchor, the stamp is what did; a milestone in which no member anchors refuses, naming its
+not-done members — a tree and no receipts is a label. No
+ordering rule: a tag cut before the PASS whose tree still holds the same blobs is honestly
+anchored — the comparison is the whole claim. A tag git cannot resolve refuses `R:NOSUCHTAG`.
+
+**Read-only, never outward.** The verb calls git through `rev-parse` and `ls-tree` only. It
+never runs `tag`, `push`, `publish` or any command that acts outward: the engine is a notary
+without credentials, and the tag itself stays the human's act (`R:OUTWARD`). `artifact:` and
+`build:` are recorded verbatim exactly when handed and **never** verified — SLSA-style
+provenance is the pipeline's to produce and consume (`R:PROVENANCEJUDGED`).
+
+A milestone released twice carries two stamps, newest last. `status --all` names the newest tag
+at the released row's end — the row stays one line: the title yields first, then the tag is cut;
+`show <m>` carries the stamp, so "which tree shipped, proven by which receipts" is one read.
+
+Derived from `add.py:release`, `add.py:_anchor`, `add.py:_tag_tree`, `add.py:_tree_blobs`, `add.py:status`.
+
 ---
 
 ## §9 Conformance

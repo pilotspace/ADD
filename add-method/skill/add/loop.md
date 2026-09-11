@@ -35,7 +35,7 @@ ARE the human's goal-met affirmation: the engine reads the tally, never judges t
 the last box releases the gate — write it with `add check`, which records WHO checked, rather than
 by hand, which records nobody. The gate fires only when criteria exist — write exit criteria to
 hold a milestone open. `milestone-done` is the only path to `done`; `milestone-archive` refuses a
-milestone not done. One gate, no quiet way around it.
+milestone not done; `add release <tag>` binds a tag's tree to the receipts. One gate, no quiet way around it.
 
 ## The loop
 

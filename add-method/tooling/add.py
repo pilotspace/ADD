@@ -794,7 +794,14 @@ def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
     # a reader actually wants — what this node is FOR — was only in the CARD, or missing when the
     # CARD was still scaffold.
     titled = _title_of(fm)
-    lines = [f"{cid}  [{status}]  {head}{('  ·  ' + titled) if titled else ''}".rstrip(), ""]
+    lines = [f"{cid}  [{status}]  {head}{('  ·  ' + titled) if titled else ''}".rstrip()]
+    # A released milestone answers "which tree shipped, proven by which receipts" in its header
+    # (release-stamp, M5): one line per `act: release` stamp, oldest first, never the body's.
+    for st in fm.get("verified") or []:
+        if isinstance(st, dict) and st.get("act") == "release":
+            lines.append(f"act: release {dot} {st.get('tag')} {dash} tree {str(st.get('tree'))[:12]} "
+                         f"{dot} receipts {st.get('receipts') or dash} {dot} by {st.get('by')} at {st.get('at')}")
+    lines.append("")
     lines.append(view["body"].rstrip())
     if view["rows"]:
         lines += ["", f"related (depth {expand} {dot} {down} declared here {dot} "
@@ -2891,6 +2898,7 @@ ROW_WIDTH, SLUG_W = 100, 28
 # The widest beat word plus its brackets (`[abandoned]`), so the type column lines up whatever
 # the beat is.
 BEAT_W = 11
+TITLE_FLOOR = 12   # the least a title keeps when a release tag shares its row
 BEAT_KEYS = ("beat", "state")
 # The one canonical next verb per beat — read by `status`'s frontier hint and `render_card`, so a
 # repaired CARD's `next:` matches its beat instead of freezing at the direction-time affordance.
@@ -3693,7 +3701,15 @@ def status(root, all: bool = False, check: bool = False) -> str:
         slug = cid.rsplit("/", 1)[-1][:-3]
         lead = f"  · {slug[:SLUG_W]:<{SLUG_W}} {('[' + str(beat) + ']'):<{BEAT_W}} " \
                f"{str(fm.get('type', '')):<9} "
-        out.append((lead + _title_of(fm, ROW_WIDTH - len(lead))).rstrip())
+        # A released milestone names its tag at the row's end (release-stamp, M5): the newest
+        # `act: release` stamp, so "which tag shipped this" is answered without opening the file.
+        tag = next((str(st.get("tag")) for st in reversed(fm.get("verified") or [])
+                    if isinstance(st, dict) and st.get("act") == "release" and st.get("tag")), "")
+        # One row is ONE line (a-roadmap R:ROWBLOAT): the title yields first, down to a floor of
+        # TITLE_FLOOR characters, then the tag itself is cut — never a negative width, which
+        # sliced the title from its end (found by the T2 refute, E8).
+        tail = f" · {tag[:max(0, ROW_WIDTH - len(lead) - 3 - TITLE_FLOOR)]}" if tag else ""
+        out.append((lead + _title_of(fm, ROW_WIDTH - len(lead) - len(tail)) + tail).rstrip())
     if not all and len(shown) > MAX_LINES:
         # The hint names a command that RUNS and actually produces the withheld rows. It used to
         # print under `--all` too, advising the flag already in force — a hint that cannot change
@@ -3862,20 +3878,151 @@ def scope_digest(root, scope: list) -> list:
     return out
 
 
+def _tree_blobs(root, tree: str, paths: list) -> dict:
+    """`{path: blob}` a git tree-ish holds at each path — ONE read-only `ls-tree`, relative to `root`."""
+    listed = _git(root, "ls-tree", "-r", "-z", tree, "--", *[str(p) for p in paths], strip=False)
+    held = {}
+    for rec in (listed or "").split("\0"):
+        if "\t" in rec:
+            meta, path = rec.split("\t", 1)
+            held[path] = meta.split()[2]
+    return held
+
+
 def _committed_to_head(root, digest: list) -> bool:
     """True iff every `{path, blob}` in `digest` is the blob HEAD's tree holds at that path.
 
     One `ls-tree` over the digest's paths, output relative to `root` exactly as the digest is.
     A path HEAD does not hold (untracked, or added since) is a difference, so it answers False.
     """
-    listed = _git(root, "ls-tree", "-r", "-z", "HEAD", "--", *[str(d["path"]) for d in digest],
-                  strip=False)
-    held = {}
-    for rec in (listed or "").split("\0"):
-        if "\t" in rec:
-            meta, path = rec.split("\t", 1)
-            held[path] = meta.split()[2]
+    held = _tree_blobs(root, "HEAD", [d["path"] for d in digest])
     return all(held.get(str(d["path"])) == str(d["blob"]).replace("sha1:", "", 1) for d in digest)
+
+
+def _tag_tree(root, tag: str):
+    """The tree sha a tag (any tree-ish) resolves to, or None — `rev-parse`, read-only."""
+    sha = _git(root, "rev-parse", "--verify", "-q", f"{tag}^{{tree}}")
+    return sha if sha and re.fullmatch(r"[0-9a-f]{40,64}", sha) else None
+
+
+def _anchor(root, graph: dict, mcid: str, tree: str) -> tuple:
+    """`(ok, detail, receipts, skipped, not_done)` — does `tree` hold every scope blob the milestone's done
+    members' gated receipts recorded? (release-stamp, FORMAT §8.6)
+
+    Members are the Tasks whose `milestone:` names this slug, in cid order; the anchor is the
+    receipt each done member's NEWEST `act: gate` stamp cites — the one the verdict read, never
+    the latest run, which may postdate the verdict red or wider (found by the T2 refute, E7), and
+    never a floor receipt (the gate never cites one, A2). A done member whose gated receipt
+    carries no content digest, or whose cited receipt is gone, cannot be anchored and refuses by
+    name; a member with no gate stamp citing a receipt (an explore, a hand-marked done) is
+    skipped by name. The first mismatch refuses, naming the task, the path and both blobs.
+    """
+    repo = Path(root).parent
+    slug = mcid.rsplit("/", 1)[-1][:-3]
+    members = sorted(c for c, n in graph.items()
+                     if (n["fm"] or {}).get("type") == "Task"
+                     and str((n["fm"] or {}).get("milestone") or "").strip() == slug)
+    receipts, skipped = [], []
+    not_done = [f"{c} ({(graph[c]['fm'] or {}).get('status') or '—'})" for c in members
+                if (graph[c]["fm"] or {}).get("status") != "done"]
+    for cid in members:
+        if (graph[cid]["fm"] or {}).get("status") != "done":
+            continue
+        # The newest CLOSING gate — the verdict `done` reads — and only one that POSTDATES the
+        # member's last `act: reopen`: a reopen resets the gate, so a verdict before it anchors
+        # nothing (second and third T2 refutes, E9, E12). A HARD-STOP after the close cites a
+        # finding's receipt, not a verdict's, and entitles nothing.
+        rcid = None
+        for st in reversed((graph[cid]["fm"] or {}).get("verified") or []):
+            if not isinstance(st, dict):
+                continue
+            if st.get("act") == "reopen":
+                break
+            if st.get("act") == "gate" and st.get("receipt") and str(st.get("outcome") or "PASS") in CLOSING_VERDICTS:
+                rcid = str(st.get("receipt"))
+                break
+        if rcid is None:
+            skipped.append(cid.rsplit("/", 1)[-1][:-3])
+            continue
+        rpath = root / rcid.lstrip("/")
+        receipt = (read(rpath, "T0")["fm"] or {}).get("receipt") if rpath.is_file() else None
+        if not isinstance(receipt, dict):
+            return False, f"{cid} is unanchorable — the receipt its gate cites, {rcid}, is gone", [], [], []
+        digest = receipt.get("scope_digest") or []
+        if not digest or not all(isinstance(d, dict) and d.get("path") and d.get("blob") for d in digest):
+            return False, f"{cid} is unanchorable — its receipt {rcid} carries no content digest", [], [], []
+        held = _tree_blobs(repo, tree, [d["path"] for d in digest])
+        for d in digest:
+            want = str(d["blob"]).replace("sha1:", "", 1)
+            got = held.get(str(d["path"]))
+            if got != want:
+                return (False, f"{cid} verified {d['path']} at {want}, the tag's tree holds "
+                               f"{got or 'nothing at that path'}", [], [], [])
+        receipts.append(rcid)
+    # A tree and no receipts is a label, not an anchor (A6, E10): name what kept it empty.
+    if not receipts:
+        why = (f"no member anchors — not done: {', '.join(not_done)}" if not_done else
+               "no member anchors — the milestone has no member Task with a closing gate" if members else
+               "no member anchors — the milestone has no member Task")
+        return False, why, [], [], []
+    return True, "", receipts, skipped, not_done
+
+
+def release(root, tag: str, milestones: list, by: str, artifact: str = None, build: str = None) -> tuple:
+    """`add release <tag> --milestone m …` — bind a tag's tree to the receipts that verified it.
+
+    Appends `{ act: release, tag, tree, receipts }` to each named DONE milestone after proving,
+    with READ-ONLY git (`rev-parse`, `ls-tree` — never `tag`, `push`, `publish`: R:OUTWARD), that
+    the tag's tree holds every scope blob the members' gated receipts recorded (R:UNANCHORED
+    otherwise). `--artifact` and `--build` are recorded verbatim when handed and never verified
+    (R:PROVENANCEJUDGED): provenance is the pipeline's to produce and consume. `(stamps, note)`.
+    """
+    root = Path(root)
+    graph = scan(root)
+
+    def refuse(why: str, fix: str) -> tuple:
+        return None, f"cannot release `{tag}` — {why}\nnext: {fix}"
+
+    tree = _tag_tree(root.parent, tag)
+    if not tree:
+        return refuse(f'git resolves no tree for `{tag}` -> "R:NOSUCHTAG"',
+                      "git tag -l — the tag is the human's to cut; release records one that exists")
+    targets = []
+    for m in milestones:
+        mcid = m if m.startswith("/") else f"/milestones/{m}.md"
+        node = graph.get(mcid)
+        if node is None:
+            return refuse(f"no such milestone: {m}", "add status --all")
+        fm = node["fm"] or {}
+        if fm.get("type") != "Milestone":
+            return refuse(f"{mcid} is not a Milestone", "add release <tag> --milestone <milestone>")
+        if fm.get("status") not in ("done", "archived"):
+            return refuse(f'{mcid} is `{fm.get("status") or "—"}`, not done -> "R:NOTDONE"',
+                          f"add milestone-done {m.rsplit('/', 1)[-1].removesuffix('.md')}, then add release {tag}")
+        ok, detail, receipts, skipped, not_done = _anchor(root, graph, mcid, tree)
+        if not ok:
+            return refuse(f'{detail} -> "R:UNANCHORED"',
+                          "cut the tag on the tree the receipts observed, or re-run and re-gate the task on this tree")
+        targets.append((mcid, receipts, skipped, not_done))
+    stamps = []
+    for mcid, receipts, skipped, not_done in targets:
+        extra = "".join([f', artifact: "{_oneline(artifact)}"' if artifact else "",
+                         f', build: "{_oneline(build)}"' if build else ""])
+        stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: release, authority: process, '
+                 f'tag: "{_oneline(tag)}", tree: {tree}, receipts: "{",".join(receipts)}"{extra} }}')
+        _, err = _transition(root, mcid, appends=[("verified", stamp)])
+        if err:
+            return None, err + "\nnext: add status"
+        stamps.append((mcid, receipts, skipped, not_done))
+    lines = []
+    for mcid, receipts, skipped, not_done in stamps:
+        slug = mcid.rsplit("/", 1)[-1][:-3]
+        # The note is what did NOT anchor; the stamp is what did (third T2 refute, E11).
+        lines.append(f"release recorded on {slug}: {tag} → tree {tree[:12]} · anchored by "
+                     f"{len(receipts)} receipt{'' if len(receipts) == 1 else 's'}"
+                     + (f" · skipped (no receipt): {', '.join(skipped)}" if skipped else "")
+                     + (f" · not anchored (not done): {', '.join(not_done)}" if not_done else ""))
+    return stamps, "\n".join(lines) + "\nnext: add status --all"
 
 
 def fresh(receipt: dict, root) -> tuple:
