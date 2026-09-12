@@ -81,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--milestone")
     s.add_argument("--scope", action="append",
                    help="paths — repeat the flag and/or comma-separate; occurrences append")
+    s.add_argument("--supersedes", metavar="REF", help="the closed node this one succeeds — a slug or a cid (R:PHANTOMPREDECESSOR)")
 
     s = sub.add_parser("brief", help="the composed XML prompt for the active beat")
     s.add_argument("ref")
@@ -264,7 +265,8 @@ def dispatch(args, run_cmd) -> int:
         return 0
 
     if args.verb == "new":
-        fields = {k: getattr(args, k) for k in ("title", "goal", "depth", "sensitivity", "kind", "milestone")
+        fields = {k: getattr(args, k)
+                  for k in ("title", "goal", "depth", "sensitivity", "kind", "milestone", "supersedes")
                   if getattr(args, k) is not None}
         if args.scope is not None:
             # `action="append"` makes each occurrence a list entry; commas expand in place,

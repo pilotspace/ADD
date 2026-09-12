@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "2d3b9d1d9a9880dd5bd22c549e7f70cb3d928205a1e0e56c8987cc5ea0e288cd"  # re-aimed @ escape-with-prevention: the MERGE refuses a severed escape tail rather than dropping it into main — one message ADDED, none reworded (E48). prior: 3e67033d… (same task, fold's severed-tail refusal)
-MESSAGE_COUNT = 123  # re-aimed @ escape-with-prevention: the join severed-tail refusal added. prior: 122
+MESSAGE_DIGEST = "8c07c98869e265cc1da2684af360d35d0ff70ab2ff92abd56786a4bdc9bdfddd"  # re-aimed @ successor-not-reopen: `reopen` refuses inside a closed milestone and `new --supersedes` refuses a predecessor that resolves to nothing — two messages ADDED, none reworded. prior: 2d3b9d1d… (escape-with-prevention, the merge's severed tail)
+MESSAGE_COUNT = 125  # re-aimed @ successor-not-reopen: R:CLOSEDHISTORY and R:PHANTOMPREDECESSOR added. prior: 123
 
 
 def _message_digest() -> tuple:

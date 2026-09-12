@@ -81,6 +81,25 @@ def released(tmp_path):
     return tmp_path, bundle, mcid, t
 
 
+
+def _reopen_in_order(bundle, mcid, cid, to="build", reason="unmet"):
+    """`reopen` through the order successor-not-reopen made legal (R:CLOSEDHISTORY refuses a reopen
+    inside a CLOSED milestone). The state these checks are about — a member reopened AFTER its
+    closing gate, in a milestone that is done by release time — is unchanged; only the order that
+    reaches it is: reopen while the milestone is still active, then close it again."""
+    p = bundle / mcid.lstrip("/")
+    was = (add.read(p, "T2")["fm"] or {}).get("status")
+    for status in ("active", was):
+        if status == "active":
+            n = add.read(p, "T2")
+            add.write(p, f"---\n{add.set_key(n['raw'], 'status', 'active')}\n---\n{n['body']}")
+            out = add.reopen(bundle, cid, to, reason)
+        else:
+            n = add.read(p, "T2")
+            add.write(p, f"---\n{add.set_key(n['raw'], 'status', status)}\n---\n{n['body']}")
+    return out
+
+
 def _stamps(bundle, cid):
     return [s for s in add.scan(bundle)[cid]["fm"]["verified"] if s.get("act") == "release"]
 
@@ -235,7 +254,7 @@ def test_anchor_is_the_closing_gate_not_a_later_finding(released):
 def test_empty_anchor_refuses_and_names_the_not_done(released):
     """covers: M3, A6, E10 — a reopened-only or memberless milestone refuses by name, never `0 receipts`."""
     root, bundle, mcid, t = released
-    assert add.reopen(bundle, t, "build", "unmet")[0]
+    assert _reopen_in_order(bundle, mcid, t)[0]
     stamps, note = add.release(bundle, "v1", ["m"], by="Tin")
     assert stamps is None and "R:UNANCHORED" in note and "/tasks/t.md" in note and "build" in note, note
     e, _ = add.new(bundle, "Milestone", "e", title="e", goal="nothing")
@@ -248,7 +267,7 @@ def test_success_note_names_not_done_members(released):
     """covers: M3, A6, E11 — found by the third T2 refute: the success path dropped the not-done list."""
     root, bundle, mcid, t = released
     u = _done_task(root, bundle, "u")
-    assert add.reopen(bundle, u, "build", "unmet")[0]
+    assert _reopen_in_order(bundle, mcid, u)[0]
     stamps, note = add.release(bundle, "v1", ["m"], by="Tin")
     assert stamps, note
     assert "not anchored" in note and "/tasks/u.md (build)" in note, f"the reopened member was not named: {note!r}"
@@ -258,7 +277,7 @@ def test_success_note_names_not_done_members(released):
 def test_closing_gate_must_postdate_the_reopen(released):
     """covers: M3, E12 — a reopened-then-hand-marked member is skipped, never anchored on the reset verdict."""
     root, bundle, mcid, t = released
-    assert add.reopen(bundle, t, "build", "unmet")[0]
+    assert _reopen_in_order(bundle, mcid, t)[0]
     p = bundle / t.lstrip("/")
     n = add.read(p, "T2")
     add.write(p, f"---\n{add.set_key(n['raw'], 'status', 'done')}\n---\n{n['body']}")

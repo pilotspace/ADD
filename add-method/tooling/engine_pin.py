@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "a82752503103fbf91fba12ea087d5d8e"  # re-aimed @ escape-with-prevention: a stranded escape tail is refused wherever the wrap falls and the MERGE asks what fold asks, so a severed escape is never laundered into main — thirty-four T2 founds. prior: same task, the marker is read however it is cased
+ENGINE_MD5 = "e198dbf485242a6ba1a53354fe6974fd"  # re-aimed @ successor-not-reopen: a done task inside a closed milestone is SUPERSEDED, never reopened (R:CLOSEDHISTORY), and `new --supersedes` resolves the predecessor or refuses (R:PHANTOMPREDECESSOR). prior: same branch, escape-with-prevention
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "d2583eb8d42c4f2336c4f7e37a58ccc8"  # re-aimed @ escape-with-prevention: learn --escape/--why-missed/--prevention. prior: 775585d7… @ release-stamp
+ENGINE_PKG_MD5 = "6bb27c137985b21bcd6b9ebe76aa4376"  # re-aimed @ successor-not-reopen: `new --supersedes REF`. prior: d2583eb8… @ escape-with-prevention

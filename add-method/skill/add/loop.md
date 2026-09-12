@@ -82,8 +82,8 @@ When the goal is genuinely met, close deliberately:
 When a deepened verify finds a criterion unmet on a task already `done`, `add reopen <task> --to
 <beat> --reason "..."` returns it to the flow with a recorded reason and a reset gate — fired by
 this loop's judgment, not the engine's. A reopen fires while the milestone is still **active** (the
-goal-gate held it open). The one residual — reopening a task inside an already-closed milestone — is
-surfaced by `add status --check` as incoherent and resolved by hand for now.
+goal-gate held it open). Inside a `done` or `archived` milestone it is REFUSED (R:CLOSEDHISTORY):
+succeed it instead — `add new Task <slug>-2 --supersedes /tasks/<slug>.md` keeps the closed record.
 
 <constraints>
 - **Goal-gated close** — never close on tasks-done; the exit-criteria boxes are the only release.

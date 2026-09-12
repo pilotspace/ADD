@@ -262,8 +262,8 @@ refines
 
 One term, because one term is what this bundle's corpus earns. A vocabulary is admitted a term
 at a time, and the bar is a **live instance in the same change that adds it** — not a plausible
-use. Three of the seven edge keys above (`tasks`, `relates_to`, `supersedes`) have zero live uses
-in the bundle that defines them; that is the measured cost of admitting a term on plausibility.
+use. `supersedes` earned its writer and its reader in 3.7 — `new --supersedes` resolves the
+predecessor and `reopen` names the form; `tasks` and `relates_to` still have zero live uses.
 
 An unrecognised rel is *recorded* (`unknown_rel`, `info`), never rejected — law 3, exactly as an
 unrecognised `type:` is. Recording it does **not** suppress the entry's target: the containment

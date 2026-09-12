@@ -336,6 +336,10 @@ def write(path: Path, text: str) -> None:
 
 EDGE_KEYS = ("depends_on", "needs", "tasks", "milestone", "relates_to", "task", "supersedes")
 
+# A milestone whose history is PUBLISHED: its goal-gate answered, its exit boxes checked. Named
+# once, so `reopen` and any later reader ask one list ("shipped" is a release word, not a close).
+CLOSED_MILESTONE_STATES = ("done", "archived")
+
 # The SECOND edge family (FORMAT §3.2). `relations:` carries typed edges between CONCEPTS —
 # `<source delta id> <rel> <target ref>` — where `EDGE_KEYS` carries untyped edges between NODES.
 #
@@ -2276,6 +2280,25 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     # accepted and `doctor` reported no findings, so the task silently lost its lens for life.
     # Absence stays legal: `kind:` is optional, and a missing value is not an unreadable one
     # -> "R:SILENT_KIND".
+    # The THIRD slot `new` judges: `supersedes:` is the edge that carries closed history forward,
+    # and an edge to a node that does not exist is worse than no edge — `show` renders it
+    # `— unresolved` and the successor's own provenance is a claim nobody can follow. Resolved
+    # HERE, so the key holds a cid whatever the author typed (a bare slug or an address), which is
+    # what `edges()` and `neighborhood()` already assume of every EDGE_KEYS value
+    # -> "R:PHANTOMPREDECESSOR".
+    sup = fields.get("supersedes")
+    if sup not in (None, "", []):
+        landed = []
+        for ref in (sup if isinstance(sup, list) else [sup]):
+            target, _ = resolve_ref(root, str(ref))
+            if target is None or "#" in target:
+                return None, (f"`--supersedes {ref}` resolves to no node — a successor that cannot "
+                              f'name its predecessor records no history at all -> "R:PHANTOMPREDECESSOR"'
+                              f"\nnext: add status   (it lists what this bundle holds), "
+                              f"then add new {node_type} {slug} --supersedes <slug or cid>")
+            landed.append(target)
+        fields["supersedes"] = landed
+
     kind = fields.get("kind")
     if kind not in (None, "") and str(kind) not in PERSONA_TASK_KINDS:
         return None, (f"unroutable kind {str(kind)!r} — no persona can declare it in `task-kinds:`, "
@@ -2660,6 +2683,21 @@ def reopen(root, cid: str, to: str, reason: str) -> tuple:
         return None, f"only a done task is reopened — {cid} is `{fm.get('status')}`\nnext: add status"
     if to not in ACTIVE_STATES:
         return None, f"`{to}` is not a beat ({' · '.join(ACTIVE_STATES)})\nnext: reopen --to build"
+    # loop.md called this "resolved by hand" and pointed at a `status --check` finding the engine
+    # never had. A reopen inside a CLOSED milestone rewrites history the goal-gate already
+    # published: the milestone's exit boxes were checked against this task being done, and its
+    # `verified[]` carries a PASS that the close depended on. The successor form keeps both —
+    # the old node stands untouched, the new one names it -> "R:CLOSEDHISTORY".
+    ms_ref = fm.get("milestone")
+    ms_cid, _ = resolve_ref(root, str(ms_ref)) if ms_ref not in (None, "") else (None, "")
+    ms_status = str(((scan(root).get(ms_cid or "") or {}).get("fm") or {}).get("status") or "")
+    if ms_status in CLOSED_MILESTONE_STATES:
+        slug = cid.rsplit("/", 1)[-1][:-3]
+        return None, (f"cannot reopen `{cid}` — its milestone {ms_cid} is `{ms_status}`, and the close "
+                      f"that published it counted this task done: reopening rewrites history a goal-gate "
+                      f'already answered for -> "R:CLOSEDHISTORY"'
+                      f"\nnext: add new Task {slug}-2 --supersedes /tasks/{slug}.md --milestone "
+                      f"<an open milestone>   (the old node, its receipts and its PASS stand)")
     # a stamp is a pre-formatted ABF flow-map STRING, not a dict — a dict serialises as Python
     # repr (`{'by': …}`) and parses back with quoted keys, so `s.get("act")` would miss it.
     stamp = f'{{ by: loop, at: {_today()}, act: reopen, to: {to}, reason: "{reason}" }}'
