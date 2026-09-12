@@ -23,9 +23,9 @@ noise), and the latency of anything under load. Same definition of "correct" —
 
 ## Turn observation into the next spec delta
 
-Every defect, surprise, or new need is written as a **delta** re-entering at DIRECTION (`deltas.md`):
-tagged, evidence-carried, `open`. The AI may cluster telemetry and *draft* the delta; the production
-calls — what to roll back, what to prioritise — stay human.
+Classify every production observation: EXPECTED (no delta) · RULE_VIOLATION (a Must or Reject broke —
+`add learn --escape` with a why-missed and a prevention; it never folds unprevented) · SPEC_SILENCE (nothing
+forbade it — a delta re-entering DIRECTION as a new assumption or edge, never a Must). Rollback and priority stay human.
 
 ## The goal-gate (what holds the loop open)
 

@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "4aba26157052ade6b73ad7719d019928"  # re-aimed @ release-stamp: release · _anchor · _tag_tree · _tree_blobs (shared with _committed_to_head) · status tag suffix · show release lines · anchor = the newest CLOSING gate's receipt, after the last reopen, empty anchor refuses, the note names not-done members, row clamp (three T2 founds) · a cited receipt must be the member's own. prior: (consumers-go-stale) stamped_gives · _pins_of · needs_pins · stale_needs · consumers_of — nine T2 founds
+ENGINE_MD5 = "a82752503103fbf91fba12ea087d5d8e"  # re-aimed @ escape-with-prevention: a stranded escape tail is refused wherever the wrap falls and the MERGE asks what fold asks, so a severed escape is never laundered into main — thirty-four T2 founds. prior: same task, the marker is read however it is cased
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
-ENGINE_PKG_MD5 = "775585d7990114d53823b706b4989e9b"  # re-aimed @ release-stamp: the release parser and dispatch. prior: a6b9eb04… @ regression-floor
+ENGINE_PKG_MD5 = "d2583eb8d42c4f2336c4f7e37a58ccc8"  # re-aimed @ escape-with-prevention: learn --escape/--why-missed/--prevention. prior: 775585d7… @ release-stamp

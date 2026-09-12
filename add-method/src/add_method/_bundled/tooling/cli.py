@@ -133,6 +133,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("lens", help="ddd | sdd | udd | tdd | add (the spec it sharpens)")
     s.add_argument("lesson")
     s.add_argument("--evidence", help="the receipt or decision that caused it")
+    s.add_argument("--escape", action="store_true", help="a production escape — demands --why-missed and --prevention (R:UNCAUSED)")
+    s.add_argument("--why-missed", metavar="TEXT", help="why the bound checks did not catch it")
+    s.add_argument("--prevention", metavar="KIND → REF", help="check|monitor|method|rule → a node address or a repo file; fold refuses an escape whose ref resolves to nothing (R:UNPREVENTED)")
 
     s = sub.add_parser("check", help="mark/unmark a checklist box — records who did it")
     s.add_argument("ref")
@@ -346,7 +349,8 @@ def dispatch(args, run_cmd) -> int:
 
     if args.verb == "learn":
         lens = DD_LENS.get(args.lens.lower(), args.lens)  # 5-DD vocab → spec filename
-        ok, note = add.learn(root, lens, args.lesson, evidence=args.evidence)
+        ok, note = add.learn(root, lens, args.lesson, evidence=args.evidence, escape=args.escape,
+                             why_missed=args.why_missed, prevention=args.prevention)
         print(note)
         return 0 if ok else 1
 

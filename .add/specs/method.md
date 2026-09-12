@@ -7,12 +7,12 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 54
+delta_seq: 56
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
   - M31 refines /specs/method.md#M4
-open_deltas: 2
+open_deltas: 4
 ---
 ## Now
 how work proceeds, and what a gate costs
@@ -39,6 +39,8 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M56 · open · 2026-09-12] doctor is silent about a severed escape tail: fold and join both refuse it by name, so the verb whose job is naming what a human must repair should name it too (evidence: /tasks/escape-with-prevention.md#E48)
+- [ADD · M55 · open · 2026-09-12] with a delta's tail severed, open_delta_count counts the head as one open while deltas() returns none and calls it malformed — a third predicate for one fact, which M5 of escape-with-prevention froze against (evidence: /tasks/escape-with-prevention.md#E48)
 - [ADD · M54 · open · 2026-09-11] a value a verb interpolates into a stamp takes _oneline's discipline, and a value a verb SERIALIZES (the needs: pin string) needs the same alphabet — eight T2 reads found the pin's delimiters one character at a time; and the frontmatter BLOCK-list parser swallows the rest of the frontmatter when an item carries { or ' — filed, not fixed (the eighth read's side note) (evidence: /tasks/consumers-go-stale.d/runs/21.md)
 - [ADD · M53 · open · 2026-09-11] The orchestrator followed the red suite's own output into the build and recorded six receipts on an UNFROZEN node before freezing; run records on any node and only the gate refuses R:UNSEALED, so the T2 advisor was the first reader to notice. Take the beat from add status, never from the last command's output (evidence: /tasks/regression-floor.md)
 - [ADD · M52 · folded · 2026-09-10→2026-09-11] A section the format PROMISES a writer for is a section nobody writes until a guard demands it: EVIDENCE and LESSONS were skipped by the placeholder guard because 'the run and the close fill them', and 88/113 done tasks carried the scaffold. Make it a view of the record (verb writes its keyed line, sync backfills) and pin it with a live-bundle count. (evidence: /tasks/evidence-and-lessons-are-views.md)

@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "7d81bd4a4775b4dfe2218d0d181bb09dd3dae01bed47a0a589a9521a614745b7"  # re-aimed @ release-stamp: two refusal messages join with `release()` (NOSUCHTAG, NOTDONE/UNANCHORED) — no existing message reworded. prior: 1c319f90… @ regression-floor
-MESSAGE_COUNT = 109  # re-aimed @ release-stamp: +release refusals. prior: 107 @ regression-floor
+MESSAGE_DIGEST = "2d3b9d1d9a9880dd5bd22c549e7f70cb3d928205a1e0e56c8987cc5ea0e288cd"  # re-aimed @ escape-with-prevention: the MERGE refuses a severed escape tail rather than dropping it into main — one message ADDED, none reworded (E48). prior: 3e67033d… (same task, fold's severed-tail refusal)
+MESSAGE_COUNT = 123  # re-aimed @ escape-with-prevention: the join severed-tail refusal added. prior: 122
 
 
 def _message_digest() -> tuple:

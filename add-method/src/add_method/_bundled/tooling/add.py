@@ -848,7 +848,7 @@ def _delta_ids(body: str) -> dict:
     (R:REUSEDID) and a duplicate must resolve deterministically rather than by scan order.
     """
     out = {}
-    for line in body.splitlines():
+    for line in live_lines(body):
         match = DELTA_LINE.match(line.strip())
         if not match:
             continue
@@ -859,18 +859,27 @@ def _delta_ids(body: str) -> dict:
 
 
 def _section(body: str, slug: str) -> str:
-    """The body section under the heading whose kebab-cased text is `slug`."""
+    """The body section under the heading whose kebab-cased text is `slug`.
+
+    Read through the ONE heading walker (`_headings`): this slicer deciding for itself what a
+    heading is made it a SECOND reader of the rule — fence-blind, so a heading spelled only inside
+    a fenced example opened a section, and `_prevention_resolves` consults `resolve` FIRST, so a
+    quoted `## my example` addressed a section a prevention bound to while the `- E9` beside it
+    was correctly refused (twenty-second T2 refute, E36).
+    """
     out, inside = [], False
-    for line in body.splitlines(keepends=True):
-        if line.startswith("#"):
+    for line, level, name in _headings(body):
+        # Level TWO only: M2 freezes "a deeper `###` opens none", and the authoring walk reads a
+        # `#` title and a `###` sub-heading as CONTENT of the section they sit in. This slicer
+        # opened a section for each, so a prevention naming one folded (E37).
+        if level == 2:
             if inside:
                 break
-            text = line.lstrip("#").strip().lower()
-            inside = "-".join(re.findall(r"[a-z0-9]+", text)) == slug
+            inside = "-".join(re.findall(r"[a-z0-9]+", (name or "").lower())) == slug
             continue
         if inside:
             out.append(line)
-    return "".join(out).strip()
+    return "\n".join(out).strip()
 
 
 def _is_template(value) -> bool:
@@ -882,8 +891,12 @@ def _is_template(value) -> bool:
     ref away from an authored `## GIVES` section to the placeholder above it. A slot
     nobody has filled is not an answer, so resolution falls through to the heading.
     """
-    items = value if isinstance(value, list) else [value]
-    return bool(items) and all("<" in str(i) and ">" in str(i) for i in items)
+    items = [i for i in (value if isinstance(value, list) else [value])
+             if i is not None and str(i).strip() != ""]
+    # EMPTY is unauthored too: `scope:` seeds empty and `verified:` starts `[]`, and both resolved
+    # — a prevention named a key nobody had filled and the escape folded (E37). Same law as the
+    # placeholder: a slot nobody has filled is not an answer.
+    return not items or all("<" in str(i) and ">" in str(i) for i in items)
 
 
 def resolve(graph: dict, ref: str, src: str = "") -> tuple:
@@ -1137,8 +1150,38 @@ def _last_gate_outcome(fm: dict):
 
 
 def _delta_lines(body: str) -> list:
-    """The append-only delta line-items in a spec body (deltas.md grammar begins `- [`)."""
-    return [ln for ln in body.splitlines(keepends=True) if ln.lstrip().startswith("- [")]
+    """Every delta in a spec body as ONE item — its head line plus the continuation lines the
+    grammar joins into it (`joined_deltas`), text unchanged.
+
+    Harvesting head lines alone dropped a wrapped escape's whole tail on the way into main, so a
+    delta the stream's own `fold` refused R:UNPREVENTED folded there at exit 0: the readers joined
+    the unit and the writers severed it (tenth T2 refute, E22).
+    """
+    # Membership comes from the ONE reader of it (`delta_spans`, over the live view, E47); the TEXT
+    # is harvested raw, because a delta main merely QUOTES in a fence is not one main holds and
+    # reading it as held dropped the stream's refused escape at the merge (E38). A walk of its own
+    # here was a second reader of which lines a delta holds.
+    lines = body.splitlines(keepends=True)
+    return ["".join(lines[i] for i in idx) for idx in delta_spans(lines).values()]
+
+
+def _delta_insert_at(lines: list, i: int) -> int:
+    """Where a new delta goes under the `## Deltas` heading at `lines[i]` — newest-first, but never
+    BETWEEN a delta's head and its continuation lines.
+
+    An unconditional `i + 2` spliced a new head into a wrapped delta, grafting one lesson's tail
+    onto another: the escape folded and the innocent lesson refused R:UNPREVENTED (E22).
+    """
+    marks = list(_headings(lines))
+    at = i + 1
+    while at < len(marks):
+        line, level, _ = marks[at]
+        # A fenced example is neither a delta nor the next section — the scan walks past it and the
+        # new line lands where every reader looks (E38). The next `## ` still ends the section.
+        if level == 2 or (level == 0 and DELTA_LINE.match(str(line).strip())):
+            return at
+        at += 1
+    return at
 
 
 def _delta_identity(line: str) -> str:
@@ -1150,52 +1193,100 @@ def _delta_identity(line: str) -> str:
     """
     s = line.strip()
     after = s.split("]", 1)[1] if "]" in s else s
-    return after.split("(evidence:", 1)[0].strip()
+    # The LAST marker, as every other reader of this line reads it (E10, E18): splitting at the
+    # first one truncated two different lessons to one identity, and the merge dropped both (E40).
+    return after.rsplit("(evidence:", 1)[0].strip() if "(evidence:" in after else after.strip()
 
 
-def _union_into_deltas(path: Path, incoming: list) -> bool:
-    """Append each delta line not already present, under `## Deltas` (as `learn` does). Idempotent.
+# ONE address, read the way `resolve` reads it — whitespace on either side of the `#` and all.
+# A third reader with a stricter pattern let a re-mint skip every spelling E26 blesses, and the
+# escape its stream refused folded in main (twentieth T2 refute, E34). A hit is re-emitted
+# canonical, so the merged line carries the address every reader agrees on.
+DELTA_ADDR = re.compile(r"/specs/([^/#\s]+)\.md\s*#\s*([A-Za-z0-9:_]+)")
+
+
+def _merge_deltas(root: Path, per_spec: dict) -> set:
+    """Union each stream's delta lines into main's specs. Returns the spec filenames it changed.
 
     `join` is the SECOND writer of delta lines, and the one that can mint a duplicate address.
     Streams branch from one base, so two of them mint the same next id for two different lessons;
-    this union then carries both while writing back MAIN's frontmatter, discarding the streams'
-    counters. An INCOMING line whose id is already taken here is re-minted above the high-water.
-    The line already in place never moves — ids retire in place, and a renumber would silently
-    re-point every relation aimed at them (R:RENUMBER).
+    this union carries both while writing back MAIN's frontmatter, discarding the streams' counters.
+    An incoming line whose id is already taken here is re-minted above the high-water. A line
+    already in place never moves — ids retire in place, and a renumber would silently re-point
+    every relation aimed at them (R:RENUMBER).
+
+    Two passes, because a re-mint moves an address that lines in OTHER specs may name: mint every
+    spec first, collecting one remap PER STREAM, then re-point that stream's own lines with its own
+    remap. Scoping the remap to the spec being written left a cross-lens prevention naming the id
+    it used to have; applying it to every fresh line re-pointed a second stream's tail whose own id
+    never moved (nineteenth T2 refute, E33).
     """
-    node = read(path, "T2")
-    lines = node["body"].splitlines(keepends=True)
-    present = {ln for ln in lines if ln.lstrip().startswith("- [")}
-    fresh = [ln for ln in dict.fromkeys(incoming) if ln not in present]  # dedupe incoming, drop known
-    if not fresh:
-        return False
-    taken = set(_delta_ids_in(lines))
-    seq = _delta_high_water(node["raw"], lines)
-    letter, remapped = _delta_letter(path.stem), []
-    for line in fresh:
-        m = DELTA_LINE.match(line.strip())
-        did = parse_delta_head(m.group(1))["id"] if m else None
-        if did and did in taken:
-            seq += 1
-            fresh_id = f"{letter}{seq}"
-            line = line.replace(f"· {did} ·", f"· {fresh_id} ·", 1)
-            did = fresh_id
-        if did:
-            taken.add(did)
-            tail = re.search(r"(\d+)\Z", did)
-            if tail:
-                seq = max(seq, int(tail.group(1)))
-        remapped.append(line)
-    fresh = remapped
-    for i, line in enumerate(lines):
-        if line.startswith("## Deltas"):
-            at = i + 2 if i + 1 < len(lines) else i + 1
+    minted, remaps, touched = {}, {}, set()
+    for name, entries in per_spec.items():
+        path = root / "specs" / name
+        node = read(path, "T2")
+        lines = node["body"].splitlines(keepends=True)
+        present = set(_delta_lines(node["body"]))
+        seen, fresh = set(), []
+        for ix, line in entries:                       # dedupe incoming, drop what main already holds
+            if line not in present and line not in seen:
+                seen.add(line)
+                fresh.append((ix, line))
+        if not fresh:
+            continue
+        taken = set(_delta_ids_in(lines))
+        seq = _delta_high_water(node["raw"], lines)
+        letter, out = _delta_letter(path.stem), []
+        for ix, line in fresh:
+            m = DELTA_LINE.match(line.strip())
+            did = parse_delta_head(m.group(1))["id"] if m else None
+            if did and did in taken:
+                seq += 1
+                fresh_id = f"{letter}{seq}"
+                line = line.replace(f"· {did} ·", f"· {fresh_id} ·", 1)
+                remaps.setdefault(ix, {})[f"/specs/{path.stem}.md#{did}"] = f"/specs/{path.stem}.md#{fresh_id}"
+                did = fresh_id
+            if did:
+                taken.add(did)
+                tail = re.search(r"(\d+)\Z", did)
+                if tail:
+                    seq = max(seq, int(tail.group(1)))
+            out.append((ix, line))
+        minted[name] = (out, seq)
+
+    for name, (entries, seq) in minted.items():
+        path = root / "specs" / name
+        node = read(path, "T2")
+        lines = node["body"].splitlines(keepends=True)
+        # Substituted in ONE pass over the whole address, so a chain of re-mints cannot re-point a
+        # line twice and a stream only ever follows its OWN moves.
+        fresh = [DELTA_ADDR.sub(
+            lambda m, r=remaps.get(ix, {}): r.get(f"/specs/{m.group(1)}.md#{m.group(2)}", m.group(0)), line)
+            for ix, line in entries]
+        i = heading_index(lines, "deltas")
+        if i >= 0:
+            at = _delta_insert_at(lines, i)
             lines[at:at] = fresh
-            break
-    else:
-        lines += ["\n## Deltas\n\n"] + fresh
-    write(path, f"---\n{set_key(node['raw'], 'delta_seq', str(seq))}\n---\n{''.join(lines)}")
-    return True
+        else:
+            lines += ["\n## Deltas\n\n"] + fresh
+        merged = "".join(lines)
+        # Every other delta writer recomputes the counter from the body it wrote; the merge did
+        # not, so `status` reported one open delta where `deltas` listed two (E41).
+        raw = set_key(set_key(node["raw"], "delta_seq", str(seq)), "open_deltas", str(open_delta_count(merged)))
+        write(path, f"---\n{raw}\n---\n{merged}")
+        touched.add(name)
+    return touched
+
+
+def _admits(fm: dict) -> bool:
+    """Does this stream node contribute to a join? Gated, and not HARD-STOP.
+
+    ONE reader: the pre-flight asked only whether a node was GATED while the merge asks this, and
+    they disagreed on exactly one input — a HARD-STOPped stream, the security case, refused a whole
+    wave's join over a spec it would never touch (thirty-first T2 refute, E45).
+    """
+    gated = any(isinstance(st, dict) and st.get("act") == "gate" for st in ((fm or {}).get("verified") or []))
+    return gated and _last_gate_outcome(fm or {}) != "HARD-STOP"
 
 
 def join(root, stream_dirs) -> tuple:
@@ -1222,10 +1313,46 @@ def join(root, stream_dirs) -> tuple:
                           f'its index, and this path does not -> "R:PHANTOMSTREAM"'
                           f"\nnext: check the path, then add join <stream>/.add")
 
+    # A writer must be able to LAND before anything is copied: main's spec must be readable, or a
+    # carried lesson lands where no reader looks and the join reports success (E43). Checked here,
+    # with the other all-or-nothing checks, because a refusal after the copy is the partial merge.
+    for d in stream_dirs:
+        # …only for a stream that can CONTRIBUTE: one with no ADMITTED node writes nothing, and
+        # refusing over a spec the join would never touch is a refusal nobody can act on (E44).
+        # The same predicate the merge applies — asking "is it gated" while the merge asks "gated
+        # and not HARD-STOP" made one rejected stream, the security case, block a whole wave (E45).
+        if not any(_admits(read(tp, "T2")["fm"] or {})
+                   for tp in sorted((Path(d) / "tasks").glob("*.md"))):
+            continue
+        for sp in sorted((Path(d) / "specs").glob("*.md")):
+            # The STREAM's spec first: that is where the escape lives, and a fence there makes
+            # `_delta_lines` yield [] — indistinguishable from a stream that filed nothing, so the
+            # merge reported success and the refused escape was gone (thirty-first refute, E45).
+            for side, node in (("the stream's ", read(sp, "T2")),
+                               ("", read(root / "specs" / sp.name, "T2")
+                                if (root / "specs" / sp.name).is_file() else None)):
+                if node is None or (side == "" and not _delta_lines(read(sp, "T2")["body"])):
+                    continue
+                why = unreadable_spec(node)
+                if why:
+                    return None, (f"cannot join — {side}specs/{sp.name} would not be readable at the line: "
+                                  f'{why}, so a carried lesson would be lost -> "R:UNREADABLE"'
+                                  f"\nnext: add doctor   (it names the file), then add join {d}")
+                # `_delta_lines` rebuilds only the lines `delta_spans` HOLDS, so a severed tail is
+                # dropped at the merge and main folds a laundered, marker-less delta at exit 0 —
+                # the escape its own stream refused (thirty-fourth T2 refute, E48). The merge asks
+                # what `fold` asks, on both sides, before it copies anything.
+                stray = orphan_tail(node["body"])
+                if stray:
+                    return None, (f"cannot join — {side}specs/{sp.name} carries `{stray[:60]}`, an escape's "
+                                  f'tail that belongs to no delta, and the merge would drop it -> "R:UNPREVENTED"'
+                                  f"\nnext: join the tail back onto its delta with a space or a tab, "
+                                  f"then add join {d}")
+
     merged, skipped, specs_touched, conflicts = [], [], set(), []
     incoming = {}  # spec filename -> delta lines contributed by admitted streams (gathered, then partitioned)
 
-    for d in stream_dirs:
+    for stream_ix, d in enumerate(stream_dirs):
         d = Path(d)
         admitted = False
         for tp in sorted((d / "tasks").glob("*.md")):
@@ -1241,6 +1368,9 @@ def join(root, stream_dirs) -> tuple:
                 skipped.append({"slug": slug, "reason": "HARD-STOP"})
                 continue  # R:MERGEHARDSTOP — a rejected stream's node never enters main
             # PASS / RISK-ACCEPTED: copy the node + its receipts byte-for-byte (lossless, no shutil).
+            # `add init` writes no `tasks/`, so a first join raised FileNotFoundError with no `R:`
+            # code — every exit is a refusal or a record (E24), and this one is a record (E39).
+            (root / "tasks").mkdir(parents=True, exist_ok=True)
             (root / "tasks" / tp.name).write_bytes(tp.read_bytes())
             # Provenance: a stream built under a lens (`persona:`, stamped by wave) records
             # `advised_by:` on the DELIVERED node — audit-grade, derived from the stream, never
@@ -1260,23 +1390,25 @@ def join(root, stream_dirs) -> tuple:
         if admitted:  # only an admitted stream's lessons fold in (a HARD-STOP/dropped stream's do not)
             for sp in sorted((d / "specs").glob("*.md")):
                 if (root / "specs" / sp.name).is_file():
-                    incoming.setdefault(sp.name, []).extend(_delta_lines(read(sp, "T2")["body"]))
+                    incoming.setdefault(sp.name, []).extend(
+                        (stream_ix, ln) for ln in _delta_lines(read(sp, "T2")["body"]))
 
     # Partition the gathered deltas per spec: a lesson filed with two different dispositions across
     # streams is a CONFLICT (flag it, insert neither variant); everything else unions as before.
-    for name, lines in incoming.items():
+    clean_per_spec = {}
+    for name, entries in incoming.items():
         groups = {}
-        for ln in lines:
-            groups.setdefault(_delta_identity(ln), []).append(ln)
+        for ix, ln in entries:
+            groups.setdefault(_delta_identity(ln), []).append((ix, ln))
         clean = []
         for ident, variants in groups.items():
-            distinct = list(dict.fromkeys(variants))
+            distinct = list(dict.fromkeys(ln for _, ln in variants))
             if len(distinct) > 1:
                 conflicts.append({"spec": name, "identity": ident, "variants": distinct})
             else:
-                clean.append(distinct[0])
-        if _union_into_deltas(root / "specs" / name, clean):
-            specs_touched.add(name)
+                clean.append(variants[0])
+        clean_per_spec[name] = clean
+    specs_touched |= _merge_deltas(root, clean_per_spec)
 
     load(root)  # M4: regenerate graph.json from the merged files — never copied from a stream
     result = {"merged": merged, "skipped": skipped, "specs": sorted(specs_touched), "conflicts": conflicts}
@@ -4364,18 +4496,80 @@ class Delta(tuple):
                 f"valid_to={self.valid_to!r})")
 
 
+def joined_deltas(body) -> dict:
+    """`{index of a delta's head line: the whole delta's text}` — the grammar's own unit.
+
+    deltas.md: "a long learning may wrap onto continuation lines — they join into ONE delta".
+    Every reader was per-physical-line, so a wrapped tail carried a prevention the fold rung could
+    not see (sixth T2 refute, E17) and the lister called the grammar's own wrap malformed while
+    the counter counted it (seventh T2 refute, E19). One unit, one answer. Takes a body or its
+    lines; the keys are indices into those lines, so a caller can retag the head it matched.
+    """
+    lines = live_lines(body)
+    return {head: " ".join(str(lines[i]).strip() for i in idx)
+            for head, idx in delta_spans(lines).items()}
+
+
+def delta_spans(body) -> dict:
+    """`{index of a delta's head line: the indices of EVERY line the grammar joins into it}` — the
+    ONE reader of which lines belong to a delta.
+
+    `joined_deltas` answers what a delta SAYS; this answers which lines it HOLDS, and a second
+    walk would be a second reader of one fact. The membership is what `orphan_tail` needs (E47).
+    """
+    lines = live_lines(body)
+    out, head = {}, None
+    for i, line in enumerate(lines):
+        stripped = str(line).strip()
+        if DELTA_LINE.match(stripped):
+            head, out[i] = i, [i]
+        # ANY whitespace indents a continuation — an NBSP-indented tail once dropped out of the
+        # unit entirely and the escape folded at exit 0 (tenth T2 refute's sibling, E23).
+        elif head is not None and stripped and str(line)[:1].isspace():
+            out[head].append(i)
+        else:
+            head = None
+    return out
+
+
+def orphan_tail(body) -> str:
+    """The first line that carries an escape's TAIL but belongs to no delta, or `""`.
+
+    A9: a line-boundary character is whitespace AND a split, so indenting a continuation with one
+    severs the tail from its head — the head stops being an escape, and it folds at exit 0 beside
+    a dangling prevention while `deltas` still prints the tail. No reader can rejoin what the text
+    itself splits, so the refusing reading wins (M2): a tail that belongs to no delta is a
+    MALFORMED delta, not prose (thirty-third T2 refute, E47).
+    """
+    lines = live_lines(body)
+    # The WRITER's own answer to where the deltas are (`heading_index`), so the reader that refuses
+    # and the writer that appends never disagree about the span (E38). Outside it, a tail clause is
+    # prose a spec is entitled to write about itself (A10).
+    start = heading_index(lines, "deltas")
+    if start < 0:
+        return ""
+    end = next((j for j, (_, level, _) in enumerate(_headings(lines))
+                if j > start and level == 2), len(lines))
+    held = {i for idx in delta_spans(lines).values() for i in idx}
+    for i in range(start + 1, end):
+        text = str(lines[i]).strip()
+        if i not in held and TAIL_MARK.search(mask_spans(text)):
+            return text
+    return ""
+
+
 def open_delta_count(body: str) -> int:
     """How many deltas in a spec body are still OPEN. The ONE oracle behind the counter.
 
-    Reads through `parse_delta_head` like every other consumer, and applies the SAME predicate
-    `fold` applies when it decides what to retag — so the number `status` reports and the set
-    `fold` acts on can never disagree by construction. A malformed head (`code` set) is not
-    counted: it is a `doctor` finding of its own, and counting it would put an unreadable line
-    into a total a human is asked to drain.
+    Reads through `parse_delta_head` like every other consumer, over the same joined unit, and
+    applies the SAME predicate `fold` applies when it decides what to retag — so the number
+    `status` reports and the set `fold` acts on can never disagree by construction. A malformed
+    head (`code` set) is not counted: it is a `doctor` finding of its own, and counting it would
+    put an unreadable line into a total a human is asked to drain.
     """
     n = 0
-    for line in body.splitlines():
-        m = DELTA_LINE.match(line.strip())
+    for text in joined_deltas(body).values():
+        m = DELTA_LINE.match(text)
         if m:
             rec = parse_delta_head(m.group(1))
             if rec["code"] is None and rec["status"] == "open":
@@ -4406,7 +4600,7 @@ def _delta_letter(lens: str) -> str:
 def _delta_ids_in(lines) -> list:
     """Every id already spelled in these body lines — the floor no mint may land on."""
     out = []
-    for raw in lines:
+    for raw in live_lines(lines):
         m = DELTA_LINE.match(str(raw).strip())
         if m:
             did = parse_delta_head(m.group(1))["id"]
@@ -4434,7 +4628,323 @@ def _delta_high_water(raw_fm: str, lines) -> int:
     return high
 
 
-def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
+PREVENTION_KINDS = ("check", "monitor", "method", "rule")
+# Kind-agnostic on purpose: a malformed kind, arrow or ref is READ and refused, never skipped
+# (third T2 refute, E13 — a kind-anchored reader let `alert → …` degrade to "no prevention").
+# The LABEL is read case-insensitively — `· Prevention:` is a malformed clause, not an absent
+# one (E13 one level up) — while the KIND stays case-sensitive, as E13 binds it.
+PREVENTION_TAIL = re.compile(r"·\s*prevention\s*:\s*([^·\n]*?)\s*(?=·|$)", re.M | re.I)
+
+
+CODE_SPAN = re.compile(r"`[^`\n]*`")
+# A marker is a marker however it is punctuated: `· escape:` once degraded to not-an-escape
+# and folded beside a dangling prevention — E13's defect one level up (ninth T2 refute, E21).
+# And however it is CASED: `re.I` here and nowhere else made `· Escape` not-an-escape while the
+# clause one level down read `· Prevention:` as malformed, so one byte folded a dangling escape
+# and bound a decision at exit 0 (thirty-third T2 refute, E47). Every site that asks "is this a
+# marker" — the reader, `learn`'s value guard, `--bind`'s — asks THIS object, or the tail-forgery
+# guards go one way and the rung the other (E14, A8).
+ESCAPE_MARK = re.compile(r"·\s*escape\b", re.I)
+
+# An escape's TAIL: what a delta's continuation CARRIES, wherever in the line it falls. Anchoring
+# this at `^` enumerated the shape the read that named it produced — a wrap immediately before
+# `· escape` — so wrapping one word earlier, the shape E17 blesses, left the orphan starting with
+# a word and the head folded at exit 0 (thirty-fourth T2 refute, E48). Read inside `## Deltas` and
+# nowhere else (A10), so prose that MENTIONS a clause blocks no fold.
+TAIL_MARK = re.compile(r"·\s*(?:escape\b|prevention\s*:|why-missed\s*:)", re.I)
+
+
+def balance_spans(value: str) -> str:
+    """`value` with an unpaired backtick closed, so its code spans can never pair with a NEIGHBOUR's.
+
+    `learn` interpolates several values into one delta and masks each ALONE; the reader masks the
+    whole line. One stray backtick in the lesson and one in the why-missed therefore paired across
+    the boundary in the reader's view and swallowed the engine's own `· escape` marker — the tail
+    was written, printed by `deltas`, and invisible to the rung (eighth T2 refute, E20). Balanced
+    values make the two views the same view, the way E15 makes every value one physical line.
+    """
+    value = str(value)
+    return value + "`" if value.count("`") % 2 else value
+
+
+def mask_spans(text) -> str:
+    """`text` with the INSIDE of every backticked span replaced character-for-character by `x`.
+
+    Length-preserving, so an offset into the mask is an offset into the original. Quoting the
+    grammar in a code span is how prose writes ABOUT it, and the writer and the reader must agree
+    on that or one refuses what the other blessed (seventh T2 refute, E18).
+    """
+    return CODE_SPAN.sub(lambda m: "`" + "x" * (len(m.group(0)) - 2) + "`", str(text or ""))
+
+
+def _prevention_of(text: str):
+    """The prevention clauses of an ESCAPE's tail — the text from the `· escape` marker on — as a
+    list of `(kind, ref, ok)`; None when the delta is not an escape.
+
+    Anchored on the MARKER, never on an evidence clause, and read through ONE view of the text: `learn` writes `· escape` and refuses it
+    inside the lesson and inside the evidence, so in a delta the engine wrote it appears once and
+    is the engine's own. Keying on the LAST `(evidence:` let a continuation line open a second
+    evidence channel and push the tail out of view (seventh T2 refute, E18). A plain lesson
+    quoting the grammar is never an escape (E9); an escape with no clause at all returns
+    `[("", "", False)]`, because a missing prevention is not "no prevention" (E13).
+    """
+    raw = str(text or "")
+    # An odd backtick count says the spans do not pair as written — a hand edit the writer never
+    # balanced. The RAW view is then the one that REFUSES, and it decides every clause, not only
+    # the marker: a stray backtick AFTER the marker masked one clause of several and the delta
+    # folded beside a dangling ref (twelfth T2 refute, E25). `learn` balances what it writes, so
+    # an even count is the author's own pairing and a clause inside a closed span is prose (E18).
+    view = raw if raw.count("`") % 2 else mask_spans(raw)
+    if ESCAPE_MARK.search(view) is None:
+        return None
+    # The marker GATES the read; it does not bound it. Scanning from `mark.start()` made the
+    # clause's POSITION decide whether it counts, so one written before the marker — which
+    # `--evidence` could put there — was folded past unread, and a resolving one written before it
+    # was reported absent (ninth T2 refute, E21). A5: the reader looks for `prevention:` anywhere
+    # in the delta, never at a position; M2: every clause it finds must resolve.
+    out = []
+    for hit in PREVENTION_TAIL.finditer(view):
+        clause = raw[hit.start(1):hit.end(1)].strip()
+        m = re.match(r"(check|monitor|method|rule)\s*(?:→|->)\s*(\S.*)$", clause)
+        # A label with nothing after it is a clause the author WROTE: reporting it as no
+        # clause at all names the wrong thing to fix (thirteenth T2 refute, E26).
+        out.append((m.group(1), m.group(2).strip(), True) if m
+                   else (clause or "<nothing after the label>", "", False))
+    return out or [("", "", False)]
+
+
+AUTHORED_SECTIONS = ("RULES", "ASSUMPTIONS", "EDGES", "CHECKS", "OBSERVES", "FINDINGS", "PLAN")
+
+FENCE_RUN = re.compile(r"(`{3,}|~{3,})(.*)$")
+LIST_MARKER = re.compile(r"(?:[-*+]|\d{1,9}[.)])\s+")
+
+
+def _block_at(line: str) -> tuple:
+    """`(quote depth, indent in COLUMNS, the text, carried by a list marker)` — the container a
+    markdown line sits in.
+
+    A fence is a BLOCK, not a line shape: its closer must sit in the same container, and its own
+    content may quote a run without ending it. Matching shapes let an indented run close a fence
+    early and left a blockquoted fence open forever (fifteenth T2 refute, E28); measuring indent in
+    characters, and reading a list marker as mere indentation, let the fence's own content close it
+    (seventeenth T2 refute, E31). A tab is four columns, as every markdown reader counts it.
+    """
+    i, depth = 0, 0
+    while i < len(line):
+        j = i
+        while j < len(line) and line[j] in " \t":
+            j += 1
+        if j < len(line) and line[j] == ">":
+            depth, i = depth + 1, j + 1 + (1 if line[j + 1:j + 2] == " " else 0)
+            continue
+        break
+    rest, indent, listed = line[i:], 0, False
+    while True:
+        while rest[:1] in (" ", "\t"):
+            indent, rest = (indent + 4 - indent % 4 if rest[0] == "\t" else indent + 1), rest[1:]
+        m = LIST_MARKER.match(rest)
+        if not m:
+            return depth, indent, rest, listed
+        indent, rest, listed = indent + m.end(), rest[m.end():], True
+
+
+# `##` then whitespace or nothing — a heading that NAMES nothing still ends the section it
+# follows, and a bare `## ` matching no branch let the walker inherit the previous section's
+# authoring state (twenty-first T2 refute, E35). `###` is a sub-heading and opens nothing.
+HEADING_LINE = re.compile(r"(#{1,6})(?:[ \t]+(.*?))?\s*$")
+
+
+def _headings(body: str):
+    """`(line, heading level, heading text)` for every line — the ONE reader of what an ATX heading
+    IS: fence-masked, at document level, within three columns, level 0 when the line is not one.
+
+    Both the authoring walker and `_section` read through here. Each deciding for itself was the
+    *two readers of one fact* shape: `_section` saw a heading inside a fenced example and opened a
+    section for a prevention to bind, where the authoring walker refused the very same fence
+    (twenty-second T2 refute, E36).
+    """
+    # A LIST is walked as the caller split it: rebuilding it with `"\n".join(rstrip("\n"))` lost
+    # every other line boundary Python knows (\x0b \x0c \x1c \x1d \x1e \x85 \u2028 \u2029), so one such
+    # character re-split a line, every index the walkers hand back shifted by one, and `learn`
+    # spliced a head between a wrapped escape and its continuation (thirty-second T2 refute, E46).
+    lines = (str(body or "").splitlines() if isinstance(body, str)
+             else [(str(line).splitlines() or [""])[0] for line in body])
+    fence = None
+    for line in lines:
+        depth, indent, rest, listed = _block_at(line)
+        run = FENCE_RUN.match(rest)
+        # A fence lives inside the block that opened it: when the blockquote carrying it ends, so
+        # does the fence — no closer needed, and the rules after it are authored again (E29).
+        if fence and depth < fence[0]:
+            fence = None
+        if fence:
+            # The closer: the same container — a line that opens a list item opens a BLOCK and
+            # closes nothing — the same character, at least as long, alone on its line, and
+            # indented no more than three columns past its opener. Anything else is content.
+            if (run and depth == fence[0] and not listed and indent <= fence[1] + 3
+                    and run.group(1)[0] == fence[2][0] and len(run.group(1)) >= len(fence[2])
+                    and not run.group(2).strip()):
+                fence = None
+            yield line, -1, None
+            continue
+        if run and not (run.group(1)[0] == "`" and "`" in run.group(2)):
+            fence = (depth, indent, run.group(1))
+            yield line, -1, None
+            continue
+        # An ATX heading opens a section only at DOCUMENT level, at up to three columns of indent.
+        # One inside a blockquote or a list item is QUOTED: it opened the authoring section back
+        # up, and an id under `## LESSONS` folded an escape and bound a decision (E29).
+        head = HEADING_LINE.match(rest) if not (depth or listed) and indent <= 3 else None
+        yield (line, len(head.group(1)), (head.group(2) or "").strip()) if head else (line, 0, None)
+
+
+def live_lines(body) -> list:
+    """The node's lines with every FENCED line blanked — the ONE view of what text a node LIVES.
+
+    A fence quotes; it never authors. `_authored_rules` held that for rule ids, but `resolve`'s
+    THIRD fragment form read the raw body, so the same fence that refused a quoted `- E9` handed
+    over the quoted delta id beside it and the escape folded and bound a decision — and `deltas`
+    listed that example as a real open delta for a human to drain (twenty-third T2 refute, E37).
+    Takes a body or its lines and returns one line per input line, so an index still addresses the
+    caller's own line.
+    """
+    return ["" if level < 0 else line for line, level, _ in _headings(body)]
+
+
+def unreadable_spec(node) -> str:
+    """Why a writer cannot land a line in this spec, or None — the ONE reader of that question.
+
+    Three writers learned it one at a time: `learn` (E41), `fold --bind` (E42) and the merge, which
+    carries an escape BETWEEN bundles and had no guard at all — it filed a stream's refused escape
+    under a fence that never closes at exit 0, where no reader could see it (twenty-ninth T2
+    refute, E43). Asked BEFORE the write, because a join that refuses after copying a node is the
+    partial merge R:PHANTOMSTREAM forbids.
+    """
+    if node["raw"] is None:
+        return "it has no frontmatter the engine can read (a byte-order mark before the `---` hides it)"
+    # A fence still open at EOF blinds every reader past it. The sentinel is a line that can open
+    # no fence and name no heading, so it comes back masked only when one is still open.
+    if live_lines(str(node["body"]).rstrip("\n") + "\n·")[-1] == "":
+        return "a fence in it never closes, and that blinds every reader past it"
+    return None
+
+
+def heading_index(lines, slug: str) -> int:
+    """The index of the line that OPENS the `## <slug>` section, or -1 — the ONE way a WRITER finds
+    where to write.
+
+    E37 taught every reader to blank a fence and left the writers scanning raw lines, so `learn`
+    wrote a new delta INSIDE a fenced example of the grammar: filed at exit 0 and thereafter
+    invisible to `deltas`, `search`, `status` and `fold`, which is worse than folding unprevented
+    — nobody is ever asked to drain it (twenty-fourth T2 refute, E38). A writer and a reader that
+    disagree about where a section starts is the same *two readers of one fact* shape as ever.
+    """
+    for i, (_, level, name) in enumerate(_headings(lines)):
+        if level == 2 and "-".join(re.findall(r"[a-z0-9]+", (name or "").lower())) == slug:
+            return i
+    return -1
+
+
+def _authored_rules(body: str) -> str:
+    """The sections of a node where a rule is AUTHORED, fenced blocks blanked, headings canonical.
+
+    A prevention resolves to "a RULES/EDGES id whose line is AUTHORED" (M2), and an id merely
+    SPELLED under `## LESSONS` — an engine-written view — or quoted inside a fence is neither: it
+    named nothing anyone could fail on (tenth T2 refute's sibling, E23). The gate's own `rules_of`
+    and `edges_of` read through here too, so "is this id authored" has ONE reader (E30) — and the
+    heading it keeps is re-emitted at column zero, so `_section_of` slices what THIS walker
+    recognised instead of deciding again for itself (seventeenth T2 refute, E31).
+    """
+    out, keep = [], False
+    for line, level, name in _headings(body):
+        # `##` alone opens or ends an authoring section: `###` is a sub-heading and `#` a title,
+        # and both are CONTENT of the section they sit in (twenty-first T2 refute, E35). A fenced
+        # line arrives here as level 0 with nothing kept — the walker already blanked its meaning.
+        if level == 2:
+            # A heading that names nothing authors nothing — and never raises: `add fold` must
+            # exit a refusal or a record, never a traceback (E24).
+            named = (name or "").strip(":;.,").split()
+            keep = bool(named) and named[0].upper() in AUTHORED_SECTIONS
+            # CANONICAL, not verbatim: `_section_of` matches a heading exactly, so re-emitting
+            # `## RULES (frozen)` left `rules_of` and the gate seeing no Musts at all while the
+            # fold rung resolved ids under it — the same heading, two readers (E31, E41).
+            out.append(f"## {named[0].upper()}" if keep else "")
+            continue
+        out.append(line if (keep and level == 0) else "")
+    return "\n".join(out)
+
+
+def _prevention_resolves(root, ref: str) -> bool:
+    """Does a prevention ref name something the bundle or the repo holds? A bundle address (a node,
+    a frontmatter key, a heading, a delta id, or a RULES/EDGES id such as `#M3`) or a repo-relative
+    file — a `::<name>` tail names a check inside the file and is not verified (A2)."""
+    root = Path(root)
+    ref = str(ref or "").strip()
+    if ref.startswith("/"):
+        graph = scan(root)
+        cid, value, why = resolve(graph, ref)
+        if why != "edge_unresolved":
+            return True
+        frag = ref.partition("#")[2].strip()
+        node = graph.get(cid)
+        if node and frag and re.fullmatch(r"(?:[MAEO]\d+|R:[A-Z0-9_]+|F\d+)", frag):
+            # A RULES/EDGES id counts only when its line is authored — a template placeholder
+            # `<…>` is a slot, not a rule anyone could fail on (E8).
+            body = _authored_rules(read(node["path"], "T2")["body"])
+            line = re.search(rf"^\s*-\s*{re.escape(frag)}\b(.*)$", body, re.M)
+            # A `<…>` inside a backticked span is prose (the engine's own placeholder detectors
+            # strip spans first; 92 live RULES/EDGES lines carry one — second T2 refute, E11).
+            # …and it must SAY something: a bare `- M7` is the heading-that-names-nothing one
+            # level down — an id anyone could cite and nobody could fail (twelfth T2 refute, E25).
+            return (line is not None and line.group(1).strip(" :-\t") != ""
+                    and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line.group(1))))
+        return False
+    # A FILE, never a path that merely exists: `.`, a directory, or an empty part before `::`
+    # is the check-that-passes-on-nothing shape (T2 refute, E8) — and it lies INSIDE the repo:
+    # a path that escapes the root through `..` names nothing the repo holds (E12).
+    file_part = ref.split("::", 1)[0].strip()
+    if not file_part:
+        return False
+    repo = root.parent.resolve()
+    try:
+        target = (repo / file_part).resolve()
+        return target.is_file() and repo in target.parents
+    except (ValueError, OSError):
+        # A path the filesystem itself refuses to look at (an embedded NUL, a name too long) names
+        # nothing the repo holds — and a refusal is the answer, never a traceback (E24, E42).
+        return False
+
+
+def _names_an_open_escape(root, ref: str) -> bool:
+    """Does `ref` address a delta that is itself an OPEN escape? Then it binds nothing.
+
+    The self-naming case is the obvious one; a two-cycle — each escape naming the other's id —
+    binds exactly as much, and folded both at exit 0 (twelfth T2 refute, E25).
+    """
+    # Split and strip BOTH sides of the `#` exactly as `resolve` does — a second regex of its own
+    # admitted no whitespace where `resolve` admits it, so `/specs/method.md# M1` resolved for the
+    # ref rung and was invisible to this one, and an escape prevented itself (thirteenth T2
+    # refute, E26). Two readers of one address must read it the same way.
+    head, sep, frag = str(ref or "").strip().partition("#")
+    m = re.fullmatch(r"/specs/([^/#]+)\.md", head.strip()) if sep else None
+    frag = frag.strip()
+    if not m or not frag:
+        return False
+    path = Path(root) / "specs" / f"{m.group(1)}.md"
+    if not path.is_file():
+        return False
+    for text in joined_deltas(read(path, "T2")["body"]).values():
+        head = DELTA_LINE.match(text)
+        if not head:
+            continue
+        rec = parse_delta_head(head.group(1))
+        if rec["id"] == frag and rec["status"] == "open":
+            return _prevention_of(head.group(2)) is not None
+    return False
+
+
+def learn(root, lens: str, lesson: str, evidence: str = None, escape: bool = False,
+          why_missed: str = None, prevention: str = None) -> tuple:
     """Append a lesson to a spec's `## Deltas` in the frozen delta grammar, `open` by default.
 
     Grammar (deltas.md): `- [<COMPETENCY> · <ID> · open · <valid-from>] <lesson> (evidence: <ptr>)`.
@@ -4445,8 +4955,77 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     is the only status `learn` writes; a human moves it to `folded`/`rejected` (the AI never
     self-consolidates).
     """
-    if not evidence:
+    # Presence, never truthiness: an empty value is a flag the caller GAVE, and the engine's own
+    # reader reports an empty evidence clause as `no_evidence` — the writer must not emit one
+    # (fifth T2 refute, E16).
+    if not str(evidence or "").strip():
         return None, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
+    # A delta is ONE physical line and its code spans close inside the value they open in: every
+    # reader of the tail is line-based (E15) and masks spans over the WHOLE line (E20), so the
+    # writer guarantees both here, before its own guard reads what it wrote.
+    lesson = balance_spans(" ".join(str(lesson).split()))
+    evidence = balance_spans(" ".join(str(evidence).split()))
+    # The marker is the ENGINE's: it cannot ride in through a flag the tail reader later trusts —
+    # not the evidence (E14), and not the lesson, which the joined unit made readable too (E18).
+    # Inside a `code span` it is prose, exactly as the reader reads it.
+    for flag, value in (("--evidence", evidence), ("the lesson", lesson)):
+        # `(evidence:` is the grammar's own too — the tail reader keys on it and `_delta_identity`
+        # splits a lesson at it, so two genuinely different lessons carrying one collapsed into a
+        # single false conflict and `join` dropped both refused escapes (twenty-sixth T2 refute,
+        # E40). It was refused in `--why-missed` and the ref (E10) and nowhere else.
+        if "(evidence:" in mask_spans(value):
+            return None, ('cannot file the lesson — `(evidence:` is the grammar\'s own marker and cannot ride '
+                           f'inside {flag} (quote it in a `code span` to write about it) -> "R:UNCAUSED"\n'
+                           f'next: add learn {lens} "<lesson>" --evidence <ref>')
+        if ESCAPE_MARK.search(mask_spans(value)):
+            return None, ('cannot file the lesson — `· escape` is the grammar\'s own marker and cannot ride inside '
+                          f'{flag} (an escape is filed with --escape; quote it in a `code span` to write about it) '
+                          f'-> "R:UNCAUSED"\nnext: add learn '
+                          f'{lens} "<lesson>" --evidence <ref> [--escape --why-missed "…" --prevention "<kind> → <ref>"]')
+    # escape-with-prevention: an escape carries its why-missed and a bound prevention, or it is
+    # not filed — a sentence with no prevention is exactly what folded unprevented before.
+    tail = ""
+    if escape or why_missed is not None or prevention is not None:
+        def uncaused(what: str) -> tuple:
+            return None, (f'cannot file an escape — {what} -> "R:UNCAUSED"\nnext: add learn {lens} '
+                          f'"quick|<lesson>" --evidence <ref> --escape --why-missed "<why the checks missed it>" '
+                          f'--prevention "<check|monitor|method|rule> → <ref>"')
+        if not escape:
+            return uncaused("--why-missed and --prevention belong to an escape; pass --escape to file one")
+        if not str(why_missed or "").strip():
+            return uncaused("no --why-missed — an escape says why the checks did not catch it")
+        if not str(prevention or "").strip():
+            return uncaused("no --prevention — an escape binds what stops the next one")
+        # Split on the FIRST arrow of either spelling; the ref keeps whatever follows as given (E7).
+        # NON-greedy: `\S+` backtracked to the LAST arrow whenever no space separated them, so
+        # `check->tests/x.py->tail` was refused by a message naming a kind nobody wrote — and the
+        # spaced control is why the bound check missed it (twenty-eighth T2 refute, E42).
+        m = re.match(r"\s*(\S*?)\s*(?:→|->)\s*(.*)$", prevention, re.S)
+        kind, ref = (m.group(1), m.group(2).strip()) if m else (prevention.strip(), "")
+        if kind not in PREVENTION_KINDS:
+            return uncaused(f"prevention kind `{kind}` is not one of {'|'.join(PREVENTION_KINDS)}")
+        if not ref:
+            return uncaused(f"prevention `{kind} →` names no ref — a check id, a node address, a file")
+        # The grammar reserves `·` as the tail's delimiter: inside a flag it would end the clause
+        # early and let the reader name a ref nobody bound (T2 refute, E7).
+        if "·" in str(why_missed) or "·" in ref:
+            return uncaused("`·` is the tail's own delimiter — it cannot appear inside --why-missed or the prevention ref")
+        # … and the reader keys the tail on the LAST evidence marker, so an author may not write
+        # one either (second T2 refute, E10 — a dangling escape hid behind it and folded).
+        if "(evidence:" in str(why_missed) or "(evidence:" in ref:
+            return uncaused("`(evidence:` is the grammar's own marker — it cannot appear inside --why-missed or the prevention ref")
+        # The ref is an address, never prose: a backtick in it would open a span over the rest of
+        # the tail, and the clause the rung reads would be the one nobody wrote (E20).
+        if "`" in ref:
+            return uncaused("a backtick cannot appear inside the prevention ref — a ref is an address, not prose")
+        # …and no control character: a NUL reached the filesystem through the resolver and raised
+        # `ValueError: embedded null character`, where every exit is a refusal or a record (E42).
+        # Whitespace is NOT a control character here: a line break in the ref is normalised to one
+        # line, which E15 and E35 froze — only a character no reader can carry is refused.
+        if any((ch < " " or ch == "\x7f") and not ch.isspace() for ch in ref):
+            return uncaused("a control character cannot appear inside the prevention ref — a ref is an address")
+        tail = (f" · escape · why-missed: {balance_spans(' '.join(str(why_missed).split()))}"
+                f" · prevention: {kind} → {' '.join(ref.split())}")
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
@@ -4455,14 +5034,18 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     comp = LENS_COMP.get(lens, lens.upper())
     node = read(path, "T2")
+    if node["raw"] is None:
+        # No frontmatter the reader can find — a BOM before it is the commonest cause, and `set_key`
+        # raised `AttributeError` on the None where `doctor` already reports `missing_frontmatter`.
+        return None, (f'cannot file the lesson — specs/{lens}.md {unreadable_spec(node)} -> "R:UNREADABLE"'
+                       f'\nnext: add doctor   (it names the file), then add learn {lens} "<lesson>" --evidence <ref>')
     lines = node["body"].splitlines(keepends=True)
     seq = _delta_high_water(node["raw"], lines) + 1
     did = f"{_delta_letter(lens)}{seq}"
-    entry = f"- [{comp} · {did} · open · {_today()}] {lesson} (evidence: {evidence})\n"
-    for i, line in enumerate(lines):
-        if line.startswith("## Deltas"):
-            lines.insert(i + 2 if i + 1 < len(lines) else i + 1, entry)
-            break
+    entry = f"- [{comp} · {did} · open · {_today()}] {lesson} (evidence: {evidence}){tail}\n"
+    i = heading_index(lines, "deltas")
+    if i >= 0:
+        lines.insert(_delta_insert_at(lines, i), entry)
     else:
         lines += ["\n## Deltas\n\n", entry]
     # The counter rides in frontmatter through `set_key`, which replaces ONE scalar and leaves
@@ -4473,6 +5056,18 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     # number that is merely usually right. Recomputed, never incremented: the oracle is the
     # body, so a hand-edited spec self-corrects on the next `learn`.
     body = "".join(lines)
+    # The writer READS BACK the line it just wrote, as `--bind` does (E39): the id `learn` hands
+    # the author back must address the delta the readers read. A fence that never closes made
+    # every reader blind past it, and both writer branches landed inside it — `deltas` said none,
+    # `show` answered R:NOSUCHNODE for the id `learn` had just minted, and the engine wrote
+    # `open_deltas: 0` itself (twenty-seventh T2 refute, E41). Asking the property, not the shape:
+    # whatever hides the line, the lesson is refused rather than filed into the void.
+    if _delta_ids(body).get(did) != entry.strip():
+        return None, (f'cannot file the lesson — specs/{lens}.md would not be readable at the line: '
+                       f'`{did}` is not addressable in what the write produces (a fence that never closes '
+                       f'blinds every reader past it) -> "R:UNREADABLE"'
+                       f'\nnext: close the fence in specs/{lens}.md (add doctor names it), then add learn '
+                       f'{lens} "<lesson>" --evidence <ref>')
     raw = set_key(raw, "open_deltas", str(open_delta_count(body)))
     write(path, f"---\n{raw}\n---\n{body}")
     hint = ("" if re.search(r"tasks/[^/\s]+\.(md|d/)", str(evidence)) else
@@ -4542,8 +5137,10 @@ def deltas(root, status: str = "open", lens: str = None,
     paths = [q for q in sorted((root / "specs").glob("*.md"))
              if lens is None or q.stem == lens]
     for path in paths:
-        for line in read(path, "T2")["body"].splitlines():
-            stripped = line.strip()
+        # The grammar's unit, not a physical line: a canonically wrapped delta was listed as
+        # malformed while the counter counted it and `fold` read it — three answers about one
+        # delta (seventh T2 refute, E19).
+        for stripped in joined_deltas(read(path, "T2")["body"]).values():
             m = DELTA_LINE.match(stripped)
             # Not every `- [..]` line is a delta; only one that LOOKS like one and fails.
             if m is None or not DELTA_SHAPE.match(stripped):
@@ -4636,18 +5233,23 @@ def _bind_decision(body: str, lens: str, sentence: str, ids: list) -> str:
     cite = ", ".join([delta_address(lens, ids[0])] + [f"#{i}" for i in ids[1:]]) if ids else ""
     entry = f"- {sentence.strip()}" + (f" (from: {cite})" if cite else "") + "\n"
     lines = body.splitlines(keepends=True)
-    start = None
-    for i, line in enumerate(lines):
-        if line.startswith("#") and "-".join(re.findall(r"[a-z0-9]+", line.lstrip("#").strip().lower())) \
-                == "decisions-that-bind":
-            start = i + 1
-            break
+    # The section is found the way `_section` — and therefore `brief` — finds it: level two, at
+    # document level, never one quoted inside a fence. Deciding for itself made this a FOURTH
+    # heading reader, so `--bind` reported "bound 1 decision" at exit 0 into a `###` section or a
+    # fenced heading the brief could not see (twenty-fourth T2 refute, E38).
+    found = heading_index(lines, "decisions-that-bind")
+    start = found + 1 if found >= 0 else None
     if start is None:                        # A10: create it rather than refuse into a hand edit
-        for i, line in enumerate(lines):
-            if line.startswith("## ") and line.strip().lower() == "## deltas":
-                return "".join(lines[:i] + ["## Decisions that bind\n", "\n", entry, "\n"] + lines[i:])
+        at = heading_index(lines, "deltas")
+        if at >= 0:
+            return "".join(lines[:at] + ["## Decisions that bind\n", "\n", entry, "\n"] + lines[at:])
         return "".join(lines + ["\n## Decisions that bind\n", "\n", entry])
-    end = next((j for j in range(start, len(lines)) if lines[j].startswith("#")), len(lines))
+    # One entry per line the caller split, because the walker reads that list itself: the rejoin
+    # this replaced could come back SHORTER (a trailing empty line) or LONGER (any other line
+    # boundary), and both mis-indexed — one raised IndexError, the other spliced a delta in half
+    # (E45, E46).
+    levels = [level for _, level, _ in _headings(lines)]
+    end = next((j for j in range(start, len(lines)) if levels[j] > 0), len(lines))
     content = [j for j in range(start, end) if lines[j].strip()]
     if content and _placeholder_only("".join(lines[j] for j in content)):
         return "".join(lines[:content[0]] + [entry] + lines[content[-1] + 1:end] + lines[end:])
@@ -4671,6 +5273,23 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
         return None, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
                        '`--reject` retires it, `--bind` promotes it, and one call may do only one\n'
                        'next: add fold <lens> "<match>" --reject   (or --bind "<decision>")')
+    if bind:
+        # `--bind` writes into the spec exactly as `learn` does, so it obeys the same two laws: ONE
+        # physical line, and the engine's own marker cannot ride in through a flag. A newline in
+        # the sentence forged a real open escape at exit 0 — an unguarded delta writer beside the
+        # guarded one (twenty-fourth T2 refute, A8, E38).
+        bind = balance_spans(" ".join(str(bind).split()))
+        # A decision its own readers disown is not written: `brief` renders the section
+        # `unauthored="true"` and `doctor` calls it scaffold, and the next `--bind` discards it —
+        # the writer refuses instead, naming the span rule E11 already froze (E40).
+        if _placeholder_only(f"- {' '.join(str(bind).split())}"):
+            return None, ('cannot bind the decision — every reader would call it scaffold: a bare `<…>` is the '
+                           'template\'s own placeholder. Quote it in a `code span` to write about it '
+                           f'-> "R:UNCAUSED"\nnext: add fold {lens} "{match}" --bind "<decision>"')
+        if ESCAPE_MARK.search(mask_spans(bind)):
+            return None, ('cannot bind the decision — `· escape` is the grammar\'s own marker and cannot ride '
+                           'inside --bind (an escape is filed with `add learn --escape`; quote it in a `code span` '
+                           f'to write about it) -> "R:UNCAUSED"\nnext: add fold {lens} "<match>" --bind "<decision>"')
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
@@ -4683,9 +5302,52 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
     # let the two verdicts drift; the verdict is a word, and only the word changes.
     verdict = "rejected" if reject else "folded"
     node = read(path, "T2")
+    why = unreadable_spec(node)
+    if why:
+        # `learn` got this guard and the rung this task is ABOUT did not: plain, `--reject` and
+        # `--bind` all raised `AttributeError` at the write (E42's clause, E43's reach).
+        return None, (f'cannot fold — specs/{lens}.md would not be readable at the line: {why} -> "R:UNREADABLE"'
+                       f'\nnext: add doctor   (it names the file), then add fold {lens} "{match}"')
+
+    whole = joined_deltas(node["body"])
+    stray = orphan_tail(node["body"]) if not reject else ""
+    if stray:
+        return None, (f'cannot fold in specs/{lens}.md — `{stray[:60]}` carries an escape\'s tail but '
+                      f'belongs to no delta: a line-boundary character is not an indent -> "R:UNPREVENTED"'
+                      f'\nnext: join the tail back onto its delta with a space or a tab, '
+                      f'then add fold {lens} "{match}"')
+    # escape-with-prevention: an escape folds (or binds) only when its prevention resolves — read
+    # over EVERY match first, so one dangling prevention refuses the whole call and nothing is
+    # retagged (M3). `--reject` never reads it: a lesson judged wrong has nothing to prevent.
+    if not reject:
+        for text in whole.values():
+            m = DELTA_LINE.match(text)
+            if not m:
+                continue
+            rec = parse_delta_head(m.group(1))
+            if rec["code"] is None and rec["status"] == "open" and match in m.group(2):
+                for kind, ref, well_formed in (_prevention_of(m.group(2)) or []):
+                    if not well_formed:
+                        what = (f"its prevention clause `{kind}` is malformed — the form is "
+                                f"`prevention: <check|monitor|method|rule> → <ref>`" if kind else
+                                "its tail carries `· escape` but no `prevention:` clause")
+                    elif _names_an_open_escape(root, ref):
+                        # An escape still OPEN stops nothing, so naming one binds nothing: the
+                        # lesson itself (E23), or a second escape naming this one back — a cycle
+                        # that folded both at exit 0 (twelfth T2 refute, E25).
+                        what = (f"its prevention `{kind} → {ref}` names an escape that is itself "
+                                f"still open — a prevention binds something that STOPS the next one")
+                    elif not _prevention_resolves(root, ref):
+                        what = f"its prevention `{kind} → {ref}` resolves to nothing"
+                    else:
+                        continue
+                    return None, (f"cannot fold `{rec['id'] or match}` — {what} -> \"R:UNPREVENTED\""
+                                  f"\nnext: write the check|monitor|method|rule it names "
+                                  f"(a node address like /tasks/<slug>.md#M1, or a repo file like tests/<file>::<check>), "
+                                  f"then add fold {lens} \"{match}\"   (or --reject if the lesson did not hold)")
     out, folded, ids = [], 0, []
-    for line in node["body"].splitlines(keepends=True):
-        m = DELTA_LINE.match(line.strip())
+    for i, line in enumerate(node["body"].splitlines(keepends=True)):
+        m = DELTA_LINE.match(whole.get(i, ""))
         if m:
             rec = parse_delta_head(m.group(1))
             if rec["code"] is None and rec["status"] == "open" and match in m.group(2):
@@ -4708,7 +5370,54 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
     # A7: the retag and the decision land in ONE write, so a decision can never cite a lesson
     # the same call failed to retag.
     if bind:
-        body = _bind_decision(body, lens, bind, ids)
+        bound = _bind_decision(body, lens, bind, ids)
+        # A8 asks ONE question, and the engine answers it by READING BACK what it is about to
+        # write: does the sentence change what the spec's own readers see? `learn` writes its
+        # bracket head first, so a caller's value can never lead the line; `--bind` writes the
+        # sentence at column zero, and one leading with a fence run opened a real block that
+        # blanked the rest of the spec — the dangling escape left `deltas`, `fold` answered
+        # R:NOMATCH forever and the engine wrote `open_deltas: 0` itself — while one leading with
+        # a delta head forged an open delta nobody filed (twenty-fifth T2 refute, E39). Naming the
+        # two shapes would freeze this at the two the read happened to find; the ids and the
+        # sections a reader sees are the property itself.
+        # The sections are read as a SUBSEQUENCE, never an equality: `_bind_decision` may add the
+        # section itself when a spec has none (A10), and that is the engine's own write.
+        after = iter([n for _, lv, n in _headings(bound) if lv == 2])
+        kept = all(any(n == later for later in after) for _, lv, n in _headings(body) if lv == 2)
+        # …and the DECISION lines the readers read. Comparing the ids and the headings was
+        # comparing what the guard happened to know about: `_bind_decision` replaces a section its
+        # placeholder detector calls scaffold, and that detector cannot tell the engine's own seed
+        # line from a decision carrying a bare `<tenant>` — so the next `--bind` deleted one
+        # nobody retired, without a word (twenty-sixth T2 refute, E40). The seed line is the one
+        # exemption: replacing it is the engine's own write (A10).
+        def decisions(text):
+            # The engine's own SEED line is the one exemption — a line that is nothing BUT a
+            # placeholder. A hand-written decision that merely mentions a `<tenant>` is a
+            # decision, and the detector calling it scaffold is what let the clobber through.
+            return [l.strip() for l in _section(text, "decisions-that-bind").splitlines()
+                    if l.strip() and re.sub(r"<[^>]*>", "", l).strip(" -*·\t") != ""]
+        held = all(line in decisions(bound) for line in decisions(body))
+        # …and the question `learn`'s own read-back asks and this one did not: is what it WROTE
+        # ADDRESSABLE? Preservation is not enough, and under a fence that never closes all three
+        # preservation comparisons degrade to empty and pass vacuously — `_bind_decision`'s EOF
+        # branch wrote the decision AND the heading it created inside that fence at exit 0, on the
+        # very spec where `learn` refuses R:UNREADABLE (twenty-eighth T2 refute, E42).
+        if _delta_ids(bound) != _delta_ids(body) or not kept or not held:
+            return None, ('cannot bind the decision — the sentence would change what the spec\'s own readers see: '
+                           'a decision is one line of prose, never a block a reader stops at (a fence run, a delta '
+                           'head). Write it as prose, or quote the markup in a `code span` -> "R:UNCAUSED"\n'
+                           f'next: add fold {lens} "{match}" --bind "<decision>"')
+        # The read-back E42 gave this writer, asked as the property it was always about: the spec
+        # must still be one a writer can LAND in afterwards. Asking only "is my own line
+        # addressable" answered yes for a sentence that blinds every LATER writer — the decision
+        # sat readable at EOF inside the fence it had just opened, and the next `learn` refused
+        # forever (thirty-first T2 refute, E45). One reader, before and after.
+        if (blind := unreadable_spec({"raw": node["raw"], "body": bound})):
+            return None, (f'cannot bind the decision — specs/{lens}.md would not be readable afterwards: '
+                           f'{blind}, so no writer could land a line in it again -> "R:UNREADABLE"'
+                           f'\nnext: write the decision as prose (quote any markup in a `code span`), '
+                           f'then add fold {lens} "{match}" --bind "<decision>"')
+        body = bound
     # Recomputed from the retagged body, so a match that retires three lessons moves the
     # counter by three (E3). A decrement-by-one would be right only for the commonest call.
     raw = set_key(node["raw"], "open_deltas", str(open_delta_count(body)))
@@ -5548,8 +6257,14 @@ def sealed_binding(fm: dict) -> str:
 
 
 def rules_of(node: dict) -> list:
-    """Every Must and Reject id declared in the node's RULES section."""
-    body = read(node["path"], "T2")["body"]
+    """Every Must and Reject id AUTHORED in the node's RULES section.
+
+    Through `_authored_rules`, the same reader `fold`'s prevention rung uses: an id quoted inside a
+    fence or under a heading a blockquote opened is an example, and the gate demanding coverage of
+    an example while `fold` called the same id unauthored was two readers of one fact — the defect
+    class this milestone keeps finding (sixteenth T2 refute, E30).
+    """
+    body = _authored_rules(read(node["path"], "T2")["body"])
     return [m.group(1) for m in (RULE_ID.match(l) for l in _section_of(body, "RULES").splitlines()) if m]
 
 
@@ -5559,8 +6274,9 @@ def edges_of(node: dict) -> list:
     An edge is a first-class `covers:` referent (C7): the gate binds it exactly as a Must. A line
     still carrying the scaffold `<placeholder>` is NOT a real edge — a task that never enumerated
     an edge, or left the scaffold untouched, owes no edge coverage (backward compatible). Backticked
-    spans are code, not placeholders (same exclusion `placeholders_in` makes)."""
-    body = read(node["path"], "T2")["body"]
+    spans are code, not placeholders (same exclusion `placeholders_in` makes). Read through
+    `_authored_rules`, the ONE reader of "is this id authored" the fold rung uses too (E30)."""
+    body = _authored_rules(read(node["path"], "T2")["body"])
     out = []
     for line in _section_of(body, "EDGES").splitlines():
         m = RULE_ID.match(line)
@@ -6596,7 +7312,10 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
             return refuse("the node still carries template placeholders: " + " · ".join(stubs),
                           f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
         body = node["body"]
-        musts = re.findall(r"^-\s*(M\d+)\b", _section_of(body, "RULES"), re.M)
+        # Through the ONE reader of "is this id authored": `rules_of` and `edges_of` already read
+        # here, and this raw findall made the gate demand a finding for an `M9` spelled only inside
+        # a fence while the fold rung called the same id unauthored (E30, twenty-sixth refute E40).
+        musts = re.findall(r"^-\s*(M\d+)\b", _section_of(_authored_rules(body), "RULES"), re.M)
         findings = _section_of(body, "FINDINGS")
         # A finding closes a question only with a REAL ref — `(evidence: )`, the template's
         # `(evidence: <ref>)`, and prose that merely contains the word all stay open.
@@ -7079,11 +7798,16 @@ def doctor(root, graph: dict = None, paths=None) -> list:
     # bundle the verb is already walking: 534KB over 207 nodes here, largest body 21KB.
     _bodies = {}
 
-    def body_of(path) -> str:
+    def node_of(path) -> dict:
         key = str(path)
         if key not in _bodies:                 # `not in`, never `.get() or` — an empty body
-            _bodies[key] = read(path, "T2")["body"]   # is a cached value, not a cache miss (A4)
+            _bodies[key] = read(path, "T2")    # is a cached value, not a cache miss (A4)
         return _bodies[key]
+
+    def body_of(path) -> str:
+        # The memo holds the whole READ, not the body alone: `unreadable_spec` asks about the
+        # frontmatter too, and a second reader of the same file would be a second scan (E44).
+        return node_of(path)["body"]
 
     for rel in strays:
         if rel not in NOT_A_NODE:
@@ -7252,12 +7976,27 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             find("warn", "unauthored_root",
                  f"{cid.lstrip('/')}: still scaffold — {' · '.join(slots[:3])}", cid)
 
+    # Every R:UNREADABLE refusal says "add doctor names it", and doctor named the COUNTER instead
+    # — a way out the engine points at and does not provide (thirtieth T2 refute, E44). Read from
+    # the DIRECTORY, not the graph: a spec whose frontmatter no reader can find is not in the
+    # graph as a Spec at all, which is exactly the state that needs naming.
+    blind_specs = {}
+    for sp in sorted((root / "specs").glob("*.md")):
+        if (blind := unreadable_spec(node_of(sp))):
+            blind_specs[sp.resolve()] = blind
+            find("warn", "unreadable_spec",
+                 f"specs/{sp.stem}: no writer can land a line here — {blind}", f"/specs/{sp.name}")
+
     # The counter is engine-maintained (A1), so a disagreement with the body is a repairable
     # fact, never a human's mistake: `info`, and `--sync` fixes it. An ABSENT key over an EMPTY
-    # body is not drift — it is a bundle that has simply never learned anything (E1).
+    # body is not drift — it is a bundle that has simply never learned anything (E1). A spec no
+    # reader can see is skipped: the drift there is a CONSEQUENCE, and reporting it invited the
+    # repair that erased an escape `fold` had refused (E44).
     for cid, node in sorted(graph.items()):
         if (node["fm"] or {}).get("type") != "Spec":
             continue
+        if Path(node["path"]).resolve() in blind_specs:
+            continue     # its counter cannot be honestly counted; the CAUSE is already reported
         actual = open_delta_count(body_of(node["path"]))
         declared = declared_open_deltas(node["fm"])
         if declared == actual or (declared is None and actual == 0):
@@ -7435,8 +8174,16 @@ def doctor_sync(root) -> tuple:
             changed.append(f"{cid.lstrip('/')} CARD `{key}`")
     # A DERIVED count, so recomputing it is exactly what this verb is for — and never
     # R:SYNCAUTHORED: no authored byte moves, only a number whose oracle is the body beneath it.
+    skipped_specs = []
     for path in sorted((root / "specs").glob("*.md")):
         n = read(path, "T2")
+        # The counter's oracle is the body, and a body no reader can see is no oracle: recomputing
+        # from it wrote `open_deltas: 0` over a spec still holding an escape `fold` had refused —
+        # this verb is where the refusals send the author, so it is the one that must not launder
+        # the leak (thirtieth T2 refute, E44). Reported, never repaired, and never a traceback.
+        if (blind := unreadable_spec(n)):
+            skipped_specs.append(f"specs/{path.stem} ({blind})")
+            continue
         actual = open_delta_count(n["body"])
         declared = declared_open_deltas(n["fm"])
         if declared == actual or (declared is None and actual == 0):
@@ -7468,8 +8215,12 @@ def doctor_sync(root) -> tuple:
             n = read(idx, "T2")
             write(idx, f"---\n{set_key(n['raw'], 'tooling_engine', ENGINE)}\n---\n{n['body']}")
         changed.append("tooling engine (re-vendored)")
+    # A spec no writer can land in is SAID, never silently stepped over: this verb is where every
+    # R:UNREADABLE refusal sends the author, so it must say what it did not repair and why (E44).
+    left = ("\n  not repaired (no reader can see the body): " + " · ".join(skipped_specs)
+            if skipped_specs else "")
     if not changed:
-        return None, ("every compiled artifact already matches the nodes\n"
-                       "next: add doctor  (to see what is reported but not repairable)")
-    return True, ("recomputed " + " · ".join(changed) +
+        return None, ("every compiled artifact already matches the nodes" + left +
+                       "\nnext: add doctor  (to see what is reported but not repairable)")
+    return True, ("recomputed " + " · ".join(changed) + left +
                   "\nnext: add doctor  (orphaned receipts and gated claims are never repaired)")
