@@ -5,6 +5,8 @@ status: direction
 generated: { by: add/3.6.0, at: 2026-09-11 }
 verified:
   - { by: "Tin Dang", at: 2026-09-11, act: freeze, authority: plan, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
+  - { by: "process:check", at: 2026-09-13, act: check, authority: process, via: process, boxes: "EXIT:1,2,3,4,5,6,7,8,10" }
+  - { by: "process:check", at: 2026-09-13, act: check, authority: process, via: process, boxes: "EXIT:11" }
 advised_by: method-steward
 ---
 ## CARD
@@ -39,17 +41,54 @@ risks:
   - A new key on a receipt must stay out of the T0 scan cost argument (FORMAT §4): scalars only; anything per-file joins the deferred payload.
 
 ## EXIT
-- [ ] a receipt written inside git carries head: and committed:, and one written outside git carries neither and says why   (← receipt-anchored-to-head)
-- [ ] a rung-bound task cannot freeze without a regression: line, and cannot PASS while a declared full|affected floor has no fresh exit-0 floor receipt   (← regression-floor)
-- [ ] a refreeze that moves a gives: surfaces every consumer as needs_stale in doctor and todo, that consumer's gate refuses PASS until it re-crosses, FORMAT §3.5 exists, and every "flagged stale" sentence is driven by a check   (← consumers-go-stale)
-- [ ] add release refuses a tag whose tree lacks a gated receipt's blob, records artifact and build as handed, and status --all / show render the stamp   (← release-stamp)
-- [ ] an escape cannot be filed without why-missed and prevention, and cannot fold while its prevention does not resolve; loop.md names the three observation outcomes   (← escape-with-prevention)
-- [ ] reopen refuses a task in a done or archived milestone and names --supersedes; new --supersedes writes the edge and show walks it   (← successor-not-reopen)
-- [ ] a human-floor PASS refuses a self-refute, and a plan-floor gate notices one   (← refute-tier-floor)
-- [ ] at a human floor every unsourced Must is put to the human at interview; elsewhere freeze notices them by id   (← must-carries-source)
+- [x] a receipt written inside git carries head: and committed:, and one written outside git carries neither and says why   (← receipt-anchored-to-head)
+- [x] a rung-bound task cannot freeze without a regression: line, and cannot PASS while a declared full|affected floor has no fresh exit-0 floor receipt   (← regression-floor)
+- [x] a refreeze that moves a gives: surfaces every consumer as needs_stale in doctor and todo, that consumer's gate refuses PASS until it re-crosses, FORMAT §3.5 exists, and every "flagged stale" sentence is driven by a check   (← consumers-go-stale)
+- [x] add release refuses a tag whose tree lacks a gated receipt's blob, records artifact and build as handed, and status --all / show render the stamp   (← release-stamp)
+- [x] an escape cannot be filed without why-missed and prevention, and cannot fold while its prevention does not resolve; loop.md names the three observation outcomes   (← escape-with-prevention)
+- [x] reopen refuses a task in a done or archived milestone and names --supersedes; new --supersedes writes the edge and show walks it   (← successor-not-reopen)
+- [x] a human-floor PASS refuses a self-refute, and a plan-floor gate notices one   (← refute-tier-floor)
+- [x] at a human floor every unsourced Must is put to the human at interview; elsewhere freeze notices them by id   (← must-carries-source)
 - [ ] a quick: learn citing a commit that touched a sensitive path or an open task's scope is refused by name   (← quick-lane-tripwire)
-- [ ] observes: lines render in brief and show and a human-floor task with none is noticed at freeze; the router carries residue by kind   (← observes-slot · direct: residue-by-kind)
-- [ ] both explores gate on cited FINDINGS, and the close review carries the counts (floor receipts · consumers flagged · self-refutes refused · quick refusals) that decide which notices are promoted   (← holdout-that-holds · method-health)
+- [x] observes: lines render in brief and show and a human-floor task with none is noticed at freeze; the router carries residue by kind   (← observes-slot · direct: residue-by-kind)
+- [x] both explores gate on cited FINDINGS, and the close review carries the counts (floor receipts · consumers flagged · self-refutes refused · quick refusals) that decide which notices are promoted   (← holdout-that-holds · method-health)
 
 ## CLOSE
-evidence: <one row per task>
+evidence: one row per task — status · gate verdict · gate authority · who signed · refutes that FOUND
+
+- consumers-go-stale        done     PASS           plan     plan:loop-that-closes    9 found
+- escape-with-prevention    done     PASS           process  plan:loop-that-closes    25 found
+- holdout-that-holds        done     RISK-ACCEPTED  process  plan:loop-that-closes    0 found
+- method-health             done     RISK-ACCEPTED  process  plan:loop-that-closes    1 found
+- must-carries-source       done     PASS           plan     plan:loop-that-closes    5 found
+- observes-slot             done     PASS           process  plan:loop-that-closes    0 found
+- quick-lane-tripwire       direction —              —        —                        8 found
+- receipt-anchored-to-head  done     PASS           process  plan:loop-that-closes    0 found
+- refute-tier-floor         done     PASS           human    human:Tin Dang           1 found
+- regression-floor          done     PASS           plan     plan:loop-that-closes    1 found
+- release-stamp             done     PASS           plan     plan:loop-that-closes    3 found
+- successor-not-reopen      done     PASS           process  plan:loop-that-closes    0 found
+
+counts the promotion rule reads (method-health F1/F3, judged at that node's gate):
+- floor receipts ........ 90 receipts carry `floor: regression`, 10 of them `exit: 1` — a red floor
+                          receipt followed by a green one before the gate IS the floor catching the
+                          host. DERIVABLE, 0 bytes.
+- consumers flagged ..... 0, and 0 BY CONSTRUCTION, not by health: every `needs:`-bearing task froze
+                          before the pin shipped, so no freeze stamp carries a `needs:` digest. This
+                          number must NOT be read as evidence the rung is unused.
+- self-refutes refused .. UNKNOWN. Not derivable: a refusal writes nothing (law 3), and the human-floor
+                          refusal leaves no trace. The plan-floor NOTICE is derivable and stands at 1
+                          of 5 gated rung-bound tasks (must-carries-source, whose gate cites a T1).
+- quick refusals ........ UNKNOWN. Not derivable, and the denominator is empty too: `learn` writes only
+                          on acceptance, and this milestone accepted 0 `quick:` lessons.
+
+promotion verdict: the frozen rule (FORMAT §6.2, "the count is what decides") names no threshold and no
+direction, so as written it is not decidable by any count — 0-of-6 compliance argues equally for promote
+(prose binds nothing) and drop (nobody pays for it). method-health F3 recommends deciding on
+COMPLIANCE-AT-CLOSE, which costs 0 bytes and anyone can recompute, and recording the refusal-count half
+as unknown until a record exists. Compliance measured now: two-mode 0 of 6 rung-bound tasks; 
+must-carries-source 0 of 4 plan-floor (2 of 2 human-floor, but the interview forces it there, so that
+pair measures the interview and not the notice); observes-slot 2 of 2 human-floor, 0 of 8 elsewhere
+where the notice does not arm. NO notice is promoted to a refusal in 3.7 — the milestone's own SCOPE
+Out line said the count would decide, and the count says it cannot yet.
+

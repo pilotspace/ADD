@@ -7,15 +7,20 @@ description: what counts as proof here — receipts, red-first checks, and the s
 tags: [guard, receipt, coverage, red-first]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 38
+delta_seq: 40
 relations:
   - Q9 refines /specs/method.md#M21
-open_deltas: 3
+open_deltas: 0
 ---
 ## Now
 what counts as proof
 
 ## Decisions that bind
+- A check that reads its subject from the live bundle retires itself the moment the bundle is fixed — bind the rule against a fixture it owns. (from: /specs/quality.md#Q36)
+- When a rule quantifies over a set of readers, its check ENUMERATES that set. (from: /specs/quality.md#Q37)
+- The unit of a pin is the RESOLVED target, never its written text. (from: /specs/quality.md#Q38)
+- When a guard sits behind an early-return ladder, the fixture must clear every rung above it AND the check must assert it cleared them. (from: /specs/quality.md#Q39)
+- A pin's comment states what the diff against HEAD shows, not what the author intended — a comment describing a re-aim that did not happen is a false entry in the ledger. (from: /specs/quality.md#Q40)
 - Implement a guard at exactly the width of its rule. A guard written broader goes red on true statements, and gets relaxed rather than narrowed. (from: /specs/quality.md#Q35)
 - A check that cannot establish its baseline reports that it could not, and never that the claim is false. Read only a ref every checkout has, or pin the content. (from: /specs/quality.md#Q34)
 - A survey over call sites must enumerate by CALLABLE, never by the arity of the result the first few happen to share. (from: /specs/quality.md#Q32)
@@ -34,9 +39,11 @@ what counts as proof
 
 ## Deltas
 - <what changed, and the evidence that changed it>
-- [TDD · Q38 · open · 2026-09-11] The unit of a pin is the RESOLVED target, never its written text: three T2 reads found order, duplicates and two spellings, each a property decided on the pin string in the writer while the readers healed it. Dedupe and order where the pin is MADE, keyed on _norm(), and vary the SPELLING in the bound check (evidence: /tasks/consumers-go-stale.md)
-- [TDD · Q37 · open · 2026-09-11] When a rule quantifies over 'every reader of the latest run', its check must enumerate the readers: three T2 reads found _latest_run_cid, the test_cmd memory and _beat_of one at a time, each the same class the bound suite had proved only for latest_receipt (evidence: /tasks/regression-floor.md)
-- [TDD · Q36 · open · 2026-09-11] a check that reads its subject from the live bundle retires itself the moment the bundle is fixed — construct the defect in the fixture (re-seed the scaffold into a copy), then prove the check red by withholding the sync (evidence: add-method/tests/engine/test_evidence_and_lessons_views.py)
+- [TDD · Q40 · folded · 2026-09-13→2026-09-13] a pin comment that describes a re-aim which did not happen is a false entry in the ledger. MESSAGE_COUNT carried 'unchanged: reworded, not added. prior: 126' while the value had moved 125 to 126 — written from intent rather than from the diff. Diff every pin against HEAD before writing its reason, and make the reason state what the diff shows (evidence: /tasks/quick-lane-tripwire.d/runs/20.md)
+- [TDD · Q39 · folded · 2026-09-13→2026-09-13] a check can PASS on a floor it never reaches. Three checks on quick-lane-tripwire drove fixture nodes left at the scaffold's authority: process; _scoped_by_any skips on the freeze stamp and the authority BEFORE it reads any scope entry, so _scope_files was never called and the traceback guard those checks claimed to bind was untested — raising unconditionally inside it shipped 24/24 green. When a guard sits behind an early-return ladder the fixture must clear EVERY rung above it, and the check should ASSERT it cleared them rather than trusting that it did (evidence: /tasks/quick-lane-tripwire.d/runs/20.md)
+- [TDD · Q38 · folded · 2026-09-11→2026-09-13] The unit of a pin is the RESOLVED target, never its written text: three T2 reads found order, duplicates and two spellings, each a property decided on the pin string in the writer while the readers healed it. Dedupe and order where the pin is MADE, keyed on _norm(), and vary the SPELLING in the bound check (evidence: /tasks/consumers-go-stale.md)
+- [TDD · Q37 · folded · 2026-09-11→2026-09-13] When a rule quantifies over 'every reader of the latest run', its check must enumerate the readers: three T2 reads found _latest_run_cid, the test_cmd memory and _beat_of one at a time, each the same class the bound suite had proved only for latest_receipt (evidence: /tasks/regression-floor.md)
+- [TDD · Q36 · folded · 2026-09-11→2026-09-13] a check that reads its subject from the live bundle retires itself the moment the bundle is fixed — construct the defect in the fixture (re-seed the scaffold into a copy), then prove the check red by withholding the sync (evidence: add-method/tests/engine/test_evidence_and_lessons_views.py)
 - [TDD · Q35 · folded · 2026-09-10→2026-09-10] A guard written broader than its rule goes red on true statements. `no budget literal moved` was implemented as `the module is byte-identical`, so adding an unrelated constant to it reported a pin bump that never happened. (evidence: /tasks/one-home-for-the-prose-pin.md)
 - [TDD · Q34 · folded · 2026-09-10→2026-09-10] A check that cannot establish its baseline must not read that as the claim being false. `git merge-base HEAD origin/main` returns 128 on a depth-1 CI clone — the check passed locally and failed CI for a reason unrelated to what it asserts. Pin the content, or read only a ref every checkout has. (evidence: /tasks/the-message-pin-is-a-content-pin.md)
 - [TDD · Q33 · folded · 2026-09-10→2026-09-10] A check that pins a COUNT (`1 uncovered`) is pinned to its fixture's shape as much as to the rule. Widen the producer and the count moves — the repair is to re-aim the FIXTURE so the number is again about one thing, never to edit the expected number. (evidence: /tasks/uncovered-widens-to-rules.md)
