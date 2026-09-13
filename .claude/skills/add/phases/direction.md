@@ -26,7 +26,7 @@ ONCE (`## GROUND`); tasks **project** from it. Take the **lens** with it: the `.
 ## The five sections (all in the node body)
 
 - **`## RULES`** — `Must` (`M<n>`, what it must do) · `Reject` (`R:<CODE>`, what it must refuse).
-  What you were **told**, and only that.
+  What you were **told**: end a Must `(from: <who told you> · fails-on: <the plausible wrong reading a check must fail on>)`, either half alone — `interview` asks for a missing `from:`, `confirm` writes `from: interview`, and `freeze` notices the ids still carrying none.
 - **`## ASSUMPTIONS`** — `A<n> [<dim>] covers: <S ids> · <what the spec does NOT say — and the
   reading you took> -> <cost if wrong>`. **Sweep every `gives:` surface on every dimension** —
   `who · which · when · absent · order · experience` — or retire one with `[<dim>] n/a · <why>`. `freeze`
@@ -71,8 +71,8 @@ ONCE (`## GROUND`); tasks **project** from it. Take the **lens** with it: the `.
   depend on) · the build **strategy** · the `scope:` tokens (the paths this node may touch; also the
   freshness set) · the regression floor — `regression: full | affected · <cmd> · <why>` or `regression:
   none · <why>`, the host suite beside the bound checks; `freeze` refuses a rung-bound task without it
-  (R:NOFLOOR) · optionally `port: <the seam acceptance checks exercise>` —
-  unbound, unswept; it exists so an acceptance check is fast by construction, not a browser test.
+  (R:NOFLOOR) · optionally `port: <the seam acceptance checks exercise>`, and the observes lines
+  `- O<n> covers: <M ids> · signal <metric> · window <w> · threshold <t> · action alert|rollback` — the runtime signal that would show that Must broken, rendered in the brief and read by no gate.
 - **`## EDGES`** — `E<n>` — the readable **example**: `E<n> Given <state> · When <action> · Then
   <observable result>`, so a non-technical owner can read it and say *that is what we mean* (RULES are
   the rules, filled EDGES the examples, ASSUMPTIONS the questions — Example Mapping's three columns;

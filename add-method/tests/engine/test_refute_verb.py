@@ -26,7 +26,7 @@ beat: build · next: add run
 
 ## RULES
 <must>
-- M1 the first rule
+- M1 the first rule (from: the fixture's own brief)
 </must>
 <reject>
 - R:BAD something forbidden -> "BAD"

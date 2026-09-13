@@ -35,5 +35,5 @@ SURFACE_BUDGET = 1500
 # Owner: tests/skill/test_surface.py::test_skill_tree_prose_unedited_by_this_task
 PROSE_PINS = {
     "SKILL.md": "edccc3300f5e48020fd5bdf0935c1a96020b90c1c9f67edc6f45e38c44f298b4",   # aimed @ t2-refute-default: the VERIFY step names the T2 spawn. prior: eacf1c6d… @ refute-tier-and-changed
-    "intake.md": "e9a394ea2fd4500c54f724c0825820a5529940b8e23698cc92f27366adbada13",   # aimed @ consumers-go-stale: the change-request sentence names needs_stale and R:STALENEEDS, the flagging it promised. prior: ee78c081… @ skill-reads-the-graph
+    "intake.md": "b53f17e4b346e3cb77e6a13b9113472a7502a019ce6ca73d0f8355aa8d3e2231",   # aimed @ residue-by-kind: the direct row owes the kind's residue lens, so the lane that never opens verify.md still performs its review. prior: e9a394ea… @ consumers-go-stale
 }

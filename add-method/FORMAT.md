@@ -790,7 +790,13 @@ T2 a fresh session · T3 a human; T0 is nobody and T4 a CI recipe, so neither is
 `R:BADTIER`); the flag makes independence countable, `by:` beside it says whether the claim is
 true. `changed:` names what the probes moved while the outcome still held — a `held` that changed
 the build is the yield `--found` alone undercounts, and it is what a bench trigger reads. The gate
-reads neither key: `_refute_of` weighs presence and outcome only (law 3).
+reads `tier:` beside the outcome, from the SAME stamp, and nothing else about the reader: at a
+`human` floor a `PASS` is refused while the latest citing refute claims `T1` or no tier at all
+(`R:SELFREFUTE`); at `plan` that state is a notice on the recorded success, and a tier the ladder
+cannot read is refused with the rest — an unreadable claim is one the engine cannot honour, the
+same law `sensitivity_floor` states for a declaration (`R:SILENT_FLOOR`). The claim is otherwise
+recorded as handed — never weighed against `by:`, `probes:` or who signs the gate (law 3) — and
+`changed:` is read by nothing at the gate at all.
 
 The gate READS it: at `standard|deep` depth on a Task whose computed floor (§3.1) is `plan` or
 `human`, a `PASS` is refused while no refute stamp cites the gated receipt (`R:UNREFUTED`), and

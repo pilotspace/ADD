@@ -862,6 +862,22 @@ def _delta_ids(body: str) -> dict:
     return out
 
 
+def authored_section(body, heading: str) -> str:
+    """The `## <heading>` section as the AUTHORING walker sees it — fences blanked, the heading
+    canonicalised, and only the seven sections a human writes in.
+
+    `_section_of` on a raw body is a FIFTH reader of "where a section is": it matches `## RULES`
+    spelled exactly that way, at column zero, wherever it appears — so `## RULES (frozen)`, `##
+    RULES:` and an indented heading all read as NO section, and a ```` ```markdown ```` example of
+    the grammar reads as THE section. `rules_of` was routed through `_authored_rules` for exactly
+    this reason (E30); the SEAL and the INTERVIEW were not, and the twenty-eighth T2 refute walked
+    through the gap: on such a node `confirm` wrote a Must's `(from: …)` tail and `direction_digest`
+    did not move — a sourced and an unsourced Must sealed alike (R:DIGESTDRIFT) — because the whole
+    Must/Reject payload was outside the seal, which also let a frozen Must be replaced under a
+    build with no drift refusal at all. Same fact, one reader.
+    """
+    return _section_of(_authored_rules(str(body or "")), heading)
+
 def _section(body: str, slug: str) -> str:
     """The body section under the heading whose kebab-cased text is `slug`.
 
@@ -1959,7 +1975,8 @@ BODIES = {
             "`· probe: <what shipped behavior must show>` declares a reading checkable: "
             "cite its A id from CHECKS and the gate holds the PASS to it.\n\n"
             "## PLAN\ncontract: <the shape this publishes>\n"
-            "regression: <full | affected · <cmd> · <why> — or none · <why>>\n\n"
+            "regression: <full | affected · <cmd> · <why> — or none · <why>>\n"
+            "- O<n> covers: <M ids> · signal <metric> · window <w> · threshold <t> · action <alert|rollback>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
             "## EVIDENCE\nreceipt: <runs/<n>.md>\ngate: <PASS | RISK-ACCEPTED | HARD-STOP>\n\n"
@@ -2561,9 +2578,21 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     # written; this line only names what the router asks for and the author can still add.
     notice = ""
     if _rung_bound(graph, cid, entry.get("fm") or {}):
+        # A NOTICE, never a refusal: the human floor already REFUSES an unsourced Must through the
+        # interview (it is an open decision like any other), and below that floor the tail is a
+        # habit being taught, not a gate being added -> "R:SOURCEASREFUSAL".
+        # The ONE beat where a human reads the whole node, and only there (A3): below it the slot
+        # is a habit being taught, not a gate being added -> "R:OBSERVEASREFUSAL".
+        if authority_for(graph, cid) == "human" and not observes(node_t2):
+            notice += (f"\nnotice: no observes: line — name the runtime signal that would show "
+                       f"M{rules_of(node_t2)[0][1:] if rules_of(node_t2) else '<n>'} broken (PLAN, O<n>)")
+        unsourced = [mid for mid, _ in _musts_without_source(node_t2)]
+        if unsourced:
+            notice += (f"\nnotice: {', '.join(unsourced)} carry no from: — a Must is what you were "
+                       f"told; add interview {slug} or write (from: …)")
         single = single_mode_musts(entry)
         if single:
-            notice = (f"\nnotice: {', '.join(f'{m} ({w})' for m, w in single)} "
+            notice += (f"\nnotice: {', '.join(f'{m} ({w})' for m, w in single)} "
                       f"{'carries' if len(single) == 1 else 'carry'} one evidence mode — a plan-floor "
                       f"Must carries two (direction.md § router)")
     return node, (f"{act} recorded at authority `{authority}`" + notice + stale_note
@@ -3416,12 +3445,16 @@ def _refute_of(stamps: list, receipt_cid: str):
     stamp with no `receipt:` cites nothing. Reads presence and outcome only — never `probes:`, the
     note, or who signed (law 3: a notary that judged a probe would be a guard).
     """
-    outcome = None
+    outcome, tier = None, None
     for s in stamps:
         if isinstance(s, dict) and s.get("act") == "refute" \
                 and receipt_cid and str(s.get("receipt", "")) == receipt_cid:
-            outcome = str(s.get("outcome") or "")
-    return outcome
+            # The tier travels WITH the outcome, from the same stamp, so the gate cannot read one
+            # read's verdict beside another's independence claim. It is a CLAIM and stays one:
+            # never `by:`, never `probes:`, never the note, never who signs the gate — an engine
+            # that compared names would be judging an identity it cannot verify (R:TIERJUDGED).
+            outcome, tier = str(s.get("outcome") or ""), (str(s.get("tier")) if s.get("tier") else None)
+    return outcome, tier
 
 
 def _latest_run_cid(stamps: list):
@@ -3465,6 +3498,54 @@ def regression_floor(node: dict):
     cmd, _, why = rest.partition("·")
     cmd, why = cmd.strip(), why.strip()
     return {"mode": mode, "cmd": cmd, "why": why} if (cmd and why) else None
+
+
+OBSERVE_ACTIONS = ("alert", "rollback")
+# `- O<n> covers: <M ids> · signal <text> · window <text> · threshold <text> · action alert|rollback`
+# The field ORDER is fixed (A5) so one regex reads every line and the brief prints them the same
+# way; the three middle fields are free text (A2) — the engine names a slot, it cannot judge a
+# metric. A line that does not match is not an observe: `doctor` names it, `observes` skips it.
+OBSERVE_LINE = re.compile(
+    r"^\s*-\s*(O\d+)\s+covers:\s*(?P<covers>[^·]+?)\s*·\s*signal\s*(?P<signal>[^·]+?)\s*·\s*"
+    r"window\s*(?P<window>[^·]+?)\s*·\s*threshold\s*(?P<threshold>[^·]+?)\s*·\s*"
+    r"action\s*(?P<action>\S+)\s*$")
+OBSERVE_HEAD = re.compile(r"^\s*-\s*(O\d+)\b")
+
+
+def observes(node: dict) -> list:
+    """`[{id, covers, signal, window, threshold, action}]` for every well-formed observe in PLAN.
+
+    The runtime signal that would show a Must broken — loop.md's "the CHECKS have a second life as
+    monitors" given the slot it never had. NOTHING in the engine decides anything from these: a
+    monitor's verdict is production's evidence, never the bundle's (R:OBSERVEASGATE). They ride
+    `## PLAN`, which no digest seals, so writing one after a freeze is neither drift nor a re-cross.
+    """
+    out = []
+    for line in live_lines(_section_of((node or {}).get("body") or "", "PLAN")):
+        m = OBSERVE_LINE.match(str(line))
+        if not m or PLACEHOLDER.search(re.sub(r"`[^`]*`", "", str(line))):
+            continue
+        if m.group("action") not in OBSERVE_ACTIONS:
+            continue
+        covers = [c.strip() for c in m.group("covers").replace(",", " ").split() if c.strip()]
+        if not covers:
+            continue
+        out.append({"id": m.group(1), "covers": covers, "signal": m.group("signal").strip(),
+                    "window": m.group("window").strip(), "threshold": m.group("threshold").strip(),
+                    "action": m.group("action")})
+    return out
+
+
+def malformed_observes(node: dict) -> list:
+    """`[(id, line)]` for every `- O<n>` line in PLAN that `observes` could not read.
+
+    The other half of one question, asked HERE so the reader that skips and the finding that names
+    can never disagree: a line nobody reads and nobody names is the slot silently not working.
+    """
+    good = {o["id"] for o in observes(node)}
+    return [(m.group(1), str(line).strip())
+            for line in live_lines(_section_of((node or {}).get("body") or "", "PLAN"))
+            if (m := OBSERVE_HEAD.match(str(line))) and m.group(1) not in good]
 
 
 def gives_digest(node: dict) -> str:
@@ -3633,7 +3714,7 @@ def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     if beat == "verify" and _rung_bound(graph, cid, fm):
         stamps = fm.get("verified") or []
         last_run = _latest_run_cid(stamps)
-        if last_run and _refute_of(stamps, last_run) is None:
+        if last_run and _refute_of(stamps, last_run)[0] is None:
             return f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>"'
     hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
     # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
@@ -6007,7 +6088,7 @@ def placeholders_in(node: dict, *, card: bool = True) -> list:
     # freezes — `_section_of` reads a missing section as empty (law 3) — so bundles
     # authored before this shipped are not retroactively refused.
     for heading in ("RULES", "ASSUMPTIONS", "CHECKS"):
-        for line in _section_of(node.get("body") or "", heading).splitlines():
+        for line in authored_section(node.get("body") or "", heading).splitlines():
             if line.startswith("- ") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
                 found.append(line.strip())
     # CARD's `goal:` — a KEYED line, not a `- ` bullet, which is why the loop above could
@@ -6055,8 +6136,8 @@ def direction_digest(node: dict) -> str:
     """
     body = node.get("body") or ""
     gives = (node.get("fm") or {}).get("gives") or []
-    payload = "\n".join((_canon(_section_of(body, "RULES")),
-                         _canon(_section_of(body, "CHECKS")),
+    payload = "\n".join((_canon(authored_section(body, "RULES")),
+                         _canon(authored_section(body, "CHECKS")),
                          _canon("\n".join(str(g) for g in gives))))
     return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
 
@@ -6076,16 +6157,97 @@ def binding_digest(node: dict) -> str:
     authors refreeze reflexively is a rubber stamp.
     """
     body = node.get("body") or ""
-    edges = [m.group(1) for line in _section_of(body, "EDGES").splitlines()
+    edges = [m.group(1) for line in authored_section(body, "EDGES").splitlines()
              for m in [RULE_ID.match(line)]
              if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line))]
-    probed = [m.group(1) for line in _section_of(body, "ASSUMPTIONS").splitlines()
+    probed = [m.group(1) for line in authored_section(body, "ASSUMPTIONS").splitlines()
               for m in [RE_PROBED_ASSUMPTION.match(line.strip())] if m]
     payload = "\n".join(sorted(edges) + sorted(probed))
     return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
 INTERVIEW_VERDICTS = ("confirm", "correct", "defer")
+
+
+# `- M<n> <the rule> (from: <where you were told> · fails-on: <the plausible wrong reading>)`.
+# Either half may stand alone; both are FREE TEXT and neither is resolved — the engine records a
+# source as handed, exactly as it records `by:` (R:SOURCEJUDGED). The tail is Must TEXT, so the
+# direction digest seals it and every existing reader sees one line as it always did.
+MUST_SOURCE = re.compile(r"\((?:from:\s*(?P<src>[^·)]*?))?\s*(?:·\s*)?"
+                         r"(?:fails-on:\s*(?P<fails>[^)]*?))?\s*\)\s*$")
+
+
+def must_source(line: str) -> dict:
+    """`{"from": …, "fails_on": …}` for a Must line carrying the tail, else None.
+
+    None is "no tail", and a tail carrying only `fails-on:` answers `{"from": None, …}` — the two
+    are different questions, and collapsing them would ask a Must that named its falsifier for a
+    source it may already have given in the sentence itself.
+    """
+    m = MUST_SOURCE.search(str(line or "").rstrip())
+    if not m or (m.group("src") is None and m.group("fails") is None):
+        return None
+    src, fails = m.group("src"), m.group("fails")
+    return {"from": (src or "").strip() or None, "fails_on": (fails or "").strip() or None}
+
+
+def _rules_view(body) -> list:
+    """The body's lines with everything outside the authored `## RULES` section blanked — one line
+    out per line in, so an index into this view is an index into the body.
+
+    The ONE view of "where a Must may live". `_authored_rules` keeps all seven authored sections,
+    so a `- M2 …` line pasted under `## EDGES` read as a Must to the question and the notice while
+    `rules_of`, `single_mode_musts`, `uncovered_obligations` and the `covers:` grammar all said it
+    was not a rule — two readers of what a Must IS, and the route a duplicate travelled (E12).
+    """
+    lines = _authored_rules(str(body or "")).splitlines()
+    start = heading_index(lines, "rules")
+    if start < 0:
+        return [""] * len(lines)
+    end = next((j for j, (_, level, _) in enumerate(_headings(lines))
+                if j > start and level == 2), len(lines))
+    return [str(ln) if start < i < end else "" for i, ln in enumerate(lines)]
+
+
+def must_lines(body) -> dict:
+    r"""`{line index in the body: Must id}` for every AUTHORED Must — the ONE reader of which LINE
+    is a Must, indexed so a writer can find it again.
+
+    A view of WHERE (`_rules_view`) and a pattern for WHAT (`RULE_ID`), in one place, because
+    splitting them is how this task was refuted five times running. `RULE_ID` is the grammar
+    FORMAT §6.1 publishes and `rules_of`, `single_mode_musts`, `uncovered_obligations` and the
+    `covers:` grammar all read; the question, the freeze notice and the interview's WRITER now read
+    it too. The writer had kept its own third pattern — looser on the left (an indent, a dash with
+    no space) and stricter on the right (`\s+` where the grammar has `\b`) — so `- M2:` was a Must
+    to the gate and to the question and INVISIBLE to the writer: `interview --answer M2=confirm`
+    exited 0, wrote nothing, and the node then carried an `act: interview` stamp attesting the
+    answer beside a freeze notice saying the Must had no source, forever (twenty-ninth T2 refute).
+    """
+    out = {}
+    for i, line in enumerate(_rules_view(body)):
+        m = RULE_ID.match(str(line))
+        if m and m.group(1).startswith("M"):
+            out[i] = m.group(1)
+    return out
+
+
+def _musts_without_source(node: dict) -> list:
+    """`[(id, the whole line)]` for every authored Must that names no source — the ONE reader both
+    the interview and the freeze notice ask, so the question and the notice can never disagree."""
+    out = []
+    lines = _rules_view(node.get("body") or "")
+    for i, mid in must_lines(node.get("body") or "").items():
+        line = str(lines[i])
+        text = line[RULE_ID.match(line).end(1):].strip()
+        # A SCAFFOLD line is one the author never wrote over — `- M1 <the rule that must hold>` —
+        # not any rule that happens to name a `<placeholder>` in its own sentence. Skipping the
+        # latter made a real Must invisible to the question, to the notice and to `confirm`, while
+        # M2 and M3 quantify over EVERY Must with no `from:` (E11).
+        if not re.fullmatch(r"<[^>]*>", re.sub(r"`[^`]*`", "", text).strip()):
+            tail = must_source(text)
+            if not (tail and tail["from"]):
+                out.append((mid, line.strip()))
+    return out
 
 
 def _open_decisions(node: dict) -> list:
@@ -6108,7 +6270,7 @@ def _open_decisions(node: dict) -> list:
             out.append({"id": f"C{n}", "of": "criterion", "dim": "criterion",
                         "reading": text.strip(), "cost": "", "text": text.strip()})
         return out
-    for line in _section_of(body, "ASSUMPTIONS").splitlines():
+    for line in authored_section(body, "ASSUMPTIONS").splitlines():
         m = re.match(r"\s*-\s*(A\d+)\s*\[([a-z]+)\]\s*(.*)", line)
         if not m or re.search(r"·\s*n/a\b", m.group(3)):
             continue
@@ -6124,17 +6286,24 @@ def _open_decisions(node: dict) -> list:
     # The readable example: a FILLED `E<n>` is a claim the human never made in those words — the
     # AI wrote the Given/When/Then — so it is put to them like an assumption. The scaffold line is
     # not (same placeholder rule `edges_of` uses); backticked spans are code, not placeholders.
-    for line in _section_of(body, "EDGES").splitlines():
+    for line in authored_section(body, "EDGES").splitlines():
         m = re.match(r"\s*-\s*(E\d+)\s+(.*)", line)
         if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
             out.append({"id": m.group(1), "of": "edge", "dim": "edge",
                         "reading": m.group(2).strip(), "cost": "", "text": line.strip()})
-    for line in _section_of(body, "RULES").splitlines():
+    for line in authored_section(body, "RULES").splitlines():
         m = re.match(r"\s*-\s*(R:[A-Z0-9_]+)\s+(.*)", line)
         if m:
             out.append({"id": m.group(1), "of": "reject", "dim": "reject",
                         "reading": m.group(2).split("->")[0].strip(), "cost": "",
                         "text": line.strip()})
+    # A Must came FROM the human — so it is never re-asked as a RULE. What is asked is the one
+    # thing RULES never recorded: WHO said so. Last, and in Must order, so an interview a human
+    # already knows keeps its shape and the new questions come after the old ones (A5).
+    for mid, line in _musts_without_source(node):
+        out.append({"id": mid, "of": "must", "dim": "source",
+                    "reading": re.sub(r"\s*-\s*M\d+\s+", "", line, count=1).strip(),
+                    "cost": "", "text": line})
     return out
 
 
@@ -6238,6 +6407,15 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
     side_dir.mkdir(parents=True, exist_ok=True)
     n = len(list(side_dir.glob("*.md"))) + 1
     digest = interview_digest(node)
+    # What THIS text had already been answered, before the write below may change it. An answer
+    # survives an edit the interview itself made: confirming a Must's source rewrites its line,
+    # which moves the digest, and reading only the new one would erase every answer given in an
+    # earlier sitting — a human who answers the source question last would be asked everything
+    # again (must-carries-source, E2).
+    prior = {}
+    for st in _interview_stamps(entry.get("fm") or {}):
+        if str(st.get("interview") or "") == digest:
+            prior.update(_answer_map(str(st.get("answers") or "")))
     # Frontmatter, like a run receipt. Without it `doctor` reported `error missing_frontmatter`
     # against a file the engine had just written correctly — the `orphan_receipt` shape one verb
     # over, a notary manufacturing its own conformance error.
@@ -6256,6 +6434,62 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
     # would make each pass clobber the one before it when `interview_gap` folds them, so a second
     # sitting would erase the first instead of completing it. The sidecar still lists every
     # decision — that is the human-readable record; this is the machine-readable delta.
+    # The one write the interview makes to the node's TEXT, and only on `confirm`: the human just
+    # said "I told you this", and `interview` is the one source the engine WITNESSED. `defer` and
+    # `correct` write nothing — a deferred question is unanswered and a correction is cleared by
+    # editing the item, which moves the digest and re-opens the pass.
+    confirmed = [d for d in decisions if d["of"] == "must" and answers.get(d["id"]) == "confirm"]
+    if confirmed:
+        # `keepends`, like the other thirteen body writers: re-joining with `"\n".join` converted
+        # every line boundary Python knows but `\n` does not preserve — U+2028, U+2029, U+0085, VT,
+        # FF — anywhere in the body, by a verb that touched ONE line (E45, E46's class, E10).
+        lines, changed = node["body"].splitlines(keepends=True), False
+        # The reader's OWN view, not a looser one: `_musts_without_source` reads `_authored_rules`,
+        # which blanks fences AND every line outside the authored sections. Reading `live_lines`
+        # here — fence-blind only — let an unfenced copy in `## CARD`, the section before `## RULES`
+        # in every live node, take the tail while the authored Must stayed bare (E9). One fact, one
+        # reader: the writer asks the reader where the line is.
+        live = _rules_view(node["body"])
+        # The reader's OWN candidate set, by index — not a third pattern spelled out here. See
+        # `must_lines`: the writer asking a looser question than the gate is what made a confirmed
+        # answer write nothing at all.
+        authored = set(must_lines(node["body"]))
+        for d in confirmed:
+            for i in sorted(authored):
+                if str(live[i]).strip() != d["text"]:
+                    continue
+                tail = must_source(d["text"])
+                if tail and tail["fails_on"]:
+                    # The tail is JOINED, never replaced: a Must that named its falsifier keeps it,
+                    # and `from:` reads first because that is the order of the sentence (A10). The
+                    # replacement is a FUNCTION, not a template: `re.sub` reads `\d`, `\1` and
+                    # `\g<0>` in a template string as grammar, so the human's own words were
+                    # resolved rather than recorded — `\d` raised out of the verb, `\n` split the
+                    # frozen Must in two — which is exactly what R:SOURCEJUDGED forbids (E7).
+                    repl = f"(from: interview · fails-on: {tail['fails_on']})"
+                    fixed = MUST_SOURCE.sub(lambda _m, r=repl: r, str(lines[i]).rstrip(), count=1)
+                else:
+                    fixed = str(lines[i]).rstrip() + " (from: interview)"
+                raw = str(lines[i])
+                lines[i], changed = fixed + raw[len(raw.rstrip("\r\n\x0b\x0c\x1c\x1d\x1e\u0085\u2028\u2029")):], True
+                # A line is written ONCE. `live` is the pre-write snapshot, so two Musts sharing an
+                # id and a text both matched the first index: the line took two tails and the
+                # second Must stayed bare, sealed that way by the freeze (E12).
+                authored.discard(i)
+                break
+        body = "".join(lines)
+        if changed:
+            write(entry["path"], f"---\n{node['raw']}\n---\n{body}")
+            node = read(entry["path"], "T2")
+            # The stamp seals the text the interview PRODUCED, and carries forward what this same
+            # conversation had already settled — ids that no longer open a decision simply drop.
+            digest = interview_digest(node)
+            still = {d["id"] for d in _open_decisions(node)}
+            answers = {**{k: v for k, v in prior.items() if k in still}, **answers}
+            decisions = _open_decisions(node) + [d for d in decisions if d["id"] not in still]
+    # Built AFTER the rewrite above, so the stamp packs what the conversation now holds against the
+    # digest the same block just recomputed — built before it, the pack named one answer and the
+    # digest named the other text, and every earlier sitting was erased.
     packed = "|".join(f"{d['id']}={answers[d['id']]}" for d in decisions if d["id"] in answers)
     node_w, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{_oneline(by or "unrecorded")}", at: {_today()}, act: interview, '
@@ -6302,8 +6536,8 @@ def rules_of(node: dict) -> list:
     an example while `fold` called the same id unauthored was two readers of one fact — the defect
     class this milestone keeps finding (sixteenth T2 refute, E30).
     """
-    body = _authored_rules(read(node["path"], "T2")["body"])
-    return [m.group(1) for m in (RULE_ID.match(l) for l in _section_of(body, "RULES").splitlines()) if m]
+    section = authored_section(read(node["path"], "T2")["body"], "RULES")
+    return [m.group(1) for m in (RULE_ID.match(l) for l in section.splitlines()) if m]
 
 
 def edges_of(node: dict) -> list:
@@ -6804,6 +7038,12 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
         out.append(f'  <subject id="{ident}">')
         out.append(body.rstrip("\n"))
         out.append("  </subject>")
+        obs = observes({"body": body})
+        if obs:
+            out.append("  <observes>")
+            out += [f'    <o id="{o["id"]}" covers="{",".join(o["covers"])}" action="{o["action"]}">'
+                    f'{o["signal"]} · {o["window"]} · {o["threshold"]}</o>' for o in obs]
+            out.append("  </observes>")
         out.append(f"  <constraints>{constraints}</constraints>")
         out.append(f'  <evidence require="{PHASE_EVIDENCE[phase]}"/>')
         for origin, text in quoted:
@@ -6882,6 +7122,9 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
 
 
 REFUTE_TIERS = ("T1", "T2", "T3")
+# The tiers that can SIGN the refute rung — `REFUTE_TIERS` minus the builder's own read.
+# Derived, not restated: a literal here would not follow if the ladder ever moved.
+SIGNING_TIERS = tuple(t for t in REFUTE_TIERS if t != "T1")
 # The tiers a SESSION can sign for. T0 is nobody — no stamp exists to carry it; T4 is a protected
 # holdout the builder cannot read, which a prompt cannot provide and so a stamp must not claim
 # (verify.md's ladder: "a CI recipe, not shipped"). The engine records the tier as a CLAIM, exactly
@@ -7531,13 +7774,14 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           f"add brief {slug} to record the entry, then re-run "
                           f"(add run {slug} -- <cmd>) and add gate {slug} PASS")
 
+    tier_notice = ""                               # refute-tier-floor: set only at a plan floor
     # The refute rung (evidence-over-tests) — a green nobody tried to break is REPORTED, not
     # earned. At a plan-or-higher floor the gate demands a refute stamp citing THIS receipt
     # (R:UNREFUTED) whose outcome is not `refuted` (R:REFUTED). Evidence-class, like `unbriefed`:
     # RISK-ACCEPTED is precisely for signing an unrefuted green knowingly. Quick depth, the
     # process floor and the explore lane are exempt — the rung is aimed at payments, not renames.
     if sealed and _binds("unrefuted", verdict) and _rung_bound(graph, cid, sfm):
-        outcome = _refute_of(sfm.get("verified") or [], receipt_cid)
+        outcome, tier = _refute_of(sfm.get("verified") or [], receipt_cid)
         if outcome is None:
             return refuse("no refute cites this receipt — the green was never read against its "
                           'frozen intent, so it is reported, not earned -> "R:UNREFUTED"',
@@ -7548,6 +7792,50 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           '-> "R:REFUTED"',
                           f"fix the build (or refreeze with the edge it exposed), add run {slug} "
                           f"-- <cmd>, then add refute {slug} again")
+        # refute-tier-floor: a green the BUILDER read is a prelude, never the rung's answer
+        # (verify.md's ladder, which the gate had never read). At a human floor a T1 or tier-less
+        # claim is refused; at plan the same state is a notice on the success line, promoted or
+        # dropped on the count (R:NOTICEASREFUSAL). The claim is recorded as handed (R:TIERJUDGED),
+        # and both earlier gaps — no read at all, a read that broke it — answer first (M4).
+        # An ALLOWLIST, not a denylist — `REFUTE_TIERS` minus `T1`, derived from the frozen
+        # constant rather than invented. A denylist sent every value it had not enumerated to the
+        # permissive branch, so `tier: "T1 "` (one trailing space, inside quotes) rendered in the
+        # engine's OWN `## EVIDENCE` view as `tier T1`, drew nothing from `doctor`, and recorded a
+        # human-floor PASS: a ledger attesting `T1` beside a control that read the same field and
+        # said yes. That is not an unverified claim recorded honestly, it is a well-formed stamp
+        # attesting nothing. The sibling law twelve hundred lines up (`sensitivity_floor`,
+        # R:SILENT_FLOOR) already says an unreadable declaration is one the engine cannot honour,
+        # so it floors UP; a control reads the same way. M1's refuse-clause (T1 or no key) and its
+        # pass-clause (T2 or T3) are both satisfied exactly; this only resolves the silence between
+        # them, and it resolves it closed (security lens, gate-security-reviewer).
+        if tier not in SIGNING_TIERS:
+            claim = tier or "no tier"
+            # The reason has to be TRUE of the value it read. `T1` is a prelude; `T4` or `t2` is a
+            # claim the ladder cannot read at all, and telling that author they read their own
+            # green would send them looking for a problem they do not have (A6: the reader is the
+            # builder at 2am, and hard for them is a refusal that names the wrong thing).
+            # The reason states what is true of the value READ, and the FLOOR is named once, by
+            # the site that acts on it. A refusal that says "you read your own green" to someone
+            # who typed `T4` sends them looking for a problem they do not have (A6), and
+            # R:SILENT_FLOOR is floor-independent — the floor scopes the refusal, never the
+            # unreadability. No second dash either: it reads as closing an appositive.
+            why = ("a green read by its own builder is a prelude, never the rung's answer"
+                   if tier in (None, "", "T1") else
+                   "no tier the ladder recognises (T2 is a fresh session, T3 a human), and an "
+                   "unreadable claim is one the engine cannot honour")
+            if authority_for(graph, cid) == "human":
+                return refuse(f"the latest refute of this receipt claims `{claim}` — {why}, and "
+                              f'this floor is human -> "R:SELFREFUTE"',
+                              f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>" '
+                              f"(a FRESH session, briefed from the frozen node before it reads the "
+                              f"diff), then add gate {slug} PASS")
+            # M2 quotes this notice VERBATIM, so the T1/no-tier branch is the frozen literal and
+            # nothing else: the refusal is free to say more because M1 never quotes it, but a Must
+            # that states a string IS that string. The illegible branch carries the new clause
+            # because M2 does not cover it — the contract is silent there, not contradicted.
+            tier_notice = (f"\nnotice: the refute of this receipt claims `{claim}` — "
+                           + ("a green read by its own builder" if tier in (None, "", "T1") else why)
+                           + "; a human floor refuses this (R:SELFREFUTE)")
 
     # The floor rung (regression-floor) — a declared host suite that never ran, ran stale or ran
     # red is not evidence the change left the host standing. Evidence-class like the refute rung
@@ -7614,6 +7902,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     else:
         tail = f"{verdict} recorded; {slug} stays in `{(graph[cid]['fm'] or {}).get('status')}`"
     note = (f"gate {verdict} recorded at authority `{authority}`"
+            + tier_notice
             + f"\n  {freshness}"
             + (f"\n  unbound (reported, not blocking): {', '.join(gaps)}" if gaps else "")
             + f"\n  brief {digest} · receipt {receipt_cid}\n{tail}\nnext: add status")
@@ -7975,6 +8264,16 @@ def doctor(root, graph: dict = None, paths=None) -> list:
     # `warn`, not `error`: a fresh scaffold is unwritten, not broken, and an error would make
     # `init` produce a red bundle. LIFECYCLE_TYPES only — a Persona has no RULES to author, so a
     # finding against one names nothing its author could clear.
+    # The slot's other half: a line the reader SKIPPED is named here, or the slot fails silently
+    # and the author never learns the monitor they wrote is not one. `info` — a malformed observe
+    # breaks nothing; no gate reads an observe at all (R:OBSERVEASGATE).
+    for cid, node in sorted(graph.items()):
+        if (node["fm"] or {}).get("type") != "Task":
+            continue
+        for oid, line in malformed_observes({"body": body_of(node["path"])}):
+            find("info", "observe_malformed",
+                 f"{cid.lstrip('/')}: {oid} is not an observe — the form is `- O<n> covers: <M ids> "
+                 f"· signal <t> · window <t> · threshold <t> · action alert|rollback`: {line[:60]}", cid)
     for cid, node in sorted(graph.items()):
         if (node["fm"] or {}).get("type") not in LIFECYCLE_TYPES:
             continue

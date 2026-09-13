@@ -93,7 +93,7 @@ route says what to create, the third column what you still owe, the fourth what 
 
 | the change (kind · size) | route | effort · review | what persists |
 |---|---|---|---|
-| **mechanical**, or small **behavior** — ≤3 adjacent files, one-sitting diff, zero unknowns | direct — no node | inline card before the edit · red→green · `invariants:` hold · self-review | the commit + one `add learn` line |
+| **mechanical**, or small **behavior** — ≤3 adjacent files, one-sitting diff, zero unknowns | direct — no node | inline card · red→green · `invariants:` hold · self-review + the kind's residue lens | the commit + one `add learn` line |
 | one **behavior** worth a frozen contract | Task, `--depth quick` or `standard` | advisor pressure-test at direction · human freeze · receipt-backed verify | the node · its frozen contract · a run receipt |
 | an unanswered **question** — investigate · evaluate · research | Task, `--kind explore` | a hard budget · cited findings · sufficiency gate | the node + its cited `## FINDINGS` |
 | a **theme**, or a slice spanning tasks | Milestone | persona-led plan · breadth-first task list · goal-gate at close | the milestone + its task nodes |

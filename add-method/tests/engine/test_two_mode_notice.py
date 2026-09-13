@@ -23,8 +23,8 @@ beat: direction · next: add freeze
 
 ## RULES
 <must>
-- M1 the first rule
-- M2 the second rule
+- M1 the first rule (from: the fixture's own brief)
+- M2 the second rule (from: the fixture's own brief)
 </must>
 <reject>
 - R:BAD something forbidden -> "BAD"

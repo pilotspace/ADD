@@ -39,15 +39,15 @@ timeout is *recorded* as exit 124 and the gate refuses the PASS.
 Evidence kinds, strongest first: `test-ids` (a runner reported the IDs your `covers:` names) > `command-exit`
 (exit 0, nothing bound); a findings-only explore gates on `sources`. A weaker kind is visible on the receipt, never silent.
 
-## 2 · Check the residue — three lenses
+## 2 · Check the residue — three lenses, and a fourth by kind
 
 Automation covers the checks; it does not cover everything. Examine, by hand, the narrow set tests miss:
 - **security** — always escalates to a human; a finding is a **HARD-STOP**, whatever the evidence says.
-- **concurrency** — races, ordering, atomicity under load.
-- **architecture** — boundary and dependency violations a passing test won't reveal.
+- **concurrency** — races, ordering, atomicity under load · **architecture** — boundary and dependency violations a passing test won't reveal.
 
-**The refute-read.** Before a verdict, read the green as a skeptic and RECORD it: `add refute <slug>
---by "<name>" --tier T2 --held|--found "<input>" --probes N`. A green that survives is *earned*; one never read against
+A fourth, **residue by kind** (`explore` builds nothing and leaves none): `feature` · the new surface's failure mode under load — `refactor` · behaviour preserved, no capability added — `test` · a check that passes on nothing — `docs` · a sentence the engine cannot honour — `ui` · keyboard and screen-reader reach, input latency — `security` · the authz surface (already HARD-STOP) — `data` · migration reversibility, retention — `infra` · the rollback path and blast radius — `release` · what a rollback leaves half-applied — `integration` · the partner's contract, retries, idempotency.
+
+**The refute-read.** Before a verdict, read the green as a skeptic and RECORD it: `add refute <slug> --by "<name>" --tier T2 --held|--found "<input>" --probes N`. A green that survives is *earned*; one never read against
 is only *reported* — at a plan-or-human floor the gate refuses a PASS with no refute citing the receipt (R:UNREFUTED) or a refuted one (R:REFUTED); quick, process and explore are exempt.
 
 <!-- probe-derivation -->
@@ -60,11 +60,11 @@ back to Direction, never a finding. A probe that finds a defect graduates into a
 refreeze; one that holds stays in the repo, unbound.
 <!-- /probe-derivation -->
 
-**Who refutes — the tier ladder.** T0 nobody (quick depth · process floor: receipt + residue) · T1 the
-building session, after its own green — a prelude, optional, never the rung's answer · T2 the DEFAULT at
-floor ≥ plan: SPAWN a fresh session — `add-advisor` in `refute` mode or a new `add-worker` verify beat —
-briefed from the frozen node before it reads the diff, and record the line it returns with `--tier T2` ·
-T3 a human, at the interview and the gate (floor human) · T4 a protected holdout the builder cannot read — a CI recipe, not shipped: a prompt is not isolation.
+**Who refutes — the tier ladder,** and the gate reads it. T0 nobody (quick depth · process floor: receipt + residue) · T1 the
+building session, after its own green — a prelude, optional, never the rung's answer: at a **human** floor a
+`T1` or tier-less refute is REFUSED (R:SELFREFUTE), at plan it is a notice · T2 the DEFAULT at floor ≥ plan:
+SPAWN a fresh session — `add-advisor` in `refute` mode or a new `add-worker` verify beat — briefed from the
+frozen node before it reads the diff, and record the line it returns with `--tier T2` · T3 a human, at the interview and the gate (floor human) · T4 a protected holdout the builder cannot read — a CI recipe, not shipped: a prompt is not isolation.
 
 ## 3 · The gate — one recorded outcome
 
