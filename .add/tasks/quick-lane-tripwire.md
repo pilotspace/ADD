@@ -4,7 +4,7 @@ title: A quick commit into a sensitive or frozen path is refused where the bundl
 status: direction
 depth: standard
 sensitivity: security
-milestone: loop-that-closes
+milestone: seal-what-you-signed
 scope:
   - add-method/tooling/add.py
   - add-method/src/add_method/_bundled/tooling/add.py

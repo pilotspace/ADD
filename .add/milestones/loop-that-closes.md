@@ -1,7 +1,7 @@
 ---
 type: Milestone
 title: The loop closes — every handoff leaves an object the next beat reads
-status: direction
+status: done
 generated: { by: add/3.6.0, at: 2026-09-11 }
 verified:
   - { by: "Tin Dang", at: 2026-09-11, act: freeze, authority: plan, direction: "sha256:75a11da44c802486", binding: "sha256:e3b0c44298fc1c14" }
@@ -49,11 +49,28 @@ risks:
 - [x] reopen refuses a task in a done or archived milestone and names --supersedes; new --supersedes writes the edge and show walks it   (← successor-not-reopen)
 - [x] a human-floor PASS refuses a self-refute, and a plan-floor gate notices one   (← refute-tier-floor)
 - [x] at a human floor every unsourced Must is put to the human at interview; elsewhere freeze notices them by id   (← must-carries-source)
-- [ ] a quick: learn citing a commit that touched a sensitive path or an open task's scope is refused by name   (← quick-lane-tripwire)
+- [~] a quick: learn citing a commit that touched a sensitive path or an open task's scope is refused by name   (← quick-lane-tripwire — MOVED to seal-what-you-signed 2026-09-13)
+      The rung is BUILT and its 25 checks are green, but eight T2 reads found the same defect
+      class one gate to the left each time and the eighth is open: `scope:` is in neither seal,
+      so a human freeze stamp routes any path later hand-added to that node's `scope:` — no
+      verb, no new stamp, both digests still verify, doctor silent. The fix changes `freeze`'s
+      stamp shape engine-wide, which is not this milestone's to move. The node and its
+      HARD-STOP moved to `seal-what-you-signed`, ratified by the human 2026-09-13. This
+      criterion is NOT met and is NOT claimed: the milestone closes at 10 of 11.
 - [x] observes: lines render in brief and show and a human-floor task with none is noticed at freeze; the router carries residue by kind   (← observes-slot · direct: residue-by-kind)
 - [x] both explores gate on cited FINDINGS, and the close review carries the counts (floor receipts · consumers flagged · self-refutes refused · quick refusals) that decide which notices are promoted   (← holdout-that-holds · method-health)
 
 ## CLOSE
+HOW THIS MILESTONE CLOSED, stated plainly because the counter cannot: it has ELEVEN exit criteria and
+TEN are met. Criterion 9 was marked `[~]` rather than `[ ]`, and the engine's box counter does not
+recognise that marker — which is why `milestone-done` succeeded and reported "10/10". The `verified:`
+ledger is exact (the check stamps name EXIT:1-8,10 and EXIT:11; 9 appears in neither), and the
+criterion itself is written out above with why it is unmet. But a reader who trusts the count over
+the text will read this as complete, and it is not. The human ratified closing at 10 of 11 on
+2026-09-13 with `quick-lane-tripwire` and its HARD-STOP moved to `seal-what-you-signed`; nobody
+ratified making the box invisible, and a future milestone should not copy this move — the engine
+needs a real "moved" verdict for a criterion, which is a change request in its own right.
+
 evidence: one row per task — status · gate verdict · gate authority · who signed · refutes that FOUND
 
 - consumers-go-stale        done     PASS           plan     plan:loop-that-closes    9 found
@@ -62,7 +79,7 @@ evidence: one row per task — status · gate verdict · gate authority · who s
 - method-health             done     RISK-ACCEPTED  process  plan:loop-that-closes    1 found
 - must-carries-source       done     PASS           plan     plan:loop-that-closes    5 found
 - observes-slot             done     PASS           process  plan:loop-that-closes    0 found
-- quick-lane-tripwire       direction —              —        —                        8 found
+- quick-lane-tripwire       MOVED    HARD-STOP      human    human:Tin Dang           8 found  -> seal-what-you-signed
 - receipt-anchored-to-head  done     PASS           process  plan:loop-that-closes    0 found
 - refute-tier-floor         done     PASS           human    human:Tin Dang           1 found
 - regression-floor          done     PASS           plan     plan:loop-that-closes    1 found

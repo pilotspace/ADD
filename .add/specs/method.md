@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 66
+delta_seq: 67
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -18,6 +18,7 @@ open_deltas: 0
 how work proceeds, and what a gate costs
 
 ## Decisions that bind
+- A milestone closes over a criterion it did not meet only by recording that criterion, never by making it invisible to the counter — a gate satisfied by hiding its subject is a check that passes on nothing. (from: /specs/method.md#M67)
 - Before a control reads a stamp as authority, name which fields that stamp's digest covers: a control resting on an unsealed field is only as strong as the file's write permissions. (from: /specs/method.md#M66)
 - A value a verb interpolates into a stamp takes _oneline's discipline; a value it SERIALISES takes the serialiser's. (from: /specs/method.md#M54)
 - A differential check over many readers of one fact asserts what the CONSUMER consumes, and enumerates the readers rather than sampling them. (from: /specs/method.md#M61)
@@ -46,6 +47,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M67 · folded · 2026-09-13→2026-09-13] a criterion that the counter cannot see is not a criterion that is met. Closing loop-that-closes at 10 of 11 required marking the unmet box [~] instead of [ ]; the engine's box counter ignores that marker, so milestone-done succeeded and reported 10/10. The verified: ledger stayed exact — the check stamps name EXIT:1-8,10 and EXIT:11, never 9 — but the headline count became a claim nobody made. A gate satisfied by making its subject invisible is the same shape as a check that passes on nothing. The engine needs a real MOVED verdict for a criterion, so a milestone can close honestly over a criterion it handed to a successor (evidence: /milestones/loop-that-closes.md)
 - [ADD · M66 · folded · 2026-09-13→2026-09-13] a SEAL binds only the fields it digests, and a control that trusts a signature must name WHICH fields that signature covered. quick-lane-tripwire's floor stood down for any node carrying a human freeze stamp — but direction_digest seals RULES, CHECKS and gives:, binding_digest seals EDGES and probed A-ids, and scope: is in NEITHER, so hand-adding one entry to a frozen node's scope: routes a sensitive path with no verb, no new stamp and no name typed, while both stamp digests still verify and doctor says nothing. Eight rounds on this node walked the same class one gate left each time: matcher, freeze, authority, signature, and now the SEAL's own coverage. Before a control reads a stamp as authority, check what that stamp's digest actually covers — and if the field it relies on is unsealed, the control is only as strong as the file's write permissions (evidence: /tasks/quick-lane-tripwire.d/runs/20.md)
 - [ADD · M65 · folded · 2026-09-13→2026-09-13] a COMPUTED authority is not a SIGNATURE. quick-lane-tripwire's floor asked authority_for(graph, cid) == 'human' — but freeze WRITES authority: human whenever the floor it computes is human, the default --by is cli, and interview_gap has nothing to ask when the author left ASSUMPTIONS empty, which the author controls. Reading the computed floor back asks the engine whether the ENGINE thought a human was owed, never whether one signed: add new Persona p --scope src/auth/token.py then a bare add freeze p took a security floor down in TWO commands with no person anywhere. Any control meaning 'a human approved this' must read the SIGNATURE, and must accept that the string is a claim the notary cannot verify — a deliberate one, which is the line the ledger already draws between human:<name>, plan:<m> and cli (evidence: /tasks/quick-lane-tripwire.d/runs/20.md)
 - [ADD · M64 · folded · 2026-09-13→2026-09-13] a fix made to close a finding is itself unreviewed until someone reads it. On refute-tier-floor three consecutive reads each found a defect introduced by the fix that closed the previous one: the allowlist fix drifted M2's quoted notice; the decorrelation fix landed only on the human fixture and left the plan floor readable by `by:`; the typo fix split `recorded as handed` across a newline and turned another task's guard red. None was a behaviour bug and none was caught by the checks written alongside the fix. The cheap counter is to re-run the PREVIOUS finding's mutant plus the new one after every fix, and to ask what the fix's own blast radius is — not just whether the reported defect is gone. (evidence: /tasks/refute-tier-floor.d/runs/ — refutes on runs 1, 7 and 9)
