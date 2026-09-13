@@ -30,22 +30,22 @@ argues Explore-first ("high" is judgment, never a numeric gate):
 
 ### Quick — direct, no node
 **Refused first, whatever the size.** A change that trips the closed floor (security · data · architecture),
-adds or alters a `gives:` surface anything else consumes, or touches frozen scope takes a Task —
-however small it is. Only then size it: at most ~3 adjacent files, a diff one
-reviewer reads in one sitting, an unknowns tally of zero. Small **new behavior** is admitted — the
-lane is bounded by size and blast radius, not by whether the specs already cover it.
+adds or alters a `gives:` surface anything else consumes, or touches frozen scope takes a Task — however
+small. Run `add locate <path>` per file BEFORE the first edit — it names the floor, and any node
+whose scope holds that path — while changing course is free. Only then size it: ~3 adjacent files, one sitting's diff,
+zero unknowns. Small **new behavior** is admitted — bounded by size and blast radius, not by coverage.
 
-**Route and go.** State one line — `quick: <intent> — <fit>` — and proceed. You do NOT wait for a
-confirm here; the human vetoes after the fact, and "make it a task" always wins. Task · Explore ·
-Milestone keep the confirm-first rule unchanged.
+**Route and go.** State one line — `quick: <intent> — <fit>` — and proceed. You do NOT wait for a confirm
+here; the human vetoes after the fact, and "make it a task" always wins. Task · Explore · Milestone
+keep the confirm-first rule unchanged.
 
 **The receipt** is the commit — its body names the check you ran and its result — plus exactly one learn line:
 `add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <sha>` — a real lesson when one was learned,
-otherwise the trace `"quick: <intent>"`. That learn line is the ONLY bundle write; a Quick
-change never writes under `.add/tasks|runs|milestones`.
+otherwise the trace `"quick: <intent>"`. It is the ONLY bundle write — nothing lands under
+`.add/tasks|runs|milestones` — so it is where the engine reads your commit back: ANY lesson whose
+sha touched an UNROUTED sensitive path is refused `R:QUICKSIZEUP`; a `quick:` one, also for scope.
 
-**Sizing up reuses today's vocabulary** — no new lane, tier, verb or stamp. medium = a Task at `--depth quick`;
-large = a Task at `standard|deep`, or a Milestone when it spans tasks.
+**Sizing up reuses today's vocabulary** — no new lane, tier, verb or stamp. medium = a Task at `--depth quick`; large = a Task at `standard|deep`, or a Milestone when it spans tasks.
 
 **The five steps**, in order:
 1. the route line `quick: <intent> — <fit>`;

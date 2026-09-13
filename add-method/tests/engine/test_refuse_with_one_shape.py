@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "8c07c98869e265cc1da2684af360d35d0ff70ab2ff92abd56786a4bdc9bdfddd"  # re-aimed @ successor-not-reopen: `reopen` refuses inside a closed milestone and `new --supersedes` refuses a predecessor that resolves to nothing — two messages ADDED, none reworded. prior: 2d3b9d1d… (escape-with-prevention, the merge's severed tail)
-MESSAGE_COUNT = 125  # re-aimed @ successor-not-reopen: R:CLOSEDHISTORY and R:PHANTOMPREDECESSOR added. prior: 123
+MESSAGE_DIGEST = "0c5160ff39f2ac18f383a7a2ae36f4fedad2482369f8fa02d5c4fec8b506d90c"  # re-aimed @ quick-lane-tripwire: the R:QUICKSIZEUP refusal REWORDED again, none added or lost. Its `next:` was `add new Task --scope <path>` on BOTH halves, and on the owner half that is a dead end — run against the task that already owns the path it makes a colliding node and re-refuses identically, so the only takeable route was the parenthetical. Each half now leads with the route that works. prior: c6bff18b…
+MESSAGE_COUNT = 126  # re-aimed @ quick-lane-tripwire: ONE refusal added — R:QUICKSIZEUP's floor half and its owner half now name DIFFERENT takeable routes, so they are two messages, not one reworded. An earlier comment on this line claimed `unchanged: reworded, not added. prior: 126`; against HEAD the value was 125, so the comment described a re-aim that had not happened. prior: 125
 
 
 def _message_digest() -> tuple:

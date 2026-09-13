@@ -2040,6 +2040,37 @@ def _under(path: str, base: str) -> bool:
     return path == base or path.startswith(base + "/")
 
 
+def _in_bundle_frame(parent, rels):
+    """`rels` — repo-root-relative, the way every git command prints them whatever the cwd — as
+    the BUNDLE's own entries are written, or None when git cannot say where the bundle sits.
+
+    `scope:` and `sensitive_paths:` are written relative to the bundle PARENT. For any bundle
+    below the repo root — this project's own `add-method/.add` is one — the two bases differ, so
+    an unnormalised comparison silently matches nothing (the sensitive floor goes inert) or
+    everything (a permanent refusal), depending on which side was prefixed. A path ABOVE the
+    parent is DROPPED, not merely left unstripped: no entry of this bundle could ever name it.
+
+    ONE reader, because the working-tree walker and the commit walker had this fact twice and it
+    was wrong in both, differently: `--show-prefix` is read with `strip=False` and only git's own
+    newline removed, since a directory is entitled to a LEADING space and the default strip ate
+    it — ` nest/` came back as `nest/`, every path then failed `startswith` and was dropped, and
+    the floor went entirely inert for that bundle.
+    """
+    prefix = _git(parent, "rev-parse", "--show-prefix", strip=False)
+    if prefix is None:
+        return None
+    prefix = prefix.rstrip("\n")
+    out = []
+    for rel in rels:
+        if prefix:
+            if not rel.startswith(prefix):
+                continue
+            rel = rel[len(prefix):]
+        if rel:
+            out.append(rel)
+    return out
+
+
 def _changed_paths(root) -> list:
     """Repo-relative paths the working tree has touched vs HEAD, or `[]` when git cannot say.
 
@@ -2051,14 +2082,7 @@ def _changed_paths(root) -> list:
     out = _git(root, "status", "--porcelain", "-z", "--untracked-files=all", strip=False)
     if not out:
         return []
-    # `git status` prints REPO-ROOT-relative paths whatever the cwd, while `scope:` entries are
-    # written relative to the BUNDLE PARENT. For any bundle below the repo root — this project's
-    # own `add-method/.add` is one — the two bases differ, so every sensitive edit compared a
-    # prefixed path against an unprefixed scope entry and refused permanently (2026-09-01 review).
-    prefix = _git(root, "rev-parse", "--show-prefix")
-    if prefix is None:
-        return []
-    recs, seen, i = out.split("\0"), [], 0
+    recs, raw, i = out.split("\0"), [], 0
     while i < len(recs):
         rec, i = recs[i], i + 1
         if len(rec) < 4:
@@ -2071,13 +2095,12 @@ def _changed_paths(root) -> list:
         if ("R" in xy or "C" in xy) and i < len(recs) and recs[i]:
             pending.append(recs[i])
             i += 1
-        for rel in pending:
-            if prefix:
-                if not rel.startswith(prefix):
-                    continue  # above the bundle parent — no `scope:` entry could ever name it
-                rel = rel[len(prefix):]
-            if rel and rel not in seen:
-                seen.append(rel)
+        raw.extend(pending)
+    # `root` IS the bundle parent here — this walker's one caller passes `root.parent`.
+    seen = []
+    for rel in _in_bundle_frame(root, raw) or []:
+        if rel not in seen:
+            seen.append(rel)
     return seen
 
 
@@ -3336,6 +3359,17 @@ def locate(root, query: str, all: bool = False) -> tuple:
     (M3 · M4 · R:NOWAYBACK). Only `done` collapses: an archived or reopened node is not settled.
     """
     graph = scan(Path(root))
+    # The FLOOR first, because the floor is checked FIRST and always wins (A5/A11) and this is the
+    # one PRE-EDIT step the direct lane runs — S2's whole promise is that it fires "while changing
+    # course is still free". Reading `scope:` alone answered `no node scopes …` for a path the
+    # bundle had declared sensitive: a false all-clear on the security half, from the step meant to
+    # prevent the very refusal `learn` would hand back after the commit. Same patterns, same
+    # matcher as `quick_hit` and A17 — one reader, never a second copy of the rule.
+    patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
+    floor = next((str(pat) for pat in (patterns if isinstance(patterns, list) else [patterns])
+                  if _paths_touch(str(query), str(pat))), None)
+    lede = (f"`{query}` matches the sensitive pattern `{floor}` — floor human; a change here is a "
+            f"node, however small\n" if floor else "")
     hits = []
     for cid, node in sorted(graph.items()):
         fm = node["fm"] or {}
@@ -3345,10 +3379,10 @@ def locate(root, query: str, all: bool = False) -> tuple:
                 hits.append((cid, fm.get("status", "—"), str(entry)))
                 break
     if not hits:
-        return [], f"no node scopes `{query}`\nnext: add status"
+        return [], lede + f"no node scopes `{query}`\nnext: add status"
     listed = hits if all else [h for h in hits if h[1] != "done"]
     closed = len(hits) - len(listed)
-    parts = [f"{len(hits)} node(s) scope `{query}`:"]
+    parts = [lede + f"{len(hits)} node(s) scope `{query}`:"]
     parts += [f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{st}]  ({entry})" for cid, st, entry in listed]
     if closed:
         parts.append(f"  … {closed} done owner(s) not listed (`--all`)")
@@ -4084,6 +4118,72 @@ def _git_blobs(root, rels: list) -> dict:
     return dict(zip(rels, lines)) if len(lines) == len(rels) else {}
 
 
+def _scope_files(root, entry) -> list:
+    """The files ONE `scope:` entry names, as absolute paths — the single reading of what an entry
+    covers (M2).
+
+    Lifted out of `scope_digest` so the freshness set and every other question about an entry give
+    the SAME answer. A glob is read with `Path.glob`, where `*` does NOT cross a `/`; `fnmatch`'s
+    `*` does, and reading an entry that way let one unfrozen node created by anyone —
+    `add new Task junk --scope '**'`, exit 0, no freeze, no human — stand the sensitive floor down
+    for every path in the bundle, while that node's own freshness set was EMPTY. A node that holds
+    no files has routed nothing.
+    """
+    root, entry = Path(root), str(entry)
+    if not entry:
+        return []
+    try:
+        candidates = _scope_candidates(root, entry)
+    except (NotImplementedError, ValueError, OSError):
+        # An entry no walker can resolve — `/etc/*` is a NotImplementedError from `Path.glob`,
+        # `/etc/hosts` a ValueError from `relative_to` — names no file HERE, and that is the whole
+        # answer. It must not raise: `learn` now reads EVERY node's scope, so one node anyone can
+        # write turned the direct lane's one bundle write into a traceback instead of a refusal
+        # (R:LANEBLOCKED), and `gate` reads them too.
+        return []
+    out = []
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            rel = path.relative_to(root)
+        except ValueError:
+            continue          # resolved outside the root — no entry of this bundle names it
+        # Build noise is not the code under review — hashing it would make the digest flap.
+        if "__pycache__" in rel.parts or path.suffix in (".pyc", ".pyo"):
+            continue
+        out.append(path)
+    return out
+
+
+def _scope_candidates(root, entry: str) -> list:
+    """The raw paths one entry expands to, before the file/noise filter."""
+    if any(c in entry for c in "*?["):
+        candidates = sorted(root.glob(entry))
+    else:
+        p = root / entry
+        # A directory scope entry expands to the files beneath it — otherwise a dir-scoped task
+        # gets an empty digest and `gate` cannot establish freshness (field-report finding #6).
+        # Enumerated THROUGH git (tracked + untracked-not-ignored), never a raw walk: the
+        # project's own .gitignore defines its build noise, so `.next/`, `node_modules/` and
+        # friends stay out — a rebuild must not stale a receipt no source edit touched, and
+        # walking a dependency tree must not price the notary (field receipt: a dir scope
+        # digested a whole turbopack cache). A glob or an explicitly named file is a
+        # deliberate declaration and keeps its exact reading.
+        if p.is_dir():
+            listed = _git(root, "ls-files", "-z", "--cached", "--others",
+                          "--exclude-standard", "--", entry)
+            candidates = [root / f for f in sorted((listed or "").split("\0")) if f]
+        else:
+            candidates = [p]
+    return candidates
+
+
+def _scope_holds(root, entry, path) -> bool:
+    """Does `entry` cover `path`? The one question, asked of the one reader."""
+    return any(f.relative_to(Path(root)).as_posix() == str(path) for f in _scope_files(root, entry))
+
+
 def scope_digest(root, scope: list) -> list:
     """`[{path, blob}]` — git blob hashes over the freshness set (FORMAT §8.1, A22).
 
@@ -4095,32 +4195,7 @@ def scope_digest(root, scope: list) -> list:
         return []
     out, rels = [], []
     for entry in sorted(str(s) for s in (scope or [])):
-        if any(c in entry for c in "*?["):
-            candidates = sorted(root.glob(entry))
-        else:
-            p = root / entry
-            # A directory scope entry expands to the files beneath it — otherwise a dir-scoped task
-            # gets an empty digest and `gate` cannot establish freshness (field-report finding #6).
-            # Enumerated THROUGH git (tracked + untracked-not-ignored), never a raw walk: the
-            # project's own .gitignore defines its build noise, so `.next/`, `node_modules/` and
-            # friends stay out — a rebuild must not stale a receipt no source edit touched, and
-            # walking a dependency tree must not price the notary (field receipt: a dir scope
-            # digested a whole turbopack cache). A glob or an explicitly named file is a
-            # deliberate declaration and keeps its exact reading.
-            if p.is_dir():
-                listed = _git(root, "ls-files", "-z", "--cached", "--others",
-                              "--exclude-standard", "--", entry)
-                candidates = [root / f for f in sorted((listed or "").split("\0")) if f]
-            else:
-                candidates = [p]
-        for path in candidates:
-            if not path.is_file():
-                continue
-            rel = path.relative_to(root)
-            # Build noise is not the code under review — hashing it would make the digest flap.
-            if "__pycache__" in rel.parts or path.suffix in (".pyc", ".pyo"):
-                continue
-            rels.append(rel)
+        rels.extend(f.relative_to(root) for f in _scope_files(root, entry))
     hashes = _git_blobs(root, [str(r) for r in rels])
     for rel in rels:
         blob = hashes.get(str(rel)) or _git(root, "hash-object", str(rel))
@@ -5062,6 +5137,174 @@ def _names_an_open_escape(root, ref: str) -> bool:
     return False
 
 
+QUICK_MARK = re.compile(r"^\s*quick\s*:", re.I)
+CLOSED_TASK_STATES = ("done", "dropped", "archived")
+
+
+def _commit_paths(root, evidence: str):
+    """The paths a commit changed, or None when this is not a commit the engine can read.
+
+    Two verbs, both READ-ONLY (R:OUTWARD, E6): `rev-parse` decides whether the evidence IS a
+    commit (`--verify -q <ev>^{commit}`), how it sits in the history (`<ev>^@` lists its parents,
+    `--is-shallow-repository` says whether git holds that history at all) and where the bundle
+    sits (`--show-prefix`); `diff-tree` says what the commit touched. Reading the SHAPE with
+    `rev-parse` and not `rev-list` keeps the tripwire to the two verbs E6 enumerates.
+    Recognition is git's, never a shape test — a receipt cid, a path and a line of prose are all
+    things `rev-parse` declines, and a regex guessing at "looks like a sha" would eventually
+    mistake one for the other in the direction that costs the lane its write.
+
+    `_git` already returns None for a missing binary, a tree that is not a repo and a non-zero
+    exit, so every flavour of "the engine cannot look" arrives here as one value (A8).
+    """
+    ev = str(evidence).strip()
+    if not _git(root, "rev-parse", "--verify", "-q", f"{ev}^{{commit}}"):
+        return None
+    # `-z`, because `diff-tree` otherwise renders any path outside ASCII through `core.quotepath`:
+    # `src/auth/tokén.py` arrives as the literal string `"src/auth/tok\303\251n.py"`, quotes and
+    # octal escapes and all, and matches no pattern a human would write. `_changed_paths` reads
+    # `-z` for this exact reason; a floor a non-ASCII filename walks through is not a floor.
+    args = ["diff-tree", "--no-commit-id", "--name-only", "-r", "-z"]
+    # How the commit sits in the history decides how it can be read at all, and the three shapes
+    # need three answers (M1 reads THE COMMIT'S CHANGED PATHS; the flags are how, not what).
+    parents = _git(root, "rev-parse", f"{ev}^@")
+    if parents is None:
+        return None
+    parents = parents.split()
+    rev = [ev]
+    if len(parents) > 1:
+        # A MERGE prints NOTHING at all with one argument: `diff-tree` has no single parent to
+        # pick, so a merge that carried a sensitive path into the branch read as a commit that
+        # changed no files and the lesson landed. A sensitive path arriving by merge is a
+        # sensitive path arriving. Against the FIRST parent, though — `-m` unions the diff
+        # against EVERY parent, and against any parent but the first that is what the OTHER
+        # branch was BEHIND on, so merging a side branch forked before a sensitive path moved on
+        # the trunk was refused naming a file the author never touched (E3, and A6's promise with
+        # it) — the same shape `--root` broke on a shallow clone, one fix to the left. The first
+        # parent is the branch the merge landed ON, so `diff(^1, merge)` is precisely what this
+        # commit introduced, and it loses nothing: an OCTOPUS's first parent lacks every other
+        # branch's contribution, so the one diff still carries them all.
+        rev = [f"{ev}^1", ev]
+    elif not parents:
+        # Parentless is TWO shapes that git reports identically. A repo's genuine FIRST commit
+        # needs `--root` or every path it introduced reads as untouched — and that is the commit
+        # most likely to be someone starting a project by dropping their secrets in. A SHALLOW
+        # clone's boundary commit is GRAFTED to look parentless, and `--root` there lists the
+        # ENTIRE TREE: `git clone --depth 1`, which is what CI checks out by default, turned a
+        # clean README-only commit into a refusal naming a file the author never touched. The
+        # engine genuinely cannot see that commit's diff, and A8 says every flavour of "cannot
+        # look" lands the lesson rather than blocking the lane on it (R:LANEBLOCKED).
+        if _git(root, "rev-parse", "--is-shallow-repository") == "true":
+            return []
+        args.append("--root")
+    out = _git(root, *args, *rev, strip=False)
+    # …and into the BUNDLE's frame, through the one reader the working-tree walker also uses:
+    # reusing A17's MATCHER without A17's FRAME is not "the engine's own match" (M2), and the six
+    # checks that shipped green could not see it — every one built its bundle at the repo root,
+    # where the two frames coincide by accident. From the bundle PARENT, not the bundle, because
+    # `--show-prefix` run inside `.add/` reports one level too deep.
+    # NUL-delimited, so each path is taken whole — a `.strip()` here would eat a leading or
+    # trailing space a filename is entitled to carry. `^1` can repeat nothing, but an octopus
+    # diff may name a path once; the first hit is what `quick_hit` reports either way.
+    return _in_bundle_frame(Path(root).parent, [r for r in (out or "").split("\0") if r])
+
+
+def _scoped_by_any(parent, graph: dict, path: str) -> bool:
+    """Does ANY node — whatever its status — declare `scope:` that HOLDS `path`?
+
+    Status-blind, unlike the OWNER half: an owner asks "whose contract is this, now", which only
+    an open frozen Task can answer, while the floor asks "was this change routed at all", and a
+    done node routed it just as surely as an open one.
+
+    HOLDS, not merely matches: read through `_scope_holds`, the reader M2 names, because this
+    answer stands the security floor down. `fnmatch` let `--scope '**'` disarm every sensitive
+    path in the bundle while the node held no files at all.
+
+    And frozen AT HUMAN AUTHORITY — floored by THIS floor. A freeze stamp alone buys nothing,
+    because a freeze costs no human when A17 cannot see the entry: `authority_for` reads a scope
+    entry with `_paths_touch`, where `_paths_touch('**/*', 'src/auth/**')` is False, so the
+    interview never arms and a bare `add freeze` stamps `process` — while this function reads the
+    SAME entry through the freshness set, where `**/*` holds every file in the tree. The one shape
+    invisible to the human-authority gate was exactly the shape that holds everything, and four
+    commands with no human anywhere took the sensitive floor down bundle-wide.
+
+    The two readers still disagree. What changes is that the disagreement now fails CLOSED: a node
+    A17 reads as `process` routes nothing, however wide its entry, so the only thing that can
+    stand this floor down is a node this floor itself demanded a human for. Status stays blind (a
+    done node routed its work as surely as an open one); the seal, and who signed it, do not.
+
+    WHO SIGNED IT is a separate question from the computed floor, and reading only the floor left
+    the disarm open one gate further left. `freeze` WRITES `authority: human` whenever the floor
+    it computes is human — `claimed_authority(None, floor)` returns the floor, the default `--by`
+    is `cli`, and `interview_gap` has nothing to put to a human when the author left no open
+    decisions, which the author controls. So `add new Persona p --scope src/auth/token.py` then a
+    bare `add freeze p` stamped `authority: human` with no person anywhere, and the floor stood
+    down on it in two commands (2026-09-13, round seven). A `by:` string is still a claim — a
+    notary cannot verify a person — but it is a DELIBERATE claim, and telling `human:<name>` from
+    a default `cli` is the same line the ledger already draws everywhere else.
+    """
+    for cid, node in graph.items():
+        fm = node.get("fm") or {}
+        if not any(isinstance(v, dict) and v.get("act") == "freeze"
+                   and str(v.get("by") or "").startswith("human:")
+                   for v in (fm.get("verified") or [])):
+            continue
+        if authority_for(graph, cid) != "human":
+            continue
+        for entry in _scope_list(fm):
+            if _scope_holds(parent, entry, path):
+                return True
+    return False
+
+
+def quick_hit(root, graph: dict, paths: list, owners: bool = True):
+    """`(kind, path, owner)` for the first path a quick commit had no business touching, or None.
+
+    `kind` is `"sensitive"` (owner: the matching pattern) or `"scope"` (owner: the task cid).
+    The floor is read FIRST and wins, because it is unstrikeable and outranks an owner (A5/A11) —
+    a path that is both is reported as sensitive, which is the higher answer.
+
+    `owners=False` reads the FLOOR alone (M1, M3). A floor cannot be gated by a prefix the author
+    picks, so it reads every lesson; an OWNER is a routing hint, and `learn` takes a commit sha OR
+    a task cid as evidence and never both, so a lesson written up about a Task's own work cites
+    that Task's own commit — reading the owner half there would refuse the ordinary case.
+
+    Both matchers are the ENGINE's own, not new ones: `_paths_touch` is what `authority_for` uses
+    for A17, and `_scope_list` is what every scope reader uses. A second matcher here would be one
+    more reader of one fact, which is the defect this milestone has spent six refutes on.
+    """
+    parent = Path(root).parent
+    patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
+    for path in paths:
+        for pattern in (patterns if isinstance(patterns, list) else [patterns]):
+            # …and no node of ANY status scopes it. The tripwire exists to catch a change with NO
+            # node; a path some node already owns is a change that WAS routed, and there is nothing
+            # left to size up. Without this the widened floor closed the prefix evasion and closed
+            # the route for writing up security work with it: an `--escape` post-mortem ABOUT a
+            # security fix necessarily cites that fix's commit, and a write-up of work a done Task
+            # routed cites that Task's commit — both were refused and told to open a node for a
+            # path a node already owned. A refusal an author cannot act on is one they route around.
+            if _paths_touch(path, str(pattern)) and not _scoped_by_any(parent, graph, path):
+                return "sensitive", path, str(pattern)
+    if not owners:
+        return None
+    # OPEN and FROZEN only (M2, A2): a done task's scope is history, and an unfrozen task's scope
+    # is a draft nobody sealed — neither owns anything a quick commit could be trespassing on.
+    for cid in sorted(graph):
+        fm = (graph[cid].get("fm") or {})
+        if fm.get("type") != "Task" or str(fm.get("status") or "") in CLOSED_TASK_STATES:
+            continue
+        if not any(isinstance(v, dict) and v.get("act") == "freeze" for v in (fm.get("verified") or [])):
+            continue
+        for entry in _scope_list(fm):
+            for path in paths:
+                # The SAME reader the floor exemption uses, and the one M2 names. If these two
+                # ever diverge, both halves can fire on one path and A5's disjointness — which is
+                # what makes the corrected ordering true — quietly stops holding.
+                if _scope_holds(parent, entry, path):
+                    return "scope", path, cid
+    return None
+
+
 def learn(root, lens: str, lesson: str, evidence: str = None, escape: bool = False,
           why_missed: str = None, prevention: str = None) -> tuple:
     """Append a lesson to a spec's `## Deltas` in the frozen delta grammar, `open` by default.
@@ -5101,6 +5344,63 @@ def learn(root, lens: str, lesson: str, evidence: str = None, escape: bool = Fal
                           f'{flag} (an escape is filed with --escape; quote it in a `code span` to write about it) '
                           f'-> "R:UNCAUSED"\nnext: add learn '
                           f'{lens} "<lesson>" --evidence <ref> [--escape --why-missed "…" --prevention "<kind> → <ref>"]')
+    # quick-lane-tripwire: the direct lane's ONE bundle write is where the engine can finally look.
+    # intake.md routes a small change to the direct lane on the author's own judgement and says the
+    # floor is checked FIRST and always wins — and nothing enforced that, so a `quick:` commit into
+    # a sensitive path or a frozen scope left no node, no contract and no receipt. Read before the
+    # write (A9), so a refused quick line writes nothing at all; and never a default-deny — a
+    # bundle that declares no sensitive paths and owns no open scope is a bundle saying there is
+    # nothing here to trespass on (A10).
+    # The FLOOR reads every lesson; the OWNER half reads the `quick:` line alone (M1, M3, E5). A
+    # floor is unstrikeable, so a prefix the author picks cannot gate it — and the refusal used to
+    # END by recommending that prefix be dropped, which made "drop `quick:`" the one-token evasion
+    # this control advertised to the very people it exists for. An owner is a routing hint, and
+    # `learn` takes a commit sha OR a task cid and never both, so a write-up of a Task's own work
+    # cites that Task's own commit: reading the owner half there would refuse the ordinary case.
+    paths = _commit_paths(root, evidence) if evidence else None
+    if paths:
+        # The lane is NEVER blocked on the engine's own inability to look (R:LANEBLOCKED, A8): no
+        # repo, no git, an unreadable sha and evidence that is simply not a commit all read as
+        # "nothing to inspect", and the lesson lands exactly as it did before this rung existed.
+        hit = quick_hit(root, scan(root), paths, owners=bool(QUICK_MARK.match(lesson)))
+        if hit:
+            kind, path, owner = hit
+            why = (f"`{path}` matches the sensitive pattern `{owner}` — floor human"
+                   if kind == "sensitive" else
+                   f"`{path}` lies under {owner}'s frozen `scope:` — that contract owns it")
+            # A MERGE says so, because the author probably did not write that path: `git pull` is
+            # the ordinary way a colleague's sensitive commit arrives on your branch, and no
+            # `diff-tree` flag tells a pull from merging your own work (`-c` reports nothing for
+            # either, which is how the carry went unseen to begin with). The detection stays; the
+            # ADVICE is what has to be true. A6's own cost-if-wrong is the author dropping the
+            # `quick:` prefix, so a refusal that CLOSES on that recommendation teaches the bypass
+            # to exactly the people this control exists for — it is named as the lesser route,
+            # never as the last word.
+            merged = len((_git(root, "rev-parse", f"{str(evidence).strip()}^@") or "").split()) > 1
+            arrived = ("the merge it cites brought in" if merged else "the commit it cites touched")
+            # Every route named must be one the author can actually take, and none of them is the
+            # prefix (M6). The clause that used to sit here recommended dropping `quick:` — which
+            # WORKED on an owner hit, handing out the bypass inside the message that refused it,
+            # FAILED on a floor hit, and read as a no-op for a lesson that never carried a prefix.
+            # Each half names the `next:` that WORKS for it, and the other route as the aside.
+            # `add new Task --scope <path>` is the route where no node owns the path — run against
+            # the task that already owns it, it creates a colliding node and lands the author back
+            # on a byte-identical refusal. M6: every route named must be one they can take.
+            if kind == "scope":
+                nxt = f'next: add learn <lens> "<lesson>" --evidence {owner}'
+                aside = (f"   (or add new Task <slug> --scope {path}, if this is separate work "
+                         f"that contract does not own)")
+            else:
+                nxt = f"next: add new Task <slug> --scope {path}"
+                aside = ("   (a merge carries what the branch was behind on — if that path is not "
+                         "your change, the commit that made it is what needs the node, not this "
+                         "merge)" if merged else
+                         "   (then build it under that contract, and file this lesson against it)")
+            return None, (f"cannot file the lesson — {arrived} {why}, and "
+                          f"the floor is checked FIRST and always wins: a change there is a node, "
+                          f'however small -> "R:QUICKSIZEUP"\n'
+                          f"{nxt}\n{aside}")
+
     # escape-with-prevention: an escape carries its why-missed and a bound prevention, or it is
     # not filed — a sentence with no prevention is exactly what folded unprevented before.
     tail = ""
