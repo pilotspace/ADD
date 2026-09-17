@@ -1169,6 +1169,17 @@ def _last_gate_outcome(fm: dict):
     return outcome
 
 
+def _effective_gate_stamp(fm: dict):
+    """Latest readable gate after reopen; a verdictless legacy gate cannot clear a known stop."""
+    stamps = [s for s in (fm or {}).get("verified") or [] if isinstance(s, dict)]
+    last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"),
+                      default=-1)
+    gates = [s for s in stamps[last_reopen + 1:] if s.get("act") == "gate"]
+    readable = ("PASS", "RISK-ACCEPTED", "HARD-STOP")
+    return next((s for s in reversed(gates) if str(s.get("outcome")) in readable),
+                gates[-1] if gates else None)
+
+
 def _delta_lines(body: str) -> list:
     """Every delta in a spec body as ONE item — its head line plus the continuation lines the
     grammar joins into it (`joined_deltas`), text unchanged.
@@ -2145,16 +2156,38 @@ def _report_predates_run(path, started: float) -> bool:
         return True
 
 
+FENCE_MARKER = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
+
+
+def _fence_step(line: str, active):
+    """Advance one Markdown fence; an inner marker of another kind is content."""
+    m = FENCE_MARKER.match(line)
+    if m is None:
+        return active, False
+    marker, tail = m.groups()
+    kind, width = marker[0], len(marker)
+    if active is None:
+        if kind == "`" and "`" in tail:
+            return active, False  # a backtick opener cannot contain backticks in its info string
+        return (kind, width), True
+    if kind == active[0] and width >= active[1] and not tail.strip():
+        closed = None
+        return closed, True
+    return active, False
+
+
 def _fence_balanced(text: str) -> bool:
-    """True when every ``` / ~~~ fence in `text` is closed.
+    """True when every real ``` / ~~~ fence in `text` is closed.
 
     `_box_lines` SKIPS fenced regions, so an unclosed fence silently swallows every box after
     it. For the goal-gate that turned real unchecked criteria into `total == 0` — the "no exit
     criteria" branch, which CLOSES the milestone (2026-09-01 review). A gate that cannot read
     its own input must refuse, never tally zero.
     """
-    return sum(1 for ln in text.splitlines()
-               if ln.strip().startswith(("```", "~~~"))) % 2 == 0
+    active = None
+    for line in text.splitlines():
+        active, _boundary = _fence_step(line, active)
+    return active is None
 
 
 def _oneline(note) -> str:
@@ -2578,11 +2611,13 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                        if isinstance(x, dict) and x.get("act") in ("freeze", "refreeze") and "gives" in x), None)
     new_gives = gives_digest(node_t2)
     pins = needs_pins(graph, cid)
+    exit_pin = (f', exit: "{exit_digest(node_t2)}"'
+                if (node_t2.get("fm") or {}).get("type") == "Milestone" else "")
     node, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{_oneline(by)}", at: {_today()}, act: {act}, authority: {authority}, '
                      f'direction: "{direction_digest(node_t2)}", '
                      f'binding: "{binding_digest(node_t2)}", gives: "{new_gives}"'
-                     + (f', needs: "{pins}"' if pins else "") + " }")])
+                     + (f', needs: "{pins}"' if pins else "") + exit_pin + " }")])
     if err:
         return None, err + "\nnext: add status"
     stale_note = ""
@@ -2764,14 +2799,14 @@ def _box_lines(body: str, section: str = None):
     milestones do) would otherwise shift every index, so the number a human counts off the
     rendered file would not be the number the verb writes to.
     """
-    out, fence, inside, here = [], False, section is None, "body"
+    out, fence, inside, here = [], None, section is None, "body"
     lines = body.splitlines()
     for i, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith("```") or stripped.startswith("~~~"):
-            fence = not fence
+        fence, boundary = _fence_step(line, fence)
+        if boundary:
             continue
-        if fence:
+        if fence is not None:
             continue
         if line.startswith("## "):
             here = stripped[3:].strip()
@@ -2889,6 +2924,16 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
                            f"criterion:\n{listed_t}\n"
                            f"next: author the criterion, then add check {slug} <n>")
 
+    # A moved criterion retains its original obligation. Its index remains visible, but
+    # neither `check` nor `uncheck` may silently turn that transfer into an ordinary box.
+    moved_indices = [n for n in sorted(set(indices))
+                     if BOX.match(body.splitlines()[boxes[n - 1][0]]).group(1) == "~"]
+    if moved_indices:
+        return None, (f"cannot check moved box {', '.join(map(str, moved_indices))} in {cid} "
+                      f"— `[~]` retains its original obligation; NOTHING was written\n"
+                      f"next: repair its `moves-to:` and destination `accepts:`, then "
+                      f"add milestone-done {slug}")
+
     want, lines, moved = not off, body.splitlines(keepends=True), []
     for n in sorted(set(indices)):
         i, marked, text, where_box = boxes[n - 1]
@@ -2928,6 +2973,54 @@ def milestone_window_anchor(fm: dict):
     return _as_date(gen.get("at")) if isinstance(gen, dict) else None
 
 
+EXIT_LOCATOR = re.compile(r"\A(/milestones/[A-Za-z0-9][A-Za-z0-9._-]*\.md)#EXIT:(C[1-9][0-9]*)\Z")
+EXIT_ID = re.compile(r"\A(C[1-9][0-9]*)\b")
+
+
+def _exit_link(text: str, name: str):
+    """One exact parenthesized locator, or None when the author left it ambiguous."""
+    links = re.findall(r"\(\s*" + re.escape(name) + r":\s*([^)]*)\)", text)
+    return links[0].strip() if len(links) == 1 and text.count(name + ":") == 1 else None
+
+
+def _resolve_exit_move(graph, source_cid: str, source_id: str, text: str, seen: set):
+    """Follow an accepted move to a terminal criterion; return (reject code, reason)."""
+    target = _exit_link(text, "moves-to")
+    if target is None:
+        return "R:ORPHAN_MOVE", "one exact `(moves-to: ...)` locator is required"
+    parsed = EXIT_LOCATOR.fullmatch(target)
+    if parsed is None:
+        return "R:DANGLING_MOVE", f"invalid Milestone EXIT locator {target!r}"
+    target_cid, target_id = parsed.groups()
+    key = (target_cid, target_id)
+    if key in seen:
+        return "R:CYCLIC_MOVE", f"move revisits {target_cid}#EXIT:{target_id}"
+    entry = graph.get(target_cid)
+    if entry is None or (entry.get("fm") or {}).get("type") != "Milestone":
+        return "R:DANGLING_MOVE", f"target {target_cid} is not a real Milestone"
+    target_doc = read(entry["path"], "T2")
+    target_exit = _section_of(target_doc["body"], "EXIT")
+    if not _fence_balanced(target_exit):
+        return "R:DANGLING_MOVE", f"target {target_cid} has an unreadable EXIT section"
+    boxes = _box_lines(target_exit)
+    matches = [(i, criterion) for i, _marked, criterion, _section in boxes
+               if (m := EXIT_ID.match(criterion)) and m.group(1) == target_id]
+    if len(matches) != 1:
+        return "R:DANGLING_MOVE", f"target {target_cid}#EXIT:{target_id} is absent or ambiguous"
+    i, criterion = matches[0]
+    if _exit_link(criterion, "accepts") != f"{source_cid}#EXIT:{source_id}":
+        return "R:REJECTED_MOVE", f"target {target_cid}#EXIT:{target_id} has no reciprocal acceptance"
+    stamps = (entry.get("fm") or {}).get("verified") or []
+    latest = next((s for s in reversed(stamps) if isinstance(s, dict)
+                   and s.get("act") in ("freeze", "refreeze")), None)
+    if not latest or latest.get("exit") != exit_digest(target_doc):
+        return "R:REJECTED_MOVE", f"target {target_cid}#EXIT:{target_id} has no current EXIT-bound freeze"
+    state = BOX.match(target_exit.splitlines()[i]).group(1)
+    if state == "~":
+        return _resolve_exit_move(graph, target_cid, target_id, criterion, seen | {key})
+    return "", ""
+
+
 def milestone_done(root, cid: str) -> tuple:
     """Close a milestone — but only when its GOAL is met (loop.md's goal-gate).
 
@@ -2964,13 +3057,36 @@ def milestone_done(root, cid: str) -> tuple:
                        f"so the goal-gate cannot tally its boxes; it does not close on an input it "
                        f"cannot read\nnext: close the fence in {slug}'s `## EXIT`, "
                        f"then add milestone-done {slug}")
-    tally = [marked for _, marked, _, _ in _box_lines(exit_body)]
-    checked, unchecked, total = sum(tally), len(tally) - sum(tally), len(tally)
+    boxes = _box_lines(exit_body)
+    lines = exit_body.splitlines()
+    moved = [(i, text) for i, _marked, text, _section in boxes
+             if BOX.match(lines[i]).group(1) == "~"]
+    checked, total = sum(marked for _, marked, _, _ in boxes), len(boxes)
+    for i, text in moved:
+        ident = EXIT_ID.match(text)
+        source_id = ident.group(1) if ident else "C?"
+        if ident is None or sum(bool((m := EXIT_ID.match(t)) and m.group(1) == source_id)
+                                for _j, _marked, t, _section in boxes) != 1:
+            code, reason = "R:ORPHAN_MOVE", "source EXIT identity is absent or duplicated"
+        else:
+            code, reason = _resolve_exit_move(graph, cid, source_id, text, {(cid, source_id)})
+        if code:
+            return None, (f"{code} — {cid}#EXIT:{source_id}: {reason}; "
+                          f"original tally {checked}/{total}, moved {len(moved)}\n"
+                          f"next: repair EXIT {source_id}'s move and accepted destination, "
+                          f"then add milestone-done {slug}")
 
+    unchecked = total - checked - len(moved)
     if unchecked:
         return None, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
                        f"next: check the remaining boxes in {cid.lstrip('/')}, then "
                        f"add milestone-done {slug}")
+
+    if (node.get("fm") or {}).get("status") == "done":
+        moved_note = (f", moved {len(moved)} ({', '.join(EXIT_ID.match(t).group(1) for _i, t in moved)})"
+                      if moved else "")
+        return True, (f"{cid} already done ({checked}/{total} exit criteria met{moved_note}) "
+                      f"— historical closure unchanged\nnext: add status")
 
     # The MEMBERS, before the lesson drain: a milestone that closes on its exit criteria while
     # still holding unauthored tasks abandons them, and until now said nothing at all. That is
@@ -3041,7 +3157,9 @@ def milestone_done(root, cid: str) -> tuple:
                 seen.add(name)
                 who.append(name)
     credit = f", checked by {', '.join(who)}" if who else ", checked by hand (unstamped)"
-    return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{credit})"
+    transfer = (f", moved {len(moved)} ({', '.join(EXIT_ID.match(t).group(1) for _i, t in moved)})"
+                if moved else "")
+    return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{transfer}{credit})"
                   f"{empty}{skipped}\nnext: add status")
 
 
@@ -3144,8 +3262,7 @@ BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
              # `<test cmd>` is the one slot a NOTARY cannot fill from the bundle — but it need
              # not guess: `run` is handed the real command every time it is called, and now
              # remembers the last one on `index.md`. Until the first run this stays a template;
-             # after it, the hint replays the command that actually worked in this project
-             # (`_last_test_cmd`) -> "R:PLACEHOLDER_NEXT".
+             # after it, the hint replays that Task's own Run computation at T0.
              "build": ('add run {slug} -- <test cmd> '
                        '--junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
              "verify": 'add gate {slug} PASS --by "<name>"', "done": "add status"}
@@ -3711,6 +3828,15 @@ def _last_test_cmd(root) -> str:
     return str((read(index, "T0")["fm"] or {}).get("test_cmd") or "").strip()
 
 
+def _task_test_cmd(graph: dict, cid: str) -> str:
+    """Latest narrow Run computation owned by this Task, using scanned frontmatter only."""
+    receipt_cid = _latest_run_cid((graph[cid]["fm"] or {}).get("verified") or [])
+    run_fm = ((graph.get(receipt_cid or "") or {}).get("fm") or {})
+    if run_fm.get("type") != "Run" or str(run_fm.get("task") or "") != cid:
+        return ""
+    return str(run_fm.get("computation") or "").strip()
+
+
 def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     """The one runnable next command for a task, by its stamp-derived beat.
 
@@ -3751,11 +3877,16 @@ def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
         if last_run and _refute_of(stamps, last_run)[0] is None:
             return f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>"'
     hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
-    # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
-    # is a sentence shaped like a command; a cold agent following it types angle brackets into a
-    # shell (R:PLACEHOLDER_NEXT).
-    if "<test cmd>" in hint and root is not None and (last := _last_test_cmd(root)):
-        hint = hint.replace("<test cmd>", last)
+    # A global last command belongs to another Task as often as this one. The scanned Run
+    # frontmatter carries the exact computation for the Task's own latest narrow stamp.
+    if "<test cmd>" in hint:
+        owned = _task_test_cmd(graph, cid)
+        if not owned:
+            return f"add show {slug}"  # inspect its PLAN before supplying a new command
+        if any(re.search(rf"(?:^|\s){re.escape(flag)}(?:=|\s)", owned)
+               for flag in JUNIT_FLAGS):
+            return f"add run {slug} -- {owned}"  # it already writes the report
+        hint = hint.replace("<test cmd>", owned)
     return hint
 
 
@@ -4011,16 +4142,24 @@ def status(root, all: bool = False, check: bool = False) -> str:
         counted = " · ".join(f"{n} {t}" for t, n in sorted(tally.items()))
         out.append(f"  … {counted} carrying no state — not listed (`--all`)")
 
-    # M6: a resume point that omits the last session is not a resume point. The most recent
-    # stamp across the board, named — ABSENT rather than guessed when nothing has happened (E6).
+    # M6: name the last recorded act. Day-only stamps cannot order different nodes, so the
+    # append index resolves same-day acts within a node and CID makes cross-node ties stable.
     acts = []
     for cid, n in graph.items():
-        for st in (n["fm"] or {}).get("verified") or []:
+        for i, st in enumerate((n["fm"] or {}).get("verified") or []):
             if isinstance(st, dict) and st.get("at") and st.get("act"):
-                acts.append((str(st["at"]), str(st["act"]), cid.rsplit("/", 1)[-1][:-3]))
+                acts.append((str(st["at"]), i, cid, str(st["act"]),
+                             cid.rsplit("/", 1)[-1][:-3]))
     if acts:
-        when, act, who = max(acts)
-        out.append(f"  last: {act} {who} · {when}")
+        when, _, _, act, who = max(acts)
+        # Cross-node stamps with the same date have no recorded global order. Name the
+        # deterministic representative, but mark the tie rather than claiming chronology.
+        tied_nodes = {c for day, _, c, _, _ in acts if day == when}
+        suffix = f" · {when}" + (" · day tie" if len(tied_nodes) > 1 else "")
+        lead = f"  last: {act} "
+        who_room = max(1, ROW_WIDTH - len(lead) - len(suffix))
+        shown_who = who if len(who) <= who_room else who[:who_room - 1] + "…"
+        out.append(f"{lead}{shown_who}{suffix}")
 
     drift = card_drift(graph) if check else []
     if drift:
@@ -4043,7 +4182,7 @@ def status(root, all: bool = False, check: bool = False) -> str:
     frontier = ready(graph)
     waiting = [c for c in active(graph) if (graph[c]["fm"] or {}).get("status") == "verify"]
     if waiting:
-        nxt = f"next: add gate {waiting[0].rsplit('/', 1)[-1][:-3]}"
+        nxt = f"next: {_next_verb(graph, waiting[0], root=root)}"
     elif frontier:
         f0 = frontier[0]
         # Through `_next_verb`, so this hint and `todo`'s arrow cannot disagree — the stamp test
@@ -4053,8 +4192,8 @@ def status(root, all: bool = False, check: bool = False) -> str:
     elif any((n["fm"] or {}).get("type") == "Milestone" for n in graph.values()):
         # A slot only the HUMAN can fill — a slug nobody has chosen — is legitimate guidance; the
         # defect R:PLACEHOLDER_NEXT names is a slot the ENGINE could have filled and did not
-        # (`<test cmd>`, which `run` now remembers). Spelled in full, so what is typed around the
-        # slot is copy-pasteable.
+        # (`<test cmd>`, which `run` now records per Task). Spelled in full, so what is typed
+        # around the human-authored slug slot is copy-pasteable.
         nxt = 'next: add new Task <slug> --title "<one line>"'
     else:
         nxt = 'next: add new Milestone <slug> --title "<one line>"' 
@@ -4065,6 +4204,51 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # printed the same thing: nothing (A4 · M5).
         answered = sum(1 for c in graph if (graph[c]["fm"] or {}).get("status") in ANSWERED)
         out.append(f"  nothing needs you — {answered} answered, {len(hidden)} carrying no state")
+
+    # The current consequence is per OPEN Task. A later non-gate act remains global activity,
+    # but cannot resolve a stopped Task; only a later gate (or reopen) changes that verdict.
+    open_tasks = [c for c, n in graph.items()
+                  if (n["fm"] or {}).get("type") == "Task"
+                  and (n["fm"] or {}).get("status") not in ANSWERED]
+    if open_tasks:
+        stops = [c for c in open_tasks
+                 if str((_effective_gate_stamp(graph[c]["fm"] or {}) or {}).get("outcome"))
+                 == "HARD-STOP"]
+        if stops:
+            now_cid = min(stops, key=lambda c: (rank(c), c))
+        else:
+            # Follow the existing final runnable route when it names an open Task. A milestone
+            # or a human-authored slug slot does not become a made-up current Task.
+            route = re.search(r"\badd [a-z][a-z-]* ([a-z0-9][a-z0-9-]*)\b", nxt)
+            route_cid = f"/tasks/{route.group(1)}.md" if route else ""
+            now_cid = route_cid if route_cid in open_tasks else min(
+                open_tasks, key=lambda c: (rank(c), c))
+        slug = now_cid.rsplit("/", 1)[-1][:-3]
+        beat = _beat_of(graph[now_cid], None, graph)
+        gate_stamp = _effective_gate_stamp(graph[now_cid]["fm"] or {})
+        verdict = str((gate_stamp or {}).get("outcome") or "none")
+        if verdict not in ("PASS", "RISK-ACCEPTED", "HARD-STOP"):
+            verdict = "none"
+        suffix = f" · beat={beat} · last-gate={verdict}"
+        slug_room = max(1, ROW_WIDTH - len("  now: ") - len(suffix))
+        shown_slug = slug if len(slug) <= slug_room else slug[:slug_room - 1] + "…"
+        out.append(f"  now: {shown_slug}{suffix}")
+        if gate_stamp:
+            receipt_cid = str(gate_stamp.get("receipt") or "")
+            same_task_run = re.fullmatch(
+                rf"/tasks/{re.escape(slug)}\.d/runs/(\d+)\.md", receipt_cid)
+            receipt_token = (f"runs/{same_task_run.group(1)}.md"
+                             if same_task_run else "unrecorded")
+            fragment = ("FINDINGS" if gate_stamp.get("kind") == "sources"
+                        and not receipt_cid else "verified")
+            ref = f"/tasks/{slug}.md#{fragment}"
+            lead = f"  evidence: receipt={receipt_token} · ref="
+            if len(lead + ref) > ROW_WIDTH:
+                room = max(1, ROW_WIDTH - len(lead))
+                end = f"#{fragment}"
+                ref = (ref[:room - len(end) - 1] + "…" + end
+                       if room > len(end) + 1 else end[:room])
+            out.append(lead + ref)
     return "\n".join(out + [nxt])
 
 
@@ -6180,7 +6364,7 @@ def _section_of(body: str, heading: str) -> str:
     return "".join(out)
 
 
-BOX = re.compile(r"^\s*- \[([ xX])\]\s?(.*)$")
+BOX = re.compile(r"^\s*- \[([ xX~])\]\s?(.*)$")
 # The ONE checkbox pattern. `check` writes what `milestone_done` tallies, so a syntax either
 # both see or neither does — two patterns would let the verb tick a box the goal-gate cannot
 # count, and the tally is what the gate refuses on.
@@ -6418,6 +6602,13 @@ def placeholders_in(node: dict, *, card: bool = True) -> list:
 def _canon(text: str) -> str:
     """Trailing whitespace and blank lines are not contract changes."""
     return "\n".join(line.rstrip() for line in text.splitlines() if line.strip())
+
+
+def exit_digest(node: dict) -> str:
+    """The authored EXIT direction, excluding completion ticks and formatting."""
+    payload = _canon(_section_of(node.get("body") or "", "EXIT"))
+    payload = re.sub(r"(?m)^([ \t]*-[ \t]*)\[[ xX]\]", r"\1[ ]", payload)
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
 def direction_digest(node: dict) -> str:
@@ -8690,10 +8881,8 @@ def doctor(root, graph: dict = None, paths=None) -> list:
                      f"personas-index/use-when.md routes {entries} personas; "
                      f"personas-teacher/ holds {corpus} — the corpus moved without the index "
                      f"(scripts/build_persona_index.py, then doctor --sync)")
-    # A Persona whose routing key falls outside its closed vocabulary routes NOTHING, and the
-    # roster then takes the generic fallback silently — no refusal, no warning, and nothing in
-    # the receipt recording that an expert was never loaded. Info severity: `doctor` reports,
-    # it never gates (M4). Sorted so the report is diffable run to run (A3).
+    # A term outside its closed vocabulary cannot contribute to fit; another valid term may
+    # still fit. Info severity: `doctor` reports, never gates (M4). Sorted for stable reports.
     routing = []
     for cid in sorted(graph):
         fm = graph[cid]["fm"] or {}
@@ -8704,19 +8893,18 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             raw = fm.get(key)
             if not raw:
                 continue                 # declaring neither key is legitimate (A2)
-            raw = str(raw)
-            if PLACEHOLDER.search(raw):
+            if PLACEHOLDER.search(str(raw)):
                 continue                 # an UNTOUCHED scaffold slot: nobody authored a value
                                          # yet, and a guard must never fire on a missing thing.
                                          # (Per-token `<`-prefix checking missed this: splitting
                                          # `<from the closed taxonomy, comma-separated>` on commas
                                          # leaves interior words carrying no bracket at all.)
-            values = [v.strip() for v in raw.replace(",", " ").split() if v.strip()]
+            values = _lens_terms(raw)  # same scalar/list normalizer as the candidate selector
             bad = [v for v in values if v not in allowed]
             if bad:
                 routing.append(
-                    f"{slug}: `{key}: {', '.join(bad)}` is outside the closed taxonomy — a value "
-                    f"outside it routes nothing, silently. Allowed: {' · '.join(allowed)}")
+                    f"{slug}: `{key}: {', '.join(bad)}` is outside the closed taxonomy — that term "
+                    f"cannot contribute to fit. Allowed: {' · '.join(allowed)}")
     for message in sorted(routing):
         find("info", "persona_routing_key", message)
     for cid, section in evidence_scaffold(root, graph=graph, body_of=body_of):

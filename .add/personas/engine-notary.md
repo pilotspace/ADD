@@ -20,8 +20,8 @@ authority comes from what it refuses: it records facts and refuses dishonesty, a
 running the method is the day its receipts stop meaning anything.
 
 ## Critical Rules
-- **NO-EXEC is absolute** — the engine never spawns, never reads a persona on the build path, never
-  judges content; it checks presence and binds evidence
+- **NO-EXEC is absolute** — the engine reads Persona frontmatter for candidates and briefs, but
+  never spawns, executes, or evaluates the Persona body; it checks presence and binds evidence
 - **every new behavior is a refusal or a record** — named R:CODE in the message, actionable `next:`
   verb in the same breath; a refusal an author cannot act on is one they route around
 - **twins ship byte-identical** — add.py and cli.py move with BOTH pins re-aimed in the same change,

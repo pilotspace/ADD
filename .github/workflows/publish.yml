@@ -1,10 +1,13 @@
-# Autonomous release: push a version tag, both registries publish.
+# Autonomous release: a version tag builds one candidate, smokes its installed
+# wheel and npm tarball (including upgrade from the prior published version),
+# then both registries receive those exact checked files.
 #
 #   git tag v1.0.1 && git push origin v1.0.1
 #
 # The tag (minus the leading `v`) MUST equal BOTH package.json and pyproject.toml
 # versions — the `guard` job fails the release closed if they drift. Only after the
-# full test suite is green and the versions agree do the two publish jobs run.
+# full test suite, versions, and candidate-byte smoke are green do the two
+# publish jobs run. The local report is not registry-served-byte attestation.
 #
 # ── One-time setup (do this once, then every tag self-publishes) ──────────────
 #
@@ -106,9 +109,98 @@ jobs:
           test "$TAG" = "$PKG" || { echo "::error::tag $TAG != package.json $PKG"; exit 1; }
           test "$TAG" = "$PY"  || { echo "::error::tag $TAG != pyproject $PY"; exit 1; }
 
+  candidate:
+    name: Build once + install candidate bytes
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Build the tagged wheel, sdist and npm tarball once
+        working-directory: add-method
+        run: |
+          set -euo pipefail
+          python3 -m pip install --upgrade build packaging
+          npm ci
+          mkdir -p release-candidate/python release-candidate/npm release-candidate/previous
+          python3 -m build --outdir release-candidate/python
+          npm pack --pack-destination release-candidate/npm
+
+      - name: Retrieve the preceding published version for an upgrade probe
+        working-directory: add-method
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          PREVIOUS_VERSION="$(python3 -c 'import os,subprocess; from packaging.version import Version; current=Version(os.environ["REF_NAME"][1:]); tags=subprocess.check_output(["git","tag","--list","v*.*.*"],text=True).splitlines(); older=max(((Version(tag[1:]),tag[1:]) for tag in tags if Version(tag[1:]) < current), default=(None,"")); print(older[1])')"
+          test -n "$PREVIOUS_VERSION" || { echo '::error::no preceding release tag for upgrade smoke'; exit 1; }
+          python3 -m pip download --no-deps --only-binary=:all: "pilotspace-add==${PREVIOUS_VERSION}" --dest release-candidate/previous
+          npm pack "@pilotspace/add@${PREVIOUS_VERSION}" --pack-destination release-candidate/previous
+
+      - name: Record expected hashes and install the exact candidate files
+        working-directory: add-method
+        run: |
+          set -euo pipefail
+          python3 - <<'PYEOF'
+          import hashlib, json, subprocess
+          from pathlib import Path
+
+          root = Path('release-candidate')
+          def one(pattern):
+              found = list(root.glob(pattern))
+              if len(found) != 1:
+                  raise SystemExit(f'expected exactly one {pattern}; found {found}')
+              path = found[0].resolve()
+              return {'path': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+
+          manifest = {
+              'tag_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+              'tag_tree': subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip(),
+              'candidate': {
+                  'wheel': one('python/*.whl'),
+                  'sdist': one('python/*.tar.gz'),
+                  'npm': one('npm/*.tgz'),
+              },
+              'previous': {
+                  'wheel': one('previous/*.whl'),
+                  'npm': one('previous/*.tgz'),
+              },
+              'preserve': {
+                  '.add/user-note.md': 'my note survives the upgrade',
+                  'AGENTS.md#outside-managed-block': 'my instruction survives the upgrade',
+              },
+          }
+          (root / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          PYEOF
+          # Prime only the npm runtime-dependency cache from the already hashed
+          # local tarballs. The candidate gate below then installs both tarballs
+          # by path with --offline; cache priming itself is not a PASS receipt.
+          npm install --ignore-scripts --no-audit --no-fund --no-save release-candidate/npm/*.tgz --prefix "${RUNNER_TEMP}/add-npm-cache-prime-candidate"
+          npm install --ignore-scripts --no-audit --no-fund --no-save release-candidate/previous/*.tgz --prefix "${RUNNER_TEMP}/add-npm-cache-prime-previous"
+          python3 scripts/candidate_artifact_smoke.py --manifest release-candidate/manifest.json --report release-candidate/report.json
+          sha256sum release-candidate/python/* release-candidate/npm/* > release-candidate/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        if: always()     # a refused smoke still attaches report.json for diagnosis
+        with:
+          name: add-release-candidate
+          path: add-method/release-candidate/
+          if-no-files-found: error
+          retention-days: 30
+
   npm:
     name: Publish @pilotspace/add to npm
-    needs: guard
+    needs: candidate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -121,19 +213,19 @@ jobs:
           node-version: '24'     # trusted publishing needs npm 11.5.1+, which ships with Node 24+
           registry-url: 'https://registry.npmjs.org'
 
-      # `prepublishOnly` shells out to python3, so pin an interpreter rather than trusting the
-      # runner's apt default. (It used to run test_packaging.py, whose wheel check drove the PEP 517
-      # backend in-process and needed setuptools>=77 provisioned here; 3.0 removed that file, which
-      # left the hook discovering nothing and exiting 0. It now runs the tree-parity sweep, which
-      # imports nothing outside the stdlib — so the setuptools step it required is gone with it.)
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-
       # Trusted publishing requires npm >= 11.5.1; Node 24.0 ships npm 11.3, so bump
       # explicitly rather than depending on the bundled version.
       - name: Ensure npm >= 11.5.1 for trusted publishing
         run: npm install -g npm@latest
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: add-release-candidate
+          path: add-method/release-candidate/
+
+      - name: Rehash the exact candidate before npm publish
+        working-directory: add-method
+        run: sha256sum -c release-candidate/SHA256SUMS
 
       - name: Publish if this version is new (idempotent — safe to re-run a tag)
         working-directory: add-method
@@ -153,29 +245,31 @@ jobs:
             echo "@pilotspace/add@${VERSION} already on the registry — skipping (no deps)."
           else
             echo "publishing ${VERSION} to the '${DIST_TAG}' channel"
-            npm publish --access public --tag "$DIST_TAG"   # OIDC auth + provenance are automatic
+            npm publish --access public --tag "$DIST_TAG" "./release-candidate/npm/pilotspace-add-${VERSION}.tgz"
           fi
 
   pypi:
     name: Publish pilotspace-add to PyPI
-    needs: guard
+    needs: candidate
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
       contents: read
       id-token: write          # required for PyPI OIDC trusted publishing
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
+      - uses: actions/download-artifact@v5
         with:
-          python-version: '3.12'
+          name: add-release-candidate
+          path: add-method/release-candidate/
 
-      - name: Build sdist + wheel (from the committed _bundled tree)
+      - name: Rehash and stage only the checked Python files
         working-directory: add-method
         run: |
-          python3 -m pip install --upgrade build
-          python3 -m build
+          set -euo pipefail
+          sha256sum -c release-candidate/SHA256SUMS
+          mkdir -p dist
+          cp release-candidate/python/*.whl release-candidate/python/*.tar.gz dist/
+          test "$(sha256sum dist/* | cut -d' ' -f1 | sort)" = "$(sha256sum release-candidate/python/* | cut -d' ' -f1 | sort)"
 
       - name: Publish via OIDC (no API token stored; idempotent re-runs)
         uses: pypa/gh-action-pypi-publish@release/v1

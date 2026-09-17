@@ -188,7 +188,8 @@ def test_todo_hints_brief_for_a_frozen_unbriefed_task(bundle, draft):
     add.brief_stamp(bundle, cid, by="cli")
     items, _ = add.todo(bundle)
     verbs = {c.rsplit("/", 1)[-1][:-3]: nxt for c, _, nxt in items}
-    assert "add run" in verbs["hinted"], f"once briefed, the hint moves on: {verbs}"
+    assert verbs["hinted"] == "add show hinted", (
+        f"without a Task-owned run computation, the hint must open its PLAN: {verbs}")
 
 
 def test_cli_brief_records_the_stamp(bundle, draft, capsys):

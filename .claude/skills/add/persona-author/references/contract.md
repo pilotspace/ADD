@@ -1,14 +1,14 @@
 # The ADD persona contract
 
-What the ADD engine reads and validates. Miss the required parts and the node draws `add doctor`
-findings (`missing_frontmatter`, `type_empty`); miss the recommended frontmatter and no
-apply-surface loads it — SILENTLY, because the engine is a notary and does not lint routing
-fields. This is the hard schema — `references/patterns.md` is the judgment that fills it well.
+The engine validates node schema, not authoring quality. Missing frontmatter/type draws
+`missing_frontmatter`/`type_empty`; an invalid declared `flow` or `task-kinds` draws
+`persona_routing_key`. Optional routing may be absent. Body quality stays author-reviewed;
+`references/patterns.md` is the judgment that fills the schema well.
 
 ## The four legs
 
-A persona carries four kinds of judgment. The section names below are what the engine and every
-apply-surface match **literally** — the legs are how you *read* the schema, never a rename of it.
+A persona carries four kinds of judgment. The headings below guide a human or agent reading the
+body; engine routing reads only frontmatter and does not match or validate these headings.
 
 | Leg | Lives in | The bar it must clear |
 |-----|----------|-----------------------|
@@ -25,33 +25,35 @@ have read in one command. If you write only one Process line, make it the ORIENT
 
 - Path: `.add/personas/<slug>.md` — `<slug>` is kebab-case (e.g. `payments-api-engineer`).
 - **Never overwrite** an existing persona file; author a new slug or fold into the named one.
-- **Never** name a persona `_`-prefixed — the engine treats `_`-prefixed files as scaffolds and
-  skips them (they are excluded from the roster, emptiness checks, and quality WARNs).
+- Avoid `_`-prefixed slugs: they look like scaffolds, but the engine currently includes them in
+  its Persona roster and routing checks.
 
 ## Frontmatter
 
 ```yaml
 ---
-name: <persona name — e.g. Payments API Engineer>      # REQUIRED
-vibe: <one-line essence — what this persona keeps true>  # REQUIRED
-flow: <design | build | advisor | verify>                # RECOMMENDED — comma-separate if >1
-task-kinds: <from the closed taxonomy, comma-separated>  # RECOMMENDED
-use-when: <pushy should-select line — enumerate triggers> # RECOMMENDED
-not-when: <the near-miss that belongs to a named sibling> # RECOMMENDED
-description: <one line for a cold catalogue reader>      # OPTIONAL — OKF-recommended
-folded: <consolidation history, newest first>            # OPTIONAL
-sources: <teacher file(s) distilled from>                # OPTIONAL — OKF provenance family
+type: Persona
+title: <persona title — e.g. Payments API Engineer>
+vibe: <one-line essence — what this persona keeps true>  # OPTIONAL authored slot
+flow: <design | build | advisor | verify>                # OPTIONAL authored slot; comma-separate if >1
+task-kinds: <from the closed taxonomy, comma-separated>  # OPTIONAL authored slot
+use-when: <pushy should-select line — enumerate triggers> # OPTIONAL authored slot
+not-when: <the near-miss that belongs to a named sibling> # OPTIONAL authored slot
+description: <one line for a cold catalogue reader>      # OPTIONAL authored slot; OKF-recommended
+sources: <teacher file(s) distilled from>                # OPTIONAL authored slot; OKF provenance family
 ---
 ```
 
-- **`name` · `vibe`** — REQUIRED. The engine will not refuse their absence (it is a notary,
-  not a linter) — but every surface that renders the roster prints them, so a missing `vibe`
-  is a blank line where your lens's one-sentence essence should be.
+- **`type` · `title`** — the Persona node keys written by `add new Persona`; `type` is exactly
+  `Persona`, and `title` is the display name. Teaching templates use authoring inputs `name:` and
+  singular `source:`; conversion maps them to node `title:` and `sources:` respectively.
+- **The seven authored slots** — `vibe`, `flow`, `task-kinds`, `use-when`, `not-when`,
+  `description`, and `sources` — are scaffolded with prompts, but their authored values are
+  optional and `new` does not validate their content. Fill or delete each prompt before use.
 - **`flow`** — the beats this lens loads at. The ONLY valid values are
   `design` · `build` · `advisor` · `verify` (single-sourced in the skill's `personas.md`).
-  Any other value is a typo that no surface loads — and NOTHING warns: the engine reads only
-  `use-when:` for the roster, so a `flow:` typo fails silently. Check the four values yourself
-  before finishing. Surfaces: **design** = the Direction-beat authoring lens (RULES ·
+  The engine reads `flow` and `task-kinds` for routing; `doctor` reports invalid values
+  with the allowed sets. Surfaces: **design** = the Direction-beat authoring lens (RULES ·
   ASSUMPTIONS · `gives:` before the freeze) · **build** = the working lens the brief injects
   (`<persona ref=… inject="frontmatter">`) · **advisor** = the delegation lens `advise` and
   `wave` record on a beat · **verify** = the evidence-judging lens on the gate report.
@@ -68,12 +70,11 @@ sources: <teacher file(s) distilled from>                # OPTIONAL — OKF prov
   layer — `type:`, `generated:`, `verified:` events, `human:<id>` actors — ADD's node format
   already speaks). `description` is one line for a cold catalogue reader; `sources` records the
   teacher file(s) or material this lens was distilled from — provenance, not routing.
-  `add new Persona` scaffolds a slot for every key in this block; fill or delete each, because
-  the engine validates none of them.
+  `add new Persona` scaffolds these slots; routing values are checked by `doctor`.
 
 ## Sections
 
-**REQUIRED (engine-checked, presence-based):**
+**AUTHORING REQUIRED (reviewed by the author, not enforced by the engine):**
 
 - `## Identity`
 - `## Critical Rules`
@@ -107,53 +108,26 @@ sources: <teacher file(s) distilled from>                # OPTIONAL — OKF prov
 
 ## What ADD ships vs what you author
 
-3.0 seeds **no personas**. What `init` vendors is the read-only teacher corpus
-(`personas-teacher/`, 232 reference lenses, byte-verbatim third-party snapshot) and its
-generated routing sidecar (`personas-index/use-when.md`). Every Persona NODE on your
-roster is yours to author — scaffolded with `add new Persona <slug>`, or distilled from a
-teacher file by the seeding flow in `references/seeding.md`. The corpus is referenced,
-never copied into your roster: a teacher file teaches; a Persona node routes and advises.
+`init` seeds every shipped starting-persona template into `.add/personas/`, never overwrites
+an existing project persona, and reports the names it newly seeded. These are starting lenses:
+inspect and adapt them to the project before relying on their judgment. Additional lenses can
+be scaffolded with `add new Persona <slug>` or distilled using `references/seeding.md`.
+The separately vendored teacher corpus and routing index are reference material, not Persona nodes.
 
-The line governing what this project would ever ship as a preset, and why it is drawn
-here rather than left to taste:
+- **Never clobber.** Existing project personas outrank templates on re-init. `doctor --sync`
+  recompiles the index; it does not replace authored persona judgment.
+- **Prove fit, not index presence.** Check the lens's `flow`, `task-kinds`, and selection
+  boundary against the task. `doctor --sync` repairs the orientation catalogue; routing reads
+  Persona nodes directly.
 
-> **Ship a persona only if it is a METHOD LENS** — one that reasons about ADD's own
-> artifacts: a Task's RULES and CHECKS, the frozen `gives:` contract and its seal, the
-> milestone graph, the gate report. **Never ship a DOMAIN lens** — one that reasons about
-> a project's subject matter: security, data, UX, a framework, an industry.
+## The author's own final sweep
 
-A method lens is correct in every project by construction: every ADD bundle has the same
-node grammar, the same freeze seal, the same gate. A domain lens asserts what *your*
-project's judgment should be, and no author who has not read your code can do that.
+`doctor` reports structural and routing-vocabulary findings; the author still judges fitness.
 
-This is a scar, not a style preference. Twelve preset personas (`security-gatekeeper`,
-`data-steward`, `ux-experience-lead`, and nine more) shipped in every npm tarball and pip
-wheel for months while **nothing loaded them** — authoritative-looking and dead. They were
-retired at `preset-patterns-fold`. Eleven of the twelve fail the criterion above; the
-honest near-miss is `release-manager`, which would have passed. The line is narrow, not
-comfortable — and it is why 3.0 ships a corpus to READ and an empty roster to AUTHOR
-rather than presets to trust.
-
-Two obligations survive the 2.x seeding machinery they were learned on:
-
-- **Never clobber.** `init` is idempotent — an existing file always outranks a template
-  (R:CLOBBER), and `doctor --sync` is the only asked-for refresh. Nothing ever rewrites
-  your authored judgment.
-- **Prove the load, not the presence.** A roster persona must appear in the compiled
-  `index.md` roster with its `use-when:` line (that is what `doctor --sync` renders from
-  frontmatter). A presence-only check is exactly what let the dead presets pass a green
-  suite, so prove the rendered line, never the file.
-
-## The author's own final sweep (the engine does NOT check these)
-
-The 3.0 engine is a notary: `add doctor` reports structural findings only. The two classic
-half-finished-persona defects fail silently, so they are YOUR checklist, not a WARN to wait for:
-
-- **flow typo** — a `flow:` value outside the four is loaded by no surface. Re-read it against
-  `design · build · advisor · verify` verbatim.
+- **flow typo** — resolve the reported value against `design · build · advisor · verify`.
 - **bare placeholder** — a `<…>` token left outside backtick spans and HTML comments (a half-filled
   copy). Backticked (`` `<slug>` ``) and commented (`<!-- <x> -->`) angle brackets are content, not
   placeholders. Sweep every real `<…>` before you finish.
 
-A roster-ready persona clears both, and its line appears in `.add/index.md` after
-`cli.py doctor --sync`.
+Valid scalar or YAML-list routing terms clear doctor routing findings; the author still sweeps
+bare placeholders. `python3 .add/tooling/cli.py doctor --sync` then lists the lens in `.add/index.md`.

@@ -231,5 +231,5 @@ def test_floor_only_run_keeps_the_build_beat(project):
     hint_t0 = add._next_verb(graph, cid, root=bundle)
     hint_t2 = add._next_verb(graph, cid, t2=add.read(graph[cid]["path"], "T2"), root=bundle)
     for hint in (hint_t0, hint_t2):
-        assert "add run t" in hint and "--floor" not in hint and "gate" not in hint, \
-            f"the hint no longer asks for the narrow run: {hint!r}"
+        assert hint == "add show t", \
+            f"floor-only evidence should open the Task PLAN before its narrow run: {hint!r}"

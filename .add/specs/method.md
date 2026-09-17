@@ -7,7 +7,7 @@ description: how a change proceeds from direction to a gate, and what each stamp
 tags: [gate, freeze, covers, refusal, registry, scope]
 sources: []
 generated: { by: add/3.0.0, at: 2026-08-08 }
-delta_seq: 67
+delta_seq: 68
 relations:
   - M21 refines /specs/method.md#M5
   - M8 refines /specs/method.md#M4
@@ -47,6 +47,7 @@ how work proceeds, and what a gate costs
 
 ## Deltas
 - <what changed, and the evidence that changed it>
+- [ADD · M68 · folded · 2026-09-17→2026-09-17] Agent-visible experiment inputs carry only the selected treatment; evaluator arm labels, acceptable/wrong labels, and outcome semantics stay outside the subject context. (evidence: /tasks/persona-eval-protocol-harness.md)
 - [ADD · M67 · folded · 2026-09-13→2026-09-13] a criterion that the counter cannot see is not a criterion that is met. Closing loop-that-closes at 10 of 11 required marking the unmet box [~] instead of [ ]; the engine's box counter ignores that marker, so milestone-done succeeded and reported 10/10. The verified: ledger stayed exact — the check stamps name EXIT:1-8,10 and EXIT:11, never 9 — but the headline count became a claim nobody made. A gate satisfied by making its subject invisible is the same shape as a check that passes on nothing. The engine needs a real MOVED verdict for a criterion, so a milestone can close honestly over a criterion it handed to a successor (evidence: /milestones/loop-that-closes.md)
 - [ADD · M66 · folded · 2026-09-13→2026-09-13] a SEAL binds only the fields it digests, and a control that trusts a signature must name WHICH fields that signature covered. quick-lane-tripwire's floor stood down for any node carrying a human freeze stamp — but direction_digest seals RULES, CHECKS and gives:, binding_digest seals EDGES and probed A-ids, and scope: is in NEITHER, so hand-adding one entry to a frozen node's scope: routes a sensitive path with no verb, no new stamp and no name typed, while both stamp digests still verify and doctor says nothing. Eight rounds on this node walked the same class one gate left each time: matcher, freeze, authority, signature, and now the SEAL's own coverage. Before a control reads a stamp as authority, check what that stamp's digest actually covers — and if the field it relies on is unsealed, the control is only as strong as the file's write permissions (evidence: /tasks/quick-lane-tripwire.d/runs/20.md)
 - [ADD · M65 · folded · 2026-09-13→2026-09-13] a COMPUTED authority is not a SIGNATURE. quick-lane-tripwire's floor asked authority_for(graph, cid) == 'human' — but freeze WRITES authority: human whenever the floor it computes is human, the default --by is cli, and interview_gap has nothing to ask when the author left ASSUMPTIONS empty, which the author controls. Reading the computed floor back asks the engine whether the ENGINE thought a human was owed, never whether one signed: add new Persona p --scope src/auth/token.py then a bare add freeze p took a security floor down in TWO commands with no person anywhere. Any control meaning 'a human approved this' must read the SIGNATURE, and must accept that the string is a claim the notary cannot verify — a deliberate one, which is the line the ledger already draws between human:<name>, plan:<m> and cli (evidence: /tasks/quick-lane-tripwire.d/runs/20.md)

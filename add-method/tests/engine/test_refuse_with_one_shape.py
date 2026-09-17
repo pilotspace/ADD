@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "0c5160ff39f2ac18f383a7a2ae36f4fedad2482369f8fa02d5c4fec8b506d90c"  # re-aimed @ quick-lane-tripwire: the R:QUICKSIZEUP refusal REWORDED again, none added or lost. Its `next:` was `add new Task --scope <path>` on BOTH halves, and on the owner half that is a dead end — run against the task that already owns the path it makes a colliding node and re-refuses identically, so the only takeable route was the parenthetical. Each half now leads with the route that works. prior: c6bff18b…
-MESSAGE_COUNT = 126  # re-aimed @ quick-lane-tripwire: ONE refusal added — R:QUICKSIZEUP's floor half and its owner half now name DIFFERENT takeable routes, so they are two messages, not one reworded. An earlier comment on this line claimed `unchanged: reworded, not added. prior: 126`; against HEAD the value was 125, so the comment described a re-aim that had not happened. prior: 125
+MESSAGE_DIGEST = "7e600fc55374efa43e7b1e7a15730f9ec7270e904103098bd29d5605d0de9d4a"  # re-aimed @ moved-is-a-real-exit-state: `check` now refuses to erase `[~]`, and `milestone_done` refuses unresolved moves by original identity before closure. prior: 0c5160ff… @ quick-lane-tripwire
+MESSAGE_COUNT = 128  # re-aimed @ moved-is-a-real-exit-state: two intentional refusal messages added; fence and move helpers' nullable results are not verb refusals. prior: 126 @ quick-lane-tripwire
 
 
 def _message_digest() -> tuple:

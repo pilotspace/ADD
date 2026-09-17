@@ -429,6 +429,37 @@ no refusal — a reader MUST treat the absence as *unknown*. Its next refreeze w
 Derived from `add.py:freeze`, `add.py:needs_pins`, `add.py:stale_needs`, `add.py:consumers_of`,
 `add.py:doctor`, `add.py:todo`, `add.py:gate`.
 
+### §3.6 Moved milestone EXIT criteria
+
+An authored `## EXIT` checkbox may be `[x]` (met), `[ ]` (unmet), or `[~]`
+(moved). All three count in the original milestone's denominator; `[~]` is never
+met, and fenced examples count as none. A fence's opener kind and width govern
+its closer; a `~~~` sequence inside an active backtick fence is quoted content,
+not a second opener. A moved line MUST start with a unique
+`C<n>` identity and carry exactly one parenthesized locator:
+
+```
+- [~] C2 original obligation (moves-to: /milestones/dest.md#EXIT:C1)
+- [ ] C1 destination obligation (accepts: /milestones/src.md#EXIT:C2)
+```
+
+The destination MUST be a distinct, real Milestone EXIT criterion with that exact
+`C<n>` identity and reciprocal `accepts:` locator. A new Milestone freeze/refreeze
+stamp carries `exit: "sha256:<16hex>"` over its canonical `## EXIT` direction:
+ordinary `[ ]`/`[x]` completion ticks normalize alike, while identities,
+locators, criterion text, and `[~]` remain distinct. The
+destination's latest freeze-class stamp MUST carry the digest of its current EXIT;
+an older stamp without `exit:` or a later edit cannot establish acceptance.
+`milestone-done` follows moved targets to a non-moved criterion, refuses missing,
+ambiguous, unfrozen, or cyclic chains by the original source identity, and names
+the original `met/total` and moved identities on an accepted close. The ordinary
+`check` verb shows moved boxes in its index list but refuses to mark or unmark
+them. This locator is authored EXIT text, not a §3.2 frontmatter graph edge or
+an inferred `carries:` authority transfer.
+
+Derived from `add.py:_box_lines`, `add.py:exit_digest`, `add.py:_resolve_exit_move`,
+`add.py:milestone_done`, and `add.py:check`.
+
 ---
 
 ## §4 Read tiers

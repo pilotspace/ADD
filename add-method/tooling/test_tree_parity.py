@@ -9,6 +9,7 @@ Surfaces swept:
   skill    add-method/skill/add  ==  _bundled/skill/add  (git-tracked: ALWAYS compared)
                                  ==  .claude/skills/add   (dogfood twin: exists-skip)
   tooling  add.py · cli.py · templates/**  ==  _bundled/tooling/**   (ALWAYS)
+           add.py == repo .add/tooling/add.py when the installed dogfood bundle exists
   corpus   add-method/personas-teacher  ==  _bundled/personas-teacher (ALWAYS)
   pins     md5(add.py) == ENGINE_MD5 · md5(cli.py) == ENGINE_PKG_MD5
 
@@ -37,6 +38,7 @@ _BUNDLE = _ADD_METHOD / "src" / "add_method" / "_bundled"
 CANON_SKILL = _ADD_METHOD / "skill" / "add"
 BUNDLE_SKILL = _BUNDLE / "skill" / "add"
 DOGFOOD_SKILL = _REPO / ".claude" / "skills" / "add"
+DOGFOOD_TOOLING = _REPO / ".add" / "tooling"
 
 CANON_TOOLING = _TOOLING
 BUNDLE_TOOLING = _BUNDLE / "tooling"
@@ -118,6 +120,12 @@ class DogfoodMirror(unittest.TestCase):
             self.skipTest("dogfood .claude/skills/add absent (fresh package) — exists-skip")
         self.assertEqual(_tree_map(CANON_SKILL), _tree_map(DOGFOOD_SKILL),
                          ".claude/skills/add drifted from add-method/skill/add — resync the mirror")
+
+    def test_live_engine_matches_canonical_when_present(self):
+        if not DOGFOOD_TOOLING.is_dir():
+            self.skipTest("dogfood .add/tooling absent (fresh package) — exists-skip")
+        self.assertEqual(_md5(CANON_TOOLING / "add.py"), _md5(DOGFOOD_TOOLING / "add.py"),
+                         "repo .add/tooling/add.py drifted from canonical tooling/add.py")
 
 
 if __name__ == "__main__":

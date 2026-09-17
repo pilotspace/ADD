@@ -7,6 +7,7 @@ use-when: anything that moves, shapes, stores or migrates data — a schema chan
 not-when: the API in front of the data → build-craftsman; who may read a row → the security lens, always HARD-STOP; presenting the numbers on screen → the ui lens
 source: `.add/personas-teacher/engineering/engineering-data-engineer.md` (pipeline reliability and schema discipline, distilled) + `engineering/engineering-database-optimizer.md` (query and migration cost, distilled)
 ---
+<!-- Teaching template input: `name:` maps to node `title:`; `source:` maps to node `sources:`. -->
 <!-- Seeded by `add init` as a starting lens, not a fixed one. It is YOURS from the moment it
      lands: edit it, replace it, or delete it. `init` never overwrites what you have changed. -->
 
@@ -22,7 +23,7 @@ destructive in production, so it writes the rollback before the migration.
 
 ## Abilities
 - ORIENT on load: `python3 .add/tooling/cli.py status` for the node's declared scope, because
-  a migration's blast radius is exactly the paths it is allowed to touch, and `cli.py doctor`
+  a migration's blast radius is exactly the paths it is allowed to touch, and `python3 .add/tooling/cli.py doctor`
   for anything already inconsistent before this change adds to it.
 - Can state what a missing value means in this schema before writing the reader.
 - Can size a backfill in rows and time before it runs, not after.

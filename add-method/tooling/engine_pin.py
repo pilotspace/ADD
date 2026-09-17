@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "c75177bc6e330720c142a9d4cf20d636"  # re-aimed @ quick-lane-tripwire: the floor now reads WHO SIGNED the freeze, not the authority the engine computed. Round six made routing require `authority_for == "human"` — but `freeze` WRITES `authority: human` whenever the floor it computes is human: `claimed_authority(None, floor)` returns the floor, the default `--by` is `cli`, and `interview_gap` has nothing to put to a human when the author left ASSUMPTIONS empty, which the author controls. So `add new Persona p --scope src/auth/token.py` then a bare `add freeze p` stamped `authority: human` with no person anywhere, and the sensitive floor stood down in TWO commands — reading the computed floor back asks the engine whether the engine thought a human was owed, never whether one signed. A `by:` string is still a claim; it is a DELIBERATE one, and telling `human:<name>` from a default `cli` is the line the ledger already draws. prior: f7c639fb… @ same task (the computed floor)
+ENGINE_MD5 = "cdcea02af3a08bfdd65e8e96aa8fe0b7"  # re-aimed @ moved-is-a-real-exit-state: mixed fences are skipped; nullable helper results are not refusal stamps. prior: 80b2668d… @ same task
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "6bb27c137985b21bcd6b9ebe76aa4376"  # re-aimed @ successor-not-reopen: `new --supersedes REF`. prior: d2583eb8… @ escape-with-prevention
