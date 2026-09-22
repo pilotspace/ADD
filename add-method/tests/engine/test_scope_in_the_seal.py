@@ -112,6 +112,43 @@ def test_legacy_and_changed_scopes_fail_closed(tmp_path):
     assert not add._scoped_by_any(root.parent, add.scan(root), "src/auth/b.py"), (
         "R:STALE_SCOPE — changing scope after a sealed freeze routed the new path")
 
+    # Quoted YAML preserves whitespace inside the value, and the scope reader preserves it too.
+    # Trimming only in the seal would let a behavior-changing edit keep the same digest.
+    cid, task = _authored(root, "spaced", ["src/auth/b.py"])
+    node = add.read(task, "T2")
+    raw = node["raw"].replace("  - src/auth/b.py", '  - " src/auth/b.py "', 1)
+    raw = add.set_key(raw, "sensitivity", "security")
+    add.write(task, f"---\n{raw}\n---\n{node['body']}")
+    questions, note = add.interview(root, cid)
+    assert questions, note
+    assert add.interview(root, cid, {q["id"]: "confirm" for q in questions}, by="human:T")[0]
+    assert add.freeze(root, cid, by="human:T", authority="human")[0]
+    assert not add._scoped_by_any(root.parent, add.scan(root), "src/auth/b.py"), \
+        "the padded entry unexpectedly held the unpadded path"
+    node = add.read(task, "T2")
+    add.write(task, f"---\n{add.set_key(node['raw'], 'scope', ['src/auth/b.py'])}\n---\n{node['body']}")
+    assert not add._scoped_by_any(root.parent, add.scan(root), "src/auth/b.py"), (
+        "R:STALE_SCOPE — trimming quoted entry whitespace changed routing under the old seal")
+
+    # Joining entries with a newline makes one block-scalar entry collide with two list entries.
+    cid, task = _authored(root, "block", ["src/auth/a.py", "src/auth/b.py"])
+    node = add.read(task, "T2")
+    raw = node["raw"].replace(
+        "scope:\n  - src/auth/a.py\n  - src/auth/b.py",
+        "scope: |\n  src/auth/a.py\n  src/auth/b.py", 1)
+    raw = add.set_key(raw, "sensitivity", "security")
+    add.write(task, f"---\n{raw}\n---\n{node['body']}")
+    questions, note = add.interview(root, cid)
+    assert questions, note
+    assert add.interview(root, cid, {q["id"]: "confirm" for q in questions}, by="human:T")[0]
+    assert add.freeze(root, cid, by="human:T", authority="human")[0]
+    assert not add._scoped_by_any(root.parent, add.scan(root), "src/auth/a.py"), \
+        "the block scalar unexpectedly held either embedded path"
+    node = add.read(task, "T2")
+    add.write(task, f"---\n{add.set_key(node['raw'], 'scope', ['src/auth/a.py', 'src/auth/b.py'])}\n---\n{node['body']}")
+    assert not add._scoped_by_any(root.parent, add.scan(root), "src/auth/a.py"), (
+        "R:STALE_SCOPE — block scalar and entry list collided under one scope seal")
+
 
 def test_scope_owner_reads_refreeze_and_open_closed_states(tmp_path):
     """covers: M3 — a valid refreeze owns every entry on an open Task; a closed Task is history."""

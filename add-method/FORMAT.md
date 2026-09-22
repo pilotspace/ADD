@@ -381,10 +381,11 @@ A second `freeze` on a sealed node is a **refreeze**: the old `gives:` stays in 
 `refreeze` stamp lands, and `verified:` stays append-only — so list order is chronology and
 no clock is consulted. A refreeze is how a frozen contract moves: never a silent edit.
 
-Every freeze and refreeze stamp carries two more keys:
+Every freeze and refreeze stamp carries these contract keys:
 
 ```
 gives: "sha256:<16hex>"                        the digest over this node's canonical gives: list alone
+scope: "sha256:<16hex>"                        compact-JSON digest of its sorted, duplicate-free scope: set
 needs: "/tasks/p.md#gives=<sha8>,/tasks/x.md#findings=?"   what a consumer read, per needs: entry
 ```
 
@@ -426,8 +427,15 @@ stored back-reference (law 1).
 A stamp with no `needs:` key was written before the pin existed. It answers nothing: no finding,
 no refusal — a reader MUST treat the absence as *unknown*. Its next refreeze writes the pin.
 
-Derived from `add.py:freeze`, `add.py:needs_pins`, `add.py:stale_needs`, `add.py:consumers_of`,
-`add.py:doctor`, `add.py:todo`, `add.py:gate`.
+`scope:` is separate from `direction:` and `binding:` so introducing scope seals does not rewrite
+what existing contract digests mean. Routing and quick-lane ownership read only the latest freeze
+or refreeze stamp. They accept it only when its scope digest is well formed and equals the current
+frontmatter scope digest; ordering and duplicate entries are semantically inert. A legacy,
+malformed, or stale scope seal authorizes no path until a human refreeze records current coverage.
+
+Derived from `add.py:freeze`, `add.py:scope_seal_digest`, `add.py:_latest_scope_seal`,
+`add.py:_scoped_by_any`, `add.py:quick_hit`, `add.py:needs_pins`, `add.py:stale_needs`,
+`add.py:consumers_of`, `add.py:doctor`, `add.py:todo`, `add.py:gate`.
 
 ### §3.6 Moved milestone EXIT criteria
 

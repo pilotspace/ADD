@@ -1,7 +1,7 @@
 ---
 type: Task
 title: scope-in-the-seal
-status: direction
+status: done
 depth: standard
 sensitivity: security
 milestone: seal-what-you-signed
@@ -16,13 +16,37 @@ gives:
   - S1 freeze/refreeze stamps a digest of its complete `scope:` list, and `_scoped_by_any` routes a path only through the latest freeze-class stamp when that digest still matches the node's current scope
   - S2 `quick_hit` classifies an open Task as scope owner through its latest matching freeze/refreeze scope seal
 generated: { by: add/3.6.0, at: 2026-09-13 }
-verified: []
+verified:
+  - { by: "human:Tin Dang", at: 2026-09-19, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/1.md, answers: "A1=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-19, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/2.md, answers: "A2=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-19, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/3.md, answers: "A3=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-20, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/4.md, answers: "A4=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-20, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/5.md, answers: "A5=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-20, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/6.md, answers: "A6=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-22, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/7.md, answers: "E1=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-22, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/8.md, answers: "E2=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-23, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/9.md, answers: "R:LEGACY_SCOPE=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-23, act: interview, authority: human, interview: "sha256:34450395beb5dc59", receipt: /tasks/scope-in-the-seal.d/interviews/10.md, answers: "R:STALE_SCOPE=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-23, act: freeze, authority: human, direction: "sha256:3ab369d20c2e2a2b", binding: "sha256:b85b43f28c97dd59", gives: "sha256:198c49a254981f14" }
+  - { by: "cli", at: 2026-09-23, act: brief, authority: process, brief: "sha256:ab66a07a3e611910" }
+  - { by: "process:run", at: 2026-09-23, act: run, authority: process, outcome: PASS, receipt: /tasks/scope-in-the-seal.d/runs/1.md }
+  - { by: "advisor:engine-notary", at: 2026-09-23, act: refute, authority: process, outcome: refuted, probes: 29, receipt: /tasks/scope-in-the-seal.d/runs/1.md, tier: T2, note: "quoted scope entry whitespace changed routing while the scope seal stayed equal", changed: "leading and trailing whitespace in one quoted scope entry" }
+  - { by: "human:Tin Dang", at: 2026-09-23, act: refreeze, authority: human, direction: "sha256:3ab369d20c2e2a2b", binding: "sha256:b85b43f28c97dd59", gives: "sha256:198c49a254981f14", scope: "sha256:c0313a618272112a" }
+  - { by: "cli", at: 2026-09-23, act: brief, authority: process, brief: "sha256:6fdeb5b66a03a162" }
+  - { by: "process:run", at: 2026-09-23, act: run, authority: process, outcome: PASS, receipt: /tasks/scope-in-the-seal.d/runs/2.md }
+  - { by: "advisor:engine-notary", at: 2026-09-23, act: refute, authority: process, outcome: held, probes: 31, receipt: /tasks/scope-in-the-seal.d/runs/2.md, tier: T2, note: "compact-JSON exact-entry set held across scalar/list/block/Unicode/separator, stale/latest/signature/authority/state and twin/pin probes", changed: "scope entry representations, stamp chronology, signer/authority and task state" }
+  - { by: "process:run", at: 2026-09-23, act: run, authority: process, floor: regression, outcome: PASS, receipt: /tasks/scope-in-the-seal.d/runs/3.md }
+  - { by: "process:run", at: 2026-09-23, act: run, authority: process, floor: regression, outcome: PASS, receipt: /tasks/scope-in-the-seal.d/runs/4.md }
+  - { by: "advisor:engine-notary", at: 2026-09-23, act: refute, authority: process, outcome: held, probes: 31, receipt: /tasks/scope-in-the-seal.d/runs/2.md, tier: T2, note: "compact-JSON exact-entry set held across scalar/list/block/Unicode/separator, stale/latest/signature/authority/state and twin/pin probes", changed: "scope entry representations, stamp chronology, signer/authority and task state" }
+  - { by: "process:run", at: 2026-09-23, act: run, authority: process, outcome: PASS, receipt: /tasks/scope-in-the-seal.d/runs/5.md }
+  - { by: "advisor:engine-notary", at: 2026-09-23, act: refute, authority: process, outcome: held, probes: 31, receipt: /tasks/scope-in-the-seal.d/runs/5.md, tier: T2, note: "compact-JSON exact-entry set held across scalar/list/block/Unicode/separator, stale/latest/signature/authority/state and twin/pin probes", changed: "scope entry representations, stamp chronology, signer/authority and task state" }
+  - { by: "human:Tin Dang", at: 2026-09-23, act: gate, authority: human, outcome: PASS, receipt: /tasks/scope-in-the-seal.d/runs/5.md, brief: "sha256:4dd7d2ffce92f3b2", reason: "All ten security decisions approved; scoped receipt 5 and floor receipt 4 passed with bound test IDs; T2 refutation held across 31 adversarial probes; artifact twins and engine pin match." }
 advised_by: engine-notary
 ---
 ## CARD
 goal: a human freeze seals the scope it approved, so a later frontmatter edit cannot route a sensitive path without a human refreeze
 why: a `human:` signature is authority only over the fields its seal names; current routing trusts mutable `scope:` entries that neither existing freeze digest covers
-beat: direction · next: add interview scope-in-the-seal, then add freeze scope-in-the-seal --by "human:<name>"
+beat: done · next: add status
 
 ## RULES
 <must>
@@ -61,8 +85,10 @@ regression: affected · python3 -m pytest add-method/tests/engine/test_scope_in_
 red-first: `python3 -m pytest add-method/tests/engine/test_scope_in_the_seal.py -q` fails before Build because freeze writes no scope seal, mutable/legacy scopes route, and the owner reader ignores refreeze.
 
 ## EVIDENCE
-receipt: pending — targeted red run is recorded in tmp/seal-direction-evidence.md
-gate: HARD-STOP until the human answers the open assumptions, rejects, and edges
+receipt: /tasks/scope-in-the-seal.d/runs/5.md · kind: test-ids · 5/5 reported · exit 0 · 2026-09-23
+refute: held · 31 probe(s) · tier T2 · by advisor:engine-notary · against /tasks/scope-in-the-seal.d/runs/5.md · 2026-09-23 · compact-JSON exact-entry set held across scalar/list/block/Unicode/separator, stale/latest/signature/authority/state and twin/pin probes · changed: scope entry representations, stamp chronology, signer/authority and task state
+gate: PASS · authority human · by human:Tin Dang · receipt /tasks/scope-in-the-seal.d/runs/5.md · 2026-09-23 · All ten security decisions approved; scoped receipt 5 and floor receipt 4 passed with bound test IDs; T2 refutation held across 31 adversarial probes; artifact twins and engine pin match.
 
 ## LESSONS
 none yet
+- none filed — no lesson cites /tasks/scope-in-the-seal.md (add learn <lens> "<lesson>" --evidence /tasks/scope-in-the-seal.md)

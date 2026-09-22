@@ -2616,7 +2616,8 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     node, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{_oneline(by)}", at: {_today()}, act: {act}, authority: {authority}, '
                      f'direction: "{direction_digest(node_t2)}", '
-                     f'binding: "{binding_digest(node_t2)}", gives: "{new_gives}"'
+                     f'binding: "{binding_digest(node_t2)}", gives: "{new_gives}", '
+                     f'scope: "{scope_seal_digest(node_t2)}"'
                      + (f', needs: "{pins}"' if pins else "") + exit_pin + " }")])
     if err:
         return None, err + "\nnext: add status"
@@ -3704,6 +3705,34 @@ def gives_digest(node: dict) -> str:
     gives = (node.get("fm") or {}).get("gives") or []
     gives = [gives] if isinstance(gives, str) else gives           # a scalar is one surface (E15)
     return "sha256:" + hashlib.sha256(_canon("\n".join(str(g) for g in gives)).encode()).hexdigest()[:16]
+
+
+def scope_seal_digest(node: dict) -> str:
+    """Digest the authored `scope:` as a normalized set (scope-in-the-seal, FORMAT §3.5).
+
+    Ordering and duplicate entries do not change what the node declares, so neither may force a
+    human refreeze. Entry text remains otherwise exact: changing a path or pattern moves the seal.
+    """
+    entries = sorted({str(entry) for entry in _scope_list((node or {}).get("fm") or {})})
+    payload = json.dumps(entries, ensure_ascii=False, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _latest_scope_seal(node: dict):
+    """Latest freeze-class stamp iff it seals this node's current `scope:`; else None.
+
+    Missing, malformed and stale scope seals all fail closed. Only the latest freeze-class stamp
+    can authorize current scope; an older matching freeze cannot outrank a later refreeze.
+    """
+    stamps = (node.get("fm") or {}).get("verified") or []
+    latest = next((stamp for stamp in reversed(stamps)
+                   if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze")), None)
+    if latest is None:
+        return None
+    sealed = str(latest.get("scope") or "")
+    if not re.fullmatch(r"sha256:[0-9a-f]{16}", sealed):
+        return None
+    return latest if sealed == scope_seal_digest(node) else None
 
 
 def _short(digest: str) -> str:
@@ -5428,9 +5457,9 @@ def _scoped_by_any(parent, graph: dict, path: str) -> bool:
     """
     for cid, node in graph.items():
         fm = node.get("fm") or {}
-        if not any(isinstance(v, dict) and v.get("act") == "freeze"
-                   and str(v.get("by") or "").startswith("human:")
-                   for v in (fm.get("verified") or [])):
+        seal = _latest_scope_seal(node)
+        if seal is None or not str(seal.get("by") or "").startswith("human:") \
+                or str(seal.get("authority") or "") != "human":
             continue
         if authority_for(graph, cid) != "human":
             continue
@@ -5477,7 +5506,7 @@ def quick_hit(root, graph: dict, paths: list, owners: bool = True):
         fm = (graph[cid].get("fm") or {})
         if fm.get("type") != "Task" or str(fm.get("status") or "") in CLOSED_TASK_STATES:
             continue
-        if not any(isinstance(v, dict) and v.get("act") == "freeze" for v in (fm.get("verified") or [])):
+        if _latest_scope_seal(graph[cid]) is None:
             continue
         for entry in _scope_list(fm):
             for path in paths:

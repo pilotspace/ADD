@@ -40,14 +40,14 @@ sys.path.insert(0, str(REPO / "tooling"))
 # somebody else wrote.
 READERS = {
     "brief": {"_brief_entered"},
-    "freeze": {"_brief_entered", "_is_frozen", "_pins_of", "_scoped_by_any", "done",
-               "freeze", "gate", "quick_hit", "_resolve_exit_move", "sealed_binding", "sealed_direction",
+    "freeze": {"_brief_entered", "_is_frozen", "_latest_scope_seal", "_pins_of", "done",
+               "freeze", "gate", "_resolve_exit_move", "sealed_binding", "sealed_direction",
                "stamped_gives"},
     "gate": {"_admits", "_anchor", "_effective_gate_stamp", "_last_gate_outcome",
              "checks_verify", "done", "join"},
     "interview": {"_interview_stamps"},
-    "refreeze": {"_brief_entered", "_is_frozen", "_pins_of", "done", "freeze", "gate", "_resolve_exit_move",
-                 "sealed_binding", "sealed_direction", "stamped_gives"},
+    "refreeze": {"_brief_entered", "_is_frozen", "_latest_scope_seal", "_pins_of", "done", "freeze", "gate",
+                 "_resolve_exit_move", "sealed_binding", "sealed_direction", "stamped_gives"},
     "refute": {"_refute_of"},
     "release": {"show", "status"},
     "reopen": {"_anchor", "_effective_gate_stamp", "done"},

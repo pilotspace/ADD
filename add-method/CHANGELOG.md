@@ -4,6 +4,13 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 `pilotspace-add` on PyPI) are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [Unreleased]
+
+### Changed
+- **Freeze seals exact scope authority.** Freeze and refreeze stamps now carry a digest over the
+  sorted, duplicate-free `scope:` set. Sensitive routing and quick-lane ownership trust only the
+  latest matching seal; legacy, malformed, or stale scope seals fail closed until refrozen.
+
 ## [3.6.0] — 2026-09-08
 
 **The loop drains, and our own tests stop passing on refusals.** Two milestones. The first closes

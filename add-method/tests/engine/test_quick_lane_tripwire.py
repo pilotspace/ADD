@@ -799,7 +799,9 @@ def test_a_node_that_holds_nothing_routes_nothing(tmp_path):
     cid, _ = add.new(ms, "Milestone", "wave", title="wave", scope=["src/auth/token.py"])
     mp = ms / cid.lstrip("/")
     nd = add.read(mp, "T2")
-    stamp = 'verified:\n  - { by: "human:T", at: 2026-09-13, act: freeze, authority: human }'
+    scope = add.scope_seal_digest(nd)
+    stamp = ('verified:\n  - { by: "human:T", at: 2026-09-13, act: freeze, '
+             f'authority: human, scope: "{scope}" }}')
     add.write(mp, f"---\n{nd['raw']}\n{stamp}\n---\n" + nd["body"])
     _commit(tmp_path / "ms", "README.md", "# hi\n")
     sha = _commit(tmp_path / "ms", "src/auth/token.py")
@@ -937,7 +939,9 @@ def test_a_scope_entry_never_takes_the_lane_down(tmp_path):
         # Raising unconditionally inside `_scope_candidates` shipped 24/24 green until these two
         # lines landed — the guard worked, and the check that claimed to bind it reached nothing.
         raw = add.set_key(n["raw"], "sensitivity", "security")
-        stamp = 'verified:\n  - { by: "human:T", at: 2026-09-13, act: freeze, authority: human }'
+        scope = add.scope_seal_digest(n)
+        stamp = ('verified:\n  - { by: "human:T", at: 2026-09-13, act: freeze, '
+                 f'authority: human, scope: "{scope}" }}')
         add.write(p, f"---\n{raw}\n{stamp}\n---\n" + n["body"])
         assert add.authority_for(add.scan(root), cid) == "human", \
             f"the fixture node scoping {entry!r} is not floored to human, so the floor never " \
@@ -1111,7 +1115,7 @@ def test_every_reader_of_a_scope_entry_is_known_and_fails_closed(tmp_path):
                and any(isinstance(c, ast.Call) and isinstance(c.func, ast.Name)
                        and c.func.id == "_scope_list" for c in ast.walk(fn))}
     assert readers == {"authority_for", "gate", "locate", "quick_hit", "_scoped_by_any",
-                       "run", "wave"}, (
+                       "run", "scope_seal_digest", "wave"}, (
         f"the set of functions reading a `scope:` entry changed: {sorted(readers)}.\n"
         "Whichever way it moved, say which matcher the new reader uses and why that is the right "
         "one for the question it asks — three readers disagreeing is how this node's security "
@@ -1128,8 +1132,9 @@ def test_every_reader_of_a_scope_entry_is_known_and_fails_closed(tmp_path):
         cid, _ = add.new(root, "Task", "n", title="n", scope=[entry])
         p = root / cid.lstrip("/")
         n = add.read(p, "T2")
+        scope = add.scope_seal_digest(n)
         stamp = ('verified:\n  - { by: "human:T", at: 2026-09-13, act: freeze, '
-                 'authority: human }')
+                 f'authority: human, scope: "{scope}" }}')
         add.write(p, f"---\n{n['raw']}\n{stamp}\n---\n" + n["body"])
         graph = add.scan(root)
         holds = add._scope_holds(work, entry, "src/auth/token.py")
@@ -1160,8 +1165,9 @@ def test_every_reader_of_a_scope_entry_is_known_and_fails_closed(tmp_path):
         cid, _ = add.new(root, "Task", "n", title="n", scope=["src/auth/token.py"])
         p = root / cid.lstrip("/")
         n = add.read(p, "T2")
+        scope = add.scope_seal_digest(n)
         add.write(p, f"---\n{n['raw']}\nverified:\n  - {{ by: \"{signer}\", at: 2026-09-13, "
-                     f"act: freeze, authority: human }}\n---\n" + n["body"])
+                     f"act: freeze, authority: human, scope: \"{scope}\" }}\n---\n" + n["body"])
         graph = add.scan(root)
         assert add.authority_for(graph, cid) == "human", "the fixture stopped being A17-floored"
         assert not add._scoped_by_any(work, graph, "src/auth/token.py"), (
@@ -1184,8 +1190,9 @@ def test_every_reader_of_a_scope_entry_is_known_and_fails_closed(tmp_path):
         p = root / cid.lstrip("/")
         n = add.read(p, "T2")
         raw = add.set_key(n["raw"], "sensitivity", sensitivity)
+        scope = add.scope_seal_digest(n)
         add.write(p, f'---\n{raw}\nverified:\n  - {{ by: "human:T", at: 2026-09-13, '
-                     f'act: {act}, authority: human }}\n---\n' + n["body"])
+                     f'act: {act}, authority: human, scope: "{scope}" }}\n---\n' + n["body"])
         graph = add.scan(root)
         assert not add._scoped_by_any(work, graph, "src/auth/token.py"), (
             f"{label}, signed by a person, stood the sensitive floor down. Only a FREEZE at the "
