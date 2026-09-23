@@ -10,6 +10,11 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 - **Freeze seals exact scope authority.** Freeze and refreeze stamps now carry a digest over the
   sorted, duplicate-free `scope:` set. Sensitive routing and quick-lane ownership trust only the
   latest matching seal; legacy, malformed, or stale scope seals fail closed until refrozen.
+- **Task Musts can be carried with their responsibility.** A destination Task seals an exact
+  original-to-local Must mapping, rejects duplicate, self, cyclic, and stale intermediate claims,
+  and inherits the original approval floor through a chain. A previously accepted carry keeps its
+  historical authority floor after correction; human-floor interview, freeze, and closing claims
+  require a named signer. Closing the destination preserves the original record.
 
 ## [3.6.0] — 2026-09-08
 

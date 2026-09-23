@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "7e600fc55374efa43e7b1e7a15730f9ec7270e904103098bd29d5605d0de9d4a"  # re-aimed @ moved-is-a-real-exit-state: `check` now refuses to erase `[~]`, and `milestone_done` refuses unresolved moves by original identity before closure. prior: 0c5160ff… @ quick-lane-tripwire
-MESSAGE_COUNT = 128  # re-aimed @ moved-is-a-real-exit-state: two intentional refusal messages added; fence and move helpers' nullable results are not verb refusals. prior: 126 @ quick-lane-tripwire
+MESSAGE_DIGEST = "4b736f063df3a9772f27ea8ff84510ac5b33eff6acc1e965d2285e403eb00acb"  # re-aimed @ carries-preserves-responsibility: one additional interview refusal requires a named human signer for a human-floor carry. prior: cda7e6be… @ same task
+MESSAGE_COUNT = 131  # re-aimed @ carries-preserves-responsibility: one carry interview refusal added. prior: 130 @ same task
 
 
 def _message_digest() -> tuple:

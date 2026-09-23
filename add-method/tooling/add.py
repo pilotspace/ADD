@@ -2209,23 +2209,200 @@ def _oneline(note) -> str:
 
 
 def authority_for(graph: dict, cid: str) -> str:
-    """`max(sensitivity floor, A17 sensitive-path floor)` — FORMAT §3.1.
+    """The local floor plus every original obligation carried into this Task.
 
     A17 is a path match against `index.md`'s `sensitive_paths:`, so a notary may perform it:
     it is mechanical, and it outranks the declared `sensitivity:` in one direction only.
     """
-    import fnmatch
-    node = graph.get(cid) or {}
-    fm = node.get("fm") or {}
-    floor = sensitivity_floor(fm.get("sensitivity"))
-
     patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
-    scope = _scope_list(fm)
-    for entry in (scope if isinstance(scope, list) else [scope]):
-        for pattern in (patterns if isinstance(patterns, list) else [patterns]):
-            if _paths_touch(str(entry), str(pattern)):
-                return "human"  # A17 — unstrikeable, and never lowered
-    return floor
+    def local(key):
+        fm = ((graph.get(key) or {}).get("fm") or {})
+        floor = sensitivity_floor(fm.get("sensitivity"))
+        for entry in _scope_list(fm):
+            for pattern in (patterns if isinstance(patterns, list) else [patterns]):
+                if _paths_touch(str(entry), str(pattern)):
+                    return "human"  # A17 — unstrikeable, and never lowered
+        # A refreeze may correct a carry, but deleting its current list cannot erase the
+        # authority that accepted it. Keep the strongest historical carried floor.
+        for stamp in (fm.get("verified") or []):
+            if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze") \
+                    and _has_carry_history_stamp(stamp):
+                claim = str(stamp.get("authority") or "")
+                if claim in AUTHORITY_ORDER:
+                    floor = max((floor, claim), key=AUTHORITY_ORDER.index)
+        return floor
+
+    def inherited(key, seen):
+        if key in seen:
+            return local(key)  # the carry validator reports the cycle before any write
+        floor = local(key)
+        node = graph.get(key) or {}
+        edges, _ = _carry_entries(node.get("fm") or {})
+        if key != cid and edges:
+            stamp = _latest_freeze_stamp(node.get("fm") or {})
+            if str((stamp or {}).get("carries") or "") != carry_digest(node):
+                edges = []  # a source's draft or stale carries transfer no authority
+        for source, _dest in edges:
+            source_cid = source.partition("#")[0]
+            if source_cid not in graph:
+                continue  # the carry validator reports the dangling address
+            stamp = _latest_freeze_stamp((graph[source_cid].get("fm") or {}))
+            stamped = str((stamp or {}).get("authority") or "")
+            levels = [floor, inherited(source_cid, seen | {key})]
+            if stamped in AUTHORITY_ORDER:
+                levels.append(stamped)
+            floor = max(levels, key=AUTHORITY_ORDER.index)
+        return floor
+
+    return inherited(cid, set())
+
+
+_CARRY_ADDRESS = r"/tasks/[A-Za-z0-9][A-Za-z0-9._-]*\.md#RULES:M[1-9][0-9]*"
+_CARRY_EDGE = re.compile(rf"\A({_CARRY_ADDRESS}) -> ({_CARRY_ADDRESS})\Z")
+
+
+def _latest_freeze_stamp(fm: dict):
+    return next((s for s in reversed((fm or {}).get("verified") or [])
+                 if isinstance(s, dict) and s.get("act") in ("freeze", "refreeze")), None)
+
+
+def _human_signer(value) -> bool:
+    """A human authority claim needs a named signer, not just its namespace."""
+    name = str(value or "")
+    return name.startswith("human:") and bool(name[len("human:"):].strip())
+
+
+def _carry_entries(fm: dict) -> tuple:
+    """Parse only the Task carry grammar; malformed values never become partial edges."""
+    raw = (fm or {}).get("carries")
+    if raw is None or raw == []:
+        return [], None
+    if not isinstance(raw, list):
+        return [], f"R:BAD_CARRY `carries:` must be a list of exact Must mappings; got {raw!r}"
+    out = []
+    for value in raw:
+        if not isinstance(value, str) or not (match := _CARRY_EDGE.fullmatch(value)):
+            return [], f"R:BAD_CARRY malformed mapping {value!r}; use /tasks/source.md#RULES:M1 -> /tasks/destination.md#RULES:M1"
+        out.append(match.groups())
+    return out, None
+
+
+def carry_digest(node: dict) -> str:
+    """Seal the complete authored list with an unambiguous, exact-entry encoding."""
+    entries = (node.get("fm") or {}).get("carries") or []
+    payload = json.dumps(sorted(entries), ensure_ascii=False, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _has_carry_history_stamp(stamp: dict) -> bool:
+    """A non-empty accepted mapping leaves a durable authority floor."""
+    sealed = str(stamp.get("carries") or "")
+    return bool(sealed) and sealed != carry_digest({"fm": {"carries": []}})
+
+
+def _has_carry_history(fm: dict) -> bool:
+    return any(isinstance(s, dict) and s.get("act") in ("freeze", "refreeze")
+               and _has_carry_history_stamp(s) for s in ((fm or {}).get("verified") or []))
+
+
+def _carry_problem(graph: dict, cid: str, *, accepted: bool) -> str:
+    """Validate one transfer and its original chain without modifying either Task."""
+    fm = ((graph.get(cid) or {}).get("fm") or {})
+    edges, problem = _carry_entries(fm)
+    if problem:
+        return problem
+    if accepted and _has_carry_history(fm):
+        stamp = _latest_freeze_stamp(fm)
+        sealed = str((stamp or {}).get("carries") or "")
+        if not re.fullmatch(r"sha256:[0-9a-f]{16}", sealed) or sealed != carry_digest(graph[cid]):
+            return f"R:UNACCEPTED_CARRY {cid} changed its accepted carries after freeze"
+    if not edges:
+        return ""
+    if fm.get("type") != "Task":
+        return f"R:BAD_CARRY {cid} is not a Task"
+
+    claims, targets, edge_by_destination = {}, {}, {}
+    for owner, node in graph.items():
+        other, _ = _carry_entries((node.get("fm") or {}))
+        for source, destination in other:
+            claims.setdefault(source, []).append(destination)
+            targets.setdefault(destination, []).append(source)
+            edge_by_destination[destination] = (source, owner)
+
+    def check_edge(source, destination, owner, require_seal):
+        if len(claims[source]) > 1:
+            return f"R:DUPLICATE_CARRY {source} is claimed by more than one destination obligation"
+        if len(targets[destination]) > 1:
+            return f"R:BAD_CARRY {destination} ambiguously accepts several originals"
+        if destination.partition("#")[0] != owner:
+            return f"R:BAD_CARRY {source} targets {destination}, outside {owner}"
+        if source.partition("#")[0] == owner:
+            return f"R:CYCLIC_CARRY {source} -> {destination} is a self-edge"
+        node = graph.get(owner)
+        original = graph.get(source.partition("#")[0])
+        if node is None or ((node.get("fm") or {}).get("type") != "Task"):
+            return f"R:BAD_CARRY {destination} is not a readable Task Must"
+        if original is None or ((original.get("fm") or {}).get("type") != "Task"):
+            return f"R:BAD_CARRY {source} is not a readable Task Must"
+        for endpoint, locator in ((original, source), (node, destination)):
+            ids = list(must_lines(read(endpoint["path"], "T2")["body"]).values())
+            if ids.count(locator.rpartition(":")[2]) != 1:
+                return f"R:BAD_CARRY {source} -> {destination} names a missing or ambiguous Must"
+        source_stamp = _latest_freeze_stamp(original.get("fm") or {})
+        direction = str((source_stamp or {}).get("direction") or "")
+        if not re.fullmatch(r"sha256:[0-9a-f]{16}", direction) \
+                or direction != direction_digest(read(original["path"], "T2")):
+            return f"R:UNACCEPTED_CARRY {source} has no readable current freeze-class direction"
+        # Removing an intermediate Task's `carries:` after its acceptance must not erase its
+        # lineage from the graph. The latest source seal still records what it accepted.
+        if _has_carry_history(original.get("fm") or {}) \
+                and str((source_stamp or {}).get("carries") or "") != carry_digest(original):
+            return f"R:UNACCEPTED_CARRY {source} changed its accepted carries after freeze"
+        stamped = str(source_stamp.get("authority") or "")
+        if stamped not in AUTHORITY_ORDER or AUTHORITY_ORDER.index(stamped) < AUTHORITY_ORDER.index(authority_for(graph, source.partition("#")[0])):
+            return f"R:LOWERED_CARRY_AUTHORITY {source} has no freeze at its inherited floor"
+        if stamped == "human" and not _human_signer(source_stamp.get("by")):
+            return f"R:LOWERED_CARRY_AUTHORITY {source} has no human freeze signer"
+        if require_seal:
+            stamp = _latest_freeze_stamp(node.get("fm") or {})
+            sealed = str((stamp or {}).get("carries") or "")
+            if not re.fullmatch(r"sha256:[0-9a-f]{16}", sealed) or sealed != carry_digest(node):
+                return f"R:UNACCEPTED_CARRY {destination} has no latest seal for its current carries"
+            if str(stamp.get("direction") or "") != direction_digest(read(node["path"], "T2")):
+                return f"R:UNACCEPTED_CARRY {destination} changed its Musts after acceptance"
+            dest_authority = str(stamp.get("authority") or "")
+            if dest_authority not in AUTHORITY_ORDER or AUTHORITY_ORDER.index(dest_authority) < AUTHORITY_ORDER.index(authority_for(graph, owner)):
+                return f"R:LOWERED_CARRY_AUTHORITY {destination} must refreeze at its inherited floor"
+            if dest_authority == "human" and not _human_signer(stamp.get("by")):
+                return f"R:LOWERED_CARRY_AUTHORITY {destination} has no human freeze signer"
+        return ""
+
+    # Shape errors, especially a cycle, precede attestation errors: a self-edge cannot have a
+    # valid source freeze yet, but the useful refusal is the identity loop the author must fix.
+    for source, destination in edges:
+        if source.partition("#")[0] == cid:
+            return f"R:CYCLIC_CARRY {source} -> {destination} is a self-edge"
+    for _source, destination in edges:
+        current, seen = destination, set()
+        while current in edge_by_destination:
+            if current in seen:
+                return f"R:CYCLIC_CARRY {destination} revisits {current}"
+            seen.add(current)
+            current = edge_by_destination[current][0]
+
+    # Follow the one named obligation through accepted links. Re-entering a Task through a
+    # different Must is legal; only revisiting the same Must is a cycle.
+    for source, destination in edges:
+        current, owner, require_seal = (source, destination), cid, accepted
+        while True:
+            link_source, link_destination = current
+            if (bad := check_edge(link_source, link_destination, owner, require_seal)):
+                return bad
+            if link_source not in edge_by_destination:
+                break
+            upstream_source, upstream_owner = edge_by_destination[link_source]
+            current, owner, require_seal = (upstream_source, link_source), upstream_owner, True
+    return ""
 
 
 def _transition(root, cid: str, sets: dict = None, appends: list = None) -> tuple:
@@ -2490,6 +2667,8 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       + " · ".join(stubs)
                       + f"\nnext: author {slug}'s RULES, ASSUMPTIONS and CHECKS, "
                         f"then add freeze {slug}")
+    if (carry_error := _carry_problem(graph, cid, accepted=False)):
+        return None, f"cannot freeze `{slug}` — {carry_error}\nnext: repair its `carries:` mapping and source approval"
 
     # No surfaces would mean nothing to sweep — a one-line off switch for the whole gate.
     if _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() \
@@ -2580,7 +2759,10 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     claims_human = (sfm_type := (node_t2.get("fm") or {}).get("type")) == "Milestone" \
         and str(authority or "") == "human"
     if authority_for(graph, cid) == "human" or claims_human:
-        owed = interview_gap(node_t2, entry.get("fm") or {})
+        owed = interview_gap(node_t2, entry.get("fm") or {},
+                             require_human_signer=(bool(_carry_entries(entry.get("fm") or {})[0])
+                             or _has_carry_history(entry.get("fm") or {}))
+                             and authority_for(graph, cid) == "human")
         if owed:
             shown = ", ".join(owed[:6]) + (f" (+{len(owed) - 6} more)" if len(owed) > 6 else "")
             forward = (f"\nnext: add interview {slug} — or stamp the honest lower claim, "
@@ -2600,7 +2782,14 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       f"<why>` — then add freeze {slug}")
     authority, floor_err = claimed_authority(authority, authority_for(graph, cid), "freeze", slug)
     if floor_err:
-        return None, f"cannot freeze `{slug}` — " + floor_err
+        code = "R:LOWERED_CARRY_AUTHORITY " if _carry_entries(entry.get("fm") or {})[0] \
+            or _has_carry_history(entry.get("fm") or {}) else ""
+        return None, f"cannot freeze `{slug}` — " + code + floor_err
+    if (_carry_entries(entry.get("fm") or {})[0] or _has_carry_history(entry.get("fm") or {})) \
+            and authority == "human" \
+            and not _human_signer(by):
+        return None, (f"cannot freeze `{slug}` — R:LOWERED_CARRY_AUTHORITY a human-floor carry "
+                      f"needs this destination's own `human:` signer\nnext: add freeze {slug} --by \"human:<name>\"")
     stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
                             if isinstance(s, dict)) else "freeze"
@@ -2618,6 +2807,7 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                      f'direction: "{direction_digest(node_t2)}", '
                      f'binding: "{binding_digest(node_t2)}", gives: "{new_gives}", '
                      f'scope: "{scope_seal_digest(node_t2)}"'
+                     + (f', carries: "{carry_digest(node_t2)}"' if sfm_type == "Task" else "")
                      + (f', needs: "{pins}"' if pins else "") + exit_pin + " }")])
     if err:
         return None, err + "\nnext: add status"
@@ -2670,7 +2860,14 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     if node is None:
         return None, ["node"], f"no such node: {cid}\nnext: add status"
 
+    if (carry_error := _carry_problem(graph, cid, accepted=True)):
+        return None, ["carries"], f"cannot record `done` — {carry_error}\nnext: repair and refreeze {cid}"
+
     required = authority_for(graph, cid)
+    if (_carry_entries(node.get("fm") or {})[0] or _has_carry_history(node.get("fm") or {})) \
+            and required == "human" and override is not None:
+        return None, ["authority"], ("cannot record `done` — R:LOWERED_CARRY_AUTHORITY "
+                                      "a security carry's HARD-STOP cannot be overridden")
     stamps = [s for s in ((node["fm"] or {}).get("verified") or []) if isinstance(s, dict)]
     # a reopen RESETS the gate (loop.md): only gates that postdate the last reopen entitle `done`,
     # so a stale pre-reopen PASS cannot re-entitle a task the loop returned to a beat.
@@ -2686,9 +2883,21 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     # OPEN rather than stranding them. Only a verdict that reads as HARD-STOP withholds `done`.
     gates = [(i, s) for i, s in gates
              if s.get("outcome") is None or str(s.get("outcome")) in CLOSING_VERDICTS]
-    entitled = [(i, s) for i, s in gates
-                if AUTHORITY_ORDER.index(str(s.get("authority", "process"))) >=
-                AUTHORITY_ORDER.index(required)]
+    def gate_rank(stamp):
+        claim = str(stamp.get("authority") or "")
+        return AUTHORITY_ORDER.index(claim) if claim in AUTHORITY_ORDER else -1
+
+    entitled = [(i, s) for i, s in gates if gate_rank(s) >= AUTHORITY_ORDER.index(required)]
+    if (_carry_entries(node.get("fm") or {})[0] or _has_carry_history(node.get("fm") or {})) \
+            and required == "human":
+        freeze_stamp = _latest_freeze_stamp(node.get("fm") or {})
+        if not _human_signer((freeze_stamp or {}).get("by")):
+            return None, ["authority"], ("cannot record `done` — R:LOWERED_CARRY_AUTHORITY "
+                                          "this destination has no human freeze signer")
+        if entitled and not any(_human_signer(s.get("by")) for _, s in entitled):
+            return None, ["authority"], ("cannot record `done` — R:LOWERED_CARRY_AUTHORITY "
+                                          "this destination has no human closing gate signer")
+        entitled = [(i, s) for i, s in entitled if _human_signer(s.get("by"))]
     # The seal, checked at the terminal write. `gate` refuses an unsealed PASS (R:UNSEALED, #206)
     # and — since this task — an unsealed RISK-ACCEPTED too, but `done` is the verb that actually
     # writes `status: done`, and it counted a gate stamp without ever asking whether the ONE
@@ -2733,7 +2942,7 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
         missing.append(f"a gate stamp (none recorded; `{required}` or above is required)")
     elif not entitled:
         missing.append(f"a gate at authority `{required}` — highest recorded is "
-                       f"`{max((s for _, s in gates), key=lambda s: AUTHORITY_ORDER.index(str(s.get('authority', 'process')))).get('authority')}`")
+                       f"`{max((s for _, s in gates), key=gate_rank).get('authority')}`")
     elif seal_at is None or all(i < seal_at for i, _ in entitled):
         missing.append("a freeze preceding the gate — the ONE human approval ADD asks for did "
                        "not happen, so this gate closed a node nobody ever approved")
@@ -6824,6 +7033,13 @@ def _open_decisions(node: dict) -> list:
         out.append({"id": mid, "of": "must", "dim": "source",
                     "reading": re.sub(r"\s*-\s*M\d+\s+", "", line, count=1).strip(),
                     "cost": "", "text": line})
+    # A human-floor transfer is a NEW approval of the exact responsibility edge. Including the
+    # edge in the ordinary interview digest makes a later carry edit reopen that decision.
+    carries, _ = _carry_entries(node.get("fm") or {})
+    for n, (source, destination) in enumerate(sorted(carries), start=1):
+        edge = f"{source} -> {destination}"
+        out.append({"id": f"TC{n}", "of": "carry", "dim": "responsibility",
+                    "reading": edge, "cost": "", "text": edge})
     return out
 
 
@@ -6842,7 +7058,7 @@ def _interview_stamps(fm: dict) -> list:
             if isinstance(s, dict) and s.get("act") == "interview"]
 
 
-def interview_gap(node: dict, fm: dict) -> list:
+def interview_gap(node: dict, fm: dict, *, require_human_signer: bool = False) -> list:
     """Ids still owed an answer for the node AS IT NOW READS, or `[]` when the interview holds.
 
     Reads the stamp whose digest MATCHES the current text — not the latest. Recency is not
@@ -6858,7 +7074,7 @@ def interview_gap(node: dict, fm: dict) -> list:
     want = interview_digest(node)
     answered = {}
     for s in _interview_stamps(fm):
-        if str(s.get("interview") or "") == want:
+        if str(s.get("interview") or "") == want and (not require_human_signer or _human_signer(s.get("by"))):
             answered.update(_answer_map(str(s.get("answers") or "")))
     # `correct` is never an answer that completes — it is cleared by EDITING the item, which moves
     # the digest and re-opens the pass.
@@ -6908,6 +7124,13 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
                 lines.append(f"  If wrong: {d['cost']}")
         lines.append(f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"<name>\"")
         return decisions, "\n".join(lines)
+
+    if (_carry_entries(entry.get("fm") or {})[0] or _has_carry_history(entry.get("fm") or {})) \
+            and authority_for(graph, cid) == "human" \
+            and not _human_signer(by):
+        return None, (f"cannot interview `{slug}` — R:LOWERED_CARRY_AUTHORITY "
+                      f"a human-floor carry needs this destination's named human signer"
+                      f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"human:<name>\"")
 
     ids = {d["id"] for d in decisions}
     bad_id = [k for k in answers if k not in ids]
@@ -8050,6 +8273,8 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     graph = scan(root)
     if cid not in graph:
         return refuse(f"no such node: {cid}", "add status")
+    if verdict in CLOSING_VERDICTS and (carry_error := _carry_problem(graph, cid, accepted=True)):
+        return refuse(carry_error, f"repair and refreeze {slug}'s `carries:` mapping")
     if verdict != "PASS" and not reason:
         return refuse(f"a {verdict} with no reason is a PASS in disguise",
                       f'add gate {slug} {verdict} --reason "<why>"')
@@ -8062,6 +8287,10 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     sfm = graph[cid]["fm"] or {}
     security_floored = authority_for(graph, cid) == "human"
     closes = verdict == "PASS"      # the ONE place the verdict is compared; refusals go via _binds
+    if (_carry_entries(sfm)[0] or _has_carry_history(sfm)) and security_floored and closes \
+            and not _human_signer(by):
+        return refuse("R:LOWERED_CARRY_AUTHORITY this destination needs its own human gate signer",
+                      f'add gate {slug} PASS --by "human:<name>"')
 
     # R:SECURITYFOLD — a security risk is a HARD-STOP, never a signed acceptance. The floor already
     # puts authority at `human`; this makes the other half structural rather than prose: the finding

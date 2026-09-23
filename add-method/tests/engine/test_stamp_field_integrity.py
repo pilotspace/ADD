@@ -108,7 +108,7 @@ def test_a_stamp_survives_an_odd_quote_in_by(tmp_path):
 
     st = _stamps(p)
     # `gives` joined at consumers-go-stale (FORMAT §3.5): the published surface's own digest.
-    assert sorted(st[0]) == ["act", "at", "authority", "binding", "by", "direction", "gives", "scope"], st[0]
+    assert sorted(st[0]) == ["act", "at", "authority", "binding", "by", "carries", "direction", "gives", "scope"], st[0]
     assert add._is_frozen(add.scan(root)[cid]), "the freeze was reported but the seal is absent"
     assert add.sealed_direction(add.scan(root)[cid]["fm"]), "the direction digest was swallowed"
 

@@ -1114,7 +1114,9 @@ def test_every_reader_of_a_scope_entry_is_known_and_fails_closed(tmp_path):
     readers = {fn.name for fn in ast.walk(ast.parse(src)) if isinstance(fn, ast.FunctionDef)
                and any(isinstance(c, ast.Call) and isinstance(c.func, ast.Name)
                        and c.func.id == "_scope_list" for c in ast.walk(fn))}
-    assert readers == {"authority_for", "gate", "locate", "quick_hit", "_scoped_by_any",
+    # `local` is authority_for's nested reader for each original in a carried-obligation chain.
+    # It uses the same A17 path matcher; the transfer only raises the destination floor.
+    assert readers == {"authority_for", "local", "gate", "locate", "quick_hit", "_scoped_by_any",
                        "run", "scope_seal_digest", "wave"}, (
         f"the set of functions reading a `scope:` entry changed: {sorted(readers)}.\n"
         "Whichever way it moved, say which matcher the new reader uses and why that is the right "

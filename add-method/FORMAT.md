@@ -437,6 +437,40 @@ Derived from `add.py:freeze`, `add.py:scope_seal_digest`, `add.py:_latest_scope_
 `add.py:_scoped_by_any`, `add.py:quick_hit`, `add.py:needs_pins`, `add.py:stale_needs`,
 `add.py:consumers_of`, `add.py:doctor`, `add.py:todo`, `add.py:gate`.
 
+### §3.5a Carried Task obligations
+
+A destination Task MAY accept an original Task Must with a `carries:` list. Each entry has one
+exact mapping, for example:
+
+```
+carries:
+  - "/tasks/original.md#RULES:M1 -> /tasks/destination.md#RULES:M2"
+```
+
+Both endpoints must name one real authored Must. The right endpoint must belong to the Task
+declaring the list. A source must have a current readable freeze-class direction seal; if that
+exact source Must was itself carried in, its mapping must also have an accepted, current carry
+seal. One original Must cannot be claimed twice, one destination Must cannot ambiguously accept
+several originals, and a chain cannot revisit an obligation. A direct self-edge is invalid even
+when it names two different Musts in the same Task. Passing through the same Task again via a
+different Must in a longer chain is allowed. `freeze` refuses these defects before writing a stamp.
+
+A Task freeze/refreeze stamps `carries: "sha256:<16hex>"` over compact JSON of the sorted, exact
+list entries. The destination accepts its list only while its **latest** freeze-class stamp
+matches its current list; `gate` and `done` recheck this before writing. Missing or stale seals
+cannot be treated as approval. The inherited authority floor is the maximum of the destination's
+own floor, every original's computed floor, and each original's latest stamped freeze authority.
+If a Task ever accepted a non-empty carry, its stamped authority remains a floor for later
+refreezes and downstream transfers even after the current list is corrected or removed.
+A human-floor carry requires an interview of the current transfer signed `human:<name>`, a
+destination freeze signed `human:<name>`, and a closing gate signed `human:<name>`; an empty name
+does not satisfy any of these claims. Security has neither a risk-accepted exit nor a `done --override`
+shortcut over HARD-STOP. Neither accepting nor
+closing a carry rewrites the original Task, its receipts, or its milestone's EXIT accounting.
+
+Derived from `add.py:_carry_entries`, `add.py:carry_digest`, `add.py:_carry_problem`,
+`add.py:authority_for`, `add.py:freeze`, `add.py:gate`, `add.py:done`.
+
 ### §3.6 Moved milestone EXIT criteria
 
 An authored `## EXIT` checkbox may be `[x]` (met), `[ ]` (unmet), or `[~]`

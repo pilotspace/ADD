@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "5f74f440a800f48dfec3e9983e38dfcb"  # re-aimed @ scope-in-the-seal: unambiguous scope-set encoding. prior: e3484488… @ same task
+ENGINE_MD5 = "a540f48a583aea414e71ae2c5723b2e7"  # re-aimed @ carries-preserves-responsibility: terminal readers reject deletion of a destination's accepted carries. prior: ea975ef8… @ scope-in-the-seal
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "6bb27c137985b21bcd6b9ebe76aa4376"  # re-aimed @ successor-not-reopen: `new --supersedes REF`. prior: d2583eb8… @ escape-with-prevention
