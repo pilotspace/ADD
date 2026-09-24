@@ -34,10 +34,12 @@ looks done", but "the suite the human froze now passes".
 Mid-build discovery that changes NO frozen surface — strategy, sequencing, a discovered
 constraint, a scope observation — is **steering**: record it with `add replan <slug> --note
 "<what changed and why>"` and keep building. The stamp lands on the node's trail at process
-authority; the seal never moves, and the gate is indifferent to it. Anything that would move a
-frozen `gives:` or a check is a **change-request** back to Direction (a `refreeze` stamp),
-exactly as the three lines above demand. Consult the split at the moment of discovery, before
-any edit — an unrecorded steer is where method-bypassing starts.
+authority; the seal never moves, and the gate is indifferent to it. When code fails against
+unchanged approved intent, record the cause with `add repair <slug> --kind implementation --cause
+"<defect>"` and fix it in Build. If a frozen rule, check, `gives:`, carry or scope must change,
+use `add repair <slug> --kind change --cause "<decision>"`; if its meaning is unclear, use
+`--kind unknown`. Both return to Direction and require a fresh freeze, brief and run before
+closure. Consult this split before editing — an unrecorded turn bypasses the method.
 
 ## When a check outside your suite fails
 

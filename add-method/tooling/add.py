@@ -2266,6 +2266,30 @@ def _latest_freeze_stamp(fm: dict):
                  if isinstance(s, dict) and s.get("act") in ("freeze", "refreeze")), None)
 
 
+def _direction_return_index(fm: dict) -> int:
+    """Last lifecycle stamp that explicitly withdrew Build authority."""
+    return max((i for i, stamp in enumerate((fm or {}).get("verified") or [])
+                if isinstance(stamp, dict) and stamp.get("act") in ("repair", "reopen")
+                and stamp.get("to") == "direction"), default=-1)
+
+
+def _active_freeze_stamp(fm: dict):
+    """Latest freeze-class stamp unless a later lifecycle act returned to Direction."""
+    stamps = (fm or {}).get("verified") or []
+    freeze_at = max((i for i, stamp in enumerate(stamps)
+                     if isinstance(stamp, dict)
+                     and stamp.get("act") in ("freeze", "refreeze")), default=-1)
+    direction_at = _direction_return_index(fm)
+    if freeze_at < 0 or direction_at > freeze_at:
+        return None
+    return stamps[freeze_at]
+
+
+def _old_seal(fm: dict) -> bool:
+    """True when history contains a seal that a later repair explicitly invalidated."""
+    return _latest_freeze_stamp(fm) is not None and _active_freeze_stamp(fm) is None
+
+
 def _human_signer(value) -> bool:
     """A human authority claim needs a named signer, not just its namespace."""
     name = str(value or "")
@@ -2348,7 +2372,7 @@ def _carry_problem(graph: dict, cid: str, *, accepted: bool) -> str:
             ids = list(must_lines(read(endpoint["path"], "T2")["body"]).values())
             if ids.count(locator.rpartition(":")[2]) != 1:
                 return f"R:BAD_CARRY {source} -> {destination} names a missing or ambiguous Must"
-        source_stamp = _latest_freeze_stamp(original.get("fm") or {})
+        source_stamp = _active_freeze_stamp(original.get("fm") or {})
         direction = str((source_stamp or {}).get("direction") or "")
         if not re.fullmatch(r"sha256:[0-9a-f]{16}", direction) \
                 or direction != direction_digest(read(original["path"], "T2")):
@@ -2364,7 +2388,7 @@ def _carry_problem(graph: dict, cid: str, *, accepted: bool) -> str:
         if stamped == "human" and not _human_signer(source_stamp.get("by")):
             return f"R:LOWERED_CARRY_AUTHORITY {source} has no human freeze signer"
         if require_seal:
-            stamp = _latest_freeze_stamp(node.get("fm") or {})
+            stamp = _active_freeze_stamp(node.get("fm") or {})
             sealed = str((stamp or {}).get("carries") or "")
             if not re.fullmatch(r"sha256:[0-9a-f]{16}", sealed) or sealed != carry_digest(node):
                 return f"R:UNACCEPTED_CARRY {destination} has no latest seal for its current carries"
@@ -2859,6 +2883,9 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     node = graph.get(cid)
     if node is None:
         return None, ["node"], f"no such node: {cid}\nnext: add status"
+    if _old_seal(node.get("fm") or {}):
+        return None, ["seal"], (f"cannot record `done` — R:OLDSEAL {cid} returned to Direction; "
+                                f"the prior freeze and gate cannot close it\nnext: add freeze {cid}")
 
     if (carry_error := _carry_problem(graph, cid, accepted=True)):
         return None, ["carries"], f"cannot record `done` — {carry_error}\nnext: repair and refreeze {cid}"
@@ -2871,7 +2898,9 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     stamps = [s for s in ((node["fm"] or {}).get("verified") or []) if isinstance(s, dict)]
     # a reopen RESETS the gate (loop.md): only gates that postdate the last reopen entitle `done`,
     # so a stale pre-reopen PASS cannot re-entitle a task the loop returned to a beat.
-    last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"), default=-1)
+    last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"),
+                      default=-1)
+    last_reopen = max(last_reopen, _direction_return_index(node.get("fm") or {}))
     gates = [(i, s) for i, s in enumerate(stamps)
              if i > last_reopen and s.get("act") == "gate"]
     # A gate's VERDICT, not merely its existence. A HARD-STOP is a finding written down, not a
@@ -2903,8 +2932,12 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     # writes `status: done`, and it counted a gate stamp without ever asking whether the ONE
     # approval had happened. Any (re)freeze BEFORE the entitling gate satisfies it; a refreeze
     # recorded afterwards (the re-cross pattern) is not required to.
-    seal_at = min((i for i, s in enumerate(stamps)
-                   if s.get("act") in ("freeze", "refreeze")), default=None)
+    direction_return = _direction_return_index(node.get("fm") or {})
+    seal_at = (min((i for i, s in enumerate(stamps)
+                    if s.get("act") in ("freeze", "refreeze")), default=None)
+               if direction_return < 0 else
+               min((i for i, s in enumerate(stamps) if i > direction_return
+                    and s.get("act") in ("freeze", "refreeze")), default=None))
     slug = cid.rsplit('/', 1)[-1][:-3]
 
     missing, fix = [], f"add gate {slug}"
@@ -3494,8 +3527,7 @@ def _is_frozen(node) -> bool:
     """True once a task carries a freeze/refreeze stamp — the signal that authoring is done and the
     frontier hint should point at `brief` (build), not `freeze`. Status stays `direction` until done,
     so the beat is stamp-derived, not read from the status field."""
-    stamps = (node.get("fm") or {}).get("verified") or []
-    return any(isinstance(s, dict) and s.get("act") in ("freeze", "refreeze") for s in stamps)
+    return _active_freeze_stamp(node.get("fm") or {}) is not None
 
 
 def _milestone_stubs(node: dict) -> list:
@@ -3590,6 +3622,58 @@ def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
         return None, err + "\nnext: add status"
     return cid, (f"replan recorded on `{slug}` — steering noted, the seal untouched"
                  f"\nnext: keep building (`add run {slug} -- <cmd>` when green)")
+
+
+def repair(root, cid: str, kind: str, cause: str, by: str = "builder") -> tuple:
+    """Route a Build failure under its seal, or visibly return changed/unknown intent."""
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    if node is None:
+        return None, f'R:WRONGNODE no such open frozen Task: {cid}\nnext: add status'
+    fm = node.get("fm") or {}
+    if fm.get("type") != "Task" or fm.get("status") in ANSWERED or not _is_frozen(node):
+        return None, (f'R:WRONGNODE `{slug}` is not an open actively frozen Task'
+                      f'\nnext: add status')
+    if kind not in ("implementation", "change", "unknown"):
+        return None, (f"unknown repair kind {kind!r} — use implementation | change | unknown"
+                      f"\nnext: add repair {slug} --kind <kind> --cause \"<concrete cause>\"")
+    if not str(cause or "").strip():
+        return None, (f'R:CAUSELESS a repair route needs a concrete cause'
+                      f'\nnext: add repair {slug} --kind {kind} --cause "<concrete cause>"')
+
+    current = read(node["path"], "T2")
+    seal = _active_freeze_stamp(fm) or {}
+    expected = {
+        "direction": direction_digest(current),
+        "binding": binding_digest(current),
+        "gives": gives_digest(current),
+        "scope": scope_seal_digest(current),
+    }
+    carry_edges, carry_error = _carry_entries(fm)
+    if not carry_error and (carry_edges or _has_carry_history(fm) or "carries" in seal):
+        expected["carries"] = carry_digest(current)
+    intact = not carry_error and all(re.fullmatch(r"sha256:[0-9a-f]{16}", str(seal.get(key) or ""))
+                 and str(seal.get(key)) == digest for key, digest in expected.items())
+    if kind == "implementation" and not intact:
+        return None, (f'R:SEAL_TOUCH `{slug}` no longer matches every sealed contract surface; '
+                      f'an implementation claim cannot authorize drift or unknown coverage'
+                      f'\nnext: add repair {slug} --kind change|unknown --cause "<what changed>"')
+
+    destination = "build" if kind == "implementation" else "direction"
+    text = _oneline(cause)
+    stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: repair, authority: process, '
+             f'kind: {kind}, cause: "{text}", to: {destination} }}')
+    _, err = _transition(root, cid, sets={"status": "direction"},
+                         appends=[("verified", stamp)])
+    if err:
+        return None, err + "\nnext: add status"
+    if destination == "build":
+        return cid, (f"implementation repair recorded on `{slug}` — approved intent is unchanged"
+                     f"\nnext: keep building (`add run {slug} -- <cmd>` when green)")
+    return cid, (f"{kind} repair returned `{slug}` to Direction — the prior seal is historical"
+                 f"\nnext: revise the direction, then add freeze {slug}")
 
 
 def card_drift(graph: dict, body_of=None) -> list:
@@ -3760,14 +3844,22 @@ def _beat_of(node, t2=None, graph=None) -> str:
     """
     fm = node.get("fm") or {}
     st = fm.get("status")
-    if st in ("done", "dropped", "archived") or st in ("build", "verify"):
+    if st in ("done", "dropped", "archived"):
+        return st
+    if _old_seal(fm):
+        return "direction"
+    if st in ("build", "verify"):
         return st
     stamps = [s for s in (fm.get("verified") or []) if isinstance(s, dict)]
+    last_repair = max((i for i, s in enumerate(stamps)
+                       if s.get("act") == "repair" or (s.get("act") == "reopen"
+                       and s.get("to") == "direction")), default=-1)
     # A floor stamp (`floor: regression`) never closes the build beat: the narrow run is the
     # receipt that binds CHECKS, and a floor-first run read as `verify` made `status` point at
     # the gate with no narrow receipt at all (found by the second T2 refute of regression-floor,
     # R:FLOORASGATE, E9) — the same filter `_latest_run_cid` and `latest_receipt` apply.
-    if any(s.get("act") == "run" and not s.get("floor") for s in stamps):
+    if any(i > last_repair and s.get("act") == "run" and not s.get("floor")
+           for i, s in enumerate(stamps)):
         return "verify"
     if _is_frozen(node):
         return "build"
@@ -4855,6 +4947,12 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
         return {"path": None, "receipt": {"exit": 1, "ids": "unknown"}, "computation": "",
                 "note": f"no such node: {cid} — no receipt written\nnext: add status"}
     node = graph[cid]
+    if _old_seal(node.get("fm") or {}):
+        slug = cid.rsplit("/", 1)[-1][:-3]
+        return {"path": None, "receipt": {"exit": 1, "ids": "old-seal"}, "computation": "",
+                "note": (f"R:OLDSEAL `{slug}` returned to Direction; the prior freeze cannot "
+                         f"authorize execution and no receipt was written\nnext: revise the "
+                         f"direction, then add freeze {slug}")}
     scope = _scope_list(node.get("fm"))
     # The digest root is the BUNDLE PARENT — the identical root `gate` hands `fresh()` — never
     # the cwd. Field finding (hardening tally #1): a cwd below the project computed the digest
@@ -7852,6 +7950,9 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
         return None, f"no such node: {cid}\nnext: add status"
     fm = node.get("fm") or {}
     slug = cid.rsplit("/", 1)[-1][:-3]
+    if _old_seal(fm):
+        return None, (f"R:OLDSEAL `{slug}` returned to Direction; the prior freeze cannot enter "
+                      f"Build\nnext: revise the direction, then add freeze {slug}")
     if fm.get("type") != "Task" or not _is_frozen(node):
         return None, (f"brief compiled, not recorded — only a frozen Task records its build "
                       f"entry, and `{slug}` is not one yet"
@@ -8273,6 +8374,9 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     graph = scan(root)
     if cid not in graph:
         return refuse(f"no such node: {cid}", "add status")
+    if verdict in CLOSING_VERDICTS and _old_seal((graph[cid].get("fm") or {})):
+        return refuse(f'R:OLDSEAL `{slug}` returned to Direction; the prior freeze cannot '
+                      f'authorize PASS', f"revise the direction, then add freeze {slug}")
     if verdict in CLOSING_VERDICTS and (carry_error := _carry_problem(graph, cid, accepted=True)):
         return refuse(carry_error, f"repair and refreeze {slug}'s `carries:` mapping")
     if verdict != "PASS" and not reason:
@@ -8314,6 +8418,17 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
 
     node_body = lambda n: read(n["path"], "T2")["body"]
     receipt, receipt_cid = latest_receipt(root, cid)
+    if verdict in CLOSING_VERDICTS and sfm.get("type") == "Task" \
+            and sfm.get("kind") != "explore" and _direction_return_index(sfm) >= 0:
+        stamps = [s for s in (sfm.get("verified") or []) if isinstance(s, dict)]
+        active_at = max((i for i, s in enumerate(stamps)
+                         if s.get("act") in ("freeze", "refreeze")), default=-1)
+        current_run = _latest_run_cid(stamps[active_at + 1:])
+        if not receipt_cid or receipt_cid != current_run \
+                or not _brief_entered(stamps, receipt_cid):
+            return refuse("R:OLDSEAL a Direction return requires a new brief and run after "
+                          "the active refreeze before a closing gate",
+                          f"add brief {slug}, then add run {slug} -- <cmd>")
 
     # The sources path (task sources-receipt) — a findings-only explore gates on its cited
     # `## FINDINGS`, not on a run receipt. A recorded receipt keeps the normal path in charge

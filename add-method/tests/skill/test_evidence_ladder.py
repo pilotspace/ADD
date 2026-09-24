@@ -23,7 +23,8 @@ ENGINE = REPO / "tooling" / "add.py"
 # guard is only as honest as its anchor, and an over-broad one manufactures its own failures.
 KIND_SITES = (
     re.compile(r'"kind":\s*([^,\n]+)'),   # dict form, incl. a ternary: "test-ids" if ids else ...
-    re.compile(r'\bkind:\s*([a-z-]+)\s*,'),   # formatted stamp: ', kind: sources, ...'
+    re.compile(r'[\'\"][^\'\"\n]*\bkind:\s*([a-z-]+)\s*,'),
+    # formatted string stamp: ', kind: sources, ...' (not a function's `kind: str,` annotation)
 )
 QUOTED = re.compile(r'"([a-z-]+)"')
 
@@ -73,6 +74,11 @@ def test_stampable_rungs_are_documented():
     missing = engine_kinds(ENGINE.read_text(encoding="utf-8")) - _documented()
     assert not missing, (f"the engine stamps kinds the skill never names: {sorted(missing)} — "
                          f"a reader cannot recognise a receipt kind nobody told them exists")
+
+
+def test_kind_parameter_annotation_is_not_an_evidence_rung():
+    source = 'def repair(root, kind: str, cause: str):\n    stamp = f\', kind: sources, closed: 1\''
+    assert engine_kinds(source) == {"sources"}
 
 
 def test_rung_set_is_derived_not_pinned():

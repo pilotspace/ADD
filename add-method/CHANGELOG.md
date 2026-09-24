@@ -15,6 +15,9 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
   and inherits the original approval floor through a chain. A previously accepted carry keeps its
   historical authority floor after correction; human-floor interview, freeze, and closing claims
   require a named signer. Closing the destination preserves the original record.
+- **Repair distinguishes code defects from changed intent.** `add repair` records a cause and keeps
+  a sealed Task in Build only when its approved contract and scope still match. A changed or unknown
+  requirement returns it to Direction and invalidates earlier Build entry until refreeze.
 
 ## [3.6.0] — 2026-09-08
 

@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "4b736f063df3a9772f27ea8ff84510ac5b33eff6acc1e965d2285e403eb00acb"  # re-aimed @ carries-preserves-responsibility: one additional interview refusal requires a named human signer for a human-floor carry. prior: cda7e6be… @ same task
-MESSAGE_COUNT = 131  # re-aimed @ carries-preserves-responsibility: one carry interview refusal added. prior: 130 @ same task
+MESSAGE_DIGEST = "acf5829cabfc7d9395a2ce0948bdf2daf30a3f1575597f520d189a35b2e1fa20"  # re-aimed @ repair-or-contract-change: new repair refusal paths and old-seal Build-entry guards, with no existing message removed. prior: 4b736f06… @ carries-preserves-responsibility
+MESSAGE_COUNT = 138  # re-aimed @ repair-or-contract-change: seven new repair and old-seal refusals. prior: 131 @ carries-preserves-responsibility
 
 
 def _message_digest() -> tuple:

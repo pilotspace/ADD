@@ -40,22 +40,26 @@ sys.path.insert(0, str(REPO / "tooling"))
 # somebody else wrote.
 READERS = {
     "brief": {"_brief_entered"},
-    "freeze": {"_brief_entered", "_has_carry_history", "_is_frozen", "_latest_freeze_stamp", "_latest_scope_seal", "_pins_of", "authority_for", "local", "done",
+    "freeze": {"_active_freeze_stamp", "_brief_entered", "_has_carry_history", "_latest_freeze_stamp", "_latest_scope_seal", "_pins_of", "authority_for", "local", "done",
                "freeze", "gate", "_resolve_exit_move", "sealed_binding", "sealed_direction",
                "stamped_gives"},
     "gate": {"_admits", "_anchor", "_effective_gate_stamp", "_last_gate_outcome",
              "checks_verify", "done", "join"},
     "interview": {"_interview_stamps"},
-    "refreeze": {"_brief_entered", "_has_carry_history", "_is_frozen", "_latest_freeze_stamp", "_latest_scope_seal", "_pins_of", "authority_for", "local", "done", "freeze", "gate",
+    "refreeze": {"_active_freeze_stamp", "_brief_entered", "_has_carry_history", "_latest_freeze_stamp", "_latest_scope_seal", "_pins_of", "authority_for", "local", "done", "freeze", "gate",
                  "_resolve_exit_move", "sealed_binding", "sealed_direction", "stamped_gives"},
     "refute": {"_refute_of"},
     "release": {"show", "status"},
-    "reopen": {"_anchor", "_effective_gate_stamp", "done"},
+    "reopen": {"_anchor", "_beat_of", "_direction_return_index", "_effective_gate_stamp", "done"},
+    "repair": {"_beat_of", "_direction_return_index"},
     "run": {"_beat_of", "_brief_entered", "_latest_run_cid"},
 }
 # B3 adds three readers of freeze-class history: `_has_carry_history` identifies a prior
 # non-empty transfer, `authority_for` and its nested `local` retain that transfer's highest
 # stamped floor after correction or removal. Both acts have the same lineage semantics.
+# B4 routes a Direction return by `repair` (and an explicit `reopen`) through one active-freeze
+# chronology reader. `_is_frozen` delegates its freeze-class read to `_active_freeze_stamp`;
+# `_beat_of` and `_direction_return_index` read the return acts to invalidate older Build entry.
 
 # Which question each gate reader asks. Every name in READERS["gate"] appears in exactly one
 # of these, with the reason it belongs there. A `current-verdict` reader MUST be reopen-aware.

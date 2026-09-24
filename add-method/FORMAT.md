@@ -471,6 +471,30 @@ closing a carry rewrites the original Task, its receipts, or its milestone's EXI
 Derived from `add.py:_carry_entries`, `add.py:carry_digest`, `add.py:_carry_problem`,
 `add.py:authority_for`, `add.py:freeze`, `add.py:gate`, `add.py:done`.
 
+### §3.5b Repair versus a change of direction
+
+`add repair <task> --kind implementation|change|unknown --cause <text> [--by <actor>]` routes
+an open, actively frozen Task. A successful stamp records `act: repair`, the declared `kind`,
+one-line `cause`, `to: build|direction`, and `authority: process`. A blank cause, invalid kind,
+non-Task, done Task, unfrozen Task, or Task already returned to Direction writes nothing.
+
+`implementation` keeps Build only when the latest active freeze has readable, matching
+`direction:`, `binding:`, `gives:`, `scope:`, and applicable `carries:` seals. A missing or malformed legacy seal is
+unknown coverage, not permission to keep building. If a sealed surface changed, an
+`implementation` claim refuses without a stamp; the operator must choose `change` or `unknown`.
+Those kinds return to Direction even when the change is semantic and the authored text has not
+yet moved. `replan` remains steering that changes no frozen surface.
+
+A `repair to: direction` or `reopen to: direction` stamp invalidates every earlier freeze, brief,
+run, and gate for this Task. Derived beat/next, `brief`, `run`, closing `gate`, and direct `done`
+use the same active-freeze boundary; `run` refuses before executing or writing a receipt. A
+later freeze/refreeze restores Build only
+at the newly computed authority floor. Historical stamps stay in the ledger as history.
+
+Derived from `add.py:repair`, `add.py:_direction_return_index`, `add.py:_active_freeze_stamp`,
+`add.py:_beat_of`, `add.py:brief_stamp`, `add.py:run`, `add.py:gate`, `add.py:done`, and
+`cli.py:build_parser`.
+
 ### §3.6 Moved milestone EXIT criteria
 
 An authored `## EXIT` checkbox may be `[x]` (met), `[ ]` (unmet), or `[~]`

@@ -10,7 +10,7 @@ Exit codes: 0 success · 1 an engine refusal (the notary declined to manufacture
 record) · 2 a usage error (argparse). The dispatch judges nothing; the engine does.
 
 Every verb the skill refers to is wired to a real engine function:
-    init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
+    init · status · new · brief · freeze · repair · run · gate · done · learn · milestone-done ·
     deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo ·
     search · show · refute · release
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
@@ -106,6 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("replan", help="record a steering amendment on a frozen task (the seal untouched)")
     s.add_argument("ref")
     s.add_argument("--note", default="")
+    s.add_argument("--by", default="builder")
+
+    s = sub.add_parser("repair", help="route a Build failure under unchanged or reopened direction")
+    s.add_argument("ref")
+    s.add_argument("--kind", required=True, choices=("implementation", "change", "unknown"))
+    s.add_argument("--cause", required=True)
     s.add_argument("--by", default="builder")
 
     s = sub.add_parser("run", help="execute → a fresh, bound receipt (cmd after --)")
@@ -315,6 +321,12 @@ def dispatch(args, run_cmd) -> int:
 
     if args.verb == "replan":
         node, note = add.replan(root, _resolve(root, args.ref), note=args.note, by=args.by)
+        print(note)
+        return 0 if node else 1
+
+    if args.verb == "repair":
+        node, note = add.repair(root, _resolve(root, args.ref), kind=args.kind,
+                                cause=args.cause, by=args.by)
         print(note)
         return 0 if node else 1
 

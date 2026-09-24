@@ -34,7 +34,7 @@ def test_every_registry_learned_the_search_verb():
     # A VALUE, not a ceiling. `search` landed the 25th verb; `show` (task show-verb) landed the
     # 26th, which moves this number without weakening what the guard checks — that every
     # registry below is derived from the CLI rather than hand-maintained.
-    assert n == 29, f"the CLI ships {n} verbs; the pin was last re-aimed at `release` — {sorted(verbs)}"
+    assert n == 30, f"the CLI ships {n} verbs; the pin was re-aimed at `repair` — {sorted(verbs)}"
 
     wired = (REPO / "tests" / "engine" / "test_cli.py").read_text(encoding="utf-8")
     block = wired[wired.find("WIRED = {"):wired.find("}", wired.find("WIRED = {"))]
@@ -101,4 +101,3 @@ def test_skill_names_search_in_all_three_trees():
             f"{skill}: the wired-surface sentence does not name `search` — {line!r}"
     assert len(set(seen.values())) == 1, \
         f"the three skill trees diverged: {sorted(seen)}"
-
