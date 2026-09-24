@@ -17,6 +17,7 @@ scope:
   - add-method/docs/13-command-reference.md
   - add-method/skill/add/phases/build.md
   - add-method/src/add_method/_bundled/skill/add/phases/build.md
+  - .claude/skills/add/phases/build.md
   - add-method/tests/engine/test_repair_or_contract_change.py
   - add-method/tests/engine/test_cli.py
   - add-method/tests/engine/test_authoring_beat.py
@@ -44,6 +45,13 @@ verified:
   - { by: "process:run", at: 2026-09-24, act: run, authority: process, floor: regression, outcome: PASS, receipt: /tasks/repair-or-contract-change.d/runs/4.md }
   - { by: "agent:repair-adversarial-t2", at: 2026-09-24, act: refute, authority: process, outcome: held, probes: 8, receipt: /tasks/repair-or-contract-change.d/runs/3.md, tier: T2, note: "Fresh independent probes covered PASS, RISK-ACCEPTED, HARD-STOP, repeated repair/refreeze, reopen/refreeze, stale gates, direct done, and fresh-evidence closure." }
   - { by: "plan:codex", at: 2026-09-24, act: gate, authority: process, outcome: PASS, receipt: /tasks/repair-or-contract-change.d/runs/3.md, brief: "sha256:87cf5a05bde76fb2" }
+  - { by: loop, at: 2026-09-24, act: reopen, to: direction, reason: "The full suite exposed an omitted installed skill mirror; add it to the sealed scope and reverify parity." }
+  - { by: "plan:codex", at: 2026-09-24, act: refreeze, authority: plan, direction: "sha256:1632e22165a1397f", binding: "sha256:60b3aed15d2d819b", gives: "sha256:dca4ecd6856b0c87", scope: "sha256:96d3caaf4cf284c1", carries: "sha256:4f53cda18c2baa0c" }
+  - { by: "cli", at: 2026-09-24, act: brief, authority: process, brief: "sha256:37b74133de25f4f5" }
+  - { by: "process:run", at: 2026-09-24, act: run, authority: process, outcome: PASS, receipt: /tasks/repair-or-contract-change.d/runs/5.md }
+  - { by: "process:run", at: 2026-09-24, act: run, authority: process, floor: regression, outcome: PASS, receipt: /tasks/repair-or-contract-change.d/runs/6.md }
+  - { by: "agent:skill-mirror-t2", at: 2026-09-24, act: refute, authority: process, outcome: held, probes: 2, receipt: /tasks/repair-or-contract-change.d/runs/5.md, tier: T2, note: "Canonical-to-bundled and canonical-to-dogfood byte comparisons held; 112 focused parity, registry, pin, refusal, evidence, and skill-budget checks passed." }
+  - { by: "plan:codex", at: 2026-09-24, act: gate, authority: process, outcome: PASS, receipt: /tasks/repair-or-contract-change.d/runs/5.md, brief: "sha256:bd56babe1d97be90" }
 ---
 ## CARD
 goal: a failing build can be repaired under its approved intent, while an open decision or changed requirement visibly returns to Direction
@@ -106,13 +114,15 @@ regression: affected · python3 -m pytest -q add-method/tests/engine/test_repair
 - test_reopened_direction_needs_a_new_freeze · covers: M4,R:OLDSEAL,E5 · explicit Direction return invalidates old seal
 - test_repair_cause_is_a_readable_one_line_stamp · covers: M1,A6,E1 · braces and quotes cannot corrupt the ledger
 - test_kind_parameter_annotation_is_not_an_evidence_rung · covers: A6 · the skill's evidence parser ignores the repair API type annotation
+- test_three_skill_trees_identical · covers: A6 · installed skill guidance matches canonical and packaged copies
+- test_dogfood_skill_matches_canonical_when_present · covers: A6 · the dogfood mirror stays byte-identical
 - test_existing_replan_preserves_seal_as_steering_control · covers: A1 · control
 red-first: `python3 -m pytest add-method/tests/engine/test_repair_or_contract_change.py -q` must fail the four acceptance routes before Build; the old `replan` control must pass.
 
 ## EVIDENCE
-receipt: /tasks/repair-or-contract-change.d/runs/3.md · kind: test-ids · 22/22 reported · exit 0 · 2026-09-24
-refute: held · 8 probe(s) · tier T2 · by agent:repair-adversarial-t2 · against /tasks/repair-or-contract-change.d/runs/3.md · 2026-09-24 · Fresh independent probes covered PASS, RISK-ACCEPTED, HARD-STOP, repeated repair/refreeze, reopen/refreeze, stale gates, direct done, and fresh-evidence closure.
-gate: PASS · authority process · by plan:codex · receipt /tasks/repair-or-contract-change.d/runs/3.md · 2026-09-24
+receipt: /tasks/repair-or-contract-change.d/runs/5.md · kind: test-ids · 24/24 reported · exit 0 · 2026-09-24
+refute: held · 2 probe(s) · tier T2 · by agent:skill-mirror-t2 · against /tasks/repair-or-contract-change.d/runs/5.md · 2026-09-24 · Canonical-to-bundled and canonical-to-dogfood byte comparisons held; 112 focused parity, registry, pin, refusal, evidence, and skill-budget checks passed.
+gate: PASS · authority process · by plan:codex · receipt /tasks/repair-or-contract-change.d/runs/5.md · 2026-09-24
 
 ## LESSONS
 none yet
