@@ -14,7 +14,10 @@ from benchmark.schema.run_record import BenchError
 
 # add-main: the MAIN-branch control arm (v2-wv1-longitudinal M5 @v2) — first-party,
 # SHA-pinned via its toml so branch-engine changes are controlled against the release.
-ARM_NAMES = ("add", "add-main", "vanilla", "plan-mode", "gsd", "spec-kit")
+# add-4 / add-3x: the ADD 4.0 (this worktree, skill-only) vs ADD 3.7.0 (pinned engine)
+# head-to-head. `add` stays listed so its archived records still score and report, but
+# it is RETIRED (`retired =` in add.toml): run paths refuse it before any workspace.
+ARM_NAMES = ("add", "add-main", "add-3x", "add-4", "vanilla", "plan-mode", "gsd", "spec-kit")
 PIN_REQUIRED_ARMS = frozenset({"gsd", "spec-kit"})
 REQUIRED_KEYS = ("name", "setup_steps", "prompt_wrapper", "pin")
 REQUIRED_FAIRNESS_KEYS = ("same_model", "token_ceiling", "turn_ceiling")
@@ -29,6 +32,18 @@ class Arm:
     same_model: bool
     token_ceiling: int
     turn_ceiling: int
+    # OPTIONAL. Non-empty = the arm may no longer be RUN (it still loads, scores and
+    # reports); the text says why and which arm replaces it. See `refuse_retired`.
+    retired: str = ""
+
+
+def refuse_retired(arm: Arm) -> None:
+    """Raise BenchError("retired_arm: ...") for an arm that must not be run any more.
+
+    Called by every run path BEFORE a workspace exists, so a retired recipe fails loud and
+    free instead of spending a setup (or an agent) on an installer it no longer matches."""
+    if arm.retired:
+        raise BenchError(f"retired_arm: {arm.name!r} — {arm.retired}")
 
 
 def load_arm(path: pathlib.Path) -> Arm:
@@ -63,4 +78,5 @@ def load_arm(path: pathlib.Path) -> Arm:
         same_model=bool(data["same_model"]),
         token_ceiling=int(data["token_ceiling"]),
         turn_ceiling=int(data["turn_ceiling"]),
+        retired=str(data.get("retired", "")),
     )

@@ -151,8 +151,10 @@ def spy(monkeypatch):
     return seen
 
 
+# `run`/`resume` refuse the RETIRED `add` arm (ADD 4.0), so these plumbing checks drive
+# `add-4` — the arm that installs {REPO_ROOT}/add-method now. `score` still takes `add`.
 def test_run_sends_the_named_runs_root_down(tmp_path, spy):
-    assert run_mod.main(["run", "--arm", "add", "--wm", "1",
+    assert run_mod.main(["run", "--arm", "add-4", "--wm", "1",
                          "--runs-root", str(tmp_path / "campaign")]) == 0
     assert spy["execute"] == [pathlib.Path(tmp_path / "campaign")]
 
@@ -175,7 +177,7 @@ def test_resume_reads_and_writes_the_named_runs_root(tmp_path, spy, monkeypatch)
 
     monkeypatch.setattr(run_mod, "find_resume_point", fake_find)
     campaign = tmp_path / "campaign"
-    assert run_mod.main(["resume", "--arm", "add", "--runs-root", str(campaign)]) == 0
+    assert run_mod.main(["resume", "--arm", "add-4", "--runs-root", str(campaign)]) == 0
     assert asked["runs_root"] == pathlib.Path(campaign)
     assert spy["execute"] == [pathlib.Path(campaign)]
 
@@ -183,5 +185,5 @@ def test_resume_reads_and_writes_the_named_runs_root(tmp_path, spy, monkeypatch)
 def test_omitting_runs_root_keeps_the_default(tmp_path, spy):
     """None, not a resolved path — the default lives in ONE place
     (DEFAULT_RUNS_ROOT), and tests monkeypatch it there."""
-    assert run_mod.main(["run", "--arm", "add", "--wm", "1"]) == 0
+    assert run_mod.main(["run", "--arm", "add-4", "--wm", "1"]) == 0
     assert spy["execute"] == [None]

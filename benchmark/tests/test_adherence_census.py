@@ -26,19 +26,60 @@ INSTALLER_VERBS = {"update", "init"}
 VERB_RE = re.compile(r"(?:add\.py|cli\.py|(?<![\w/@-])add)\s+([a-z][a-z-]+)(?![\w/@-])")
 
 
+# ADD 4.0 ships no engine, so `add-loop` now drives exactly one engine: the pinned 3.7.0 control
+# (`arms/add-3x.toml`). Its verb set is a RELEASED, immutable fact, recorded here so the sweep runs
+# on every machine — and re-read from the live parser wherever the pinned worktree exists, so the
+# record cannot drift from the engine it describes (`test_the_recorded_3_7_verbs_match_the_engine`).
+ADD_37_VERBS = frozenset({
+    "advise", "brief", "check", "deltas", "doctor", "done", "drop", "fold", "freeze", "gate",
+    "init", "interview", "join", "learn", "locate", "milestone-archive", "milestone-done", "new",
+    "refute", "release", "reopen", "repair", "replan", "run", "search", "show", "status", "todo",
+    "upgrade", "wave",
+})
+
+
+def _add37_tooling() -> pathlib.Path:
+    """The pinned 3.7.0 engine's tooling dir, read from the add-3x arm's own install step."""
+    toml = (pathlib.Path(__file__).resolve().parents[1] / "arms" / "add-3x.toml").read_text()
+    path = re.search(r"uv pip install -e (\S+/add-method)", toml).group(1)
+    return pathlib.Path(path) / "tooling"
+
+
+def _live_37_verbs() -> set[str] | None:
+    tooling = _add37_tooling()
+    if not (tooling / "cli.py").is_file():
+        return None
+    import importlib.util  # noqa: PLC0415
+
+    # a unique module name: a bare `import cli` would hand back whatever `cli` was cached first
+    spec = importlib.util.spec_from_file_location("_add37_cli", tooling / "cli.py")
+    cli = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(tooling))        # cli.py imports its sibling `add`
+    try:
+        spec.loader.exec_module(cli)
+    finally:
+        sys.path.remove(str(tooling))
+    sub = next(a for a in cli.build_parser()._actions
+               if isinstance(getattr(a, "choices", None), dict))
+    return set(sub.choices)
+
+
 def _engine_verbs() -> set[str]:
-    """The verb list read from the engine's own parser, so this can never drift from the CLI.
+    """The verb list of the engine `add-loop` drives, never a list the wrapper author hopes for.
 
     The whole reason the wrapper rotted unnoticed is that the assertions below used to pin literal
     strings (`assert "--cross" in low`), which made the tests *enforce* the 2.x contract: after 3.0
     retired those verbs, the suite stayed green precisely because the wrapper stayed wrong.
     """
-    sys.path.insert(0, str(REPO / "add-method" / "tooling"))
-    import cli  # noqa: PLC0415
+    return _live_37_verbs() or set(ADD_37_VERBS)
 
-    sub = next(a for a in cli.build_parser()._actions
-               if isinstance(getattr(a, "choices", None), dict))
-    return set(sub.choices)
+
+def test_the_recorded_3_7_verbs_match_the_engine():
+    """covers: R:DRIFT — the recorded verb set is only a stand-in where the engine is absent."""
+    live = _live_37_verbs()
+    if live is None:
+        pytest.skip(f"pinned 3.7.0 engine absent at {_add37_tooling()} — sweep uses the record")
+    assert live == set(ADD_37_VERBS)
 
 
 class TestEngineCallCensus:
@@ -174,8 +215,10 @@ class TestAddLoopWrapper:
         assert _wrap_prompt("x", "no-such-wrapper") == "x"
 
     def test_add_toml_uses_add_loop(self):
-        toml = (pathlib.Path(__file__).resolve().parents[1] / "arms" / "add.toml").read_text()
-        assert 'prompt_wrapper = "add-loop"' in toml
+        # `add` (retired) keeps its historical wrapper; `add-3x` is the arm that drives it now.
+        for name in ("add", "add-3x"):
+            toml = (pathlib.Path(__file__).resolve().parents[1] / "arms" / f"{name}.toml").read_text()
+            assert 'prompt_wrapper = "add-loop"' in toml, name
 
 
 class TestTokensUncached:

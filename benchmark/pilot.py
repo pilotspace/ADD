@@ -20,7 +20,7 @@ import pathlib
 import sys
 from typing import Sequence
 
-from benchmark.arms.loader import ARM_NAMES, Arm, load_arm
+from benchmark.arms.loader import ARM_NAMES, Arm, load_arm, refuse_retired
 from benchmark.runner.core import execute_wm
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, find_resume_point, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord
@@ -86,10 +86,16 @@ def run_pilot(
         if arm_name not in ARM_NAMES:
             raise BenchError(f"unknown_arm: {arm_name!r} not in {ARM_NAMES}")
 
+    # Load every requested arm up front, so a retired (or malformed) recipe is refused
+    # BEFORE any arm's workspace exists — same all-or-nothing stance as unknown_arm above.
+    loaded = {arm_name: load_arm(ARMS_DIR / f"{arm_name}.toml") for arm_name in arms}
+    for arm in loaded.values():
+        refuse_retired(arm)
+
     records: list[RunRecord] = []
 
     for arm_name in arms:
-        arm = load_arm(ARMS_DIR / f"{arm_name}.toml")
+        arm = loaded[arm_name]
         resolved_arm = resolve_setup_steps(arm, repo_root_path)
 
         if resume:

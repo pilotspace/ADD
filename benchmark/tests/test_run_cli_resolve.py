@@ -26,7 +26,7 @@ def _invoke_run_capturing_arm(argv):
 
 
 def test_run_resolves_repo_root_token():
-    arm = _invoke_run_capturing_arm(["run", "--arm", "add", "--wm", "1"])
+    arm = _invoke_run_capturing_arm(["run", "--arm", "add-4", "--wm", "1"])
     joined = "\n".join(arm.setup_steps)
     assert "{REPO_ROOT}" not in joined, (
         "run.py passed the arm to execute_wm with the {REPO_ROOT} placeholder "
@@ -37,5 +37,5 @@ def test_run_resolves_repo_root_token():
 
 def test_resume_resolves_repo_root_token():
     with mock.patch.object(run_cli, "find_resume_point", return_value=1):
-        arm = _invoke_run_capturing_arm(["resume", "--arm", "add"])
+        arm = _invoke_run_capturing_arm(["resume", "--arm", "add-4"])
     assert "{REPO_ROOT}" not in "\n".join(arm.setup_steps)

@@ -23,7 +23,7 @@ from benchmark.arms.loader import Arm
 from benchmark.check_isolation import find_leaks
 from benchmark.check_isolation import main as check_isolation_main
 from benchmark.runner.agent import PINNED_MODEL, build_argv
-from benchmark.runner.pin import resolve_pin
+from benchmark.runner.pin import REPO_PATH_PINNED_ARMS, resolve_pin
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
 from benchmark.schema.run_record import RunRecord, validate
 from benchmark.workload._oracle_lib import http_call, running_app
@@ -43,10 +43,13 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
     if wrapper == "plan-then-execute":
         return f"Plan first, then execute:\n\n{text}"
     if wrapper == "add-loop":
-        # ABF-1 / ADD 3.0 surface. The engine CLI is `cli.py`; `add.py` is a library module with no
+        # ABF-1 / ADD 3.x surface. The engine CLI is `cli.py`; `add.py` is a library module with no
         # `__main__`, so invoking it prints nothing and exits 0 — an arm pointed at it orients into
         # a void and never learns it asked the wrong question. `tests/test_adherence_census.py`
-        # sweeps this string against `cli.build_parser()` so a retired verb cannot survive here.
+        # sweeps this string against the pinned 3.7.0 parser so a retired verb cannot survive here.
+        # 3.7 (2026-09-28): `brief` added — walking these verbs against the pinned engine, `gate`
+        # refused R:UNBRIEFED until `brief <slug>` entered the build, while `status` still named
+        # `gate` as next. Every other verb/flag here walked clean. 3.0.0 (add-main) has `brief` too.
         return (
             "Drive this repo's ADD loop for the whole job (see CLAUDE.md): run "
             "`python3 .add/tooling/cli.py status` FIRST and follow its next-step through the "
@@ -61,7 +64,8 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "(Musts and Rejects), `## PLAN`, and `## CHECKS` with a `covers:` key on every line "
             "naming the rule it proves. Freeze refuses a node that still carries template "
             "placeholders, so replace them all first, then approve with "
-            "`python3 .add/tooling/cli.py freeze <slug> --by <you> --authority human`. Build to "
+            "`python3 .add/tooling/cli.py freeze <slug> --by <you> --authority human` and enter "
+            "the build with `python3 .add/tooling/cli.py brief <slug>`. Build to "
             "green, then record evidence with `python3 .add/tooling/cli.py run <slug> "
             "--junitxml r.xml -- <test cmd> --junitxml=r.xml` — the test command must write that "
             "file itself, since the gate binds each `covers:` rule to a PASSING test id in it and "
@@ -71,6 +75,39 @@ def _wrap_prompt(text: str, wrapper: str) -> str:
             "build, or verify). "
             "Finish the run once the app meets the requirements and the verify gate is recorded "
             "— do NOT run milestone-done, fold (ledger work), or milestone-archive: that "
+            "milestone-ledger close-out is project bookkeeping, not part of delivering this "
+            "feature, and is out of scope for the benchmark.\n\n"
+            + text
+        )
+    if wrapper == "add-skill":
+        # ADD 4.0 — the analogue of add-loop, clause for clause, for a method with no engine: the
+        # seal is a `freeze(<slug>)` commit, verify is a `verify(<slug>)` commit, the verdict lives
+        # in `## EVIDENCE`. Every clause that is NOT the method's mechanics is add-loop's own words,
+        # and the length is held within 15% of it (`tests/test_arms_4v3.py`), so a 4.0-vs-3.x
+        # result measures the method rather than prompt pressure. Skills are disabled in the
+        # measured session (`--disable-slash-commands`), so the skill is named as a FILE to read.
+        return (
+            "Drive this repo's ADD loop for the whole job (see CLAUDE.md): read "
+            "`.claude/skills/add/SKILL.md` FIRST (skills are off in this session, so read the file) "
+            "and follow it through the beats; write NO app code before the task's contract is "
+            "SEALED and its checks have run red; record the verify verdict before finishing. This "
+            "is a headless run with no human available: you carry the human's proxy authority — "
+            "make the calls the skill leaves to the human yourself (record them as usual) and NEVER "
+            "end the run waiting for a human reply; the job is done only when the app meets the "
+            "requirements. This is a CLEARED, fully-specified benchmark task, so take the one-pass "
+            "walk: create each task as `.add/tasks/<slug>.md`, then author its whole Direction in "
+            "ONE pass — `## RULES` (Musts and Rejects), `## PLAN`, and `## CHECKS` with a `covers:` "
+            "key on every line naming the rule it proves. Write the checks as real tests and run "
+            "them red, then seal the task file and its check files together with "
+            "`git commit -m \"freeze(<slug>): <goal>\"` — from then on they are frozen. Build to "
+            "green, then verify: `git diff <freeze sha> HEAD -- <sealed files>` must print nothing, "
+            "the checks and the regression suite must pass fresh on the committed tree, and the "
+            "verdict goes under `## EVIDENCE` with the shas, commands, exit codes and counts you "
+            "saw. Close with `git commit -m \"verify(<slug>): PASS\"`. The floor never bends: the "
+            "contract is SEALED and the red checks precede the build (never skip contract, tests, "
+            "build, or verify). "
+            "Finish the run once the app meets the requirements and the verify commit is recorded "
+            "— do NOT check off milestone EXIT boxes, promote spec deltas, or open a PR: that "
             "milestone-ledger close-out is project bookkeeping, not part of delivering this "
             "feature, and is out of scope for the benchmark.\n\n"
             + text
@@ -510,6 +547,9 @@ def execute_wm(
         "transcript": str(transcript_path),
         "oracle_report": str(oracle_report_path),
         "attempts": "; ".join(attempts_log),
+        # the failed/timeout records always carried it; a DONE record is the one a same-model
+        # comparison is actually read from, so it carries it too (None when a fake agent ran)
+        **({"model": PINNED_MODEL} if not agent_cmd else {}),
     }
     if continuing:
         artifacts["session_mode"] = "continue"
@@ -521,7 +561,7 @@ def execute_wm(
             {"k": int(interrupt["k"]), **interrupt_result}, separators=(",", ":"))
     if unparseable:
         artifacts["token_source"] = "unparseable"
-    if arm.name == "add":
+    if arm.name in REPO_PATH_PINNED_ARMS:
         artifacts["resolved_pin"] = resolve_pin(arm.pin, arm.name)
     if not isolation_clean:
         artifacts["leak_path"] = "; ".join(leak_paths)

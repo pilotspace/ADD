@@ -1,0 +1,21 @@
+name = "add-4"
+# ADD 4.0 — THIS worktree's add-method: one skill, no engine. The seal is a
+# `freeze(<slug>)` git commit and verify is a `verify(<slug>): <verdict>` commit,
+# so the workspace gets its OWN git repo (last step) — without it, a workspace
+# under benchmark/runs/ would commit into the harness repo it is nested in.
+# 4.0 installer: `pilotspace-add [init|update] [dir] [--name <name>]`; it EXITS 2
+# on --force/--stage/--no-skill (why the old `add` arm is retired) and silently
+# accepts --yes/--non-interactive, so plain `init` is the whole call.
+setup_steps = [
+  "uv venv .venv --clear",
+  "uv pip install -e {REPO_ROOT}/add-method --python .venv/bin/python",
+  ".venv/bin/pilotspace-add init",
+  "python3 {REPO_ROOT}/benchmark/arms/workspace_git.py",
+]
+prompt_wrapper = "add-skill"
+pin = "add-method (this repo, path pin — resolved to the HEAD SHA at run time) — ADD 4.0.0"
+
+# Fairness floor (identical across all arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

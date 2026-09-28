@@ -161,16 +161,18 @@ def test_add_arm_setup_succeeds_in_bare_sandbox(tmp_path):
 
     from benchmark.runner.core import execute_wm
 
-    arm = load_arm(ARMS_DIR / "add.toml")
+    # `add` is RETIRED (its 3.x `--force` init exits 2 against the 4.0 installer this
+    # repo now ships); `add-4` is the arm that installs {REPO_ROOT}/add-method today.
+    arm = load_arm(ARMS_DIR / "add-4.toml")
     resolved = pilot_mod.resolve_setup_steps(arm, REPO_ROOT)
 
     agent_cmd = _fake_agent_ok(tmp_path)
     runs_root = tmp_path / "runs"
     record = execute_wm(resolved, 1, agent_cmd=agent_cmd, timeout_s=300.0, retries=0, runs_root=runs_root)
 
-    transcript = (runs_root / "add" / "wm1" / "transcript.jsonl").read_text()
+    transcript = (runs_root / "add-4" / "wm1" / "transcript.jsonl").read_text()
     setup_lines = [ln for ln in transcript.splitlines() if ln.startswith("setup:")]
-    assert len(setup_lines) == 3
+    assert len(setup_lines) == len(arm.setup_steps)
     for line in setup_lines:
         assert "exit 0" in line
     assert record.status != "failed" or "setup" not in record.artifacts.get("attempts", "")

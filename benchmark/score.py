@@ -18,13 +18,15 @@ import subprocess
 import sys
 from typing import Sequence
 
-from benchmark import judge, tamper
+from benchmark import judge, loop_census, tamper
 from benchmark.ambiguity import is_implementation_write
 from benchmark.arms.loader import ARM_NAMES
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord, validate
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+# the ADD 4.0-vs-3.7.0 pilot arms: both get the workspace loop census (loop_census.py)
+LOOP_CENSUS_ARMS = frozenset({"add-3x", "add-4"})
 WM3_REGRESSION_TEST_PATH = REPO_ROOT / "benchmark" / "workload" / "wm3" / "oracle" / "test_refactor.py"
 REGRESSION_SUBPROCESS_TIMEOUT_S = 300.0
 VALID_WMS = (1, 2, 3, 4, 5, 6)
@@ -748,6 +750,14 @@ def score_record(
     artifacts["tokens_uncached"] = str(
         _tokens_uncached(pathlib.Path(transcript_str)) if transcript_str else 0
     )
+    # ADD 4.0 has no engine, so `engine_calls` reads 0 on a disciplined 4.0 run. The loop census
+    # counts what the run LEFT (task files, freeze/verify commits, EVIDENCE verdicts, seal
+    # integrity, red-before-seal) — for both pilot arms, by one rule. It refuses a vacuous zero:
+    # an unreadable workspace repo records `measured: false` + a reason, never counts. Artifact only.
+    if arm_name in LOOP_CENSUS_ARMS:
+        artifacts["loop_census"] = json.dumps(
+            loop_census.census(workspace, pathlib.Path(transcript_str) if transcript_str else None),
+            separators=(",", ":"), sort_keys=True)
 
     if wm >= 3:
         # context_rot_slope over the FULL requirement_coverage trajectory at every

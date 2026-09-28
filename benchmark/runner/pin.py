@@ -12,6 +12,10 @@ import subprocess
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
+# Arms that install `{REPO_ROOT}/add-method` — the branch under test — so their `pin` is a
+# path comment until resolved here. `add` is retired but its archived records keep theirs.
+REPO_PATH_PINNED_ARMS = frozenset({"add", "add-4"})
+
 
 def resolve_pin(raw_pin: str, arm_name: str, *, repo_path: pathlib.Path | None = None) -> str:
     """Return a concrete, re-derivable reference for `raw_pin`.
@@ -20,7 +24,7 @@ def resolve_pin(raw_pin: str, arm_name: str, *, repo_path: pathlib.Path | None =
     (bench-scaffold spec delta); every other arm's pin is already a
     reproducible ref (npm/pip/git version string) and passes through as-is.
     """
-    if arm_name != "add":
+    if arm_name not in REPO_PATH_PINNED_ARMS:
         return raw_pin
 
     path = repo_path or REPO_ROOT
