@@ -153,6 +153,25 @@ class TestLoopCounts:
         assert out["seals_broken"] == ["slugify"]
         assert out["seals_intact"] == 0
 
+    def test_only_the_task_file_and_its_checks_are_sealed(self, tmp_path):
+        # Pilot (lean rep1 · wm1): the freeze commit also carried .add/PROJECT.md (test_cmd) and
+        # a __pycache__ .pyc; the build legitimately edited PROJECT.md. SKILL.md seals the task
+        # file and the files its CHECKS name — nothing else in the commit.
+        ws = _repo(tmp_path / "ws")
+        (ws / ".add" / "tasks").mkdir(parents=True)
+        (ws / "tests" / "__pycache__").mkdir(parents=True)
+        (ws / ".add" / "PROJECT.md").write_text("test_cmd: pytest\n")
+        (ws / ".add" / "tasks" / "slugify.md").write_text(TASK.format(status="build", evidence=""))
+        (ws / "tests" / "test_slug.py").write_text("def test_lower():\n    assert False\n")
+        (ws / "tests" / "__pycache__" / "test_slug.pyc").write_bytes(b"\x00")
+        _commit(ws, "freeze(slugify): slugify text")
+        (ws / ".add" / "PROJECT.md").write_text("test_cmd: python3 -m pytest -q\n")
+        (ws / "tests" / "__pycache__" / "test_slug.pyc").write_bytes(b"\x01")
+        _commit(ws, "feat(app): slugify")
+        _commit(ws, "verify(slugify): PASS")
+        out = lc.census(ws)
+        assert out["seals_intact"] == 1 and out["seals_broken"] == []
+
     def test_a_refreeze_moves_the_seal(self, tmp_path):
         ws = _repo(tmp_path / "ws")
         (ws / ".add" / "tasks").mkdir(parents=True)
@@ -242,6 +261,31 @@ class TestRedFirst:
         red = lc.red_first(t)
         assert red["failing_runs_before_seal"] == 1
         assert red["red_first"] is True
+
+    def test_a_stub_raising_not_implemented_is_red_for_the_right_reason(self, tmp_path):
+        # Pilot (lean rep0 · wm1): output filtered by the agent, no "N failed" line — only the
+        # stubs' NotImplementedError. That is the behavior-absent red SKILL.md asks for.
+        t = tmp_path / "transcript.jsonl"
+        t.write_text("\n".join([
+            _tool_use("a", "python3 -m pytest -q 2>&1 | grep -E 'Error|def ' | head"),
+            _tool_result("a", "  def create(self, p): raise NotImplementedError\nE   NotImplementedError"),
+            _tool_use("b", 'git commit -qm "freeze(s): slug"'),
+            _tool_result("b", "[main 1a2b3c] freeze(s): slug"),
+        ]) + "\n")
+        assert lc.red_first(t)["red_first"] is True
+
+    def test_a_red_run_inside_the_seal_command_counts(self, tmp_path):
+        # SKILL.md's turn rule runs the checks and commits the freeze in ONE command; the red
+        # printed by that command happened before the commit and is the red-first evidence.
+        t = tmp_path / "transcript.jsonl"
+        t.write_text("\n".join([
+            _tool_use("a", 'python3 -m pytest -q tests/ ; git add .add/tasks/s.md tests && '
+                           'git commit -qm "freeze(s): slug"'),
+            _tool_result("a", "FFF\n3 failed in 0.02s\n[main 1a2b3c] freeze(s): slug"),
+        ]) + "\n")
+        red = lc.red_first(t)
+        assert red["seal_seen"] is True
+        assert red["failing_runs_before_seal"] == 1 and red["red_first"] is True
 
     def test_an_import_error_is_not_red_for_the_right_reason(self, tmp_path):
         t = tmp_path / "transcript.jsonl"

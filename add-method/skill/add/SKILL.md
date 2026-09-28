@@ -34,7 +34,8 @@ No `.add/` yet → create `PROJECT.md` and empty `specs/ milestones/ tasks/` (`r
 
 Every turn re-reads the whole context, so cost grows with turns, not with what you write. Keep every
 step; cut the round-trips:
-- **Direction = two turns.** Write the task file and its test files together (parallel writes). Then
+- **Direction = two turns.** Write the task file, its test files, and stubs of the new code that
+  raise `NotImplementedError` (so the first run fails on behavior, not on imports). Then
   one command runs the checks and seals: `<check> ; git add .add/tasks/<slug>.md <tests> && git
   commit -qm "freeze(<slug>): <goal>"`. Read the output: green, or red on an import error, means the
   seal is wrong — fix the checks and `refreeze` before any code.

@@ -86,6 +86,24 @@ def _evidence_verdict(text: str) -> str | None:
     return hit.group(1).upper() if hit else None
 
 
+_CHECK_PATH = re.compile(r"([\w./-]+\.(?:py|js|mjs|cjs|ts|tsx|jsx|go|rs|rb|java|kt|sh))(?:::|\b)")
+_NOT_SEALED = re.compile(r"(^|/)__pycache__/|\.pyc$|^\.gitignore$|^\.add/PROJECT\.md$")
+
+
+def _sealed_files(ws: pathlib.Path, seal: str, slug: str, carried: list[str]) -> list[str]:
+    """What SKILL.md seals: the task file plus the files its `## CHECKS` name. Other files that
+    rode along in the seal commit (PROJECT.md's test_cmd, a .pyc, .gitignore) are not sealed.
+    If the CHECKS name no file the census can recognise, fall back to the carried files minus
+    that known infrastructure, so a seal never silently shrinks to nothing."""
+    task = f".add/tasks/{slug}.md"
+    body = _git(ws, "show", f"{seal}:{task}", check=False).stdout
+    checks = body.split("## CHECKS", 1)[1].split("\n## ", 1)[0] if "## CHECKS" in body else ""
+    named = set(_CHECK_PATH.findall(checks))
+    if named:
+        return sorted(f for f in carried if f == task or f in named)
+    return sorted(f for f in carried if not _NOT_SEALED.search(f))
+
+
 def _seal_state(ws: pathlib.Path, commits: list[tuple[str, str]]) -> tuple[list[str], int, list[str]]:
     """Per sealed slug: the latest freeze/refreeze before its verify is the seal; every file its
     seal commits carried must be unchanged from that seal to the verify commit's parent (the
@@ -108,9 +126,10 @@ def _seal_state(ws: pathlib.Path, commits: list[tuple[str, str]]) -> tuple[list[
         end = f"{verified_at[slug]}^" if slug in verified_at else "HEAD"
         # the sealed set is every file ANY of the slug's seal commits carried: a refreeze commit
         # names only what it changed, yet the task file the first freeze sealed stays sealed
-        files = sorted({f for c in seal_commits[slug]
-                        for f in _git(ws, "diff-tree", "--root", "--no-commit-id", "--name-only",
-                                      "-r", c).stdout.splitlines() if f})
+        carried = sorted({f for c in seal_commits[slug]
+                          for f in _git(ws, "diff-tree", "--root", "--no-commit-id", "--name-only",
+                                        "-r", c).stdout.splitlines() if f})
+        files = _sealed_files(ws, seal, slug, carried)
         if not files:
             broken.append(slug)          # a seal that sealed nothing is not a seal
             continue
@@ -125,7 +144,9 @@ def _seal_state(ws: pathlib.Path, commits: list[tuple[str, str]]) -> tuple[list[
 # ------------------------------------------------------------ transcript: red before seal
 
 _TEST_CMD = re.compile(r"\bpytest\b|\bunittest\b|\bnpm (?:run )?test\b|\bgo test\b|\bcargo test\b")
-_FAILED = re.compile(r"\b\d+ failed\b|FAILED \((?:failures|errors)=|\bFAIL:|\bAssertionError\b")
+# NotImplementedError is a stub saying "behavior absent" — red for the right reason.
+_FAILED = re.compile(r"\b\d+ failed\b|FAILED \((?:failures|errors)=|\bFAIL:|\bAssertionError\b|"
+                     r"\bNotImplementedError\b")
 _ERRORED = re.compile(r"\b\d+ errors?\b|ERROR collecting|ModuleNotFoundError|ImportError|"
                       r"SyntaxError|Interrupted: \d+ errors?")
 _SEAL_4 = re.compile(r"git\b[^\n]*\bcommit\b[^\n]*\bfreeze\(")
@@ -169,19 +190,25 @@ def red_first(transcript: pathlib.Path) -> dict:
                 continue
             if block.get("type") == "tool_use" and block.get("name") == "Bash":
                 cmd = str((block.get("input") or {}).get("command", ""))
-                if _SEAL_4.search(cmd) or _SEAL_3.search(cmd):
+                is_seal = bool(_SEAL_4.search(cmd) or _SEAL_3.search(cmd))
+                if is_seal and not _TEST_CMD.search(cmd):
                     seal_seen = True
                     break
                 if _TEST_CMD.search(cmd):
-                    pending[str(block.get("id"))] = cmd
+                    # a command that runs the checks AND commits the seal (SKILL.md's turn rule):
+                    # its test output precedes the commit, so it counts, then the seal is seen
+                    pending[str(block.get("id"))] = "seal" if is_seal else cmd
             elif block.get("type") == "tool_result" and str(block.get("tool_use_id")) in pending:
-                pending.pop(str(block.get("tool_use_id")))
+                kind = pending.pop(str(block.get("tool_use_id")))
                 text = _result_text(block.get("content"))
                 runs += 1
                 if _FAILED.search(text):
                     failing += 1
                 elif _ERRORED.search(text) or block.get("is_error"):
                     errors += 1
+                if kind == "seal":
+                    seal_seen = True
+                    break
         if seal_seen:
             break
     return {
