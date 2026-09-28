@@ -16,7 +16,13 @@ gives:
   - S1 a canonical immutable versioned decision manifest bound to each freeze/refreeze
   - S2 a refreeze candidate delta that keeps interview staleness and authority separate
 generated: { by: add/3.6.0, at: 2026-09-16 }
-verified: []
+verified:
+  - { by: "human:Tin Dang", at: 2026-09-24, act: interview, authority: human, interview: "sha256:121dc410b8e26d5b", receipt: /tasks/decision-manifest-binds-approval.d/interviews/1.md, answers: "A1=confirm|A2=confirm|A3=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-24, act: interview, authority: human, interview: "sha256:121dc410b8e26d5b", receipt: /tasks/decision-manifest-binds-approval.d/interviews/2.md, answers: "A4=confirm|A5=confirm|A6=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-24, act: interview, authority: human, interview: "sha256:121dc410b8e26d5b", receipt: /tasks/decision-manifest-binds-approval.d/interviews/3.md, answers: "E1=confirm|E2=confirm|E3=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-24, act: interview, authority: human, interview: "sha256:121dc410b8e26d5b", receipt: /tasks/decision-manifest-binds-approval.d/interviews/4.md, answers: "E4=confirm|E5=confirm|E6=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-24, act: interview, authority: human, interview: "sha256:121dc410b8e26d5b", receipt: /tasks/decision-manifest-binds-approval.d/interviews/5.md, answers: "E7=confirm|R:MISSING_DECISION_ID=confirm|R:DUPLICATE_DECISION_ID=confirm" }
+  - { by: "human:Tin Dang", at: 2026-09-24, act: interview, authority: human, interview: "sha256:121dc410b8e26d5b", receipt: /tasks/decision-manifest-binds-approval.d/interviews/6.md, answers: "R:DECISION_MANIFEST=confirm|R:DECISION_ANSWER=confirm|R:UNINTERVIEWED=confirm" }
 ---
 ## CARD
 goal: bind each freeze to one complete immutable decision candidate
