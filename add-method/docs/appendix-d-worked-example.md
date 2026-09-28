@@ -2,331 +2,291 @@
 
 [← Appendix C Glossary](./appendix-c-glossary.md) · [Contents](./README.md) · Next: [Appendix E Checklists →](./appendix-e-checklists.md)
 
-The running example, assembled in one place so you can see a complete pass through
-the loop without flipping between chapters. The feature: **transfer money between a
-user's own accounts.**
+The running example in one place: **transfer money between a user's own accounts**, taken through the whole 4.0 loop — task file, red run, seal, build, verify, verdict, report.
 
-Every command and every engine response on this page was produced by running the
-shipped engine against a real bundle. Nothing here is illustrative shorthand.
+Every command output and commit hash on this page is real: the example was run in a scratch Python repository with `pytest`. The agent's reasoning between the commands is paraphrased.
 
 ---
 
-## Open the task
+## The starting point
 
+A small project with an `Account` type and one test. `.add/PROJECT.md`:
+
+```markdown
+---
+type: Project
+title: payments
+goal: let customers hold and move money between their own accounts
+invariants:
+  - money is never created or destroyed by a transfer
+  - the test suite runs offline with no credentials
+test_cmd: python3 -m pytest -q
+stage: mvp
+---
+## CARD
+goal: let customers hold and move money between their own accounts
+state: accounts exist; transfers not started
+next: transfer between own accounts
 ```
-$ add new milestone payments
-created milestones/payments.md
-next: add freeze payments
 
-$ add new task transfer-own-accounts --milestone payments --scope src/transfers.py
-created tasks/transfer-own-accounts.md
-next: add freeze transfer-own-accounts
-```
+The request: *"Let users transfer money between their own accounts."* It moves money, so it touches **data** — the floor makes it at least a Task, never Quick.
 
-`add new task` writes a scaffolded node with its sections empty. Authoring those
-sections *is* the Direction beat.
+## Direction — the task file
 
-## Direction — the authored node
-
-One file carries the whole direction: what must hold, what must never happen, the
-contract it publishes, the files it may touch, and the checks that prove each rule.
+After reading `src/accounts.py` (balances are integer cents and may be 0), the agent writes `.add/tasks/transfer-own-accounts.md` in one pass:
 
 ```markdown
 ---
 type: Task
-title: transfer-own-accounts
-status: direction
-milestone: payments
-scope:
-  - src/transfers.py
+title: transfer between own accounts
+status: build
+kind: feature
+sensitivity: data
+scope: [src/transfers.py, tests/test_transfer_contract.py]
 gives:
-  - "POST /transfers -> 200 { transferId, fromBalance, toBalance }"
+  - S1 transfer(ledger, caller, from_id, to_id, amount) -> {from_balance, to_balance} | raises TransferError(status, code)
 ---
 ## CARD
-goal: Move an amount between two accounts the caller owns, atomically.
-why: The first payments slice; every later payment feature freezes against this shape.
+goal: move money between two accounts the caller owns
+why: the first payments slice; later payment features build on this shape
 
 ## RULES
-<must>
-- M1 A transfer between two accounts I own moves the amount: source -= amount, destination += amount.
-</must>
-<reject>
-- R:NONPOSITIVE an amount <= 0 must never move money -> "amount_invalid"
-- R:SAMEACCOUNT source == destination must never be accepted -> "same_account"
-- R:OVERDRAW a balance below the amount must never be debited -> "insufficient_funds"
-- R:NOTMINE an account the caller does not own must never be a source -> "forbidden"
-</reject>
+- M1 a transfer between two accounts the caller owns debits the source and credits the destination by the amount (from: request)
+- R:AMOUNT_INVALID amount <= 0 is refused with 400 "amount_invalid"; no balance changes (from: request)
+- R:SAME_ACCOUNT source == destination is refused with 400 "same_account" (from: request)
+- R:INSUFFICIENT a source balance below the amount is refused with 400 "insufficient_funds"; no balance changes (from: request)
+- R:FORBIDDEN an account the caller does not own is refused with 403 "forbidden"; no balance changes (from: request)
+
+## ASSUMPTIONS
+- A1 [which] currency is not mentioned → one currency, amounts in integer cents · found: balances are integer cents (evidence: src/accounts.py:8)
+- A2 [order] two transfers from one account at once are not mentioned → the check and the debit happen under one lock → without it, two transfers can both pass the balance check and overdraw
+- A3 [when] amount == balance is not mentioned → allowed; leaves 0 · found: a balance may be 0 (evidence: src/accounts.py:8)
+- A4 [who] the destination's owner is not mentioned → both source and destination must be the caller's → if transfers to others are wanted, R:FORBIDDEN is too strict
+- A5 [absent] an unknown account id is not mentioned → refused as "forbidden", so the response never reveals whether an id exists → a caller cannot tell a typo from a foreign account
+- A6 [experience] n/a · internal service call; the error code is the contract
 
 ## PLAN
-contract: POST /transfers { fromAccountId, toAccountId, amount }
-  200 -> { transferId, fromBalance, toBalance }
-  400 -> { error: "amount_invalid" | "same_account" | "insufficient_funds" }
-  403 -> { error: "forbidden" }
-scope: src/transfers.py
-assumptions (lowest confidence first):
-  - "⚠ single currency, no FX, in v1 — the ticket never said; if wrong the amount and
-     rounding model changes and this contract is wrong"
-  - "no daily limit in v1 — confirmed out of scope"
-
-## EDGES
-- E1 Two simultaneous transfers from the same source must not both pass the balance check and overdraw it.
+strategy: look up both accounts, check ownership, then amount, then same-account, then balance, all under one lock; debit and credit together
+check: python3 -m pytest -q tests/test_transfer_contract.py
+regression: python3 -m pytest -q
 
 ## CHECKS
-- test_successful_transfer · covers: M1 · 100/0, transfer 30, leaves 70/30
-- test_amount_must_be_positive · covers: R:NONPOSITIVE · amount 0 is rejected and no balance changes
-- test_same_account · covers: R:SAMEACCOUNT · A to A is rejected and no balance changes
-- test_insufficient_funds · covers: R:OVERDRAW · 50 from a balance of 20 is rejected and no balance changes
-- test_not_my_account · covers: R:NOTMINE · a source I do not own is rejected
-- test_concurrent_transfers_cannot_overdraw · covers: E1 · two parallel debits of 60 from 100 leave exactly one winner
-red-first: every check MUST fail first.
+- C1 covers: M1 · acceptance · tests/test_transfer_contract.py::test_moves_the_amount
+- C2 covers: R:AMOUNT_INVALID · acceptance · tests/test_transfer_contract.py::test_non_positive_amount_refused_nothing_moves
+- C3 covers: R:SAME_ACCOUNT · acceptance · tests/test_transfer_contract.py::test_same_account_refused
+- C4 covers: R:INSUFFICIENT, A3 · acceptance · tests/test_transfer_contract.py::test_overdraw_refused_exact_balance_allowed
+- C5 covers: R:FORBIDDEN, A4, A5 · acceptance · tests/test_transfer_contract.py::test_foreign_or_unknown_account_forbidden
+- C6 covers: A2 · property · tests/test_transfer_contract.py::test_parallel_transfers_never_overdraw
 ```
 
-Three things earn their place here:
+Two assumptions (A1, A3) were cheap to check, so they carry `found:` with a citation. A4 and A5 are real product decisions the request did not make — exactly what the human should read in the report.
 
-- **The flagged assumption comes first.** The product owner reads the single-currency
-  choice — the one most likely to be wrong and most expensive if it were — and
-  confirms it before anything is built.
-- **Every rule has exactly one check, named by `covers:`.** A rule nothing covers
-  blocks the gate later, so the binding is not a convention you have to remember.
-- **The race is an edge case, `E1`, not a hope.** It is written down and covered like
-  any rule, which is what stops "we'll check that at review" from quietly meaning
-  "nobody checked it."
+## Direction — the checks, red for the right reason
 
-## Freeze — the one approval
-
-```
-$ add freeze transfer-own-accounts
-freeze recorded at authority `process`
-next: build, then `add run -- <cmd>`
-```
-
-The freeze is the single human decision of the task. It stamps the direction and
-opens Build.
-
-## The red suite, red for the right reason
-
-The checks run before any implementation exists. The first attempt failed on an
-import error — which is a **lying red**: the suite is failing because it cannot load,
-not because the behavior is missing. Stubbing the real shape fixes that:
+The checks live in their own file. Every refusal is asserted to leave balances untouched:
 
 ```python
-def transfer(source, destination, amount, caller):
-    raise NotImplementedError
+def refused(led, *args):
+    before = led.balances()
+    with pytest.raises(TransferError) as err:
+        transfer(led, *args)
+    assert led.balances() == before, "a refused transfer moved money"
+    return err.value.status, err.value.code
+
+
+def test_foreign_or_unknown_account_forbidden():
+    led = ledger(a=5_000, b=0, x=5_000)
+    assert refused(led, "me", "x", "a", 100) == (403, "forbidden")      # foreign source
+    assert refused(led, "me", "a", "x", 100) == (403, "forbidden")      # foreign destination
+    assert refused(led, "me", "a", "nope", 100) == (403, "forbidden")   # unknown id
 ```
 
-```
-$ python3 -m pytest tests -q
-FAILED tests/test_transfers.py::test_insufficient_funds - NotImplementedError
-FAILED tests/test_transfers.py::test_not_my_account - NotImplementedError
-FAILED tests/test_transfers.py::test_concurrent_transfers_cannot_overdraw - A...
-6 failed
+A one-line stub (`def transfer(...): raise NotImplementedError`) gives the checks a seam to call, so they fail on missing behavior rather than on an import error:
+
+```text
+$ python3 -m pytest -q tests/test_transfer_contract.py
+FAILED tests/test_transfer_contract.py::test_moves_the_amount - NotImplemente...
+FAILED tests/test_transfer_contract.py::test_non_positive_amount_refused_nothing_moves[0]
+FAILED tests/test_transfer_contract.py::test_non_positive_amount_refused_nothing_moves[-1]
+FAILED tests/test_transfer_contract.py::test_same_account_refused - NotImplem...
+FAILED tests/test_transfer_contract.py::test_overdraw_refused_exact_balance_allowed
+FAILED tests/test_transfer_contract.py::test_foreign_or_unknown_account_forbidden
+FAILED tests/test_transfer_contract.py::test_parallel_transfers_never_overdraw
+7 failed, 20 warnings in 0.03s
 ```
 
-Six checks, six honest failures. That is the baseline the build has to move.
+Every failure is `NotImplementedError` — the behavior is absent. Red for the right reason.
+
+## The seal
+
+With `status: build` set in the task file:
+
+```bash
+git add .add/tasks/transfer-own-accounts.md tests/test_transfer_contract.py src/transfers.py
+git commit -m "freeze(transfer-own-accounts): move money between two accounts the caller owns"
+```
+
+```text
+1bfa9ee freeze(transfer-own-accounts): move money between two accounts the caller owns
+```
 
 ## Build
 
-The AI implements against the frozen direction — it may not edit a check, may not
-edit the frozen contract, and may not touch a file outside `scope:`. The one line
-that matters for `E1`:
+The agent writes `src/transfers.py` — ownership first (so no error reveals whether an id exists), then amount, same-account and balance, all under one lock:
 
 ```python
-    # The balance is re-checked INSIDE the lock: checking outside it is what lets two
-    # concurrent transfers both pass and overdraw the source (E1).
-    with _ledger_lock:
+def transfer(ledger, caller, from_id, to_id, amount):
+    with ledger.lock:
+        source = ledger.owned(caller, from_id)
+        dest = ledger.owned(caller, to_id)
+        if amount <= 0:
+            raise TransferError(400, "amount_invalid")
+        if source is dest:
+            raise TransferError(400, "same_account")
         if source.balance < amount:
-            return {"error": "insufficient_funds"}
+            raise TransferError(400, "insufficient_funds")
+        source.balance -= amount
+        dest.balance += amount
+        return {"from_balance": source.balance, "to_balance": dest.balance}
 ```
 
-```
-$ python3 -m pytest tests -q
-6 passed
-```
-
-## Verify — record the evidence, then gate
-
-The engine never runs your suite ([NO-EXEC](./01-principles.md)). You run it; `add
-run` records what happened as a receipt:
-
-```
-$ add run transfer-own-accounts --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- python3 -m pytest tests -q --junitxml="${TMPDIR:-/tmp}/add-run.xml"
-receipt 1 recorded (exit 0)
-next: add gate transfer-own-accounts
-
-$ add gate transfer-own-accounts PASS
-gate PASS recorded at authority `process`
-  freshness: fresh — every file in scope is byte-identical to the run
-  brief sha256:b8e0396b0b7499f5 · receipt /tasks/transfer-own-accounts.d/runs/1.md
-/tasks/transfer-own-accounts.md is done
-next: add status
+```text
+$ python3 -m pytest -q tests/test_transfer_contract.py
+7 passed in 0.01s
 ```
 
-A `PASS` closes the node. The verdict is on record with the receipt that earned it.
-
-Before signing it, the reviewer still owes the residue — the part checks cannot
-reach: that the balance re-check happens *inside* the transaction, that no secret or
-unexpected dependency arrived, that the layering held, and that every new symbol is
-actually wired in. See [05 Verify](./05-verify.md).
-
-## What the gate actually refuses
-
-These are the engine's own words, not a description of them.
-
-**No evidence at all:**
-
-```
-$ add gate transfer-own-accounts PASS
-cannot record `PASS` — no receipt has been recorded
-next: add run transfer-own-accounts -- <cmd>
+```text
+f536334 feat(transfers): transfer between own accounts under one lock
 ```
 
-**Evidence that went stale** — a scoped file was edited after the run, so the receipt
-no longer describes the code you are signing for:
+## Verify — and a check that could not fail
 
-```
-$ add gate transfer-own-accounts PASS
-cannot record `PASS` — the receipt is stale — src/transfers.py changed since the run
-next: add run transfer-own-accounts -- <cmd>
-```
+**Seal intact.** `git diff 1bfa9ee HEAD -- .add/tasks/transfer-own-accounts.md tests/test_transfer_contract.py` prints nothing.
 
-**A security risk someone tried to sign away.** On a task carrying
-`--sensitivity security`, `RISK-ACCEPTED` is not available at all:
+**Refute.** A2 — concurrency — is the one property the other checks do not force, so the first probe goes there: remove the lock and see whether C6 notices.
 
-```
-$ add gate transfer-audit-log RISK-ACCEPTED --reason "ship it"
-cannot record `RISK-ACCEPTED` — a security risk cannot be folded into a RISK-ACCEPTED — the security floor is HARD-STOP
-next: resolve it (add gate transfer-audit-log PASS) or stop it (add gate transfer-audit-log HARD-STOP --reason "<the finding>")
+```text
+$ python3 -m pytest -q tests/test_transfer_contract.py      # lock removed, five runs
+7 passed in 0.01s
+7 passed in 0.01s
+7 passed in 0.01s
+7 passed in 0.01s
+7 passed in 0.01s
 ```
 
-**A security `PASS` with nobody on record for it:**
+C6 passes without the lock. Nothing in it forces a thread switch between the balance check and the debit, so it cannot fail on the implementation it exists to catch. The build is fine; **the check was mis-aimed** — which is a refreeze, not a quiet edit. The check's accounts now yield on every balance read:
 
-```
-$ add gate transfer-audit-log PASS
-cannot record `PASS` — a security PASS needs a named lens — no `persona:`/`advised_by:` is recorded, so no one is on record as having reviewed the security -> "R:NOCOVERAGE"
-next: assign a security lens (add advise transfer-audit-log --persona <p>, or run it in a lensed wave), then add gate transfer-audit-log PASS
-```
+```python
+class SlowAccount(Account):
+    """Yields to other threads on every balance read, so an unguarded check-then-debit interleaves."""
 
-`add doctor` reports the same gap before you reach the gate:
+    @property
+    def balance(self):
+        time.sleep(0.001)
+        return self._balance
 
-```
-$ add doctor
-  warn  unadvised_sensitive: tasks/transfer-audit-log.md: security, no lens
-1 finding(s) — `add doctor --sync` repairs what it can
-```
-
-## Knowing where you are
-
-Two read-only verbs answer "what now?" without re-reading the repo:
-
-```
-$ add todo
-1 open task(s):
-direction:
-  · transfer-audit-log       → add freeze transfer-audit-log
-
-$ add status
-.add  ·  11 nodes
-  · PROJECT                      [—] Project
-  · payments                     [direction] Milestone
-  · transfer-audit-log           [direction] Task
-  · domain                       [—] Spec
-  ...
-next: add freeze transfer-audit-log
+    @balance.setter
+    def balance(self, cents):
+        self._balance = cents
 ```
 
-## The loop — observe
+Against the lock-free build it now fails; against the real build it passes:
 
-Released behind a feature flag to 5% of users. Monitored:
-
-- transfer error rate (target: well under 0.1% of attempts);
-- the rate of each rejection — a spike in `insufficient_funds` would suggest a UX
-  problem (users not seeing their balance) rather than a code defect;
-- latency of the atomic update under load.
-
-A week later, telemetry shows an unexpectedly high `forbidden` rate: users are trying
-to transfer *into* a shared account they can see but do not own. That observation is
-recorded against the evidence with `add learn`, and once confirmed it folds into the
-living specs (`add fold`) — "support transfers into accounts I am authorized on, not
-only accounts I own" — which is where the next task's direction starts.
-
----
-
-This is the whole method in one feature: one node holding the direction, a human
-freeze, a red suite bound to the rules it proves, a build bounded by scope, a verdict
-grounded in a fresh receipt plus the residue only a person can check, and a loop that
-turns production reality into the next direction.
-
----
-
-## Multi-component, end to end
-
-The example above is a single codebase with one green bar. Real slices often cross
-components — a backend endpoint and the frontend that calls it. ADD ships that slice
-*inside one milestone* using the component pillar
-([17 Components](./17-components.md)). Here is the same flow spanning two parts: a
-`gateway` backend that **produces** an orders interface, and a `web` frontend that
-**consumes** it.
-
-### Scope is declared on the node
-
-There is no registry and nothing scans the tree to guess ownership. Each task names
-its own parts:
-
-```yaml
-# the backend task
-scope:
-  - apps/gateway/**
-
-# the frontend task
-scope:
-  - apps/web/**
+```text
+$ python3 -m pytest -q tests/test_transfer_contract.py      # lock removed
+FAILED tests/test_transfer_contract.py::test_parallel_transfers_never_overdraw
+1 failed, 6 passed in 0.03s
+$ python3 -m pytest -q tests/test_transfer_contract.py      # the real build
+7 passed in 0.09s
 ```
 
-`add locate apps/gateway/service.py` does the reverse lookup — which node's scope
-owns this path.
+The reason goes under `## LOG`, and the task file and check file are committed together:
 
-### The boundary is the producer's frozen `gives:`
-
-The interface is not a separate file type. It is the producer task's `gives:`, frozen
-at the freeze stamp, cited by the consumer's `needs:`:
-
-```yaml
-# producer task (apps/gateway)
-gives:
-  - "GET /orders?status= -> 200 { orders: [...], nextCursor } · 400 bad_status"
-
-# consumer task (apps/web)
-depends_on:
-  - /tasks/orders-api.md
-needs:
-  - /tasks/orders-api.md#gives
+```markdown
+## LOG
+- refreeze: C6 could not fail — with the lock removed it still passed 5 of 5 runs, because nothing forced a thread switch between the balance check and the debit; its accounts now yield on every balance read, and the lock-free build fails it
 ```
 
-The consumer's `needs:` cannot resolve until the producer's `gives:` is frozen, so
-the slice is **ordered by the frozen contract** rather than split across two
-milestones. A `needs:` pointing at a `gives:` that was never frozen pins `?` — nothing to compare, so
-nothing is flagged — and a `needs:` whose node file does not exist surfaces as an
-`edge_unresolved` finding. If the producer later refreezes a changed shape, every node citing the old
-fragment is flagged stale (`needs_stale` in `doctor` and `todo`) and, at a plan-or-human floor, its gate refuses `R:STALENEEDS` until it refreezes against the new shape.
+```text
+3a4b3a7 refreeze(transfer-own-accounts): C6 could not fail under the lock-free mutant; accounts now yield on balance reads
+```
 
-### Each task verifies on its own bar
+**Verify again, from the refreeze.**
 
-A backend task and a frontend task pass on different toolchains, and the gate holds
-each to its own through its **bound receipt**: `add run <slug> -- <the suite for this
-scope>` records the checks that actually ran, and `add gate <slug> PASS` refuses
-unless every check the rules `covers:` appears in that receipt as passed. The engine
-never runs either suite. Two tasks, one milestone, two green bars.
+```bash
+F=$(git log -1 --format=%H --grep='freeze(transfer-own-accounts)')    # → 3a4b3a7
+git diff $F HEAD -- .add/tasks/transfer-own-accounts.md tests/test_transfer_contract.py   # → empty
+```
 
-### In parallel, and across repositories
+On a clean tree:
 
-When the parts are independent, `add wave <milestone>` plans the wave from the task
-DAG by levels — producers land before their consumers — and each stream runs in its
-own git worktree under its own persona lens. `add join <bundles…>` folds the finished
-streams back, PASS-only.
+```text
+$ python3 -m pytest -q tests/test_transfer_contract.py      → exit 0
+7 passed in 0.09s
+$ python3 -m pytest -q                                      → exit 0
+8 passed in 0.09s
+```
 
-Across *separate repositories* one honest difference applies: an edge may not escape
-its bundle, so a consumer in repo B cannot cite a node in repo A. Each repo carries
-its own `.add/` bundle, and the hand-off is the frozen shape itself — committed in
-the producer repo, and committed as the contract of record in the consumer repo. The
-engine ships no cross-repo fetch verb, because a boundary between two teams' repos is
-exactly where a human-carried, committed contract beats a background pull.
+**Residue.** Security — ownership is checked before amount or balance, so no error reveals whether an id exists. Concurrency — check and debit run under one lock, and C6 now proves it. Architecture — one new module, no new dependency.
+
+**Refute.** The task is `sensitivity: data`, so the skill has a fresh subagent read the task file before the diff and derive probes from the sealed rules. Three probes, run against the real build:
+
+```text
+smallest amount, exact balance: a->b 1 -> {'from_balance': 0, 'to_balance': 1}
+foreign source AND zero amount: x->a 0 -> 403 forbidden
+unknown source AND overdraw: nope->a 999 -> 403 forbidden
+```
+
+All consistent with the rules and with A3 and A5. Held.
+
+## The verdict
+
+`status: done`, and `## EVIDENCE` is written:
+
+```markdown
+## EVIDENCE
+freeze: 3a4b3a7 (refreeze of 1bfa9ee) · head: 3a4b3a7
+seal: git diff 3a4b3a7 3a4b3a7 -- .add/tasks/transfer-own-accounts.md tests/test_transfer_contract.py → empty
+check: `python3 -m pytest -q tests/test_transfer_contract.py` → exit 0 · 7 passed
+regression: `python3 -m pytest -q` → exit 0 · 8 passed
+residue: security — ownership is checked before amount or balance, so no error reveals whether an id exists; concurrency — check and debit run under one lock, and C6 now fails without it; architecture — src/transfers.py only, no new dependency
+refute: a->b 1 from a balance of 1 → allowed, leaves 0; foreign source + amount 0 → 403 forbidden; unknown source + overdraw → 403 forbidden · held
+verdict: PASS
+```
+
+```text
+99f2b86 verify(transfer-own-accounts): PASS
+3a4b3a7 refreeze(transfer-own-accounts): C6 could not fail under the lock-free mutant; accounts now yield on balance reads
+f536334 feat(transfers): transfer between own accounts under one lock
+1bfa9ee freeze(transfer-own-accounts): move money between two accounts the caller owns
+56ad754 chore: accounts
+```
+
+The history tells the whole story without anyone narrating it: sealed, built, a check found wanting and re-aimed in the open, verified.
+
+## Learn
+
+One lesson is worth keeping, with its evidence, in `.add/specs/quality.md`:
+
+```markdown
+## Deltas
+- 2026-09-28 open · a concurrency property check passes without the lock unless the test forces a thread switch between check and write — verify it against a lock-free mutant (evidence: refreeze(transfer-own-accounts) 3a4b3a7)
+```
+
+## The report
+
+```markdown
+No HARD-STOPs. No open risks.
+
+transfer-own-accounts — move money between two accounts the caller owns
+  verdict: PASS · freeze 1bfa9ee, refrozen 3a4b3a7 (C6 could not fail; re-aimed) · verify 99f2b86
+  evidence: 7/7 task checks, 8/8 suite, fresh on 3a4b3a7; 3 refute probes held
+  assumptions taken — please check:
+    A2 check and debit under one lock (a single-process ledger; a database would need a row lock)
+    A4 both accounts must be the caller's — transfers to other users are refused as forbidden
+    A5 unknown account ids are refused as "forbidden", indistinguishable from foreign ones
+    A1, A3 checked in code (integer cents; zero balances allowed)
+next: PROJECT.md CARD — state: own-account transfers verified · next: transfer history
+```
+
+The human reads this once. If A4 is wrong — transfers to other users *were* wanted — that is one sentence back, and a new task.

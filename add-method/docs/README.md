@@ -1,64 +1,62 @@
 # AI-Driven Development
 
-### A complete, practical book on building software when AI writes the code
+### A practical book on building software when AI writes the code
 
-**Edition:** 1.0 · **Type:** Methodology + operating manual
+**Edition:** 4.0 · **Type:** Methodology + operating manual
 
 ---
 
 ## What this book is
 
-This is a complete guide to **AIDD (AI-Driven Development)** — a way of building software in which an AI agent writes most of the code and people do the two things AI cannot reliably do alone: decide *what* to build, and *verify* that what was built is correct.
+This is a guide to **ADD (AI-Driven Development)**: a way of building software in which an AI agent plans, writes and verifies the code, and people do the two things an AI cannot reliably do alone: decide *what* to build, and judge whether what was built is right.
 
-The method's center in one sentence: **the agent is the hands; ADD is the memory, judgment, and conscience — the part of the team that survives when the context window doesn't.** Everything an agent structurally cannot keep — what is true so far, what was promised, what worked here before, what must never be traded away — lives as artifacts on disk, not in a conversation. That is why a fresh session loses nothing, and why the method's quality holds across milestones while chat-carried work decays.
+The method's center in one sentence: **the agent is the hands; ADD is the memory, judgment and conscience — the part of the team that survives when the context window doesn't.** What is true so far, what was promised, and what must never be traded away live as plain files in the repository, sealed by git, not in a conversation. A fresh session loses nothing.
 
-It is written to be read once front to back, then kept open beside you as a working manual. The early chapters explain *why* the method has the shape it does; the middle chapters explain each step in detail; the later chapters explain how to operate it across a real team and product; the appendices are copy-paste reference material.
+ADD 4.0 is **one skill file** the agent follows. There is no engine, no CLI and no approval step. The tools are the ones every project already has: files, git, and the project's own test command. The human reviews the work after it is done, from a report that lists every assumption the agent took.
 
-A single worked example — *transferring money between a user's own accounts* — runs through the entire book so that every abstract step has a concrete form you can see.
-
-## Who it is for
-
-Anyone who builds software with AI in the loop: engineers, architects, testers, designers, product owners, and the managers who lead them. No part assumes you have read the others; cross-references point you to what you need.
+Read it once front to back, then keep it open as a manual. Part I explains *why* the method has its shape; Part II walks the loop; Part III covers operating it; Part IV and the appendices are reference. One worked example, *transferring money between a user's own accounts*, runs through the whole book.
 
 ## The method in one paragraph
 
-For every feature, before AI writes any code, you write four short artifacts in order — the rules it must obey, those rules as pass/fail scenarios, the data and interface contract, and the failing tests — and then you direct the AI to make the tests pass without changing them, and finally you verify the result through evidence rather than inspection. That ordered set of artifacts *is* the method. The code is disposable; the artifacts are the durable asset. Direction comes before speed, and trust comes from passing tests rather than from reading code and finding it plausible.
+For every change worth a contract, before any production code is written, the agent writes one task file: the rules the change must obey, the assumptions it had to make, and the checks that will prove it. It runs those checks and watches them fail. It commits the task file and the checks together — `freeze(<slug>)` — and that commit is the seal. It then builds until the checks pass without touching the sealed files, verifies on a fresh run that the seal is intact, reviews what tests cannot show, tries to break its own green, and writes a verdict with the real command output into the task file. The code is disposable; the rules, checks and evidence are the durable asset.
 
 ## The flow
 
-> **Specify → Contract → Tests & Scenarios → Build → Verify → observe, then repeat.**
+> **Direction → Build → Verify → learn, then repeat.**
 
 ---
 
 ## Table of contents
 
 **Part I — Foundations**
-- [00 · The shift: why AIDD exists](./00-introduction.md)
+- [00 · The shift: why ADD exists](./00-introduction.md)
 - [01 · Core principles](./01-principles.md)
-- [02 · The flow, and what is disposable](./02-the-flow.md)
 
-**Part II — The method, step by step**
-- [03 · Step 1 — Specify](./03-direction.md)
-- [05 · Step 3 — Contract](./03-direction.md)
-- [06 · Step 4 — Tests & Scenarios](./03-direction.md)
-- [07 · Step 5 — Build](./04-build.md)
-- [08 · Step 6 — Verify](./05-verify.md)
-- [09 · The loop — observe and learn](./06-the-loop.md)
+**Part II — The loop**
+- [02 · The loop, and what is disposable](./02-the-flow.md)
+- [03 · Direction — rules, assumptions, checks, the seal](./03-direction.md)
+- [04 · Build — red to green, inside the lines](./04-build.md)
+- [05 · Verify — evidence, residue, refute, verdict](./05-verify.md)
+- [06 · Learn — lessons, milestones, the report](./06-the-loop.md)
 
 **Part III — Operating the method**
-- [10 · Project setup and stages](./07-setup-and-lanes.md)
-- [11 · Governance](./09-governance.md)
-- [12 · Roles and responsibilities](./10-personas.md)
-- [13 · Adoption and onboarding](./11-adoption.md)
-- [14 · The foundation: project context across milestones](./14-foundation.md)
-
-**Lineage**
-- [15 · Foundations & Lineage](./15-foundations-and-lineage.md)
-
-**Releasing**
-- [16 · Releasing](./16-releasing.md)
+- [07 · Setup and the four lanes](./07-setup-and-lanes.md)
+- [19 · Explore — when the answer is the deliverable](./19-dynamic-workflow.md)
+- [08 · Parallel work — worktrees](./08-parallel-work.md)
+- [09 · Governance — verdicts, floors, review after](./09-governance.md)
+- [10 · Personas — expert lenses](./10-personas.md)
+- [11 · Adoption](./11-adoption.md)
 
 **Part IV — Reference**
+- [12 · The .add/ bundle — ABF-1 format](./12-bundle-format.md)
+- [13 · Files and commits](./13-files-and-commits.md)
+- [14 · The foundation and the five living specs](./14-foundation.md)
+- [15 · Foundations and lineage](./15-foundations-and-lineage.md)
+- [16 · Releasing](./16-releasing.md)
+- [17 · Components — monorepo and multi-repo](./17-components.md)
+- [20 · What changed in 4.0 — migrating from 3.x](./20-whats-new-in-4.md)
+
+**Appendices**
 - [Appendix C · Glossary](./appendix-c-glossary.md)
 - [Appendix D · The worked example, end to end](./appendix-d-worked-example.md)
 - [Appendix E · Checklists](./appendix-e-checklists.md)
@@ -70,7 +68,7 @@ For every feature, before AI writes any code, you write four short artifacts in 
 ## Conventions used in this book
 
 - **▶ Example** marks the running worked example.
-- **Do / Don't** boxes give the rule in its shortest form.
-- A **gate** is a checkpoint with an explicit pass/fail exit. Its outcome is always one of `PASS`, `RISK-ACCEPTED` (a signed waiver), or `HARD-STOP`.
-- Paths like `.add/tasks/<slug>/`, `.add/specs/`, and `graph.json` refer to files inside the bundle the engine writes; see [12 · The `.add/` bundle](./12-bundle-format.md).
-- Every term the method uses — beat, node, receipt, lens, wave, lane, covers — is defined once in [Appendix C](./appendix-c-glossary.md).
+- **Do / Don't** boxes give a rule in its shortest form.
+- A **verdict** is the one outcome every task ends with: `PASS`, `RISK-ACCEPTED` (a known non-security risk, with a reason and an owner), or `HARD-STOP`.
+- Paths like `.add/tasks/<slug>.md` and `.add/specs/` are files in the project's bundle; see [12 · The `.add/` bundle](./12-bundle-format.md).
+- Every term the method uses is defined once in [Appendix C](./appendix-c-glossary.md).

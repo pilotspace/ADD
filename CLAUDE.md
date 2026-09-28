@@ -1,41 +1,35 @@
-<!-- ADD:BEGIN — managed by `add.py sync-guidelines`; do not edit inside -->
+<!-- ADD:BEGIN — managed by the ADD installer; do not edit inside -->
 ## ADD — how to work in this repo
 
-**ADD (AI-Driven Development)** — you, the AI, drive the build; the human owns direction
-and verification. Works for any agent (Claude · Cursor · Copilot · Codex) through the CLI
-alone. Before you touch code, orient:
+This project uses **ADD (AI-Driven Development)**: the AI plans, builds and verifies; the human
+owns direction and reviews the result. There is no CLI. The method is one skill file
+(`.claude/skills/add/SKILL.md`), run with files, git and the project's own test command.
 
-1. `python3 .add/tooling/cli.py status` — your resume point; read it first each session.
-2. `.add/PROJECT.md` — the thin read-first index (goal · `invariants:` · pointers into
-   `.add/specs/`, the 5-DD standing picture); drill into a spec on demand.
+**Orient first, every session:** read `.add/PROJECT.md` (`goal:`, `invariants:`, `test_cmd:`),
+then the open task and milestone files under `.add/tasks/` and `.add/milestones/` (any `status:`
+that is not `done` or `dropped`), and the last few commits. Resume an open task; otherwise size
+the work.
 
-**Size the work before you spend ceremony on it.** The floor is checked FIRST and always wins:
-security · data · architecture, a `gives:` surface something else consumes, or frozen scope → a
-node, however small. Security is a HARD-STOP. Under that floor, route by kind and size — you
-route and go, the human vetoes after ("make it a task" always wins):
+**Size the work. You route and go; the human reviews after.**
 
-| the change (kind · size) | route | effort · review | what persists |
-|---|---|---|---|
-| **mechanical**, or small **behavior** — ≤3 adjacent files, one-sitting diff, zero unknowns | direct — no node | inline card before the edit · red→green · `invariants:` hold · self-review | the commit + one `add learn` line |
-| one **behavior** worth a frozen contract | Task, `--depth quick` or `standard` | advisor pressure-test at direction · human freeze · receipt-backed verify | the node · its frozen contract · a run receipt |
-| an unanswered **question** — investigate · evaluate · research | Task, `--kind explore` | a hard budget · cited findings · sufficiency gate | the node + its cited `## FINDINGS` |
-| a **theme**, or a slice spanning tasks | Milestone | persona-led plan · breadth-first task list · goal-gate at close | the milestone + its task nodes |
+| the request | lane | what persists |
+|---|---|---|
+| mechanical, or a small behavior: ≤3 adjacent files, one sitting, no unknowns | Quick | a red→green test + one commit |
+| one behavior worth a written contract | Task | `.add/tasks/<slug>.md` + its commits |
+| the answer IS the deliverable: investigate · evaluate · research | Explore | the task's `## FINDINGS` |
+| a theme, or more than one task | Milestone | `.add/milestones/<slug>.md` + its tasks |
 
-Effort scales UP with the rung, and review scales with it — **skipped ceremony is never skipped review**.
-A direct change still writes its check and runs it red; it simply does not persist a node to prove it
-did. A change that fits no rung cleanly sizes UP to the next one.
+Floor: anything touching security · data · architecture, or a surface other code consumes, is at
+least a Task. When in doubt, size up.
 
-Each task drafts the **specification bundle** (Spec · Contract · Tests & Scenarios) —
-ONE human approval at the frozen contract, then a self-driving build→verify run.
-Non-negotiable: Never weaken a test or edit a frozen contract to pass a build; a
-security finding is always HARD-STOP. PROJECT.md `invariants:` bind EVERY task — the
-artifact must hold under the BARE declared runtime.
+Then follow the skill: Direction (rules · assumptions · failing checks, sealed by a
+`freeze(<slug>)` commit) → Build (to green, sealed files untouched) → Verify (seal intact · fresh
+green run · residue review · verdict in `## EVIDENCE`, committed as `verify(<slug>): <verdict>`).
 
-Roster (`agents/*.md`): `add-worker` runs each beat (direction · build · verify · persona);
-`add-advisor` is the second mind it spawns to plan, pressure-test, or resolve a delegable
-ambiguity. Each loads the beat's guide + the best-fit `.add/personas/` persona — personas
-carry the expertise, the agent carries the discipline.
+Rules that bind: the `invariants:` in PROJECT.md hold for every change, Quick included. Never
+weaken a sealed check or edit the contract to get green; changed intent is a visible
+`refreeze(<slug>)` commit. A security finding is a HARD-STOP verdict, flagged at the top of the
+report.
 
-On Claude Code the `add` skill drives this loop; other agents follow the steps above.
 Book: https://pilotspace.github.io/ADD/. Edit outside the markers.
 <!-- ADD:END -->

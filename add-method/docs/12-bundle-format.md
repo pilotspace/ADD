@@ -1,210 +1,177 @@
 # 12 · The .add/ bundle — ABF-1 format
 
-[← 11 Adoption](./11-adoption.md) · [Contents](./README.md) · Next: [13 The add command reference →](./13-command-reference.md)
+[← 11 Adoption](./11-adoption.md) · [Contents](./README.md) · Next: [13 Files and commits →](./13-files-and-commits.md)
 
 ---
 
-## The one idea: files are the database
+## The one idea: the files are the state, git is the history
 
-Everything ADD knows about a project lives in one directory, `.add/`, as plain markdown. Each entity is exactly one file with YAML frontmatter. There is no separate state store, no database process, no authoritative index the files must be kept in sync with. If you can edit a text file, you can drive the method by hand — the engine only makes it cheap and discoverable.
+Everything ADD knows about a project lives in `.add/` as plain markdown with YAML frontmatter. Nothing is compiled, generated or cached: the agent writes every file by hand and keeps each one short and true. Git is the history and the seal. If you can edit a text file and run `git log`, you can read — and drive — the whole method.
 
-`graph.json` is the one exception that proves the rule. It is a **compiled cache** — the whole graph rebuilt from the nodes' frontmatter — so it is gitignored, regenerated on demand, and **never hand-edited**. If it ever disagrees with the files, the files win and the cache is thrown away and rebuilt. Nothing is ever *only* in `graph.json`.
-
-This is the format's central bet: a truth stored twice rots. A hand-authored summary of the nodes drifts from the nodes within a day. So anything derivable from the nodes is *compiled*, never maintained — the graph, the `index.md` table of contents, the `log.md` journal. A compiled artifact cannot go stale, and it has no second writer to conflict with, which is exactly what lets many agents work many nodes in many worktrees at once.
-
-## The directory shape
+The canonical definition ships with the skill, in `references/format.md`; this chapter is its readable companion.
 
 ```
 .add/
-  index.md                 # bundle config in frontmatter + a COMPILED body (a TOC); never hand-edit the body
-  log.md                   # the journal, newest first, compiled from node stamps
-  <root Project node>      # type: Project — one per bundle, the direction of the whole
-  specs/                   # the five living specs — .add/specs/
-    domain.md              # lens: ddd — what the system IS
-    system.md              # lens: sdd — how it is built
-    experience.md          # lens: udd — how it feels to use
-    quality.md             # lens: tdd — how we know it works
-    method.md              # lens: add — how we work
-  tasks/<slug>.md          # type: Task — one file = one atomic node
-  tasks/<slug>.d/runs/     # OPTIONAL sidecar — run receipts, created only when a task accrues them
-  milestones/<slug>.md     # type: Milestone — one file per user-request scope
-  personas-teacher/        # the installed seed corpus of reasoning lenses (project Personas are typed nodes)
-  tooling/                 # the vendored engine — the copy of the CLI that drives this bundle
-  graph.json               # DERIVED cache — gitignored, rebuilt on demand
-  .gitattributes           # declares the compiled files to git (merge=ours) so a merge never needs a hand-edit
+  PROJECT.md             goal · invariants · test_cmd — read first, every session
+  specs/<lens>.md        domain · system · experience · quality · method
+  milestones/<slug>.md
+  tasks/<slug>.md
+  personas/<name>.md     optional expert lenses
 ```
 
-`init` scaffolds the eight starter files — `index.md`, `log.md`, the root `Project` node, and the five specs under `.add/specs/` — and vendors `tooling/` and `personas-teacher/`. The smallest conforming bundle is three files: `index.md`, the root `Project` node, and one task.
+Slugs are kebab-case and stable, because commits refer to them: `freeze(<slug>)`, `refreeze(<slug>)`, `verify(<slug>)`.
 
-Tasks live flat under `tasks/` and point at their milestone with a `milestone:` key rather than nesting under it, so a task's identity does not change when it is re-homed. A node's **concept ID** is its bundle-relative path with `.md` removed (`tasks/add-auth-token`); its **slug** is the filename stem (kebab-case, verb-first for tasks, noun-first for milestones), so a slug resolves before any frontmatter is parsed.
+## PROJECT.md
 
-## The typed nodes
-
-A closed vocabulary of `type:` values, each in its own place:
-
-| type | one per | required keys |
-|---|---|---|
-| `Project` | bundle | `type, title, goal` |
-| `Milestone` | file | `type, title, goal, status` |
-| `Task` | file | `type, title, goal, status` |
-| `Spec` | 5 fixed files | `type, title, lens` |
-| `Persona` | file | `type, name, vibe` |
-| `Prompt` | file | `type, title, fills` |
-| `Run` | file | `type, runtime, receipt` |
-
-The set is closed *for authoring*. Reading is more forgiving: an unknown `type:` is recorded as an `info` finding and still compiles into the graph. The engine is a **notary, not a guard** — unknown keys, unknown types, and broken links are recorded, never rejected. Only a link that escapes the bundle root (`edge_out_of_bundle`) is fatal.
-
-### The Task node
-
-A Task is one atomic graph node — the unit the loop runs on. Its frontmatter carries the fields the graph and the gate need at a glance:
-
-```yaml
+```markdown
 ---
-type: Task
-title: Reject overlapping bookings per user
-goal: a second booking overlapping an existing one returns 409 OVERLAP
-status: todo | direction | build | verify | done | dropped
-depth: quick | standard | deep          # the ceremony dial — never the authority dial
-kind: feature | fix | refactor | test | docs | ui | security | data | infra | integration
-sensitivity: mechanical | data | architecture | security     # pins the authority floor
-milestone: /milestones/auth-layer.md    # optional — a quick task may be milestone-less
-depends_on: [ /tasks/add-auth-token.md ]      # graph edges
-needs: [ /tasks/add-auth-token.md#gives ]     # frozen fragments this task consumes
-gives: [ "POST /bookings -> 409 OVERLAP on user-overlap" ]   # the interface it produces — FROZEN at freeze
-scope: [ src/bookings/** ]              # paths this task may touch; also the freshness set
-verified:                               # append-only stamps — order is chronology
-  - { by: "human:tindang", at: 2026-07-29T09:00:00Z, act: freeze, authority: human, direction: "sha256:8034caf4323539bb" }
-  - { by: "cli", at: 2026-07-29T09:05:00Z, act: brief, authority: process, brief: "sha256:2f61ab90c44d17e2" }
-  - { by: "process:run", at: 2026-07-29T10:12:00Z, act: run, authority: process, outcome: PASS, receipt: /tasks/reject-overlap.d/runs/1.md }
----
-```
-
-The stamps read as a story because they *are* one: the freeze seals the direction
-(`direction: sha256:…` over RULES · CHECKS · `gives:`), the brief records the moment that
-sealed direction was compiled into the working prompt (`act: brief` — Build's entry; the
-gate refuses a `PASS` whose receipts predate it), and the run binds the evidence. Append-only
-means the order is chronological fact — nothing can be back-dated into place.
-
-Its body is six sections, each with one job:
-
-- `## CARD` — the ≤10-line summary: goal restated, the contract shape, scope, the current beat and next action. This is the **only** section other nodes ever read.
-- `## RULES` — Must (`M<n>`), Reject (`R:<code>`), After. What the request *said*, and only that.
-- `## ASSUMPTIONS` — `A<n> [<dim>] covers: <S ids>`: what the request did **not** say, the reading
-  you took, and the cost if it is wrong. Every `gives:` surface is swept on every dimension
-  (`who · which · when · absent · order · experience`) or the dimension is retired with `n/a · <why>`; `freeze`
-  refuses and names the unswept pairs. Exempt at `depth: quick`. Not sealed by the direction digest —
-  and not bindable by `covers:` *unless marked*: a line carrying `· probe: <what shipped behavior
-  must show>` makes its `A<n>` id a binding referent, and the gate holds a `PASS` until a passing
-  check cites it (FORMAT.md §5.1).
-- `## PLAN` — the contract detail that becomes the frozen `gives:`, the build strategy, and the `scope:`.
-- `## EDGES` — optional enumerated boundary cases (`E<n>`) a check must cover.
-- `## CHECKS` — every Must / Reject / Edge bound by at least one check, red-first, each carrying a `covers:` referent.
-- `## EVIDENCE` — a view the engine writes from the record: `receipt:` at `add run`, `refute:` at `add refute`, `gate:` at `add gate`. Never authored; a line you add beside them survives.
-- `## LESSONS` — a view harvested at close: every delta filed with `add learn <lens> --evidence /tasks/<slug>.md` that cites this task. `add doctor --sync` backfills both views on older nodes.
-
-**Atomicity:** rebuilding a task may change anything in its body, but its frontmatter `gives:` is its external interface, frozen at the freeze stamp. Changing it is a *change request* that reopens direction and flags every dependent whose `needs:` cite it as **stale**, to re-verify before its next gate.
-
-### The Milestone node
-
-A Milestone is one user-request scope — the thing a wave of tasks delivers. Its frontmatter names its members (`tasks:`), its `status`, and its `ratified:`/`amended:` stamps. Its body is five sections:
-
-- `## CARD` — goal restated, wave shape, current state.
-- `## SCOPE` — In / Out, the anti-scope-creep list.
-- `## GROUND` — gathered once: shared touches, anchors, honored decisions, shared risks. Tasks project from this and never re-ground the repo.
-- `## EXIT` — observable criteria, each mapped to the task that delivers it. Append-only: a criterion that no longer applies is struck through with its date, never deleted.
-- `## CLOSE` — at done: the per-task evidence rollup and the goal-met verdict.
-
-(At `depth: deep` a `## STRATEGY` section is added for approach, freeze-first ordering, and waves.) The milestone owns membership, ground, and exit; each task owns its own edges — one source per fact.
-
-### The Persona node
-
-A Persona is a reasoning lens for a decision point, not a task — it has no lifecycle, never freezes, and never gates. Its frontmatter carries `type, name, vibe` and a `use-when:` line (the one field a tool reads to place the lens). Its body distills the stance into machine-readable parts: `## Identity`, `## Critical Rules`, `## Default Requirement`, `## Success Metrics`. The installed seed corpus lives in `personas-teacher/`; project-authored personas are typed nodes in the bundle. A persona advises; it can never lower a gate (see chapter 8).
-
-## The covers grammar — binding a rule to its check
-
-A `## CHECKS` line names, with `covers:`, the exact rule it exists to prove. The referent depends on depth, and the grammar is closed. Quoted verbatim from FORMAT.md §6.1:
-
-```covers-grammar
-quick           = \A(goal|G\d+)\Z
-standard | deep = \A(M\d+|R:[A-Z0-9_]+|E\d+)\Z
-```
-
-So at `standard`/`deep` depth a check covers `M<n>` (a Must), `R:<CODE>` (a Reject), or `E<n>` (an enumerated edge). At `quick` depth there is no RULES section, so a check covers `goal` or `G<n>` (the nth entry of `gives:`).
-
-The binding is checked at two distinct moments:
-
-| moment | the check | failure |
-|---|---|---|
-| **freeze** | every `M<n>` and `R:<CODE>` in RULES appears in at least one check's `covers:` | refuse to freeze — a rule in no check means the rules are not understood |
-| **gate** | every check listed in CHECKS appears in the receipt with `outcome: pass` | refuse the gate — `covers:` names a check that did not demonstrably pass |
-
-`covers:` is a *binding*, not a label: the gate refuses a PASS whose rules are not all covered by a passing check, and refuses a receipt that is stale (its observed code no longer matches) or unbound.
-
-## The engine is a NO-EXEC notary
-
-One law governs the whole format: **the engine records; it never executes.** It runs only the command its caller passes on the command line (via `add run … -- <cmd>`) and captures the result. A `computation:` string stored in a node is *never* executed — a notary that ran arbitrary strings from files would be an execution surface, and a gate could pass without anyone having run anything. The engine does not run the method, does not write your RULES or CHECKS for you, and does not spawn an agent. It stamps what happened.
-
-## A worked node
-
-```yaml
----
-type: Task
-title: Reject overlapping bookings per user
-goal: a second booking overlapping an existing one returns 409 OVERLAP
-status: verify
-depth: standard
-kind: feature
-sensitivity: data
-scope: [ src/bookings/** ]
-gives: [ "POST /bookings -> 409 OVERLAP on user-overlap" ]
-verified:
-  - { by: "human:tindang", at: 2026-07-29T09:00:00Z, act: freeze, authority: human }
+type: Project
+title: <name>
+goal: <one line — what this project is for>
+invariants:                  # bind every change, Quick included; [] when none yet
+  - <a property no change may break>
+test_cmd: <the full suite command>
+stage: prototype | mvp | production
 ---
 ## CARD
-goal: a second overlapping booking for the same user returns 409 OVERLAP.
-contract: POST /bookings -> 409 { error: OVERLAP }   scope: src/bookings/**
-beat: verify · next: add gate reject-overlap PASS --by "tindang"
-
-## RULES
-<must>
-- M1 a booking overlapping one the user already holds is refused
-</must>
-<reject>
-- R:OVERLAP the overlapping request is rejected -> "OVERLAP"
-</reject>
-
-## PLAN
-contract: POST /bookings -> 201 on free slot · 409 { error: OVERLAP } on overlap
-scope: src/bookings/**
-
-## CHECKS
-- test_overlap_rejects   · covers: R:OVERLAP · a second overlapping booking gets 409
-- test_adjacent_allows   · covers: M1       · a back-to-back non-overlapping slot gets 201
-red-first: every check MUST fail first.
-
-## EVIDENCE
-receipt: runs/2.md
-gate: <PASS | RISK-ACCEPTED | HARD-STOP>
-
-## LESSONS
-- overlap is half-open [start, end) — folded to specs/domain -> add learn ddd
+goal: <the goal, in plain words>
+state: <where things stand — one line, updated at the end of each session>
+next: <the next piece of work>
 ```
 
-The receipt at `runs/2.md` is a `type: Run` node recording the command's exit code, the passing check IDs, and the git blob hash of every in-`scope:` file at run time. The gate reads that receipt, re-hashes the scope, confirms `R:OVERLAP` and `M1` each map to a passing check, and only then records a `PASS`.
+## Task
 
-## Alignment with OKF
+One file per task, the unit the loop runs on.
 
-ABF-1's trust layer deliberately speaks the same shapes as the **Open Knowledge Format**
-(OKF v0.2, from Google Cloud's knowledge-catalog): every node carries a required `type:`;
-provenance and trust are recorded as `generated: { by, at }` and an append-only `verified:`
-list of confirmation events; actors follow the `human:<id>` / `process:<id>` convention;
-`index.md` and `log.md` are the reserved bundle files; and a Run receipt is essentially
-OKF's attested-computation shape (`runtime`, `computation`, `receipt`). Persona nodes adopt
-OKF's recommended `description:` and provenance `sources:` keys. This is *alignment*, not a
-conformance claim against OKF's own suite — but it means an OKF-aware tool reading an `.add/`
-bundle finds familiar structure, and the trust tiers OKF derives (unverified →
-machine-confirmed → human-reviewed) map directly onto ADD's stamp authorities.
+```markdown
+---
+type: Task
+title: <title>
+status: direction | build | done | dropped
+milestone: <slug>            # omit when standalone
+kind: feature | fix | refactor | explore | docs | test | data | infra | ui | security | release | integration
+sensitivity: none | security | data | architecture
+scope: [src/auth/session.py, tests/auth/test_session_expiry.py]
+gives:
+  - S1 POST /sessions -> 201 {id, expires_at}
+needs: [tasks/session-store.md#gives]   # surfaces from other tasks this one builds on
+---
+## CARD
+goal: expired sessions are refused
+why: support saw week-old sessions still acting after password resets
 
-## Conformance
+## RULES
+- M1 a session within its lifetime is accepted (from: request)
+- R:EXPIRED a session past `expires_at` is refused with 401 "session expired" (from: docs/auth.md)
 
-A bundle **conforms** iff it has zero `error` findings. There are only two severities. The `error` set is small and structural — `missing_frontmatter`, `type_empty`, `edge_out_of_bundle`. Everything else is `info`: unknown keys and types, unresolved edges (a wave may be sketched before its tasks exist), a gate that passed on coarse evidence. Within a major `abf_version`, changes are additive only — new keys, new sections, new finding codes — so an old engine reading a newer bundle sees unknown keys and records `info` rather than breaking.
+## ASSUMPTIONS
+- A1 [when] the boundary second is not specified → `expires_at` itself is already expired → one second of access
+- A2 [who] n/a · sessions are per-user; no cross-user surface
+
+## PLAN
+strategy: compare against a clock port, not the wall clock
+check: pytest tests/auth/test_session_expiry.py
+regression: pytest
+
+## CHECKS
+- C1 covers: M1 · acceptance · tests/auth/test_session_expiry.py::test_live_session_accepted
+- C2 covers: R:EXPIRED, A1 · acceptance · tests/auth/test_session_expiry.py::test_expired_at_boundary_refused
+
+## LOG
+- refreeze: C2 aimed at the wrong clock; now uses the injected clock
+
+## EVIDENCE
+freeze: 3f2a91c · head: 8be0d44
+seal: git diff 3f2a91c 8be0d44 -- .add/tasks/session-expiry.md tests/auth/test_session_expiry.py → empty
+check: `pytest tests/auth/test_session_expiry.py` → exit 0 · 2 passed
+regression: `pytest` → exit 0 · 318 passed
+residue: security — refusal leaks no session id; concurrency — n/a; architecture — clock port only
+refute: expires_at = now + 1ms → accepted; now - 1ms → refused · held
+verdict: PASS
+```
+
+| section | job | written |
+|---|---|---|
+| `## CARD` | the goal and why, in two lines | Direction |
+| `## RULES` | `M<n>` Musts and `R:<CODE>` Rejects, each citing its source | Direction |
+| `## ASSUMPTIONS` | `A<n> [<dim>]` — every silence filled, with its cost if wrong | Direction |
+| `## PLAN` | strategy, the `check:` and `regression:` commands | Direction |
+| `## CHECKS` | `C<n> covers: <ids> · <mode> · <test id>` | Direction |
+| `## LOG` | why the contract changed | only in a `refreeze(<slug>)` commit |
+| `## EVIDENCE` | seal, runs, residue, refute, verdict | once, at Verify |
+
+Rules for the lifecycle:
+
+- `status:` moves `direction → build` in the freeze commit and `build → done` in the verify commit. A `HARD-STOP` leaves it at `build`. A `dropped` task carries `dropped: <reason>` in its CARD.
+- `## EDGES` is optional: `E<n> Given <state> · When <action> · Then <result>` — readable examples. A written edge needs a check that covers it.
+- An explore task (`kind: explore`) carries `## QUESTIONS`, `## BUDGET` and `## FINDINGS` instead of RULES and CHECKS — see [19 · Explore](./19-dynamic-workflow.md).
+- `gives:` lists the surfaces other code depends on; `needs:` cites another task's surfaces. When a sealed `gives:` changes, every task that `needs:` it is re-verified.
+
+## Milestone
+
+```markdown
+---
+type: Milestone
+title: <title>
+status: active | done
+---
+## CARD
+goal: <the outcome that makes this worth doing>
+why: <one line>
+
+## SCOPE
+In:  <what this milestone covers>
+Out: <what it deliberately does not>
+
+## EXIT
+- [ ] <a criterion that proves the goal> — evidence: <task slug | sha>
+
+## TASKS
+- session-store — sessions persist across restarts
+- session-expiry — expired sessions are refused (after: session-store)
+```
+
+Tick an EXIT box only with its evidence on the line. `status: done` when every box is ticked.
+
+## Spec — one per lens
+
+```markdown
+---
+type: Spec
+lens: domain | system | experience | quality | method
+---
+## Now
+<what is true today, a few lines>
+
+## Decisions that bind
+- D1 <a decision future tasks must follow> (evidence: <sha | task>)
+
+## Deltas
+- 2026-09-28 open · <lesson> (evidence: <sha | task>)
+```
+
+A delta is `open`, then `folded` into a decision or `rejected`. See [14 · The foundation](./14-foundation.md).
+
+## Persona
+
+```markdown
+---
+type: Persona
+title: <the lens, in a phrase>
+flow: design, verify, advisor      # the beats it serves
+task-kinds: feature, security
+use-when: <when to load it>
+not-when: <when not to>
+---
+<what this expert checks, prefers and refuses — distilled, not copied>
+```
+
+See [10 · Personas](./10-personas.md).
+
+## Non-code work
+
+The loop is the same. A check is anything that can fail and be run or read: a lint, link or spelling script, a schema validator, a rendered-output diff, or a pass/fail rubric scored against the artifact. Name the mode on the CHECKS line — `script` · `validator` · `rubric` — so a reviewer knows how it was judged. [BEYOND-CODE](https://github.com/pilotspace/ADD/blob/main/add-method/BEYOND-CODE.md) walks a month-end close this way.
+
+## Coming from 3.x
+
+A 3.x bundle reads as-is. Its extra frontmatter and generated files are history: leave them, do not maintain them. New work uses the shapes above. Details: [20 · What changed in 4.0](./20-whats-new-in-4.md).

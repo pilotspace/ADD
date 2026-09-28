@@ -13,15 +13,15 @@ Top card (warm-sand tint #f5f0e8), the hero element, slightly larger:
 
 Middle card (morning-peach tint #faf3ee):
   Name: "Milestone"
-  lives in:  ".add/milestones/<slug>/MILESTONE.md"
-  lifespan:  "one depth-bounded goal"
-  holds:     "scope · shared contracts · exit criteria"
+  lives in:  ".add/milestones/<slug>.md"
+  lifespan:  "one goal"
+  holds:     "scope · exit criteria · task list"
 
 Bottom card (cloud-blue tint #eef3f9):
   Name: "Task"
-  lives in:  ".add/tasks/<slug>/TASK.md"
-  lifespan:  "one feature"
-  holds:     "the seven-step artifacts"
+  lives in:  ".add/tasks/<slug>.md"
+  lifespan:  "one change"
+  holds:     "rules · assumptions · checks · evidence"
 
 A thin solid arrow runs down the left margin from Project to Milestone to Task, with a small handwritten label: "narrower scope, shorter life".
 

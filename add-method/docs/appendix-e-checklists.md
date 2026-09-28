@@ -2,62 +2,57 @@
 
 [← Appendix D Worked example](./appendix-d-worked-example.md) · [Contents](./README.md) · Next: [Appendix G References →](./appendix-g-references.md)
 
-Every exit check in the book, collected for quick use. Print this page.
-
-Each list is the one from its chapter — [03 Direction](./03-direction.md),
-[04 Build](./04-build.md), [05 Verify](./05-verify.md), [06 The loop](./06-the-loop.md).
-Where a line is something the **engine refuses**, it says so; everything else is
-discipline the engine cannot see for you.
+Every exit check in the book, collected. Each list comes from its chapter — [07 Setup](./07-setup-and-lanes.md), [03 Direction](./03-direction.md), [04 Build](./04-build.md), [05 Verify](./05-verify.md), [06 Learn](./06-the-loop.md).
 
 ---
 
 ## Setup (once per project)
 
-- [ ] The pipeline runs and is green on the empty skeleton.
-- [ ] `add init` has run; `.add/` holds the five living specs and `add status` answers.
+- [ ] The skill is installed (`.claude/skills/add/`), or the agent's context file carries the managed ADD block.
+- [ ] `.add/PROJECT.md` has `goal:`, `invariants:` and `test_cmd:`, and the test command runs green on the current tree.
+- [ ] The five specs exist under `.add/specs/`, each with `## Now`, `## Decisions that bind`, `## Deltas`.
 - [ ] The model behind the work is recorded.
-- [ ] `sensitive_paths:` in `.add/index.md` names the paths that must floor to a human.
-- [ ] At least one persona is seeded for the domain, so a sensitive task has a lens to route to.
+
+## Sizing
+
+- [ ] Anything touching security · data · architecture, or a consumed surface, is at least a Task.
+- [ ] Quick only for mechanical or small behavior: ≤3 adjacent files, one sitting, no unknowns.
+- [ ] A question whose answer would change the contract goes to Explore first.
 
 ## Direction
 
-- [ ] Every required behavior is a Must; every rejection is a named error code; the success state-change is stated.
-- [ ] The assumptions are ordered lowest-confidence first, with the one `⚠` flag carrying *why* + *cost* — or, for trivial scope, an honest "none material" that still names the single biggest risk.
-- [ ] "Existing behavior" assumptions carry grep/line citations; wiring claims name the production caller chain.
-- [ ] The contract shape is authored into `gives:`, versioned in intent, and every rejection has a contracted response.
-- [ ] `scope:` lists the files or directories the build may touch.
-- [ ] Every Must, Reject and behavior-changing edge is named by at least one check that would fail without it — each with a `covers:` referent. *(Engine: an uncovered rule or edge blocks the gate.)*
-- [ ] The suite (or the acceptance list) runs in the pipeline and is **red for the right reason** — no lying reds; an unimplemented path fails because it is unimplemented.
-- [ ] Checks assert observable behavior, not internals.
-- [ ] Collateral checks for globally-enumerated things are listed by exact name.
-- [ ] Arithmetic is checked: fixtures can actually reach green against the frozen constants.
-- [ ] A person froze the node. *(This is the single human decision that opens Build.)*
+- [ ] Grounded in the code the task touches and the binding decisions in `.add/specs/`.
+- [ ] Every required behavior is a Must, every refusal a Reject with a named error, each citing its source.
+- [ ] Every public surface swept on `who · which · when · absent · order · experience`; each silence is one assumption line, or retired with a reason; cheap guesses checked and marked `found:`.
+- [ ] `scope:`, `gives:`, `check:` and `regression:` written.
+- [ ] Every Must and Reject covered by a check aimed at a plausible wrong implementation; checks in files of their own.
+- [ ] The checks ran and failed because the behavior is absent.
+- [ ] `status: build`; task file and check files committed as `freeze(<slug>)`.
 
 ## Build
 
-- [ ] Every red check is now green.
-- [ ] No check and no frozen contract was modified by the AI.
-- [ ] Every edit stayed inside the node's `scope:`.
-- [ ] The change is small enough to review in full.
+- [ ] Every check in CHECKS passes.
+- [ ] No sealed file changed since the latest freeze or refreeze; any change of contract is a `refreeze(<slug>)` commit with its reason under `## LOG`.
+- [ ] Every edit inside `scope:`; no `gives:` surface moved.
+- [ ] The `regression:` suite is green; the work is committed.
 
 ## Verify
 
-- [ ] The receipt is **fresh** (every in-`scope:` file unchanged since the run) and **bound** (every check the rules `covers:` passed). *(Engine: no receipt, a stale receipt, or a receipt whose exit code is non-zero is refused.)*
-- [ ] No check or frozen contract was altered during the build.
-- [ ] Concurrency/timing of the risky operation is safe.
-- [ ] No exposed secrets, injection openings, or unexpected dependencies.
-- [ ] Layering and dependency boundaries are respected.
-- [ ] Deep check: for code, every new symbol is referenced (wiring) and no new dead code was introduced; for prose, a semantic read is recorded.
-- [ ] A security finding was escalated, not waved through. *(Engine: a security-floored node cannot record `RISK-ACCEPTED`, and its `PASS` needs a named lens.)*
-- [ ] Exactly one outcome is recorded — `PASS` / `RISK-ACCEPTED` / `HARD-STOP` — with an accountable owner.
+- [ ] `git diff <freeze> HEAD -- <sealed files>` prints nothing.
+- [ ] `check:` and `regression:` ran fresh on a clean, committed tree; real exit codes and counts recorded.
+- [ ] Residue read: security, concurrency, architecture, plus the kind's lens (migration reversibility · rollback path · keyboard and screen-reader reach · retries and idempotency).
+- [ ] New code is wired: each new entry point has a production caller.
+- [ ] One to three refute probes derived from the sealed rules; a fresh subagent for security, data or architecture work.
+- [ ] Exactly one verdict in `## EVIDENCE` — `PASS`, `RISK-ACCEPTED` (non-security, with reason and owner) or `HARD-STOP` — and the `verify(<slug>): <verdict>` commit made.
+- [ ] A security finding is a `HARD-STOP` at the top of the report.
 
-## The loop
+## Learn and report
 
-- [ ] Released behind a flag or gradual rollout.
-- [ ] Checks reused as production monitors.
-- [ ] What was learned is recorded with `add learn`, against evidence.
-- [ ] Confirmed lessons are folded into the living specs (`add fold`).
-- [ ] The milestone stays open until its exit criteria are met; anything reopened went back through the loop, not around it.
+- [ ] Lessons recorded as deltas with evidence in the matching spec.
+- [ ] Deltas that held are promoted to `## Decisions that bind`.
+- [ ] Milestone EXIT boxes ticked only with evidence on the line.
+- [ ] The report leads with HARD-STOPs and open risks, then per task: goal, verdict, freeze commit, evidence, every assumption taken.
+- [ ] `PROJECT.md`'s CARD updated (`state:`, `next:`).
 
 ---
 
@@ -65,15 +60,11 @@ discipline the engine cannot see for you.
 
 A change is shippable only when all are true:
 
-- [ ] Direction complete: behavior stated, rejections named, assumptions ranked lowest-confidence first with the biggest risk flagged.
-- [ ] Wiring and "existing behavior" assumptions carry grep/line citations; wiring claims name the production caller chain.
-- [ ] Every rule and every behavior-changing edge has a check bound to it by `covers:`.
-- [ ] The contract shape is authored and the node was frozen by a person.
-- [ ] The suite was red before the build, for the right reason.
-- [ ] Collateral checks listed by exact name; arithmetic checked against the frozen constants.
-- [ ] All checks green; no check and no frozen contract touched by the AI; every edit inside `scope:`.
-- [ ] The receipt is fresh and bound — the gate is reading evidence, not a plausible diff.
-- [ ] Wiring trace recorded: every new symbol reachable from the production entry point.
-- [ ] Concurrency, security, and architecture checked by a person; any security finding escalated.
-- [ ] Gate outcome recorded with an accountable owner.
-- [ ] Released behind a flag, with monitors in place.
+- [ ] Rules stated, refusals named, every silence written as an assumption.
+- [ ] Every rule covered by a check that would fail without it.
+- [ ] The checks were red for the right reason before the build, and sealed in a `freeze` commit.
+- [ ] The sealed files are unchanged since the latest freeze or refreeze.
+- [ ] Task checks and the full suite green, fresh, on the committed tree — with the output recorded.
+- [ ] Security, concurrency and architecture read; any security finding is a `HARD-STOP`.
+- [ ] Someone other than the builder tried to break it, for security, data or architecture work.
+- [ ] One verdict in `## EVIDENCE`, and the human has the report listing every assumption.

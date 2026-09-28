@@ -1,67 +1,63 @@
 # Contributing — repo layout & the edit-then-sync model
 
-This repo is three things at once: the **AIDD book**, the **`add` skill + engine**,
-and the **shippable package** (`@pilotspace/add` on npm, `pilotspace-add` on PyPI).
-To serve all three, a few artifacts are mirrored across trees — but **every mirror is
-either *generated* or *guarded by a parity test***, so none can silently drift. Read
-this before editing, so you change the canonical copy and let the rest follow.
+This repo is three things at once: the **ADD book**, the **`add` skill**, and the **shippable
+package** (`@pilotspace/add` on npm, `pilotspace-add` on PyPI). A few artifacts are mirrored across
+trees, and **every mirror is either generated or guarded by a test**, so none can silently drift.
+Read this before editing, so you change the canonical copy and let the rest follow.
 
 ## The trees
 
 | Tree | Role | Canonical? | Kept honest by |
 |---|---|---|---|
-| `add-method/` — `skill/add/`, `tooling/add.py` (+ `templates/`), `docs/` | **The package source** | ✅ **edit here** | — |
-| `add-method/src/add_method/_bundled/` | What ships inside the Python wheel | ❌ generated | `scripts/prepare_bundle.py` → `test_bundle_parity` |
-| `.claude/skills/add/` | Dogfood skill (this repo runs `/add` on itself) | ❌ mirror of `add-method/skill/add/` | `test_tree_parity` (byte) |
-| `.add/tooling/add.py` | Dogfood engine | ❌ mirror of `add-method/tooling/add.py` | `test_shared_engine_pin` (md5) |
-| `.add/state.json`, `PROJECT.md`, `CONVENTIONS.md`, `tasks/`, `milestones/`, `archive/` | The **live dogfood project** — real ADD data, not a copy | ✅ its own data | `add.py check` · `add.py audit` |
-| `.add/docs/` | Local book materialization | n/a — **gitignored** | re-created by install / `add.py update` |
-| root `./NN-*.md`, `appendix-*.md`, `*.png` | The GitHub-readable book (the README's table of contents links here) | ❌ mirror of `add-method/docs/` | `test_book_parity` (byte) |
-| root `CHANGELOG.md`, `GETTING-STARTED.md` | **Pointers** to the package — deliberately *not* copies | ❌ pointer | — |
+| `add-method/skill/add/` — `SKILL.md`, `references/`, `persona-author/` | **The method** | ✅ **edit here** | `tests/test_skill_only.py` |
+| `add-method/personas/`, `personas-teacher/`, `personas-index/` | starter personas, the vendored teacher corpus, its routing index | ✅ **edit here** | `scripts/build_persona_index.py`, `scripts/update_teacher.py` |
+| `add-method/docs/` | **The book**, published by MkDocs (`mkdocs.yml` at the root) | ✅ **edit here** | `tests/book/` · `scripts/book_lint.py` |
+| `add-method/src/add_method/_bundled/` | what ships inside the Python wheel | ❌ generated | `scripts/prepare_bundle.py` → `tests/test_npm_pip_parity.py` |
+| `.claude/skills/add/` | the dogfood skill — this repo runs `/add` on itself | ❌ byte mirror of `add-method/skill/add/` | `tests/test_skill_only.py` |
+| `.add/` | the **live dogfood bundle** — real ADD work on this repo, not a copy | ✅ its own data | — |
+| `archive/` | earlier bundles (2.x, 3.x), kept as history | read-only | — |
+| root `GETTING-STARTED.md` | a **pointer** to the package's guide — deliberately not a copy | ❌ pointer | — |
 
 ## The one rule
 
-**Edit the canonical tree (`add-method/`), then propagate.** Never hand-edit a
-generated tree (`_bundled/`) or one side of a mirror in isolation — a parity test will
-fail in CI.
+**Edit the canonical tree (`add-method/`), then propagate.** Never hand-edit a generated tree
+(`_bundled/`) or one side of a mirror in isolation — a test will fail in CI.
 
-After changing anything under `add-method/skill/`, `add-method/tooling/add.py`, or
-`add-method/docs/`:
+After changing anything under `add-method/skill/` or `add-method/personas*/`:
 
 ```bash
 # 1. regenerate the wheel bundle
 python3 add-method/scripts/prepare_bundle.py
 
-# 2. propagate to the dogfood + book mirrors (hand-copy; there is no sync script yet)
+# 2. refresh the dogfood skill mirror
 rm -rf .claude/skills/add && cp -R add-method/skill/add .claude/skills/add
-cp add-method/tooling/add.py .add/tooling/add.py
-# the book — every docs file EXCEPT README.md (the root README is its own document)
-for f in add-method/docs/*; do [ "$(basename "$f")" = README.md ] || cp "$f" ./; done
 
 # 3. verify nothing drifted
-cd add-method && python3 -m unittest discover -s tooling -p 'test_*.py'
+cd add-method && python3 -m pytest -q
 ```
 
-> The book parity guard (`test_book_parity`) excludes `README.md` on purpose: the root
-> README is the repo/book landing page — a different document from
-> `add-method/docs/README.md` (the docs index). The loop above honors that exclusion.
+After changing the book, run `python3 add-method/scripts/book_lint.py` (nav, links, and no
+instructions that point at the retired 3.x CLI) and, if you have MkDocs installed,
+`mkdocs build --strict` from the repo root.
+
+## Working on this repo with ADD
+
+This repository dogfoods the method. Orient on `.add/PROJECT.md` and the open task files, size
+the change, and follow the skill: Quick for small edits; a task file sealed with a
+`freeze(<slug>)` commit for anything worth a contract; a `verify(<slug>): <verdict>` commit with
+the evidence. `invariants:` in `.add/PROJECT.md` bind every change.
 
 ## Running the suite
 
-CI (`.github/workflows/ci.yml`) runs the tooling tests, then audits the dogfood board:
+CI (`.github/workflows/ci.yml`) runs the package suite on Python 3.10 and 3.12:
 
 ```bash
-cd add-method && python3 -m unittest discover -s tooling -p 'test_*.py'   # tooling tests
-python3 .add/tooling/add.py audit                                          # recorded human gates
+cd add-method && python3 -m pytest -q
 ```
 
-Most parity tests are byte/md5 comparisons that finish in milliseconds. A few tests —
-`test_installer_handoff`, `test_v8_install`, and `test_shared_engine_pin`'s guard
-runner — shell out to `node` / `npx` / `pip`, so they need those tools (and network)
-installed and will fail in a bare sandbox without them.
+A few tests shell out to `node` / `npm` / `pip` to exercise the installers, so they need those
+tools installed.
 
 ## Releasing
 
-One version tag publishes both registries; the full recipe is in
-[`RELEASING.md`](./RELEASING.md). Because the root `CHANGELOG.md` and
-`GETTING-STARTED.md` are pointers, a release edits only `add-method/CHANGELOG.md`.
+One version tag publishes both registries; the recipe is in [`RELEASING.md`](./RELEASING.md).

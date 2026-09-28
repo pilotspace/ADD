@@ -41,13 +41,19 @@ PyPI ▸ your account ▸ **Publishing** ▸ **Add a pending publisher** (use th
 
 ## Cutting a release
 
-1. **Bump the version** — keep all three in sync (a guard test enforces the first two):
+1. **Bump the version** — every declaration moves together
+   (`add-method/tests/test_version_parity.py` enforces it):
    - `add-method/package.json` → `version`
+   - `add-method/package-lock.json` → `version` (top level and the root package entry)
    - `add-method/pyproject.toml` → `version`
    - `add-method/src/add_method/__init__.py` → `__version__`
+   - `add-method/.claude-plugin/plugin.json` → `version`
+   - `metadata: { … version: "X.Y.Z" … }` in each of the three `SKILL.md` trees:
+     `add-method/skill/add/`, `add-method/src/add_method/_bundled/skill/add/` and
+     `.claude/skills/add/` (edit the first, then regenerate and copy as in
+     [`CONTRIBUTING.md`](./CONTRIBUTING.md))
 2. **Update `add-method/CHANGELOG.md`** — add the new version section and date.
-   (The root `CHANGELOG.md` is a pointer to this file, so it needs no per-release
-   edit; same for the root `GETTING-STARTED.md` pointer.)
+   The root `GETTING-STARTED.md` is a pointer and needs no per-release edit.
 3. **Open a PR**, let CI go green, **merge to `main`**.
 4. **Tag from `main`** and push:
    ```bash
@@ -63,8 +69,11 @@ PyPI ▸ your account ▸ **Publishing** ▸ **Add a pending publisher** (use th
 
 ```bash
 npm view @pilotspace/add version
-pip install pilotspace-add && pilotspace-add init --name "Test" --stage prototype
+pip index versions pilotspace-add
 ```
+
+Then install the new version into a scratch git repository (`npx @pilotspace/add@X.Y.Z init`) and
+check that `.claude/skills/add/SKILL.md` declares the new version.
 
 ## If a publish job fails
 

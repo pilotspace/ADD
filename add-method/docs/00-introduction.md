@@ -39,8 +39,8 @@ This is not a smaller job than coding; it is a harder one. It is the part of eng
 
 The rest of the book is the practical consequence of the shift:
 
-- **The loop** — a three-beat loop (Direction → Build → Verify) that front-loads direction and back-loads AI execution, with verification built in, and one human decision in the middle.
-- **An operating manual** — running that loop in practice: sizing a request into the right lane, working in parallel with waves, governing the gates, and routing a task to the right persona lens.
-- **Reference** — the `.add/` bundle format and the `add` command surface the method actually runs on, so it is concrete from day one.
+- **The loop** — a three-beat loop (Direction → Build → Verify) that front-loads direction and back-loads AI execution, with verification built in. The agent seals its own direction with a git commit before it builds, and the human reviews the result afterwards.
+- **An operating manual** — running that loop in practice: sizing a request into the right lane, working in parallel on separate worktrees, reading verdicts, and loading the right persona lens.
+- **Reference** — the `.add/` bundle format and the commit conventions the method runs on. There is nothing to install beyond the skill: files, git and your test command are the whole toolset.
 
 > **The thesis in one line.** Build the right thing (direction), prove it is right (verification), and let the AI do the building in between.

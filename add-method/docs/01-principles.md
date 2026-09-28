@@ -1,69 +1,63 @@
 # 01 · Core principles
 
-[← 00 The shift: why ADD exists](./00-introduction.md) · [Contents](./README.md) · Next: [02 The three-beat loop, and what is disposable →](./02-the-flow.md)
+[← 00 The shift: why ADD exists](./00-introduction.md) · [Contents](./README.md) · Next: [02 The loop, and what is disposable →](./02-the-flow.md)
 
 ---
 
 ## 1. Direction before speed
 
-An AI agent accelerates in whatever direction it is given. Therefore the direction must be fixed before the acceleration begins. In practice this means the early, human-led steps of the flow are not optional preamble — they are the steering, and the build step is the engine. You do not start the engine until the wheel is set.
+An AI agent accelerates in whatever direction it is given, so the direction must be fixed before the acceleration begins. The rules, the assumptions and the failing checks are not optional preamble. They are the steering, and the build is the engine. You do not start the engine until the wheel is set.
 
-**Consequence:** the specification, scenarios, and contract come *before* any code, every time.
+**Consequence:** no production code is written before the task's rules, assumptions and checks exist and the checks have failed for the right reason.
 
 ## 2. Trust through evidence, not inspection
 
-AI output is often wrong in ways that read as correct. You cannot establish correctness by reading the code and judging it plausible. You establish it by defining, in advance, what "correct" means — as automated tests — and confirming the code satisfies them, then checking by hand only the narrow set of things tests cannot catch.
+AI output is often wrong in ways that read as correct. You cannot establish correctness by reading the code and finding it plausible. You establish it by defining "correct" in advance, as checks, confirming the code passes them on a fresh run, and then examining by hand only what checks cannot catch.
 
-**Consequence:** tests are written *before* the implementation, and a feature is trusted because its tests pass, not because someone reviewed it and liked it.
+**Consequence:** checks are written *before* the implementation, and a change is trusted because its checks pass on the committed tree and its residue was read — not because someone liked the diff.
 
 ## 3. The artifacts survive; the code is disposable
 
-The durable assets of a project are the decisions and agreements: the specification, the scenarios, the contract, the tests. The code is merely one implementation that satisfies them and can be regenerated at will. Protect the artifacts; treat the code as replaceable.
+The durable assets of a project are its decisions: the rules, the assumptions, the contract, the checks, the evidence. The code is one implementation that satisfies them and can be regenerated. Protect the decisions; treat the code as replaceable.
 
-**Consequence:** effort goes into keeping contracts and specs stable and clear, not into preserving particular code. Metrics that count code volume or reuse measure the wrong thing.
+**Consequence:** effort goes into keeping rules, contracts and specs clear and stable. Metrics that count code volume measure the wrong thing.
 
 ## 4. The loop is re-entrant, not a waterfall
 
-The flow has an order, but it is not a one-way march. Any step may reveal a gap in an earlier one — and when it does, you return to that earlier step, fix the artifact, and come forward again. The specification is a living document, not a frozen contract signed once.
+The loop has an order, but it is not a one-way march. Any beat may reveal a gap in an earlier one, and then you go back, fix the artifact, and come forward again.
 
-**Consequence:** discovering a missing rule during the build is the method working, not failing. The only true one-way door is the frozen interface contract, and even that reopens through a deliberate change request.
+**Consequence:** finding a missing rule during the build is the method working. The sealed contract is the one door that does not swing freely: it reopens only through a visible `refreeze(<slug>)` commit that says why.
 
-## 5. Trust is earned per scope, not granted globally
+## 5. Ceremony is sized by what the work touches
 
-How much you let the AI run unattended is not a single switch. It is set per task, by *what the task touches* — not by a global mode. The lever is the task's **sensitivity**: purely mechanical work carries a light floor; anything touching **data**, **architecture**, or **security** is held to a real task with a human at the freeze, and **security is always a hard stop**. Orthogonally, the **depth dial** (quick · standard · deep) tunes how much ceremony a task runs — never how much authority it has.
+Not every change needs a contract. A typo gets a failing test and a commit; a behavior other code will depend on gets a task file; a theme gets a milestone. The size of the diff does not decide this alone — *what the change touches* does. Anything touching **security, data or architecture**, or a surface other code consumes, is at least a Task however small it looks.
 
-Two things never move, whatever the task: the contract-freeze decision point stays human (the AI never freezes the interface it then builds against), and a security- or architecture-shaping scope is never resolved on evidence alone.
-
-**Consequence:** trust is a per-task judgment set by the task's sensitivity floor and its depth, not a mode you flip; a high-risk scope is held to a human gate regardless (see [09 Governance](./09-governance.md)).
+**Consequence:** the agent routes each request to the lightest lane that is safe, sizes up when in doubt, and never takes the light lane for sensitive work.
 
 ## 6. You cannot move faster than you can verify
 
-When an agent produces more than the team can review, the excess is not speed — it is unreviewed risk accumulating. Verification capacity is the real ceiling on throughput.
+When an agent produces more than anyone can check, the excess is not speed; it is unverified risk piling up. But verification is not the same as a person reading. A passing suite, a contract check and an attempt to break the green are all verification, and they scale in a way human reading does not. What they cannot cover is the residue — security, concurrency, architecture — and that part stays at the speed of careful reading.
 
-But *verification* is not the same as *human reading*. The ceiling is what you can trust to a recorded standard, and automated verification raises it: a passing test suite, a contract check, an adversarial verifier are all verification, and they scale in a way human review cannot. This is only principle 2 taken to its limit. What automation cannot cover is the residue principle 2 names — the narrow set tests miss: security, concurrency, and architecture. That residue stays at human speed. So the rule sharpens: you may move as fast as your *automated* verification carries you, and no faster on the part only a human can check.
+**Consequence:** if output outpaces verification, strengthen the checks or size the work down. More latitude is earned by more verification, never by a lower bar.
 
-**Consequence:** if AI output outpaces verification, the correct response is to strengthen the automated checks or size the work down — never to rush or skip. More latitude is earned by more verification, not by a lower bar.
+## 7. No silent outcomes
 
-## 7. No silent skips
+Every task ends with exactly one written verdict: `PASS`, `RISK-ACCEPTED` with a reason and an owner, or `HARD-STOP`. Every guess the agent had to make is written down as an assumption. Nothing is quietly waved through, and nothing is quietly decided.
 
-Every checkpoint resolves explicitly. A step is either passed, or passed with a recorded and signed acceptance of a known risk, or stopped. Nothing is quietly waved through.
-
-An *automated* pass is still an explicit pass, not a skip — provided it records an outcome and escalates what it cannot judge. A gate may be resolved by evidence rather than by a person when that evidence is sufficient and the result is logged to an accountable owner: a named run, against a recorded standard, is as accountable as a signature. The line between a pass and a skip is the recorded outcome, not who signed it. The exception is absolute: security always escalates to a human and is never auto-passed — a security finding is a hard stop, whatever the evidence says.
-
-**Consequence:** every gate produces a recorded outcome with an accountable owner — a person, or a named automated run — and security always stops for a person (see [09 Governance](./09-governance.md)).
+**Consequence:** a reviewer can read what was decided, on what evidence, and what was guessed — and a security finding is always a `HARD-STOP`, put at the top of the report.
 
 ## 8. Tool-agnostic by construction
 
-The instructions you give the AI are plain text that reference files in the repository, not commands tied to one product. Enforcement of the gates lives in your build pipeline, not in the agent. This keeps the method portable: the agent is replaceable; the method is not.
+The method is plain text that refers to files in the repository. Its seal is a git commit; its evidence is the output of your own test command. Nothing ties it to one agent or one product.
 
-**Consequence:** the same project works whether the team uses one AI coding tool or another, and switching tools changes nothing structural.
+**Consequence:** the same project works under Claude Code, Cursor, Codex, Copilot or any agent that can read a file and run a command. The agent is replaceable; the method is not.
 
-## 9. Two layers: the working state you load, the audit trail you reference
+## 9. Two layers: the state you load, the story you reference
 
-A method that fills the context window with its own documentation defeats itself — the agent rots before it reaches the work. So ADD keeps two documentation layers and never loads both. The **working state** is everything an agent loads to do the work each session: the `add` skill itself (its router `SKILL.md` and the one beat currently in play) together with the lean, current state of the `.add/` bundle — the active task node, its milestone, and the five living specs — surfaced by `add status`. The **audit trail** is this book plus the records behind it: the whole method, read once by a person to understand and trust ADD, and thereafter **never auto-loaded** into agent context — only referenced by a pointer. Depth lives in the audit trail; leanness is enforced on the working state; they never compete for the same tokens.
+A method that fills the context window with its own documentation defeats itself. So ADD keeps two layers apart. The **working state** is what the agent loads each session: the skill file and the lean state of the `.add/` bundle — `PROJECT.md`, the open task, its milestone, the specs it touches. The **story** is this book: read by a person to understand and trust the method, and never loaded into the agent's context.
 
-**Consequence:** the book can be as rich as trust requires without costing a single runtime token, while the loaded surface stays small enough never to rot. It is why the guideline block in `CLAUDE.md`/`AGENTS.md` *points* to `add status` and the `.add/` bundle rather than copying them.
+**Consequence:** the book can be as thorough as trust requires without costing a runtime token, while the loaded surface stays small. That is why the ADD block in `CLAUDE.md` / `AGENTS.md` *points* at the skill and the bundle rather than copying them.
 
 ---
 
-> **The principles, compressed.** Steer before you accelerate. Trust evidence, not impressions. Keep the decisions, throw away the code. Loop freely, but never skip silently. Load the State; reference the Story. Grant the AI only as much latitude as you can verify.
+> **The principles, compressed.** Steer before you accelerate. Trust evidence, not impressions. Keep the decisions, throw away the code. Loop freely, but never change the contract silently. Size ceremony by what the work touches. Write down every verdict and every guess.

@@ -10,26 +10,23 @@
 
 **Your AI's first milestone is always great. ADD is for every milestone after that.**
 
-> A minimal, state-tracked skill for work the AI does and **you** own the two things
-> it cannot do alone: decide *what* to make, and *verify* it is correct. Software is
-> where it started; the loop holds anywhere the result can be checked.
+> One skill file for work the AI plans, builds and verifies — while **you** own the two things
+> it cannot do alone: decide *what* to make, and judge whether it is right. No engine, no CLI:
+> the tools are files, git, and your project's own test command.
 
-**The agent is the hands. ADD is the memory, judgment, and conscience — the part
-of the team that survives when the context window doesn't.** Memory: the board,
-frozen contracts, and living specs on disk (`cli.py status` resumes any session
-losslessly). Judgment: personas propose each task's lane and the loop learns from
-traced outcomes (`cli.py deltas`). Conscience: evidence-scored gates, the tamper
-tripwire, the security hard-stop.
+**The agent is the hands. ADD is the memory, judgment, and conscience — the part of the team
+that survives when the context window doesn't.** Memory: `.add/PROJECT.md`, one task file per
+change, five living specs — plain markdown in your repo. Judgment: every change is sized, and
+every guess the agent makes is written down. Conscience: checks sealed in git before the build,
+a verdict backed by real test output, and security findings that always stop.
 
-Native on Claude Code; every other CLI agent follows the same loop through the
-phase guides. The full reasoning — *why* every rule exists — is
-[the AIDD book](https://pilotspace.github.io/ADD/).
+The full reasoning — *why* every rule exists — is [the ADD book](https://pilotspace.github.io/ADD/).
 
 ```
   Foundation (context):  DDD  ·  SDD  ·  UDD
-  Engine (this skill):   TDD  ⇄  ADD
-  Flow per task:  Direction (spec · scenarios · contract · red tests → ONE freeze)
-                  → Build (red → green)  → Verify (fresh receipt · refute-read · gate)  ↻
+  The loop (this skill): TDD  ⇄  ADD
+  Per task:  Direction (rules · assumptions · red checks → freeze commit)
+             → Build (red → green)  → Verify (seal intact · fresh run · residue · verdict)  ↻
 ```
 
 ## Quick Start
@@ -45,100 +42,56 @@ Then, in your coding agent, say what you want to build:
 
 > `/add` — *"Let users log in with email + password / SSO, and keep them signed in for 30 days unless they explicitly log out."*
 
-The agent sizes it into a milestone (you confirm the shape), drafts the
-specification bundle — spec → scenarios → contract → red tests as one Direction
-pass (you approve once, at the frozen contract) — then builds and verifies to
-green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
+The agent sizes the request, writes the task's rules, assumptions and failing checks, seals them
+with a `freeze(<slug>)` commit, builds to green, verifies on a fresh run, and hands you a report
+of what it decided and on what evidence. Full walkthrough: the [Quickstart](./GETTING-STARTED.md).
 
 ## Highlights
 
-- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk (the task files under `.add/tasks/`, frozen contracts, red suites, `.add/graph.json`), so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
-- ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
-- 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared checks passing on a fresh receipt *and* a session that did not build it trying to break the green; at a plan-or-human floor the gate refuses a PASS nobody tried to refute. Never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
-- 🎯 **Evidence, not test count** — every binding rule is named by a check written to fail on the most plausible wrong implementation; acceptance checks through a port are the default for code, and property, contract and mutation checkers ride the same receipt. The freeze names any rule still resting on one kind of evidence.
-- 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 30-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
-- 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
-- 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are recorded, and lessons land on the spec they belong to.
-- 🙋 **"Who has to live with this?" is a question it cannot skip** — every surface is swept for who *receives* the output and what would make it hard for them, alongside the five correctness dimensions; `freeze` refuses until it is answered or explicitly retired.
-- 👥 **Grows with your team** — git-native multi-user, N parallel milestones, DAG-scheduled waves; monorepo or multi-repo in one team.
-- 🤝 **Keep the agent you already use** — Claude, Copilot, Cursor, Codex, Gemini; install via npm, pip, or the Claude Code plugin.
+- 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, in the task files and specs under `.add/`, so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
+- 🔒 **Checks sealed before the build** — the task file and its checks are committed together as `freeze(<slug>)`. Weakening a check to get green shows up in `git diff`; a changed contract is a visible `refreeze` commit with its reason.
+- 🔬 **A verdict backed by evidence, not a plausible diff** — every task ends `PASS`, `RISK-ACCEPTED` or `HARD-STOP`, written with the exact commands, exit codes and counts from a fresh run on the committed tree, plus a read of what tests cannot show and an attempt to break the green.
+- 🙋 **Every guess on the record** — each silence in the request becomes an assumption line: what was not said, the reading taken, the cost if wrong. That list is what you review.
+- ✅ **Nothing interrupts the run** — the agent routes, seals, builds and verifies on its own; you review the finished work from a report that puts any security finding first.
+- 💸 **Ceremony only where it buys trust** — most changes take the Quick lane: a failing test, a fix, a commit, no task file.
+- 🧠 **Fits *your* codebase** — project personas carry your domain's judgment; lessons with evidence become decisions that bind later work.
+- 🤝 **Keep the agent you already use** — native in Claude Code; Cursor, Codex, Copilot, Gemini and others follow the same skill file.
 
-> _Direction before speed. Trust comes from evidence that survived a refute — not from reading code and finding it plausible._
+> _Direction before speed. Trust comes from evidence you can re-run — not from reading code and finding it plausible._
 
-## How much ceremony? — the ladder
+## How much ceremony? — the lanes
 
-**Most changes never create a node.** Size the work first; the floor is checked FIRST and always
-wins (security · data · architecture, a published surface something else consumes, or frozen
-scope → a node, however small). Under that floor:
+**Most changes never create a node.** The agent sizes each request and routes it to the lightest
+safe lane. The floor is checked first: anything touching security · data · architecture, or a
+surface other code consumes, is at least a Task.
 
-| the change | route | what persists |
+| the request | lane | what persists |
 |---|---|---|
-| mechanical, or a small behavior — ≤3 adjacent files, one sitting, no unknowns | **direct** — no node | the commit + one `add learn` line |
-| one behavior worth a frozen contract | a **Task** | the node, its frozen contract, a run receipt |
-| an unanswered question — investigate · evaluate · research | a **Task**, explore lane | the node + its cited findings |
-| a theme, or a slice spanning tasks | a **Milestone** | the milestone + its task nodes |
+| mechanical, or a small behavior — ≤3 adjacent files, one sitting, no unknowns | **Quick** — no node | a red→green test + one commit |
+| one behavior worth a written contract | **Task** | `.add/tasks/<slug>.md` + its commits |
+| the answer is the deliverable — investigate · evaluate · research | **Explore** | the task's cited `## FINDINGS` |
+| a theme, or more than one task | **Milestone** | `.add/milestones/<slug>.md` + its tasks |
 
-Skipped ceremony is never skipped review: a direct change still writes its check and runs it red —
-it just does not persist a node to prove it did.
+Skipped ceremony is never skipped review: a Quick change still writes its test and runs it red.
 
 ## Why ADD — context rot, measured
 
-Every AI tool writes code fast and aces a greenfield first milestone. The unsolved
-part is **trust across change**: when the spec evolves in milestone 2 and breaks
-compatibility in milestone 3, does the work you already trusted *stay* trusted?
+Every AI tool writes code fast and aces a greenfield first milestone. The unsolved part is
+**trust across change**: when the spec evolves in milestone 2 and breaks compatibility in
+milestone 3, does the work you already trusted *stay* trusted?
 
-Our benchmark runs the same six-milestone evolving project through each flow under
-a pinned model with deterministic probe scoring
-([report, revised edition](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
-The causal finding: when ONE continued conversation carried the milestones, every
-flow decayed the same way (coverage .92 → .75, an early spec violation carried
-through five more milestones). When every milestone instead started a **fresh
-session resuming from disk**, ADD held every floor at 1.0 across all six — through
-a breaking shape change and a cross-cutting refactor — with zero regressions.
+Our benchmark ran the same six-milestone evolving project through each flow under a pinned
+model with deterministic probe scoring ([report, revised edition](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
+When ONE continued conversation carried the milestones, every flow decayed the same way
+(coverage .92 → .75, an early spec violation carried through five more milestones). When every
+milestone started a **fresh session resuming from disk**, the floors held at 1.0 across all six.
+The lesson: nothing that matters may live only in the chat.
 
-That's the design, in three moves:
-
-- **One file per feature.** Rules, assumptions, contract, checks, and gate record all live inline in a single task file at `.add/tasks/<slug>.md`. No sprawling doc tree.
-- **State on disk, not in chat.** Files are the database — a stdlib-Python kernel reads where you are back off the `.add/` bundle itself (`graph.json` is a rebuildable cache, not the source of truth), so a fresh session resumes with one command instead of trusting a long conversation's memory.
-- **Progressive disclosure.** The skill narrates the whole loop itself and loads a deeper phase reference only when the beat needs it — the context window stays lean.
-
-<sub>**Honesty note:** on this friendly single-app workload a strong model under spec-kit also passed the restart floors (and ran cheaper) — we published the retraction of our own earlier collapse claim when we found the meter defect behind it. What ADD uniquely adds is the *guarantees*: contracts that can't be silently edited, tests that can't be quietly weakened, security findings that can't scroll past.</sub>
-
-## ADD vs skill libraries (e.g. agency-agents)
-
-ADD is the **trust layer** — the gated loop (Direction → Build → Verify) that
-decides when work is trusted, plus the on-disk memory it runs on. It answers **how
-you trust what gets built**. Skill libraries and role-specific subagents (a backend
-expert, a security reviewer) answer **who does the work**. Different layers — they
-compose, they don't compete.
-
-ADD's persona loop **distills** a lean, project-fit persona from a teacher corpus
-like [agency-agents](https://github.com/msitarzewski/agency-agents) — vendored at
-[`personas-teacher/`](./personas-teacher/), read off-build while drafting, never a
-runtime dependency — down to the three parts a project needs: **Identity**,
-**Critical Rules**, **Success Metrics**. The project then owns that persona.
-
-A distilled persona is an **advisory overlay** during direction, build, or verify:
-it shapes *how* a step gets done, never whether it happens. It can't skip a gate,
-edit a frozen contract, or wave through a security finding. Personas also
-propose each task's approach; the freeze ratifies it, the gate records the outcome,
-and `cli.py deltas` lists the lessons that came out of it, by lens.
-
-**Best setup:** install ADD to drive the loop, keep whatever subagent libraries you
-already use. ADD ships two agents — `add-worker` (the execution shell) and `add-advisor`
-(the second mind it spawns to propose a plan, pressure-test a draft, or decide a delegable
-ambiguity) — in the same `.claude/agents/` mechanism as any other subagent; they coexist
-with a distilled persona or a built-in expert with zero conflict, nothing is replaced.
-Prefer `add-worker` for anything phase-shaped (build mode for a red→green batch, verify mode
-for the gate) and let it consult `add-advisor` when confidence is thin — at a plan-or-human floor
-`add-advisor` in refute mode is the fresh session the gate asks for before a PASS;
-reach for another specialist when a piece needs deep domain expertise the phase guide
-doesn't carry. **The gates hold no matter who did the work** — a delegated subagent
-proposes; the orchestrating agent records.
+<sub>**Honesty note:** on this friendly workload spec-kit also held the restart floors, and ran cheaper — we published the retraction of our own earlier collapse claim. ADD 4.0 removed its engine because the engine's ceremony cost more than it protected; see [what changed in 4.0](https://pilotspace.github.io/ADD/20-whats-new-in-4/).</sub>
 
 ## Install
 
-Pick your ecosystem — all three install the same skill and tooling:
+Pick your ecosystem — all three install the same skill:
 
 ```bash
 npx @pilotspace/add init                   # Node / npm
@@ -152,97 +105,65 @@ pip install pilotspace-add && pilotspace-add init      # Python / pip
 /plugin install add@add-method
 ```
 
-The plugin carries the engine. On first `/add`, the skill materializes it into the
-project and scaffolds `.add/` — a self-contained result identical to the npm/pip
-flow. No flags needed: the project name is inferred from your folder (pass
-`--name "My App"` to set it up front). Ceremony is per-task in 3.x — a task
-declares its own `--depth` and `--sensitivity`, so there is no project-wide stage.
-
-**Already installed?** `npx @pilotspace/add@latest update` (or `pipx run
-pilotspace-add update`) re-materializes the skill and tooling while leaving your
-project work untouched; add `--check` to see whether a project is behind.
-**Coming from 2.x?** 3.0 is a clean break: it reads a different bundle format and
-never converts one. Run `add upgrade` — it renames `.add/` to `.add-2x-archive/`
-byte-for-byte, writes a `MIGRATION.md` beside it, and initialises a fresh 3.0
-bundle. Nothing is deleted and nothing is rewritten; the 2.x record stays readable
-as the account of how the project was built.
-
-**New here?** Pick the walkthrough that matches what you are making:
-
-- 🔍 [10-minute Quickstart](./GETTING-STARTED.md) — your first feature, end to end
-- 📒 [Beyond code](./BEYOND-CODE.md) — a month-end close, end to end: same three beats, same
-  bound receipt, where the artifact under check is a ledger rather than a repo
-
 This installs:
 
 | Path | What |
 |------|------|
-| `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
-| `.claude/agents/` | the advisor and worker subagents the skill dispatches |
-| `.add/tooling/cli.py` | the notary engine's CLI — 30 verbs (Python, stdlib only) |
-| `.add/tooling/add.py` | the engine module the CLI dispatches into (a library, not a command) |
-| `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
-| `.add/personas-index/` | the generated routing index — which persona to reach for, and when |
+| `.claude/skills/add/` | the `add` skill — `SKILL.md`, `references/format.md`, `references/explore.md`, and the `persona-author` sub-skill |
+| `.add/personas/` | starter personas — yours to edit; a re-install never overwrites one |
+| `.add/personas-teacher/` | the vendored corpus personas are distilled from (read while authoring, never at run time) |
+| `.add/personas-index/` | which persona to reach for, and when |
+| `AGENTS.md` / `CLAUDE.md` etc. | for agents other than Claude Code: a short managed block pointing at the skill |
 
-Project state is *not* created at install — the installer drops files only;
-initialisation is the agent's first move when you run `/add`. `add init` is what
-writes the bundle: `index.md`, `PROJECT.md`, `graph.json`, `log.md`, and the
-living `specs/`.
+The installer drops files only. The bundle itself — `.add/PROJECT.md` and the specs — is the
+agent's first move when you run `/add`.
 
-## Boundaries — what this plugin writes and runs
+**Already installed?** `npx @pilotspace/add@latest update` (or `pipx run pilotspace-add update`)
+refreshes the skill and leaves your project work untouched. **Coming from 3.x?** Your bundle reads
+as-is; the update removes the old engine files. See
+[what changed in 4.0](https://pilotspace.github.io/ADD/20-whats-new-in-4/).
 
-ADD works *inside your project* — here is exactly what that means:
+**New here?** Pick the walkthrough that matches what you are making:
 
-- **Runs only when you ask.** Nothing executes on install. It acts when you run `/add`. User-initiated, every time.
-- **What it runs:** the bundled engine only — `node bin/cli.js` and `python3 .add/tooling/cli.py`. No downloaded or remote code.
-- **What it writes:** files under your project's `.add/` and the managed guideline block in `CLAUDE.md` / `AGENTS.md`. Never above the project root.
-- **Network:** none. Nothing in the installer or the engine opens a socket — no update check, no telemetry, no analytics. `npm`/`pipx` fetch the package; after that ADD is entirely offline.
-- **No secrets, no credentials, no privileged access.** Pure local file orchestration.
+- 🔍 [Quickstart](./GETTING-STARTED.md) — your first feature, end to end
+- 📒 [Beyond code](./BEYOND-CODE.md) — a month-end close: same loop, where the artifact under check is a ledger rather than a repo
+
+## Boundaries — what this package writes and runs
+
+- **Runs only when you ask.** Nothing executes on install beyond copying files.
+- **What it writes:** the skill under `.claude/skills/add/`, persona files under `.add/`, and the managed ADD block in your agent's context file. Never above the project root.
+- **Network:** none. `npm`/`pipx` fetch the package; after that ADD is entirely offline.
+- **No secrets, no credentials, no privileged access.**
 
 ## Use it
 
-ADD is AI-first: you talk to the agent; it drives the method. The installer detects
-which coding agent you're in and drops the context file it reads — so ADD drives
-under **Claude Code, Codex, OpenCode, Cursor, Windsurf, Trae, Gemini CLI, GitHub
-Copilot, Cline, and Aider** (anything else falls back to a generic `AGENTS.md`).
-Only Claude Code runs `/add` natively; every other agent follows the same loop
-through `cli.py status` (the resume point) and `cli.py brief <slug>` (the composed
-prompt for the beat that node is on).
+You talk to the agent; it drives the method. In Claude Code, `/add` starts or resumes work and
+`/add status` summarizes where things stand. Other agents read the managed ADD block the
+installer writes into `AGENTS.md` (and `CLAUDE.md`), which points them at the same skill file;
+if `.gemini/` exists, the installer also adds `AGENTS.md` to Gemini CLI's context files.
 
-You can hand-drive the CLI too:
-
-```bash
-python3 .add/tooling/cli.py status      # where am I? (resume point)
-```
+You can always read the state yourself: it is `.add/PROJECT.md`, the task files, and `git log`.
 
 ## The non-negotiables
 
-1. **Direction before speed** — no Build until spec, scenarios, contract, and *red* tests exist.
-2. **Trust evidence, not inspection** — a feature is trusted because its bound checks pass on a fresh receipt, a session that did not build it tried to break the green, and the residue (concurrency, security, architecture) was examined. A green proves the checks you declared ran — never that they were enough.
-3. **Never weaken a test or edit a frozen contract** to make the build pass.
-4. **No silent skips** — every Verify records `PASS`, `RISK-ACCEPTED`, or `HARD-STOP`. Security findings are always `HARD-STOP`.
-5. **Ask, don't guess.**
-
-## The decisions survive; the output is disposable
-
-The durable asset is the decisions — rules, assumptions, contract, checks. What you
-produced is one thing that satisfies them and can be made again: a module, a report,
-a reconciliation. If the thing you'd be upset to lose is the output rather than the
-reasoning that justified it, you're still working the old way.
+1. **Direction before build** — no production code before rules, assumptions and checks exist and the checks have failed for the right reason.
+2. **Evidence, not inspection** — a change is trusted because its checks pass fresh on the committed tree and its residue was read. A green proves the checks you wrote ran — never that they were enough.
+3. **Never weaken a sealed check or edit the contract to pass** — changed intent is a visible `refreeze` with a reason.
+4. **No silent outcomes** — every task ends `PASS`, `RISK-ACCEPTED` or `HARD-STOP`; every guess is an assumption the human can read. Security findings are always `HARD-STOP`.
+5. **`invariants:` bind every change**, Quick included.
 
 ## Read the method
 
-- 📖 [Read the book](https://pilotspace.github.io/ADD/) — the full AIDD method, chapter by chapter
-- 🔍 [Full hands-on walkthrough](./GETTING-STARTED.md) — one real feature, end to end
+- 📖 [Read the book](https://pilotspace.github.io/ADD/) — the full method, chapter by chapter
+- 🔍 [Quickstart](./GETTING-STARTED.md) — one real feature, end to end
 - 📒 [Beyond code](./BEYOND-CODE.md) — one real month-end close, end to end
 - 📊 [Benchmark results](https://github.com/pilotspace/ADD/tree/main/benchmark/results) — every trust and cost claim, measured
-- ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/) — where we tie, where they win, what only ADD guarantees
-- 🗞️ [ADD Across the Org: AI-Driven Development Beyond Code](https://inkpaper-blog.pages.dev/series/add-across-the-org/)
+- ⚖️ [ADD vs spec-kit — the honest comparison](https://pilotspace.github.io/ADD/appendix-h-add-vs-spec-kit/)
 
 ## Develop
 
 ```bash
-npm test     # runs the Python tests for the tooling (red/green)
+python3 -m pytest -q      # from add-method/
 ```
 
 License: MIT.

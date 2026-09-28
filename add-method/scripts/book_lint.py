@@ -1,122 +1,125 @@
 #!/usr/bin/env python3
-"""book_lint — the acceptance harness for the ADD-3.0 book alignment (milestone book-align).
+"""book_lint — structural and vocabulary checks for the ADD book (add-method/docs/).
 
-Two jobs, both pure reads:
+ADD 4.0 has no engine and no CLI: the method is one skill, run with files, git and the project's
+own test command. The book must teach exactly that. These pure-read helpers back
+`tests/book/test_book.py` and can be run by hand:
 
-  * STRUCTURE (book-toc) — the frozen target-TOC manifest, an internal-link resolver, and a nav
-    reader, so the renumber can be asserted complete and link-clean.
-  * VOCAB (book-part1..4) — a banned-OKF-token scan + an `add <verb>` command-surface check, so a
-    rewritten chapter can be proven to teach only the shipped engine.
+    python3 add-method/scripts/book_lint.py        # exit 1 and a list of problems, or exit 0
 
-The manifest is the single source of truth for chapter identity: `target_chapters()` returns the
-ordered new-number → (filename, title) map the book must realize. `book_renumber.py` applies it;
-`tests/book/test_toc_structure.py` asserts it.
+Checks:
+  * every page named in the repo-root mkdocs.yml nav exists, and every docs page is in the nav;
+  * every relative link and image in a page resolves to a file inside docs/;
+  * no page tells the reader to run a retired 3.x verb (`add status`, `add freeze`, ...) in a code
+    span or code block, and no page names the removed engine files — except the one migration page,
+    whose job is to name them.
 """
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
-# ── the frozen target TOC (new number → filename, title) — approved 2026-08-07 ────────────────
-# Ordered. New 12/13 are the two added reference chapters. Filenames stay stable where the number
-# is unchanged (00,01,02,14,15,16,17,18) to spare external links; new slugs only where the number moved.
-TARGET_CHAPTERS = [
-    ("00", "00-introduction.md",            "00 · The shift: why ADD exists"),
-    ("01", "01-principles.md",              "01 · Core principles"),
-    ("02", "02-the-flow.md",                "02 · The three-beat loop, and what is disposable"),
-    ("03", "03-direction.md",               "03 · Direction — rules, plan, checks"),
-    ("04", "04-build.md",                   "04 · Build — red to green, inside scope"),
-    ("05", "05-verify.md",                  "05 · Verify — evidence, residue lenses, the gate"),
-    ("06", "06-the-loop.md",                "06 · The loop — observe, learn, close"),
-    ("07", "07-setup-and-lanes.md",         "07 · Setup and the four lanes"),
-    ("19", "19-dynamic-workflow.md",        "19 · The dynamic path — explore, steer, fan out"),
-    ("08", "08-parallel-work.md",           "08 · Parallel work — waves and worktrees"),
-    ("09", "09-governance.md",              "09 · Governance"),
-    ("10", "10-personas.md",                "10 · Personas — the team as lenses"),
-    ("11", "11-adoption.md",                "11 · Adoption"),
-    ("12", "12-bundle-format.md",           "12 · The .add/ bundle — ABF-1 format"),
-    ("13", "13-command-reference.md",       "13 · The add command reference"),
-    ("14", "14-foundation.md",              "14 · The foundation and the five living specs"),
-    ("15", "15-foundations-and-lineage.md", "15 · Foundations and lineage"),
-    ("16", "16-releasing.md",               "16 · Releasing"),
-    ("17", "17-components.md",              "17 · Components — monorepo and multi-repo"),
-    ("18", "18-personas.md",                "18 · Personas in practice — the project-fit loop"),
-]
+PKG = Path(__file__).resolve().parents[1]          # add-method/
+DOCS = PKG / "docs"
+MKDOCS = PKG.parent / "mkdocs.yml"
 
-# old filename → new filename. A merged trio maps to new 03; the split old-10 maps to its primary
-# (new 07); links that were specifically about parallel streams are repointed to 08 by the renumber
-# pass on a per-link basis, not here (this is the default owner).
-RENAME = {
-    "00-introduction.md":            "00-introduction.md",
-    "01-principles.md":              "01-principles.md",
-    "02-the-flow.md":                "02-the-flow.md",
-    "03-step-1-specify.md":          "03-direction.md",
-    "05-step-3-plan.md":             "03-direction.md",
-    "06-step-4-tests.md":            "03-direction.md",
-    "07-step-5-build.md":            "04-build.md",
-    "08-step-6-verify.md":           "05-verify.md",
-    "09-the-loop.md":                "06-the-loop.md",
-    "10-setup-and-stages.md":        "07-setup-and-lanes.md",
-    "11-governance.md":              "09-governance.md",
-    "12-roles.md":                   "10-personas.md",
-    "13-adoption.md":                "11-adoption.md",
-    "14-foundation.md":              "14-foundation.md",
-    "15-foundations-and-lineage.md": "15-foundations-and-lineage.md",
-    "16-releasing.md":               "16-releasing.md",
-    "17-components.md":              "17-components.md",
-    "18-personas.md":                "18-personas.md",
-}
+# The page that explains what 4.0 removed. Naming the retired surface is its whole job.
+MIGRATION_PAGE = "20-whats-new-in-4.md"
 
-# the two new reference chapters have no source; the renumber writes stubs the part-tasks fill.
-NEW_STUBS = ["12-bundle-format.md", "13-command-reference.md"]
+# The 3.x CLI verbs (the same list the skill guard uses, tests/test_skill_only.py).
+RETIRED_VERBS = ("status", "init", "new", "brief", "upgrade", "freeze", "interview", "replan",
+                 "repair", "run", "gate", "done", "learn", "check", "milestone-done", "deltas",
+                 "fold", "drop", "reopen", "milestone-archive", "doctor", "wave", "join", "advise",
+                 "refute", "release", "locate", "todo", "show", "search")
 
-# OKF / AIDD-2.x vocabulary the aligned book must NOT teach (vocab check, part-tasks).
-BANNED_TOKENS = [
-    "autonomy: auto", "autonomy: conservative", "autonomy: manual", "autonomy ladder",
-    "--stage", "new-task", "freeze --cross", "add.py", "state.json", "SOUL",
-    "graduation", "stage production", "MILESTONE.md", "PROJECT.md", "CONVENTIONS.md",
-    "SETUP-REVIEW.md", "dependencies.allowlist", "GEPA", "ship review", "ship-review",
-    "refute-read", "self-heal", "delta-append", "graduation-report",
-]
+# Names of the removed engine and agent roster. Prose that names them points at nothing.
+ENGINE_NAMES = ("cli.py", "add.py", ".add/tooling", "add-worker", "add-advisor", "graph.json")
 
-LINK_RE = re.compile(r"\]\(\.\/([0-9A-Za-z][0-9A-Za-z._-]*\.md)(?:#[^)]*)?\)")
+# `add <verb>` as a command: not glued to a path or package name, so `npx @pilotspace/add init`,
+# `pilotspace-add update`, `/add status` (the Claude Code skill invocation) and `git add .add/`
+# do not read as engine calls.
+VERB_RE = re.compile(r"(?<![\w/@.-])add\s+(" + "|".join(map(re.escape, RETIRED_VERBS))
+                     + r")(?![\w-])")
+CODE_SPAN = re.compile(r"`[^`\n]+`")
+LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+NAV_ENTRY = re.compile(r"^\s*-\s*(?:.*:\s*)?\"?([\w./-]+\.md)\"?\s*$")
 
 
-def target_chapters():
-    """The ordered frozen manifest: list of (number, filename, title)."""
-    return list(TARGET_CHAPTERS)
+def pages(docs: Path = DOCS) -> list[str]:
+    """Every markdown page under docs/, as a docs-relative posix path."""
+    return sorted(p.relative_to(docs).as_posix() for p in docs.rglob("*.md"))
 
 
-def target_filenames():
-    return {fn for _, fn, _ in TARGET_CHAPTERS}
+def nav_pages(mkdocs: Path = MKDOCS) -> list[str]:
+    """The .md files the mkdocs nav lists, in order."""
+    lines = mkdocs.read_text(encoding="utf-8").splitlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith("nav:"))
+    out = []
+    for line in lines[start + 1:]:
+        if line and not line.startswith((" ", "-", "#")):
+            break                                   # the next top-level key ends the nav
+        m = NAV_ENTRY.match(line)
+        if m:
+            out.append(m.group(1))
+    return out
 
 
-def internal_links(text: str):
-    """Every ./<file>.md target referenced from a markdown link in `text`."""
-    return LINK_RE.findall(text)
+def internal_links(text: str) -> list[str]:
+    """Relative link and image targets, anchors stripped. URLs and pure anchors are skipped."""
+    out = []
+    for target in LINK_RE.findall(text):
+        if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith("#"):
+            continue
+        out.append(target.split("#", 1)[0])
+    return [t for t in out if t]
 
 
-def resolve_links(docs_dir) -> list:
-    """Return [(chapter_file, bad_target), …] for every internal ./NN link that does not resolve
-    to a file that exists in `docs_dir`. README.md is a valid target (mkdocs maps it to the home)."""
-    docs = Path(docs_dir)
-    present = {p.name for p in docs.glob("*.md")} | {"README.md"}
+def unresolved_links(docs: Path = DOCS) -> list[tuple[str, str]]:
+    """(page, target) for every relative link that does not land on a file inside docs/."""
     bad = []
-    for md in sorted(docs.glob("*.md")):
-        for target in internal_links(md.read_text(encoding="utf-8")):
-            if target not in present:
-                bad.append((md.name, target))
+    root = docs.resolve()
+    for rel in pages(docs):
+        page = docs / rel
+        for target in internal_links(page.read_text(encoding="utf-8")):
+            dest = (page.parent / target).resolve()
+            if not dest.is_file() or root not in dest.parents:
+                bad.append((rel, target))
     return bad
 
 
-def nav_chapters(mkdocs_path) -> list:
-    """The ordered list of chapter filenames the mkdocs.yml nav references (NN-*.md only, in order)."""
-    text = Path(mkdocs_path).read_text(encoding="utf-8")
-    # nav entries look like:  "<title>": NN-name.md  — collect the .md targets in file order.
-    found = re.findall(r":\s*([0-9]{2}-[0-9A-Za-z._-]*\.md)\s*$", text, flags=re.MULTILINE)
-    return found
+def retired_verb_hits(text: str) -> list[tuple[int, str]]:
+    """(line, verb) for every retired verb stated as a command — in a code span or a code block."""
+    hits, fenced = [], False
+    for n, line in enumerate(text.splitlines(), 1):
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+            continue
+        code = line if fenced else " ".join(s.strip("`") for s in CODE_SPAN.findall(line))
+        hits.extend((n, v) for v in VERB_RE.findall(code))
+    return hits
 
 
-def banned_hits(text: str) -> list:
-    """Every banned OKF token present in `text` (substring match, case-sensitive where it matters)."""
-    return [tok for tok in BANNED_TOKENS if tok in text]
+def engine_name_hits(text: str) -> list[tuple[int, str]]:
+    """(line, name) for every mention of a removed engine file or roster agent."""
+    return [(n, name) for n, line in enumerate(text.splitlines(), 1)
+            for name in ENGINE_NAMES if name in line]
+
+
+def problems(docs: Path = DOCS, mkdocs: Path = MKDOCS) -> list[str]:
+    out = []
+    nav, have = nav_pages(mkdocs), set(pages(docs))
+    out += [f"nav names a missing page: {p}" for p in nav if p not in have]
+    out += [f"page is not in the nav: {p}" for p in sorted(have - set(nav))]
+    out += [f"{p}: unresolved link {t}" for p, t in unresolved_links(docs)]
+    for rel in sorted(have - {MIGRATION_PAGE}):
+        text = (docs / rel).read_text(encoding="utf-8")
+        out += [f"{rel}:{n}: retired verb `add {v}`" for n, v in retired_verb_hits(text)]
+        out += [f"{rel}:{n}: names removed engine file {x}" for n, x in engine_name_hits(text)]
+    return out
+
+
+if __name__ == "__main__":
+    found = problems()
+    print("\n".join(found) if found else "book_lint: clean")
+    sys.exit(1 if found else 0)
