@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADD 3.7 → 4.0 — one skill, no engine</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f2f2ef;
+    --surface-1: #fcfcfb;
+    --surface-2: #f0efec;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #7a7974;
+    --border: rgba(11, 11, 11, 0.09);
+    --s37: #eb6834;   /* categorical slot 2 — ADD 3.7 */
+    --s40: #2a78d6;   /* categorical slot 1 — ADD 4.0 */
+    --neutral-bar: #a3a29c;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --bg: #111110;
+      --surface-1: #1a1a19;
+      --surface-2: #232321;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #8f8e86;
+      --border: rgba(255,255,255,0.09);
+      --s37: #d95926;
+      --s40: #3987e5;
+      --neutral-bar: #6b6a64;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #111110;
+    --surface-1: #1a1a19;
+    --surface-2: #232321;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --border: rgba(255,255,255,0.09);
+    --s37: #d95926;
+    --s40: #3987e5;
+    --neutral-bar: #6b6a64;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text-primary);
+    font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  html { scroll-behavior: smooth; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .86em; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 72px 0 24px; scroll-margin-top: 56px; }
+  h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); line-height: 1.05; letter-spacing: -0.03em; margin: 0 0 16px; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); letter-spacing: -0.02em; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 0 0 6px; }
+  .lede { color: var(--text-secondary); font-size: 1.15rem; max-width: 720px; margin: 0; }
+  .sub { color: var(--text-secondary); margin: 0 0 28px; max-width: 760px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: 0; margin-right: 6px; }
+  .dot.s37 { background: var(--s37); } .dot.s40 { background: var(--s40); }
+  .topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--border); }
+  .topbar .wrap { display: flex; align-items: center; gap: 18px; height: 52px; }
+  .topbar nav { display: flex; gap: 16px; flex-wrap: wrap; font-size: .9rem; color: var(--text-secondary); }
+  .topbar nav a { text-decoration: none; }
+  .topbar nav a:hover { color: var(--text-primary); }
+  .brand { font-weight: 700; letter-spacing: -0.01em; }
+  .spacer { flex: 1; }
+  button { font: inherit; color: inherit; }
+  .ghost { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; cursor: pointer; color: var(--text-secondary); }
+  .ghost:hover { color: var(--text-primary); }
+  .hero { padding-top: 88px; }
+  .tag { display: inline-flex; gap: 8px; align-items: center; font-size: .85rem; color: var(--text-secondary);
+    border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; margin-bottom: 22px; background: var(--surface-1); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 40px; }
+  .stat { padding: 18px 20px; }
+  .stat .label { color: var(--text-secondary); font-size: .88rem; }
+  .stat .big { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .stat .from { color: var(--text-muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+
+  .seg { display: inline-flex; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); position: relative; }
+  .seg button { position: relative; border: 0; background: transparent; padding: 8px 18px; border-radius: 9px; cursor: pointer;
+    font-weight: 600; color: var(--text-secondary); z-index: 1; }
+  .seg button[aria-pressed="true"] { color: var(--text-primary); }
+  .seg .pill { position: absolute; inset: 0; border-radius: 9px; background: var(--surface-1); box-shadow: var(--shadow); z-index: -1; }
+  .seg .pill .edge { position: absolute; left: 12px; right: 12px; bottom: 3px; height: 3px; border-radius: 3px; }
+
+  .stackgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 20px; margin-top: 24px; }
+  @media (max-width: 860px) { .stackgrid { grid-template-columns: 1fr; } }
+  .stack { padding: 18px; display: flex; flex-direction: column; gap: 10px; min-height: 440px; }
+  .layer { border-radius: 10px; padding: 12px 14px; border: 1px solid var(--border); background: var(--surface-2); }
+  .layer .k { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+  .layer .v { font-weight: 600; }
+  .layer .d { color: var(--text-secondary); font-size: .9rem; }
+  .layer.engine { border-style: dashed; border-width: 2px; }
+  .feed { padding: 18px; min-height: 440px; display: flex; flex-direction: column; }
+  .feed h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .feed .count { color: var(--text-muted); font-weight: 500; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  .calls { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
+  .calls li { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 7px 10px;
+    border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); font-size: .9rem; }
+  .calls .n { color: var(--text-muted); font-variant-numeric: tabular-nums; font-size: .8rem; }
+  .calls .kind { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+
+  .loop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 24px; }
+  @media (max-width: 900px) { .loop { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 600px) { .loop { grid-template-columns: 1fr; } }
+  .stage { padding: 16px 18px 18px 22px; position: relative; overflow: hidden; min-height: 210px; }
+  .stage .idx { font-size: .75rem; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; }
+  .stage .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px; }
+  .chip { padding: 3px 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); }
+  .stage p { margin: 0; color: var(--text-secondary); font-size: .92rem; }
+
+  .values { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-top: 24px; }
+  @media (max-width: 900px) { .values { grid-template-columns: 1fr; } }
+  .col { padding: 18px 18px 8px; }
+  .col h3 { display: flex; gap: 8px; align-items: center; font-size: 1.1rem; }
+  .col .blurb { color: var(--text-secondary); font-size: .9rem; margin: 0 0 12px; }
+  .items { list-style: none; padding: 0; margin: 0; }
+  .items li { padding: 10px 0; border-top: 1px solid var(--border); display: grid; grid-template-columns: 22px 1fr; gap: 8px; }
+  .items .t { font-weight: 600; }
+  .items .s { color: var(--text-secondary); font-size: .88rem; }
+  .icon { width: 18px; height: 18px; margin-top: 3px; flex: none; }
+  .strike { position: relative; display: inline-block; }
+  .strike .line { position: absolute; left: 0; right: 0; top: 55%; height: 2px; background: var(--text-muted); transform-origin: left; display: block; }
+  .removed .t { color: var(--text-secondary); }
+
+  .legend { display: flex; gap: 18px; align-items: center; color: var(--text-secondary); font-size: .9rem; flex-wrap: wrap; }
+  .metrics { margin-top: 18px; padding: 8px 20px 16px; }
+  .metric { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); }
+  .metric:first-child { border-top: 0; }
+  @media (max-width: 640px) { .metric { grid-template-columns: 1fr; gap: 6px; } }
+  .metric .name { font-weight: 600; font-size: .95rem; }
+  .metric .unit { color: var(--text-muted); font-size: .8rem; }
+  .bars { display: flex; flex-direction: column; gap: 6px; }
+  .barrow { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 8px; }
+  .barrow .ver { font-size: .75rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .track { position: relative; height: 22px; display: flex; align-items: center; outline: none; cursor: default; }
+  .track:focus-visible { box-shadow: 0 0 0 2px var(--s40); border-radius: 4px; }
+  .fill { height: 12px; border-radius: 0 4px 4px 0; }
+  .val { margin-left: 8px; font-size: .85rem; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tip { position: fixed; z-index: 50; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; box-shadow: var(--shadow); font-size: .85rem; min-width: 190px; }
+  .tip .row { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+  table.data { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  table.data th, table.data td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  table.data th { color: var(--text-secondary); font-weight: 600; border-top: 0; }
+  .why { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-top: 16px; }
+  @media (max-width: 860px) { .why { grid-template-columns: 1fr; } }
+  .why .card { padding: 18px 20px; }
+  .note { color: var(--text-muted); font-size: .85rem; margin: 10px 0 0; }
+
+  .trade { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch; margin-top: 24px; }
+  @media (max-width: 860px) { .trade { grid-template-columns: 1fr; } }
+  .trade .card { padding: 20px; }
+  .swap { align-self: center; font-size: 1.6rem; color: var(--text-muted); text-align: center; }
+  pre.term { margin: 12px 0 0; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+    overflow-x: auto; font-size: .82rem; line-height: 1.6; }
+
+  .map { margin-top: 20px; padding: 6px 0; }
+  .maprow { display: grid; grid-template-columns: 1fr 28px 1fr; gap: 10px; padding: 10px 20px; border-top: 1px solid var(--border); align-items: center; }
+  .maprow:first-child { border-top: 0; }
+  @media (max-width: 700px) { .maprow { grid-template-columns: 1fr; } .maprow .to { display: none; } }
+  .maprow .from { color: var(--text-secondary); }
+  .maprow .to { color: var(--text-muted); text-align: center; }
+  footer { padding: 56px 0 72px; color: var(--text-muted); font-size: .88rem; }
+  footer ul { padding-left: 18px; }
+  .err { max-width: 640px; margin: 80px auto; padding: 20px; }
+  /* long code strings must wrap inside grid cells, never widen the page */
+  .stackgrid > *, .loop > *, .values > *, .why > *, .trade > *, .calls li > *, .maprow > *, .metric > * { min-width: 0; }
+  .calls code, .maprow code, .chip, .layer .d, .layer .v { overflow-wrap: anywhere; }
+  @media (max-width: 640px) {
+    .topbar nav { display: none; }
+    .wrap { padding: 0 16px; }
+    section { padding-top: 56px; }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+    "react-dom":"https://esm.sh/react-dom@18.3.1?external=react",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?external=react",
+    "framer-motion": "https://esm.sh/framer-motion@11.11.17?external=react,react-dom",
+    "htm": "https://esm.sh/htm@3.1.1"
+  }
+}
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  // If the CDN modules fail to load (offline) or throw, say so instead of leaving a blank page.
+  window.addFail = function (detail) {
+    var root = document.getElementById("root");
+    if (!root || root.children.length) return;
+    var box = document.createElement("div");
+    box.className = "card err";
+    var strong = document.createElement("strong");
+    strong.textContent = "Could not load React / Framer Motion from esm.sh.";
+    box.appendChild(strong);
+    box.appendChild(document.createElement("br"));
+    box.appendChild(document.createTextNode("This page needs a network connection the first time it opens." + (detail ? " (" + detail + ")" : "")));
+    root.appendChild(box);
+  };
+  window.addEventListener("error", function (e) { console.error("page error:", e.message); window.addFail(e.message); });
+</script>
+<noscript><div class="card err">This page animates with React + Framer Motion and needs JavaScript.</div></noscript>
+
+<script type="module" onerror="window.addFail('module fetch failed')">
+import React, { useState, useEffect, useRef } from "react";
+import { createRoot } from "react-dom/client";
+import { motion, AnimatePresence, LayoutGroup, useInView, useReducedMotion, animate } from "framer-motion";
+import htm from "htm";
+
+const html = htm.bind(React.createElement);
+
+/* ------------------------------------------------ data — every figure is measured from the repo */
+
+const HERO = [
+  { label: "Engine code", from: 9943, to: 0, unit: "lines", note: "add.py 9,424 + cli.py 519" },
+  { label: "CLI verbs", from: 30, to: 0, unit: "", note: "status · freeze · run · gate · …" },
+  { label: "Human approvals per task", from: 1, to: 0, unit: "", note: "the freeze → reviewed after" },
+  { label: "Skill the model reads", from: 106, to: 18, unit: "KB", note: "17 files → 3 files" },
+];
+
+const STACK = {
+  "3.7": [
+    { id: "human", k: "Human", v: "Approves at the freeze", d: "add interview → answer every assumption → add freeze --authority human" },
+    { id: "agent", k: "Agent", v: "Skill + add-worker / add-advisor roster", d: "17 skill files · phase guides · 2 roster agents" },
+    { id: "engine", k: "Engine", v: "Python engine · 30 verbs · 169 refusal codes", d: "add.py + cli.py — stamps, digests, receipts, gates", engine: true },
+    { id: "tools", k: "Tools", v: "git · test command, wrapped by add run", d: "the engine runs your tests and hashes your files" },
+    { id: "bundle", k: "Bundle .add/", v: "Nodes + graph.json + index.md + runs/ + stamps", d: "compiled views the engine rewrites" },
+  ],
+  "4.0": [
+    { id: "human", k: "Human", v: "Reviews after", d: "the session report / PR — HARD-STOPs first, every assumption listed" },
+    { id: "agent", k: "Agent", v: "One skill: SKILL.md + 2 references", d: "174 lines · the model plans; fresh subagents where the skill says" },
+    { id: "tools", k: "Tools", v: "git · the project's test command", d: "freeze(<slug>) commit is the seal · git diff proves it held" },
+    { id: "bundle", k: "Bundle .add/", v: "Plain markdown the model maintains", d: "PROJECT · specs · milestones · tasks · personas" },
+  ],
+};
+
+/* One standard Task — 3.7 from the shipped command cookbook, 4.0 from SKILL.md */
+const CALLS = {
+  "3.7": [
+    ["add status", "engine"], ["add new Task <slug> --depth standard", "engine"], ["edit .add/tasks/<slug>.md", "file"],
+    ["run checks red", "test"], ["add interview <slug>", "engine"], ["add interview --answer A1=confirm …", "engine"],
+    ["add freeze <slug> --authority human", "engine"], ["add brief <slug>", "engine"], ["write code", "file"],
+    ["add run <slug> -- pytest …", "engine"], ["add run <slug> --floor -- pytest", "engine"],
+    ["add refute <slug> --tier T2 --held", "engine"], ["add gate <slug> PASS", "engine"], ["add learn method \"…\"", "engine"],
+  ],
+  "4.0": [
+    ["read .add/PROJECT.md + open tasks", "file"], ["write .add/tasks/<slug>.md", "file"], ["run checks red", "test"],
+    ["git commit \"freeze(<slug>)\"", "git"], ["write code", "file"], ["git diff <freeze> HEAD -- <sealed>", "git"],
+    ["run check + regression", "test"], ["write ## EVIDENCE + verdict", "file"], ["git commit \"verify(<slug>): PASS\"", "git"],
+  ],
+};
+const MAX_ENGINE = CALLS["3.7"].filter((c) => c[1] === "engine").length;
+
+const STAGES = [
+  { name: "Orient", "3.7": { chips: ["add status"], p: "A resume cursor compiled from graph.json and the node stamps." },
+                    "4.0": { chips: [".add/PROJECT.md", "open task files", "git log"], p: "Read the files. Nothing is compiled; the files are the state." } },
+  { name: "Size", "3.7": { chips: ["intake", "add new Task --depth"], p: "Lanes and the floor, then the engine scaffolds the node." },
+                  "4.0": { chips: ["Quick · Task · Explore · Milestone"], p: "Same lanes, same floor. The model writes the task file from format.md." } },
+  { name: "Direction", "3.7": { chips: ["RULES · ASSUMPTIONS · CHECKS", "add interview", "add freeze"], p: "A human answers each assumption; freeze stamps a sha256 digest." },
+                       "4.0": { chips: ["RULES · ASSUMPTIONS · CHECKS", "run red", "freeze(<slug>) commit"], p: "Same contract, same red-first rule. The seal is a git commit — no approval." } },
+  { name: "Build", "3.7": { chips: ["add brief", "add replan", "add repair"], p: "An act: brief stamp opens Build; steering and repairs are recorded verbs." },
+                   "4.0": { chips: ["code to green", "refreeze(<slug>): why"], p: "Never edit a sealed check. Changed intent is a visible refreeze commit." } },
+  { name: "Verify", "3.7": { chips: ["add run", "add refute --tier T2", "add gate PASS"], p: "Receipts hash scope files; the gate refuses on ~25 codes." },
+                    "4.0": { chips: ["git diff <freeze> HEAD", "fresh run", "residue · refute", "## EVIDENCE"], p: "Seal diff empty, checks green on the committed tree, one verdict written down." } },
+  { name: "Learn", "3.7": { chips: ["add learn", "add fold --bind", "add milestone-done"], p: "Lessons filed and folded by verb; the goal-gate refuses unchecked boxes." },
+                   "4.0": { chips: ["## Deltas", "Decisions that bind", "tick EXIT with evidence"], p: "A line in the spec; promote what held. Milestones close on evidence, not tasks-done." } },
+];
+
+const KEPT = [
+  ["Direction before build", "Rules, assumptions and failing checks exist before any production code."],
+  ["Red for the right reason", "A check must fail because the behavior is absent — not on a typo."],
+  ["Evidence over inspection", "Trust checks run on the committed tree, never a plausible diff."],
+  ["Never weaken a sealed check", "Changing intent is a visible refreeze with a reason."],
+  ["Three verdicts, no silent skips", "PASS · RISK-ACCEPTED · HARD-STOP — security is always HARD-STOP."],
+  ["Right-sized lanes + the floor", "Quick · Task · Explore · Milestone; security · data · architecture ≥ Task."],
+  ["The assumption sweep", "who · which · when · absent · order · experience — one silence per line."],
+  ["Residue review + refute", "Security · concurrency · architecture, and probes derived from the rules."],
+  ["invariants: bind everything", "PROJECT.md invariants hold for every change, Quick included."],
+  ["A durable bundle", "Resume across sessions from .add/ — five lens specs, EXIT-proven milestones."],
+  ["The learning loop", "Deltas → decisions that bind; an escaped defect names its missing check."],
+  ["Personas as lenses", "Project personas, the teacher corpus and persona-author."],
+];
+
+const CHANGED = [
+  ["Approval → review", "One human freeze per task becomes a report that lists every assumption."],
+  ["Digest stamp → git commit", "freeze(<slug>) seals the task file and its check files."],
+  ["Tamper tripwire → git diff", "git diff <freeze> HEAD -- <sealed files> must print nothing."],
+  ["Run receipt → EVIDENCE", "Real command, exit code and counts written in the task file."],
+  ["add gate → verify commit", "verify(<slug>): <verdict>, with freeze and head sha recorded."],
+  ["Roster agents → the model", "It plans itself; a fresh subagent refutes security · data · architecture."],
+  ["Installers", "4,142 → 791 lines, no dependencies, 3.x cleanup built in."],
+];
+
+const REMOVED = [
+  ["The Python engine", "add.py + cli.py — 9,943 lines."],
+  ["30 CLI verbs", "status, new, brief, interview, freeze, run, gate, learn, fold, doctor, wave, …"],
+  ["169 refusal codes", "R:OLDSEAL, R:GREENLIE, R:STALENEEDS, … — mechanical refusal itself."],
+  ["Compiled state", "graph.json, compiled index.md, log.md, runs/ receipts, stamps and digests."],
+  ["Interview nodes & the human freeze", "The one up-front approval per task."],
+  ["add-worker / add-advisor", "The agent roster."],
+  ["Engine & prose-pin tests", "~2,090 tests collected → 128; what they guarded no longer exists."],
+  ["FORMAT.md (1,114 lines)", "Replaced by references/format.md (165 lines)."],
+];
+
+/* Units differ per row → each row is its own small multiple, on its own scale. */
+const METRICS = [
+  { name: "Engine code", unit: "lines", a: 9943, b: 0 },
+  { name: "Installers (npm + pip)", unit: "lines", a: 4142, b: 791 },
+  { name: "Skill prose", unit: "KB", a: 106, b: 18 },
+  { name: "Skill files", unit: "files", a: 17, b: 3 },
+  { name: "Format spec", unit: "lines", a: 1114, b: 165 },
+  { name: "Tests collected", unit: "tests", a: 2090, b: 128 },
+  { name: "CLI verbs", unit: "verbs", a: 30, b: 0 },
+  { name: "Refusal codes", unit: "codes", a: 169, b: 0 },
+];
+
+const MAP = [
+  ["add freeze — digest of the direction", "freeze(<slug>) git commit"],
+  ["tamper tripwire on sealed files", "git diff <freeze> HEAD -- <sealed files> is empty"],
+  ["add refreeze / change request", "refreeze(<slug>): <why> commit, reason under ## LOG"],
+  ["add run — Run receipt", "command · exit code · counts in ## EVIDENCE"],
+  ["add gate PASS | RISK-ACCEPTED | HARD-STOP", "same verdicts, committed as verify(<slug>): <verdict>"],
+  ["add refute + tiers", "1–3 probes from the rules; fresh subagent for security · data · architecture"],
+  ["add interview + human freeze", "## ASSUMPTIONS, reviewed after in the report"],
+  ["add status", "read PROJECT.md + open task files; git log"],
+  ["add learn / deltas / fold", "a line in ## Deltas; promote to Decisions that bind"],
+  ["add milestone-done", "tick each EXIT box with its evidence"],
+  ["add wave / join", "one git worktree per task, disjoint scope:"],
+  ["doctor --sync · graph.json · index.md", "nothing — nothing is compiled"],
+];
+
+/* ------------------------------------------------ helpers */
+
+const fmt = (n) => n.toLocaleString("en-US");
+const EASE = [0.22, 1, 0.36, 1];
+const change = (m) => (m.b === 0 ? "removed" : "−" + Math.round((1 - m.b / m.a) * 100) + "%");
+
+function Counter({ from, to, go, reduce }) {
+  const [v, setV] = useState(from);
+  useEffect(() => {
+    if (!go) return;
+    if (reduce) { setV(to); return; }
+    const c = animate(from, to, { duration: 1.6, ease: EASE, delay: 0.35, onUpdate: (x) => setV(Math.round(x)) });
+    return () => c.stop();
+  }, [go, reduce]);
+  return html`<span>${fmt(v)}</span>`;
+}
+
+const fadeUp = (reduce, i = 0) => (reduce ? {} : {
+  initial: { opacity: 0, y: 18 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.2 },
+  transition: { duration: 0.55, delay: i * 0.06, ease: EASE },
+});
+
+function Seg({ value, onChange, id }) {
+  return html`
+    <div class="seg" role="group" aria-label="Compare version">
+      ${["3.7", "4.0"].map((v) => html`
+        <button key=${v} aria-pressed=${value === v} onClick=${() => onChange(v)}>
+          ${value === v && html`<${motion.span} layoutId=${"pill-" + id} class="pill" transition=${{ type: "spring", stiffness: 420, damping: 34 }}>
+            <span class="edge" style=${{ background: v === "3.7" ? "var(--s37)" : "var(--s40)" }}></span>
+          </${motion.span}>`}
+          ADD ${v}
+        </button>`)}
+    </div>`;
+}
+
+/* ------------------------------------------------ sections */
+
+function Hero({ reduce }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.3 });
+  return html`
+    <section class="hero" id="top">
+      <div class="wrap">
+        <${motion.div} ...${fadeUp(reduce)}>
+          <div class="tag"><span class="dot s37"></span>3.7 · last engine release <span style=${{ color: "var(--text-muted)" }}>→</span><span class="dot s40"></span>4.0 · PR #226</div>
+          <h1>One skill.<br/>No engine.</h1>
+          <p class="lede">ADD 4.0 keeps the method — direction before build, evidence over inspection, a durable bundle — and drops the machinery that enforced it. The model follows one markdown skill with the tools every project already has: files, git, and its own test command.</p>
+        </${motion.div}>
+        <div class="stats" ref=${ref}>
+          ${HERO.map((h, i) => html`
+            <${motion.div} key=${h.label} class="card stat" ...${fadeUp(reduce, i + 1)}>
+              <div class="label">${h.label}</div>
+              <div class="big"><${Counter} from=${h.from} to=${h.to} go=${inView} reduce=${reduce} />${h.unit ? html`<span style=${{ fontSize: "1rem", fontWeight: 600, color: "var(--text-secondary)" }}> ${h.unit}</span>` : null}</div>
+              <div class="from">was ${fmt(h.from)}${h.unit ? " " + h.unit : ""} · ${h.note}</div>
+            </${motion.div}>`)}
+        </div>
+      </div>
+    </section>`;
+}
+
+function Stack({ reduce }) {
+  const [ver, setVer] = useState("3.7");
+  const [auto, setAuto] = useState(true);
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.3 });
+  useEffect(() => {
+    if (!auto || !inView || reduce) return;
+    const t = setInterval(() => setVer((v) => (v === "3.7" ? "4.0" : "3.7")), 4200);
+    return () => clearInterval(t);
+  }, [auto, inView, reduce]);
+  const pick = (v) => { setAuto(false); setVer(v); };
+  const calls = CALLS[ver];
+  const engineCalls = calls.filter((c) => c[1] === "engine").length;
+  const color = ver === "3.7" ? "var(--s37)" : "var(--s40)";
+  return html`
+    <section id="stack" ref=${ref}>
+      <div class="wrap">
+        <h2>What sits between the agent and your code</h2>
+        <p class="sub">In 3.7 every step went through the engine. In 4.0 that layer is gone — the agent works the bundle and git directly.${auto && !reduce ? " Auto-playing; pick a version to hold it." : ""}</p>
+        <${Seg} value=${ver} onChange=${pick} id="stack" />
+        <div class="stackgrid">
+          <div class="card stack">
+            <${LayoutGroup}>
+              <${AnimatePresence} initial=${false} mode="popLayout">
+                ${STACK[ver].map((l) => html`
+                  <${motion.div} key=${l.id + (l.id === "human" || l.id === "agent" || l.id === "bundle" ? ver : "")} layout=${!reduce}
+                    initial=${reduce ? false : { opacity: 0, scale: 0.96 }}
+                    animate=${{ opacity: 1, scale: 1 }}
+                    exit=${reduce ? undefined : { opacity: 0, scale: 0.9, filter: "blur(4px)", transition: { duration: 0.3 } }}
+                    transition=${{ type: "spring", stiffness: 300, damping: 30 }}
+                    class=${"layer" + (l.engine ? " engine" : "")}
+                    style=${l.engine ? { borderColor: "var(--s37)" } : (l.id === "tools" && ver === "4.0" ? { borderColor: "var(--s40)" } : undefined)}>
+                    <div class="k">${l.k}</div>
+                    <div class="v">${l.v}</div>
+                    <div class="d">${l.d}</div>
+                  </${motion.div}>`)}
+              </${AnimatePresence}>
+            </${LayoutGroup}>
+          </div>
+          <div class="card feed">
+            <h3><span>One Task, start to finish</span>
+              <span class="count">${calls.length} steps · <strong style=${{ color: "var(--text-primary)" }}>${engineCalls}</strong> engine calls</span></h3>
+            <div style=${{ height: 4, borderRadius: 4, background: "var(--surface-2)", overflow: "hidden" }} aria-hidden="true">
+              <${motion.div} animate=${{ width: (engineCalls / MAX_ENGINE) * 100 + "%" }} transition=${{ duration: reduce ? 0 : 0.6 }}
+                style=${{ height: "100%", background: color, borderRadius: 4 }} />
+            </div>
+            <${AnimatePresence} mode="wait" initial=${false}>
+              <${motion.ul} key=${ver} class="calls"
+                initial=${reduce ? false : "hidden"} animate="show" exit=${reduce ? undefined : { opacity: 0, transition: { duration: 0.2 } }}
+                variants=${{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}>
+                ${calls.map(([c, kind], i) => html`
+                  <${motion.li} key=${c + i}
+                    variants=${{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
+                    style=${kind === "engine" ? { borderColor: "color-mix(in srgb, var(--s37) 55%, transparent)" } : undefined}>
+                    <span class="n">${i + 1}</span><code>${c}</code><span class="kind">${kind}</span>
+                  </${motion.li}>`)}
+              </${motion.ul}>
+            </${AnimatePresence}>
+            <p class="note">Steps for one standard Task: 3.7 from its command cookbook, 4.0 from SKILL.md. Each engine call was a full agent turn re-reading its context; in the 3.x benchmarks, engine ceremony was a large share of all turns.</p>
+          </div>
+        </div>
+      </div>
+    </section>`;
+}
+
+function Loop({ reduce }) {
+  const [ver, setVer] = useState("4.0");
+  const color = ver === "3.7" ? "var(--s37)" : "var(--s40)";
+  return html`
+    <section id="loop">
+      <div class="wrap">
+        <h2>The loop is the same — the mechanism is not</h2>
+        <p class="sub">Direction → Build → Verify survives intact. Toggle to see how each stage is carried out.</p>
+        <${Seg} value=${ver} onChange=${setVer} id="loop" />
+        <div class="loop">
+          ${STAGES.map((s, i) => html`
+            <${motion.div} key=${s.name} class="card stage" ...${fadeUp(reduce, i)}>
+              <${motion.span} class="rail" animate=${{ backgroundColor: color }} transition=${{ duration: 0.4 }} />
+              <div class="idx">${String(i + 1).padStart(2, "0")} · ${s.name}</div>
+              <${AnimatePresence} mode="wait" initial=${false}>
+                <${motion.div} key=${ver}
+                  initial=${reduce ? false : { opacity: 0, y: 10, filter: "blur(3px)" }}
+                  animate=${{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit=${reduce ? undefined : { opacity: 0, y: -8, filter: "blur(3px)" }}
+                  transition=${{ duration: 0.28, delay: reduce ? 0 : i * 0.04 }}>
+                  <div class="chips">${s[ver].chips.map((c) => html`<code key=${c} class="chip">${c}</code>`)}</div>
+                  <p>${s[ver].p}</p>
+                </${motion.div}>
+              </${AnimatePresence}>
+            </${motion.div}>`)}
+        </div>
+      </div>
+    </section>`;
+}
+
+const Check = () => html`<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-opacity=".35"/><path d="M6 10.5l2.6 2.6L14 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const Swap = () => html`<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-opacity=".35"/><path d="M6 8h8l-2.5-2.5M14 12H6l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const Cross = () => html`<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-opacity=".35"/><path d="M7 7l6 6M13 7l-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+
+function Values({ reduce }) {
+  const list = (items, Icon, removed) => html`
+    <${motion.ul} class=${"items" + (removed ? " removed" : "")}
+      initial=${reduce ? false : "hidden"} whileInView="show" viewport=${{ once: true, amount: 0.15 }}
+      variants=${{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}>
+      ${items.map(([t, s]) => html`
+        <${motion.li} key=${t} variants=${{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
+          <${Icon} />
+          <div>
+            <div class="t">${removed
+              ? html`<span class="strike">${t}<${motion.span} class="line" aria-hidden="true"
+                  variants=${{ hidden: { scaleX: 0 }, show: { scaleX: 1, transition: { delay: 0.35, duration: 0.5 } } }} /></span>`
+              : t}</div>
+            <div class="s">${s}</div>
+          </div>
+        </${motion.li}>`)}
+    </${motion.ul}>`;
+  return html`
+    <section id="values">
+      <div class="wrap">
+        <h2>What ADD keeps, changes and removes</h2>
+        <p class="sub">The values are the method; the engine was one way to enforce them. 4.0 keeps every value and changes how each is carried.</p>
+        <div class="values">
+          <div class="card col"><h3><${Check} /> Kept — the values</h3><p class="blurb">Unchanged in 4.0, now stated as rules the model follows.</p>${list(KEPT, Check, false)}</div>
+          <div class="card col"><h3><${Swap} /> Changed — the mechanism</h3><p class="blurb">Same guarantee, carried by files and git instead of verbs.</p>${list(CHANGED, Swap, false)}</div>
+          <div class="card col"><h3><${Cross} /> Removed — the machinery</h3><p class="blurb">Gone from every shipped tree; history stays in archive/.</p>${list(REMOVED, Cross, true)}</div>
+        </div>
+      </div>
+    </section>`;
+}
+
+function Metrics({ reduce }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.15 });
+  const [tip, setTip] = useState(null);
+  const [table, setTable] = useState(false);
+  const show = (e, m) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setTip({ x: Math.min(r.left + 12, window.innerWidth - 220), y: Math.max(8, r.top - 86), m });
+  };
+  const bar = (m, which, i) => {
+    const v = which === "a" ? m.a : m.b;
+    const pct = (v / m.a) * 100;
+    const label = which === "a" ? "3.7" : "4.0";
+    const target = v === 0 ? "0px" : `max(4px, calc(${pct}% - 110px))`;
+    return html`
+      <div class="barrow" key=${which}>
+        <span class="ver">${label}</span>
+        <div class="track" tabIndex="0" role="img" aria-label=${`${m.name}, ADD ${label}: ${fmt(v)} ${m.unit}`}
+          onMouseEnter=${(e) => show(e, m)} onMouseMove=${(e) => show(e, m)} onMouseLeave=${() => setTip(null)}
+          onFocus=${(e) => show(e, m)} onBlur=${() => setTip(null)}>
+          <${motion.div} class="fill" style=${{ background: which === "a" ? "var(--s37)" : "var(--s40)" }}
+            initial=${{ width: reduce ? target : "0px" }}
+            animate=${{ width: inView || reduce ? target : "0px" }}
+            transition=${{ duration: reduce ? 0 : 1.1, delay: reduce ? 0 : 0.08 * i + (which === "b" ? 0.25 : 0), ease: EASE }} />
+          <span class="val">${fmt(v)} ${m.unit}</span>
+        </div>
+      </div>`;
+  };
+  return html`
+    <section id="numbers">
+      <div class="wrap">
+        <h2>By the numbers</h2>
+        <p class="sub">Measured from the repository: the 3.7.0 release commit against the 4.0 branch. Each row has its own scale — compare the pair, not across rows.</p>
+        <div class="legend">
+          <span><span class="dot s37"></span>ADD 3.7</span><span><span class="dot s40"></span>ADD 4.0</span>
+          <span class="spacer"></span>
+          <button class="ghost" onClick=${() => setTable(!table)} aria-pressed=${table}>${table ? "Show chart" : "Show table"}</button>
+        </div>
+        <div class="card metrics" ref=${ref}>
+          ${table ? html`
+            <table class="data"><thead><tr><th>Measure</th><th>ADD 3.7</th><th>ADD 4.0</th><th>Change</th></tr></thead>
+              <tbody>${METRICS.map((m) => html`<tr key=${m.name}><td>${m.name}</td><td>${fmt(m.a)} ${m.unit}</td><td>${fmt(m.b)} ${m.unit}</td><td>${change(m)}</td></tr>`)}</tbody></table>`
+          : METRICS.map((m, i) => html`
+            <div class="metric" key=${m.name}>
+              <div><div class="name">${m.name}</div><div class="unit">${change(m)}</div></div>
+              <div class="bars">${bar(m, "a", i)}${bar(m, "b", i)}</div>
+            </div>`)}
+        </div>
+        ${tip && html`<div class="tip" style=${{ left: tip.x + "px", top: tip.y + "px" }}>
+          <div style=${{ fontWeight: 600 }}>${tip.m.name}</div>
+          <div class="row"><span><span class="dot s37"></span>ADD 3.7</span><span>${fmt(tip.m.a)} ${tip.m.unit}</span></div>
+          <div class="row"><span><span class="dot s40"></span>ADD 4.0</span><span>${fmt(tip.m.b)} ${tip.m.unit}</span></div>
+          <div class="row" style=${{ color: "var(--text-muted)" }}><span>change</span><span>${change(tip.m)}</span></div>
+        </div>`}
+
+        <div class="why">
+          <${motion.div} class="card" ...${fadeUp(reduce)}>
+            <h3>Why the engine went</h3>
+            <p style=${{ color: "var(--text-secondary)", margin: "0 0 14px" }}>On the repo's own benchmark (same model, evolving milestones), 3.x ADD matched spec-kit's fidelity at nearly five times the tokens.</p>
+            ${[["ADD 3.x (engine)", 18.2, "var(--s37)", "18.2M tokens · ~$15 · fidelity min 0.97"],
+               ["spec-kit", 3.8, "var(--neutral-bar)", "3.8M tokens · $2.53 · fidelity min 0.95"]].map(([n, v, c, d], i) => html`
+              <div key=${n} style=${{ margin: "10px 0" }}>
+                <div style=${{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontSize: ".9rem" }}><strong>${n}</strong><span style=${{ color: "var(--text-secondary)", fontVariantNumeric: "tabular-nums" }}>${d}</span></div>
+                <div style=${{ height: 14, marginTop: 4 }} role="img" aria-label=${n + ": " + d}>
+                  <${motion.div} style=${{ height: 12, background: c, borderRadius: "0 4px 4px 0" }}
+                    initial=${{ width: reduce ? (v / 18.2) * 100 + "%" : "0%" }} whileInView=${{ width: (v / 18.2) * 100 + "%" }}
+                    viewport=${{ once: true }} transition=${{ duration: reduce ? 0 : 1.1, delay: i * 0.2, ease: EASE }} />
+                </div>
+              </div>`)}
+            <p class="note">Source: benchmark/BENCHMARK.md, final cross-arm comparison. On the amb1 track, vanilla prompting cost $0.61 per run vs ADD 3.x $2.13–2.52 (benchmark/FINDINGS-2026-08-10.md).</p>
+          </${motion.div}>
+          <${motion.div} class="card" ...${fadeUp(reduce, 1)}>
+            <h3>What is not claimed yet</h3>
+            <p style=${{ color: "var(--text-secondary)", margin: 0 }}>4.0 has not been benchmarked. The saving is structural — zero engine calls and a 174-line skill instead of ~106 KB of guides — not a measured token figure. Re-running the benchmark arm against 4.0 is the honest next step before claiming a number.</p>
+            <p class="note">The cut itself: 717 files changed, +6,107 / −77,438 lines, including the 3.x bundle moved to archive/.</p>
+          </${motion.div}>
+        </div>
+      </div>
+    </section>`;
+}
+
+function Trade({ reduce }) {
+  return html`
+    <section id="tradeoff">
+      <div class="wrap">
+        <h2>What 4.0 gives up — and what replaces it</h2>
+        <p class="sub">The one real loss is mechanical refusal. In its place: every claim is checkable by anyone with git.</p>
+        <div class="trade">
+          <${motion.div} class="card" ...${fadeUp(reduce)}>
+            <h3><span class="dot s37"></span>3.7 — the engine refused</h3>
+            <p style=${{ color: "var(--text-secondary)", margin: 0 }}>A PASS over a stale receipt, an edited frozen contract, or a report older than its run was refused by code the agent could not talk past.</p>
+            <pre class="term">$ add gate session-expiry PASS
+refused R:OLDSEAL — the direction changed after freeze
+next: add freeze session-expiry</pre>
+          </${motion.div}>
+          <${motion.div} class="swap" aria-hidden="true"
+            initial=${reduce ? false : { rotate: -90, opacity: 0 }} whileInView=${{ rotate: 0, opacity: 1 }} viewport=${{ once: true }}
+            transition=${{ type: "spring", stiffness: 200, damping: 16, delay: 0.3 }}>⇄</${motion.div}>
+          <${motion.div} class="card" ...${fadeUp(reduce, 2)}>
+            <h3><span class="dot s40"></span>4.0 — anyone can check</h3>
+            <p style=${{ color: "var(--text-secondary)", margin: 0 }}>A dishonest agent could now write a PASS. But the seal is a diff, the evidence names exact commands at an exact commit, and every change of intent is a commit.</p>
+            <pre class="term">$ F=$(git log -1 --format=%H --grep='freeze(session-expiry)')
+$ git diff $F HEAD -- .add/tasks/session-expiry.md tests/auth/
+                         # prints nothing → the seal held
+$ git log --oneline --grep='(session-expiry)'</pre>
+          </${motion.div}>
+        </div>
+      </div>
+    </section>`;
+}
+
+function Mapping({ reduce }) {
+  return html`
+    <section id="map">
+      <div class="wrap">
+        <h2>Every 3.7 mechanism, mapped</h2>
+        <p class="sub">From chapter 20 of the book, “What changed in 4.0”.</p>
+        <${motion.div} class="card map"
+          initial=${reduce ? false : "hidden"} whileInView="show" viewport=${{ once: true, amount: 0.1 }}
+          variants=${{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}>
+          ${MAP.map(([a, b]) => html`
+            <${motion.div} key=${a} class="maprow" variants=${{ hidden: { opacity: 0, x: -12 }, show: { opacity: 1, x: 0 } }}>
+              <code class="from">${a}</code><span class="to">→</span><code>${b}</code>
+            </${motion.div}>`)}
+        </${motion.div}>
+      </div>
+    </section>`;
+}
+
+function App() {
+  const reduce = useReducedMotion();
+  const [theme, setTheme] = useState(null);
+  useEffect(() => { if (theme) document.documentElement.dataset.theme = theme; }, [theme]);
+  const isDark = theme ? theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return html`
+    <div>
+      <div class="topbar"><div class="wrap">
+        <span class="brand">ADD 3.7 → 4.0</span>
+        <nav><a href="#stack">Stack</a><a href="#loop">Loop</a><a href="#values">Values</a><a href="#numbers">Numbers</a><a href="#tradeoff">Trade-off</a><a href="#map">Mapping</a></nav>
+        <span class="spacer"></span>
+        <button class="ghost" onClick=${() => setTheme(isDark ? "light" : "dark")}>${isDark ? "Light" : "Dark"}</button>
+      </div></div>
+      <${Hero} reduce=${reduce} />
+      <${Stack} reduce=${reduce} />
+      <${Loop} reduce=${reduce} />
+      <${Values} reduce=${reduce} />
+      <${Metrics} reduce=${reduce} />
+      <${Trade} reduce=${reduce} />
+      <${Mapping} reduce=${reduce} />
+      <footer><div class="wrap">
+        <strong>Sources.</strong>
+        <ul>
+          <li>3.7.0 release: PR #224 (release/3.7.0 · fba54456). 4.0: draft PR #226 (feat/add-4-skill-only · 6a097175).</li>
+          <li>Sizes: git ls-tree and wc on both commits. Benchmarks: benchmark/BENCHMARK.md, benchmark/FINDINGS-2026-08-10.md.</li>
+          <li>Mechanism mapping: add-method/docs/20-whats-new-in-4.md. The method itself: add-method/skill/add/SKILL.md.</li>
+        </ul>
+      </div></footer>
+    </div>`;
+}
+
+createRoot(document.getElementById("root")).render(html`<${App} />`);
+</script>
+</body>
+</html>
