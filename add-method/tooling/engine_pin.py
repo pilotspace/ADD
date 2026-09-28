@@ -17,7 +17,7 @@ prose (its PLAN.md) is the place to record the full rationale for a re-aim —
 this file only ever holds the newest pointer.
 """
 
-ENGINE_MD5 = "85b5884c9ce536d0edbc56fe9cd5dd68"  # re-aimed @ repair-or-contract-change: active-freeze chronology, receipt invalidation, and cause-bearing repair routes. prior: a540f48a… @ carries-preserves-responsibility
+ENGINE_MD5 = "d94f9d4176b9196b25553f722bb711f7"  # re-aimed @ release 3.7.0: the ENGINE version string only. prior: 85b5884c… @ repair-or-contract-change
 # ADD 3.0 (ABF-1): the engine is a flat two-file pair (add.py + cli.py), no add_engine/ package.
 # ENGINE_PKG_MD5 is repurposed to pin the dispatch entry cli.py (the second engine file).
 ENGINE_PKG_MD5 = "a8cdfb0e7246c102d9035b4c5c17b406"  # re-aimed @ repair-or-contract-change: public `add repair` parser and dispatch. prior: 6bb27c13… @ successor-not-reopen

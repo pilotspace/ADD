@@ -6,7 +6,27 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [3.7.0] — 2026-09-28
+
+**The loop closes — and this is the last engine release.** The `loop-that-closes` milestone
+closed 10 of 11 exit criteria; its open item (a security HARD-STOP on the quick-lane tripwire) and
+the in-direction successor milestones ship as-is and are not finished in 3.x. ADD 4.0 replaces the
+Python engine with a single markdown skill; 3.7.0 is the final release of the `add` CLI.
+
+### Added
+- **A run receipt names the commit it ran against**, and `add release <tag>` binds a tag's tree
+  to the receipts that verified it — anchoring only on a receipt the member itself earned.
+- **The regression floor is a PLAN line** the freeze demands and the gate reads.
+- **A refreeze that moves a `gives:` marks every consumer stale**; the consumer's gate holds
+  until it re-briefs.
+- **An escaped defect drains only with a why-missed and a bound prevention.**
+- **The quick-lane tripwire** trips on a commit that touches a sensitive path no node owns, and
+  only a human's signature stands it down.
+- **`add repair`** routes a Build failure under unchanged or reopened direction.
+
 ### Changed
+- **Closed history is superseded, never reopened.**
+- **A Must names its source**, every reader of a section agrees, and the gate reads the tier.
 - **Freeze seals exact scope authority.** Freeze and refreeze stamps now carry a digest over the
   sorted, duplicate-free `scope:` set. Sensitive routing and quick-lane ownership trust only the
   latest matching seal; legacy, malformed, or stale scope seals fail closed until refrozen.
