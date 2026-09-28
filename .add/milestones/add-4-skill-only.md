@@ -1,11 +1,11 @@
 ---
 type: Milestone
 title: ADD 4.0 — one skill, no engine
-status: active
+status: done
 ---
 ## CARD
 goal: ADD ships as one markdown skill the model follows with git and the project's test command — no engine, no CLI verbs, no approval gate
-why: the 3.x engine cost ~3-4× the tokens of lean methods at equal fidelity, and most of its growth guarded its own stamps; Opus-class models plan well enough to run the method from prose
+why: the 3.x engine cost 18.2M tokens where spec-kit cost 3.8M at comparable fidelity (benchmark/BENCHMARK.md), and most of its growth guarded its own stamps; Opus-class models plan well enough to run the method from prose
 
 ## SCOPE
 In:  the skill (SKILL.md + references/format.md + references/explore.md, persona-author kept) ·
@@ -19,11 +19,11 @@ Run note: this milestone was driven directly, not through task files — the loo
 exist yet while the engine was being removed. Evidence is the commits and the guard tests.
 
 ## EXIT
-- [ ] the method is SKILL.md plus two references, and no engine or roster file ships — evidence: add-method/tests/test_skill_only.py
-- [ ] both installers install the skill, personas and a 4.0 bundle, and remove a 3.x `.add/tooling/` — evidence: installer tests
-- [ ] the book and front-door docs teach only 4.0, with a migration page — evidence: add-method/tests/book/
-- [ ] every version declaration reads 4.0.0 and the CHANGELOG says what was removed — evidence: add-method/tests/test_version_parity.py
-- [ ] this repo's `.add/` is a 4.0 bundle and the 3.x bundle is archived — evidence: add-method/tests/test_repo_dogfood.py
+- [x] the method is SKILL.md plus two references, and no engine or roster file ships — evidence: add-method/tests/test_skill_only.py (7 pass) · 98ccf487 · 0c94030f
+- [x] both installers install the skill, personas and a 4.0 bundle, and remove a 3.x `.add/tooling/` — evidence: installer tests (89 pass, incl. upgrade over published 3.6.0 artifacts) · 3014c021
+- [x] the book and front-door docs teach only 4.0, with a migration page — evidence: add-method/tests/book/ · mkdocs build --strict exit 0 · c157c3f7
+- [x] every version declaration reads 4.0.0 and the CHANGELOG says what was removed — evidence: add-method/tests/test_version_parity.py · the release-prep commit
+- [x] this repo's `.add/` is a 4.0 bundle and the 3.x bundle is archived — evidence: add-method/tests/test_repo_dogfood.py · 01ec1e2a
 
 ## TASKS
 - skill — write SKILL.md and its two references

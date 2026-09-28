@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pilotspace-add"
-version = "3.7.0"
-description = "ADD (AI-Driven Development). The agent is the hands; ADD is the memory, judgment, and conscience — a lean, state-tracked skill that drives every change through one atomic task node: Direction → Build → Verify, red/green TDD built in, trusted on a recorded receipt rather than a plausible diff. State lives on disk, so context rot never survives a new session. Installs the ADD skill into any project."
+version = "4.0.0"
+description = "ADD (AI-Driven Development). One skill, no engine: the agent sizes each change, then drives Direction → Build → Verify — rules, assumptions and failing checks sealed by a git commit, a build to green inside the seal, a verdict trusted on fresh evidence rather than a plausible diff. State lives in plain markdown under .add/, so no context is lost between sessions. Installs the ADD skill into any project."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
