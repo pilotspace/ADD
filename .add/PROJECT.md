@@ -1,13 +1,16 @@
 ---
 type: Project
 title: AIDD-Book
-goal: ship ADD as a lean, trustworthy AI-driven method — any agent drives direction-and-evidence-first development through the CLI alone while the human owns direction and verification — installable as @pilotspace/add / pilotspace-add, with no lost context across sessions
-invariants: []
+goal: ship ADD as one markdown skill any agent can follow — direction before build, evidence over inspection, a durable bundle — installable as @pilotspace/add / pilotspace-add, with no engine and no lost context across sessions
+invariants:
+  - the method is skill/add/SKILL.md plus references/format.md and references/explore.md — no engine code ships (add-method/tests/test_skill_only.py)
+  - the three shipped skill trees are byte-identical (skill/add, src/add_method/_bundled/skill/add, .claude/skills/add)
+  - the npm and pip installers produce the same install
+  - every version declaration agrees (add-method/tests/test_version_parity.py)
+test_cmd: cd add-method && python3 -m pytest -q
 stage: mvp
-profile: code
-generated: { by: add/3.0.0, at: 2026-08-08 }
 ---
 ## CARD
-goal: the method, its engine and its book — shipped, dogfooded on itself, and trustworthy because its own bundle holds
-state: 3.6.0 PUBLISHED (tag v3.6.0 · 65827f08 · PR #222 · npm + PyPI) · next release unnumbered, in flight on feat/loop-that-closes: loop-that-closes closed 10 of 11, seal-what-you-signed building, state-that-tells-truth in direction
-next: add todo
+goal: the method and its book — shipped as a skill, dogfooded on itself
+state: 4.0 skill-only cut in flight on feat/add-4-skill-only (milestone add-4-skill-only); 3.7.0 is the last engine release; the 3.x bundle is archived at archive/add-3x-bundle/
+next: finish add-4-skill-only, then release 4.0.0
