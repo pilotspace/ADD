@@ -2,10 +2,9 @@
 name: persona-author
 description: >-
   Author or improve an ADD-method persona file (a .add/personas/ slug.md) — the project-fit
-  requirements LENS the ADD engine validates and the design/build/verify/advisor surfaces load.
-  Use when adding a domain expert to the ADD roster, when the add-worker persona mode must DRAFT
-  a persona because none fits the task kind, or when folding a retrospective into an existing
-  persona. Produces a schema-valid persona (Identity, Critical Rules, Default Requirement,
+  requirements LENS the ADD skill loads at the Direction, Build and Verify beats.
+  Use when adding a domain expert to a project's personas, when no persona fits a task's kind
+  and one should be drafted, or when folding a retrospective into an existing persona. Produces a schema-valid persona (Identity, Critical Rules, Default Requirement,
   Success Metrics, plus recommended frontmatter and Abilities/Anti-patterns/Playbook) that carries
   the judgment layer of strong agent design: earned-perspective identity, bold-lead rules, the
   qualification gate, read-before-you-assert, failure-mode-aware metrics, defended budgets, and
@@ -15,17 +14,17 @@ description: >-
 
 # Authoring an ADD persona
 
-A persona is a **lens, not a voice** — a distilled slice of domain expertise the ADD engine
+A persona is a **lens, not a voice** — a distilled slice of domain expertise the ADD skill
 loads onto a beat so a generic agent becomes the specialist. Author for that seam and nothing
-else: **tone belongs to the agent's own voice**, the **six-dimension self-score lives in the agent** (add-worker),
+else: **tone belongs to the agent's own voice**, the **self-assessment lives in the agent**,
 and the **deliverable's shape lives in the agent's Return contract**. A persona that duplicates
 any of those is dead weight. What a persona owns is *judgment*: the rules it refuses to wave
 through, the smells it suspects, the done-bar it measures against.
 
 Two references and one worked example back this workflow — read them as you go:
-- **`references/contract.md`** — the exact engine contract (required/recommended/optional sections,
-  frontmatter field semantics, the flow values and task-kinds taxonomy, the quality WARNs). Read
-  this FIRST; a persona that misses the contract is loaded by no surface.
+- **`references/contract.md`** — the exact persona contract (required/recommended/optional
+  sections, frontmatter field semantics, the flow values and task-kinds taxonomy). Read this
+  FIRST; a persona that misses the contract is selected at no beat.
 - **`references/patterns.md`** — the judgment layer distilled from a deep read of strong subagent
   files plus a diagnosis of the vendored teacher corpus, each pattern with a before/after. This is
   what separates an expert lens from a keyword list.
@@ -58,7 +57,7 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
 
 ## Workflow
 
-1. **ORIENT before drafting.** Run `python3 .add/tooling/cli.py status`. Read the sibling personas
+1. **ORIENT before drafting.** Read `.add/PROJECT.md`. Read the sibling personas
    in `.add/personas/*.md` (frontmatter alone is enough) and, if present, the teacher library at
    `.add/personas-teacher/`. You are placing ONE lens in a roster — know the neighbours so this
    persona has a distinct seam, not an overlap. If you'll author (no sibling fits), pick the
@@ -84,7 +83,7 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
    can check in-session; fake precision is worse than none. Keep it to what it would refuse.
 
 5. **List Abilities — concrete, anchored, checkable.** Lead with the ORIENT commands the lens runs
-   on load (`python3 .add/tooling/cli.py status` · the suite · the diff). State each ability as something doable *now*,
+   on load (the task file · the suite · the diff). State each ability as something doable *now*,
    anchored to a real file/tool/command — never an aspiration. A persona that owns I/O/network/infra
    carries a **design-for-failure** ability (timeout · retry · circuit-breaker · rollback for every
    external call; an unbounded await or silent half-write is a defect).
@@ -107,11 +106,9 @@ When unsure, prefer (1) then (2). A new persona must earn its place by owning a 
    is honest.
 
 9. **VALIDATE.** Save as `.add/personas/<slug>.md` (never overwrite; avoid `_`-prefixed names).
-   Run `python3 .add/tooling/cli.py doctor` to check routing keys. Then run
-   `python3 .add/tooling/cli.py doctor --sync` and check `.add/index.md` lists its `use-when:`
-   for orientation. A missing row makes the catalogue stale; the selector reads Persona nodes directly.
-   The engine does NOT lint quality: sweep bare `<…>` placeholders yourself; whether the lens
-   fits this project remains your judgment.
+   Check the routing keys by hand against `references/contract.md` (every `flow:` and
+   `task-kinds:` value from its closed set). Nothing lints quality: sweep bare `<…>`
+   placeholders yourself; whether the lens fits this project remains your judgment.
 
 ## The one-line test
 
