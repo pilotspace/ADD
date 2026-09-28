@@ -227,6 +227,22 @@ class TestRedFirst:
         assert red["failing_runs_before_seal"] == 1
         assert red["red_first"] is True
 
+    def test_a_colored_unittest_failure_is_red(self, tmp_path):
+        # Real pilot output (add-4 × amb1): unittest wraps markers in ANSI color codes, which broke
+        # both `FAILED (failures=` and the `\bAssertionError\b` boundary (the code ends in `m`).
+        colored = ("\x1b[1;35mAssertionError\x1b[0m: \x1b[35mserver did not start on $PORT\x1b[0m\n"
+                   "Ran 29 tests in 1.741s\n\n\x1b[1;31mFAILED\x1b[0m (\x1b[1;31mfailures=29\x1b[0m)")
+        t = tmp_path / "transcript.jsonl"
+        t.write_text("\n".join([
+            _tool_use("a", "python3 -m unittest discover -s tests"),
+            _tool_result("a", colored),
+            _tool_use("b", 'git commit -m "freeze(booking): booking service"'),
+            _tool_result("b", "[main 9037bb9] freeze(booking)"),
+        ]) + "\n")
+        red = lc.red_first(t)
+        assert red["failing_runs_before_seal"] == 1
+        assert red["red_first"] is True
+
     def test_an_import_error_is_not_red_for_the_right_reason(self, tmp_path):
         t = tmp_path / "transcript.jsonl"
         t.write_text("\n".join([

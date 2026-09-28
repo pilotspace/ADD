@@ -132,11 +132,16 @@ _SEAL_4 = re.compile(r"git\b[^\n]*\bcommit\b[^\n]*\bfreeze\(")
 _SEAL_3 = re.compile(r"(?:\.add/tooling/cli\.py|add\.py)\s+freeze\b")
 
 
+_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
 def _result_text(content: object) -> str:
+    """Tool output with ANSI color codes stripped: unittest/pytest color their markers, and a code
+    ending in `m` glued to `AssertionError` defeats the word boundary the patterns rely on."""
     if isinstance(content, str):
-        return content
+        return _ANSI.sub("", content)
     if isinstance(content, list):
-        return "\n".join(str(b.get("text", "")) for b in content if isinstance(b, dict))
+        return _ANSI.sub("", "\n".join(str(b.get("text", "")) for b in content if isinstance(b, dict)))
     return ""
 
 
