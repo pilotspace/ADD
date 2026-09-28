@@ -1,15 +1,16 @@
-"""add_method — Python installer for the ADD (AI-Driven Development) method.
+"""add_method — the pip installer for ADD (AI-Driven Development).
 
-Published as `pilotspace-add` on PyPI. Installs the ADD skill, tooling, and
-AIDD book into a target project (files only — `add.py init` is the
-agent's or the user's own first move, never the installer's).
+Published as `pilotspace-add` on PyPI. Copies the ADD skill into a project (or, with
+`--global`, into ~/.claude/skills/add) and scaffolds the `.add/` bundle. ADD 4.0 has no
+engine: the method is the skill, and its tools are git and the project's own test command.
 
 Usage (CLI):
-    pilotspace-add init [targetDir] [--force] [--stage STAGE] [--name NAME]
+    pilotspace-add [init|update] [dir] [--name NAME]
+    pilotspace-add --global
 
 Usage (Python API):
     from add_method import install
-    install("/path/to/project", stage="mvp", name="my-app")
+    install("/path/to/project", name="my-app")   # 0 ok · 1 failed
 """
 from add_method._installer import install
 

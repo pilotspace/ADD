@@ -3,6 +3,10 @@
 Fixture archives carry tiny, real ZIP/TGZ bytes. They exercise the runner's
 digest, packaged-payload and upgrade controls without registries or build tools.
 The release workflow must separately run the same runner in real-install mode.
+
+ADD 4.0 ships a skill, not an engine: the candidate must carry the skill, the
+starter personas and the persona corpus, and must NOT carry `tooling/` or
+`agents/`. The previous (3.x) package only has to be installable.
 """
 from __future__ import annotations
 
@@ -24,14 +28,15 @@ RUNNER = REPO / "add-method" / "scripts" / "candidate_artifact_smoke.py"
 PUBLISH = REPO / ".github" / "workflows" / "publish.yml"
 
 SHARED = {
-    "tooling/cli.py": b"print('candidate status')\n",
-    "tooling/add.py": b"# candidate engine\n",
     "skill/add/SKILL.md": b"# candidate skill\n",
+    "skill/add/references/format.md": b"# candidate format\n",
+    "personas/task-planner.md": b"# candidate persona\n",
     "personas-index/use-when.md": b"# candidate index\n",
     "personas-teacher/engineering/seed.md": b"# candidate corpus\n",
 }
-OLD = {name: data.replace(b"candidate", b"previous")
-       for name, data in SHARED.items()}
+OLD = {**{name: data.replace(b"candidate", b"previous") for name, data in SHARED.items()
+          if not name.startswith("personas/")},
+       "tooling/cli.py": b"print('previous status')\n"}
 
 
 def _sha(path: Path) -> str:
@@ -111,11 +116,12 @@ def test_fixture_candidate_pass_reports_measured_digests(candidate):
             Path(candidate[1]["candidate"][kind]["path"]))
     assert report["tag_commit"] == candidate[1]["tag_commit"]
     assert report["tag_tree"] == candidate[1]["tag_tree"]
-    assert report["fresh_install"]["pip"]["dropped_cli"] == "NOT_RUN"
-    assert report["fresh_install"]["npm"]["dropped_cli"] == "NOT_RUN"
+    assert report["fresh_install"]["pip"]["installed"] == "NOT_RUN"
+    assert report["fresh_install"]["npm"]["installed"] == "NOT_RUN"
     assert report["upgrade"]["pip"]["state_preserved"] == "NOT_RUN"
     assert report["upgrade"]["npm"]["state_preserved"] == "NOT_RUN"
     assert report["archive_controls"]["required_payload"] == "PASS"
+    assert report["archive_controls"]["no_engine"] == "PASS"
 
 
 def test_hash_mismatch_refuses_before_install(candidate):
@@ -127,21 +133,31 @@ def test_hash_mismatch_refuses_before_install(candidate):
     assert not report.get("fresh_install") and not report.get("upgrade")
 
 
-def test_missing_dropped_cli_refuses(candidate):
+def _repack_npm(candidate, payload):
     path = Path(candidate[1]["candidate"]["npm"]["path"])
-    _tgz(path, {k: v for k, v in SHARED.items() if k != "tooling/cli.py"})
+    _tgz(path, payload)
     candidate[1]["candidate"]["npm"]["sha256"] = _sha(path)
-    proc, report = _run(candidate)
-    assert proc.returncode != 0 and report["reason"] == "HEADLESS"
-    assert report["stage"] in ("archive", "fresh_install")
-    assert "tooling/cli.py" in report["path"]
+
+
+def test_missing_skill_refuses(candidate):
+    for missing in ("skill/add/SKILL.md", "personas/task-planner.md"):
+        _repack_npm(candidate, {k: v for k, v in SHARED.items() if k != missing})
+        proc, report = _run(candidate)
+        assert proc.returncode != 0 and report["reason"] == "MISSING_PAYLOAD", (missing, report)
+        assert report["stage"] == "archive" and missing.split("/")[0] in report["path"], report
+
+
+def test_a_candidate_that_ships_the_engine_refuses(candidate):
+    for retired in ("tooling/cli.py", "agents/add-worker.md"):
+        _repack_npm(candidate, {**SHARED, retired: b"# 3.x\n"})
+        proc, report = _run(candidate)
+        assert proc.returncode != 0 and report["reason"] == "ENGINE_SHIPPED", (retired, report)
+        assert report["path"] == retired
 
 
 def test_upgrade_user_state_loss_refuses(candidate):
     # A package trying to occupy user-owned state cannot count as a safe upgrade.
-    path = Path(candidate[1]["candidate"]["npm"]["path"])
-    _tgz(path, {**SHARED, ".add/user-note.md": b"package overwrite\n"})
-    candidate[1]["candidate"]["npm"]["sha256"] = _sha(path)
+    _repack_npm(candidate, {**SHARED, ".add/user-note.md": b"package overwrite\n"})
     proc, report = _run(candidate)
     assert proc.returncode != 0 and report["reason"] == "STATELOSS"
     assert report["stage"] == "upgrade"
@@ -149,16 +165,14 @@ def test_upgrade_user_state_loss_refuses(candidate):
 
 
 def test_installed_package_divergence_refuses(candidate):
-    path = Path(candidate[1]["candidate"]["npm"]["path"])
-    _tgz(path, {**SHARED, "tooling/add.py": b"# different engine\n"})
-    candidate[1]["candidate"]["npm"]["sha256"] = _sha(path)
+    _repack_npm(candidate, {**SHARED, "skill/add/SKILL.md": b"# a different skill\n"})
     proc, report = _run(candidate)
     assert proc.returncode != 0 and report["reason"] == "PACKAGE_DIVERGENCE"
-    assert "tooling/add.py" in report["path"]
+    assert "skill/add/SKILL.md" in report["path"]
 
 
 def test_missing_artifact_never_passes(candidate):
-    # Run each required-file absence inside one named CHECK so the ADD receipt
+    # Run each required-file absence inside one named CHECK so the receipt
     # binds the full five-file matrix rather than a parametrized name suffix.
     for group, kind in (("candidate", "wheel"), ("candidate", "sdist"),
                         ("candidate", "npm"), ("previous", "wheel"),
@@ -180,15 +194,15 @@ def test_unusable_previous_archive_refuses(candidate):
         path = Path(candidate[1]["previous"][kind]["path"])
         original, expected = path.read_bytes(), candidate[1]["previous"][kind]["sha256"]
         if kind == "wheel":
-            _zip(path, {"nonsense.txt": b"no older engine"}, "add_method/_bundled/")
+            _zip(path, {"nonsense.txt": b"no older skill"}, "add_method/_bundled/")
         else:
-            _tgz(path, {"nonsense.txt": b"no older engine"})
+            _tgz(path, {"nonsense.txt": b"no older skill"})
         candidate[1]["previous"][kind]["sha256"] = _sha(path)
         try:
             proc, report = _run(candidate)
             assert proc.returncode != 0 and report["outcome"] == "REFUSED", (kind, report)
-            assert report["reason"] == "HEADLESS" and report["stage"] == "archive", (kind, report)
-            assert "tooling/cli.py" in report["path"], (kind, report)
+            assert report["reason"] == "MISSING_PAYLOAD" and report["stage"] == "archive", (kind, report)
+            assert "skill/add/SKILL.md" in report["path"], (kind, report)
         finally:
             path.write_bytes(original)
             candidate[1]["previous"][kind]["sha256"] = expected
@@ -209,6 +223,12 @@ def test_publish_consumes_smoked_artifacts_without_rebuild():
     assert re.search(r"npm publish\s+[^\n]*\.tgz", text), "npm publisher uses source, not tarball"
     assert "packages-dir: add-method/dist" in text
     assert text.count("python3 -m build") == 1, "publish jobs rebuild or do not build candidate"
+
+
+def test_publish_runs_no_engine():
+    text = PUBLISH.read_text(encoding="utf-8")
+    for retired in ("tooling/cli.py", "tooling/add.py", "clack"):
+        assert retired not in text, f"publish.yml still depends on the retired {retired}"
 
 
 def test_previous_tag_is_strictly_older():

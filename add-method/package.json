@@ -8,24 +8,19 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@clack/prompts": "^1.5.1"
-  },
   "scripts": {
-    "test": "python3 -m unittest discover -s tooling -p 'test_*.py'",
-    "prepublishOnly": "python3 -m unittest discover -s tooling -p 'test_tree_parity.py'"
+    "test": "python3 -m pytest -q",
+    "prepublishOnly": "python3 -m pytest -q tests/test_npm_pip_parity.py tests/test_skill_only.py"
   },
   "files": [
     "bin/",
     "skill/",
-    "agents/",
-    "tooling/add.py",
-    "tooling/cli.py",
-    "!**/*.pyc",
-    "!**/__pycache__",
-    "tooling/templates/",
+    "personas/",
     "personas-teacher/",
     "personas-index/",
+    "!**/*.pyc",
+    "!**/__pycache__",
+    "!**/.DS_Store",
     "THIRD_PARTY_NOTICES.md",
     "README.md",
     "GETTING-STARTED.md",

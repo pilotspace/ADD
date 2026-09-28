@@ -9,7 +9,7 @@
     {
       "name": "add",
       "source": "./add-method",
-      "description": "Drives every change through Direction \u2192 Build \u2192 Verify: one human approval at a frozen contract, then a self-driving build and a receipt-backed gate, with red/green TDD built in. On first run it materializes the engine into your project.",
+      "description": "Drives every change through Direction \u2192 Build \u2192 Verify: rules, assumptions and failing checks sealed by a git commit, a build to green inside the seal, and a verify that trusts only fresh evidence. One skill, no engine.",
       "keywords": [
         "ai-driven-development",
         "aidd",
