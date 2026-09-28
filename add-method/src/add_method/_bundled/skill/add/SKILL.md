@@ -23,17 +23,24 @@ You are the planner and the hands. ADD keeps you fast and honest: fix direction 
 leave a bundle (`.add/`) the next session — and the human reviewing your work — can read. There is
 no engine and no CLI: your tools are files, git, and the project's own test command.
 
-## Orient — every session, first
+## Orient — every session, first, in one command
 
-1. Read `.add/PROJECT.md`: `goal:`, `invariants:` (they bind every change), `test_cmd:`.
-2. Find open work — task and milestone files whose `status:` is not `done`/`dropped`
-   (`grep -lE '^status: (direction|build|active)' .add/tasks/*.md .add/milestones/*.md`)
-   — and `git log --oneline -15`.
-3. Resume an open task at its `status:`; otherwise size the request. Read what the task touches,
-   never the whole repo.
+`cat .add/PROJECT.md; grep -lE '^status: (direction|build|active)' .add/tasks/*.md .add/milestones/*.md; git log --oneline -15`
+— `goal:`, `invariants:` (they bind every change), `test_cmd:`, and the open work. Resume an open
+task at its `status:`; otherwise size the request. Read what the task touches, never the whole repo.
+No `.add/` yet → create `PROJECT.md` and empty `specs/ milestones/ tasks/` (`references/format.md`).
 
-No `.add/` yet → create `PROJECT.md` and empty `specs/ milestones/ tasks/` from
-`references/format.md`, find the test command, then continue.
+## Turns — the real cost
+
+Every turn re-reads the whole context, so cost grows with turns, not with what you write. Keep every
+step; cut the round-trips:
+- **Direction = two turns.** Write the task file and its test files together (parallel writes). Then
+  one command runs the checks and seals: `<check> ; git add .add/tasks/<slug>.md <tests> && git
+  commit -qm "freeze(<slug>): <goal>"`. Read the output: green, or red on an import error, means the
+  seal is wrong — fix the checks and `refreeze` before any code.
+- **Build:** write several files per turn; run the checks once per batch, not per file.
+- **Verify = two turns.** One command runs the seal diff, `check:` and `regression:`; then write
+  `## EVIDENCE` and commit `verify(<slug>)` in one more.
 
 ## Size the work — you route and go
 
@@ -54,25 +61,41 @@ commit `<type>(<scope>): <what>` with a one-line why. `invariants:` still hold.
 
 ### 1 · Direction — write the contract, watch it fail, seal it
 
-Ground first: read the code the task touches (files, signatures, conventions) and the relevant
-`## Decisions that bind` in `.add/specs/`; load a persona if one fits (§ Personas). Then write
-`.add/tasks/<slug>.md` (shape: `references/format.md`) in one pass:
+Ground first: read the code the task touches and the relevant `## Decisions that bind` in
+`.add/specs/`; load a persona if one fits (§ Personas). Then write `.add/tasks/<slug>.md`:
 
-- **CARD** — `goal:` one line · `why:` one line.
-- **RULES** — `M<n>` Musts (what it must do) · `R:<CODE>` Rejects (what it must refuse). Only what
-  you were told or what code and specs require; cite it: `(from: request | <file> | <spec>)`.
-- **ASSUMPTIONS** — every silence you had to fill: `A<n> [<dim>] <what is not said> → <reading
-  taken> → <cost if wrong>`. Sweep each public surface on six dims: *who* may (authorization) ·
-  *which* cases are in · *when* (boundaries inclusive?) · *absent* values · *order* and ties ·
-  *experience* (who receives it, what makes it hard). One silence per line. A guess you can check
-  cheaply, check now: `· found: <answer> (evidence: <file:line | command>)`. The human reviews this
-  section instead of approving up front — never hide a guess inside a Must.
-- **PLAN** — `gives:` (surfaces other code will depend on) · `scope:` (paths you may touch) ·
-  strategy · the `check:` command (this task's checks) and the `regression:` command.
-- **CHECKS** — `C<n> covers: <M/R/A ids> · <mode> · <test id>`. At least one per Must and Reject,
-  each written to FAIL on the most plausible wrong implementation. Prefer acceptance checks through
-  the public seam; add a property or contract check where an invariant or a consumer exists. Keep
-  the task's checks in files of their own. A Must you cannot encode as a check is not understood yet.
+```markdown
+---
+type: Task
+title: <title>
+status: direction        # → build in the freeze commit · → done in the verify commit
+scope: [<paths you may touch>]
+gives: [S1 <a surface other code will depend on>]
+---
+## CARD
+goal: <one line> · why: <one line>
+## RULES
+- M1 <what it must do> (from: request | <file> | <spec>)
+- R:<CODE> <what it must refuse> (from: …)
+## ASSUMPTIONS
+- A1 [<dim>] <what is not said> → <reading taken> → <cost if wrong>
+## PLAN
+strategy: <how> · check: <this task's tests> · regression: <the full suite>
+## CHECKS
+- C1 covers: M1 · acceptance · <test id>
+## EVIDENCE
+<written once, at verify>
+```
+
+- **RULES** — only what you were told or what code and specs require, with its source.
+- **ASSUMPTIONS** — every silence you had to fill, one per line. Sweep each public surface on six
+  dims: *who* may (authorization) · *which* cases are in · *when* (boundaries inclusive?) · *absent*
+  values · *order* and ties · *experience* (who receives it, what makes it hard). A guess you can
+  check cheaply, check now: `· found: <answer> (evidence: <file:line | command>)`. The human reviews
+  this section instead of approving up front — never hide a guess inside a Must.
+- **CHECKS** — at least one per Must and Reject, each written to FAIL on the most plausible wrong
+  implementation; acceptance checks through the public seam first, in files of their own. A Must you
+  cannot encode as a check is not understood yet.
 
 Write the checks as real tests and **run them: they must fail because the behavior is absent** — not
 on an import error or a typo. A check that is green before the build proves nothing; fix it.

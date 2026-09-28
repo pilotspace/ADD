@@ -71,6 +71,28 @@ def test_git_is_the_seal():
     assert "git diff" in text, "verify does not diff the sealed files against the freeze commit"
 
 
+def test_a_task_needs_no_second_file():
+    """The 4.0 pilot spent a whole turn reading references/format.md for the task-file shape
+    (benchmark/PILOT-4v3-2026-09-28.md). A Task's template lives inline in SKILL.md."""
+    text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    block = re.search(r"```markdown\n(.*?)```", text, re.S)
+    assert block, "SKILL.md carries no inline task template"
+    for part in ("type: Task", "status: direction", "## RULES", "## ASSUMPTIONS", "## PLAN",
+                 "## CHECKS", "## EVIDENCE"):
+        assert part in block.group(1), f"inline template is missing {part!r}"
+    assert "shape: `references/format.md`" not in text, "Direction still sends a Task to format.md"
+
+
+def test_skill_budgets_turns():
+    """Tokens scale with turns (each turn re-reads the whole context), not with skill bytes.
+    The skill states the batching rule and the per-beat turn shape."""
+    text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    assert "## Turns" in text, "SKILL.md has no turn-budget section"
+    section = text.split("## Turns", 1)[1].split("\n## ", 1)[0]
+    for phrase in ("re-reads", "one command", "freeze("):
+        assert phrase in section, f"turn section does not state {phrase!r}"
+
+
 def test_shipped_skill_trees_are_identical():
     base = {p: (SKILL / p).read_bytes() for p in (str(q.relative_to(SKILL)) for q in SKILL.rglob("*")
                                                    if q.is_file() and "__pycache__" not in q.parts)}
