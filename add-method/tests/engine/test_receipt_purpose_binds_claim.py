@@ -51,6 +51,7 @@ def _stamp(bundle, cid, receipt_path):
                 and s.get("receipt") == path)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_run_stamps_bound_support_and_floor_purpose(project):
     """M1/M4: the receipt and run stamp agree; --floor keeps its legacy marker."""
     work, bundle, cid = _task(project)
@@ -74,6 +75,7 @@ def test_legacy_purpose_normalization_and_conflict(project):
     assert add.latest_receipt(bundle, cid)[1] != "/" + str(p.relative_to(bundle))
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_support_only_cannot_enter_code_gate_or_build_beat(project):
     """M3/E1: even a green support command cannot fulfill code proof."""
     work, bundle, cid = _task(project)
@@ -86,6 +88,7 @@ def test_support_only_cannot_enter_code_gate_or_build_beat(project):
     assert ok is None and "bound" in note.lower(), note
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_newer_support_does_not_displace_bound_refute_or_hint(project):
     """M3/E2: purpose filters before newest-run selection in every reader."""
     work, bundle, cid = _task(project)
@@ -98,6 +101,7 @@ def test_newer_support_does_not_displace_bound_refute_or_hint(project):
     assert (add.refute(bundle, cid, by="fixture", held=True)[0] or {}).get("receipt") == expected
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_floor_selector_ignores_support_and_bound(project):
     """M4/E2: later diagnostics cannot displace the regression receipt."""
     work, bundle, cid = _task(project)
@@ -108,6 +112,7 @@ def test_floor_selector_ignores_support_and_bound(project):
     assert add.latest_floor_receipt(bundle, cid)[1] == expected
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_explore_support_preserves_sources_gate(project):
     """M5/E3: support in FINDINGS cannot switch to code receipt semantics."""
     work, bundle, cid = _task(project, kind="explore")
@@ -118,6 +123,7 @@ def test_explore_support_preserves_sources_gate(project):
     assert add.latest_support_receipt(bundle, cid)[0]["purpose"] == "support"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_local_holdout_refuses_before_execution(project):
     """M6/E5: a local command cannot self-attest protected origin."""
     work, bundle, cid = _task(project)
@@ -129,6 +135,7 @@ def test_local_holdout_refuses_before_execution(project):
     assert add.latest_receipt(bundle, cid) == (None, None)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_security_floor_stays_human_with_support(project):
     """M7: a support purpose cannot lower the computed human floor."""
     work, bundle, cid = _task(project, slug="secure", sensitivity="security")

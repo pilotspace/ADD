@@ -1,4 +1,5 @@
 """Red direction check for holds-against-the-commit."""
+import pytest
 import subprocess
 import sys
 from pathlib import Path
@@ -46,11 +47,13 @@ def _assert_scope_holds_from_both_checkouts(tmp_path, operation):
             f"R:WORKTREE_SCOPE — the same {operation} evidence changed outcome on the {label} checkout: {note!r}")
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_deleted_scope_holds_from_both_checkout_states(tmp_path):
     """covers: M1, R:WORKTREE_SCOPE, E1 — deletion routing is anchored to the cited commit."""
     _assert_scope_holds_from_both_checkouts(tmp_path, "delete")
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_renamed_scope_holds_from_both_checkout_states(tmp_path):
     """covers: M2, R:WORKTREE_SCOPE, E2 — rename routing is anchored to the cited commit."""
     _assert_scope_holds_from_both_checkouts(tmp_path, "rename")

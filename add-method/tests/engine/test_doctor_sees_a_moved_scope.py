@@ -1,4 +1,5 @@
 """Red direction check for doctor-sees-a-moved-scope."""
+import pytest
 import sys
 from pathlib import Path
 
@@ -8,6 +9,7 @@ import add  # noqa: E402
 from conftest import draft_direction  # noqa: E402
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_doctor_names_a_scope_moved_after_its_seal_without_repairing_it(tmp_path):
     """covers: M1, M3, R:SCOPE_SILENCE, R:REPAIRAWAY, E1, E2 — doctor reports scope drift and writes nothing."""
     root = tmp_path / ".add"
@@ -28,6 +30,7 @@ def test_doctor_names_a_scope_moved_after_its_seal_without_repairing_it(tmp_path
     assert path.read_text(encoding="utf-8") == moved and moved != before, "R:REPAIRAWAY — doctor changed the record"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_doctor_names_legacy_and_malformed_scope_seals(tmp_path):
     """covers: M2, M3, R:LEGACY_SILENCE, R:REPAIRAWAY, E2, E3 — unsealed migration is visible."""
     root = tmp_path / ".add"

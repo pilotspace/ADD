@@ -4,6 +4,7 @@ The current interview digest is intentionally narrower than the approval candida
 questions, not every declaration the freeze approves.  These checks drive public freeze/interview
 behavior and artifacts.  They do not prescribe a private compiler API.
 """
+import pytest
 import hashlib
 import json
 import re
@@ -174,6 +175,7 @@ def _walk_keys(value):
             yield from _walk_keys(child)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_manifest_format_and_reorder_are_stable(tmp_path):
     """covers: M1,M2,M3,M4,A5,E1 — formatting/order do not change the candidate."""
     root = _bundle(tmp_path)
@@ -193,6 +195,7 @@ def test_manifest_format_and_reorder_are_stable(tmp_path):
     assert len(list(first_path.parent.glob("*.json"))) == 1
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_substantive_change_moves_digest_and_keeps_old_snapshot(tmp_path):
     """covers: M1,M4,A3,A5,E1 — real text moves the content address; history stays immutable."""
     root = _bundle(tmp_path)
@@ -210,6 +213,7 @@ def test_substantive_change_moves_digest_and_keeps_old_snapshot(tmp_path):
         [first_path.name, second_path.name])
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_task_candidate_refuses_missing_and_duplicate_ids(tmp_path):
     """covers: M3,R:MISSING_DECISION_ID,R:DUPLICATE_DECISION_ID,E2 — all five Task classes."""
     root = _bundle(tmp_path)
@@ -246,6 +250,7 @@ def test_task_candidate_refuses_missing_and_duplicate_ids(tmp_path):
     assert failures == [], "decision ID refusals missed:\n" + "\n".join(failures)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_milestone_candidate_refuses_missing_and_duplicate_c_ids(tmp_path):
     """covers: M3,R:MISSING_DECISION_ID,R:DUPLICATE_DECISION_ID,E5 — C ids are authored."""
     root = _bundle(tmp_path)
@@ -262,6 +267,7 @@ def test_milestone_candidate_refuses_missing_and_duplicate_c_ids(tmp_path):
     assert failures == [], "Milestone C identity refusals missed:\n" + "\n".join(failures)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_complete_candidate_and_question_subset_have_exact_rows(tmp_path):
     """covers: M2,M3,M5,A2,E2 — complete candidate and question projection stay distinct."""
     root = _bundle(tmp_path)
@@ -291,6 +297,7 @@ def test_complete_candidate_and_question_subset_have_exact_rows(tmp_path):
     assert {row["required_authority"] for row in doc["decisions"]} == {"process"}
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_answers_never_enter_manifest_and_sparse_verdicts_keep_their_meaning(tmp_path):
     """covers: M2,M5,R:DECISION_ANSWER,R:UNINTERVIEWED,E3 — explicit answers stay separate."""
     root = _bundle(tmp_path)
@@ -315,6 +322,7 @@ def test_answers_never_enter_manifest_and_sparse_verdicts_keep_their_meaning(tmp
     assert set(doc["question_ids"]) == set(ids)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_stale_interview_is_whole_set_while_candidate_delta_is_per_row(tmp_path):
     """covers: M5,M6,A6,E4 — row equality never revives a whole stale interview."""
     root = _bundle(tmp_path)
@@ -334,6 +342,7 @@ def test_stale_interview_is_whole_set_while_candidate_delta_is_per_row(tmp_path)
     assert _ids_on_line(note, "stale") == set(gap)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_refreeze_keeps_added_removed_and_unchanged_obligations_visible(tmp_path):
     """covers: M1,M6,A3,E5 — a removed row survives in the old content-addressed snapshot."""
     root = _bundle(tmp_path)
@@ -378,6 +387,7 @@ def _append_claim(root: Path, cid: str, digest: str):
     assert written, note
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_legacy_is_unknown_but_missing_or_malformed_claim_refuses(tmp_path):
     """covers: M7,R:DECISION_MANIFEST,A4,E6 — unknown history is not corrupt claimed history."""
     problems = []
@@ -413,6 +423,7 @@ def test_legacy_is_unknown_but_missing_or_malformed_claim_refuses(tmp_path):
     assert problems == [], "\n".join(problems)
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_security_interviews_and_manifests_remain_per_node(tmp_path):
     """covers: M4,M8,R:UNINTERVIEWED,A1,E7 — completeness never transfers authority."""
     root = _bundle(tmp_path)

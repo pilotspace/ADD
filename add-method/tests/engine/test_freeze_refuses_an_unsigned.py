@@ -1,4 +1,5 @@
 """Red direction check for freeze-refuses-an-unsigned."""
+import pytest
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ def _human_floor_task(root, slug="sensitive"):
     return cid, task
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_default_cli_human_floor_refuses_without_a_write(tmp_path):
     """covers: M1, R:UNSIGNED, E1 — a bare human-floor freeze writes neither bytes nor stamps."""
     root = tmp_path / ".add"
@@ -32,6 +34,7 @@ def test_default_cli_human_floor_refuses_without_a_write(tmp_path):
     assert task.read_bytes() == before, "R:UNSIGNED wrote a stamp despite refusing"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_non_lifecycle_freeze_refuses_without_a_write(tmp_path):
     """covers: M2, R:NOTATASK, E2 — a Persona has no lifecycle seal and stays byte-identical."""
     root = tmp_path / ".add"
@@ -44,6 +47,7 @@ def test_non_lifecycle_freeze_refuses_without_a_write(tmp_path):
     assert path.read_bytes() == before, "R:NOTATASK wrote a stamp despite refusing"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_explicit_empty_or_placeholder_human_signer_refuses_without_a_write(tmp_path):
     """covers: M1 — a human floor needs an explicit non-placeholder signer claim."""
     root = tmp_path / ".add"

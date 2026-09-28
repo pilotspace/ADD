@@ -34,6 +34,6 @@ SURFACE_BUDGET = 1500
 # when a human deliberately edits the prose, in the same commit, with the reason on its line.
 # Owner: tests/skill/test_surface.py::test_skill_tree_prose_unedited_by_this_task
 PROSE_PINS = {
-    "SKILL.md": "edccc3300f5e48020fd5bdf0935c1a96020b90c1c9f67edc6f45e38c44f298b4",   # aimed @ t2-refute-default: the VERIFY step names the T2 spawn. prior: eacf1c6d… @ refute-tier-and-changed
+    "SKILL.md": "55411e64121bb2add735a8ef0f60d9866893a859f10ddf28ec55f046f570ca1c",   # re-aimed @ release 3.7.0: the metadata version line only. prior: edccc330… @ t2-refute-default
     "intake.md": "2648a7e8dba85d2d2e415085ab6c6d6fa544d8d9216149ee3c53c1d2d26158d7",   # re-aimed @ quick-lane-tripwire (REFROZEN): two claims went stale under the refreeze and the one page the direct lane reads was documenting the evasion M6 suppresses. It said a `quick:` line is what gets refused — M1 now refuses ANY lesson whose sha touched an UNROUTED sensitive path, and the prefix buys nothing. And the `locate` sentence now names the FLOOR as well as the owner: the earlier comment here said `locate` does not name the floor, which was true when it was written and is exactly what this task fixed — the claim is DRIVEN in test_claimed_output_guard, both halves, one fixture. Line-neutral vs HEAD at 126, three trees identical. prior: 9f541483… @ same task (when the Quick step first named `add locate`)
 }

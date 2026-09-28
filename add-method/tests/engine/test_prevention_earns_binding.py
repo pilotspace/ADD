@@ -36,6 +36,7 @@ def _assert_validation_surface() -> None:
         "RED: fold has no explicit later validation receipt"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_escape_bind_requires_explicit_validation(bundle):
     _escape(bundle)
     ok, note = add.fold(bundle, "method", "escaped defect",
@@ -43,6 +44,7 @@ def test_escape_bind_requires_explicit_validation(bundle):
     assert ok is None and "R:UNVALIDATED" in note, note
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_self_or_date_only_validation_refuses(bundle):
     _assert_validation_surface()
     _escape(bundle)
@@ -53,24 +55,28 @@ def test_self_or_date_only_validation_refuses(bundle):
     assert ok is None and "R:UNVALIDATED" in note and "distinct" in note.lower(), note
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_receipt_stamp_gate_and_bound_purpose_must_agree(bundle):
     _assert_validation_surface()
     assert hasattr(add, "escape_validation_eligibility"), \
         "RED: no centralized receipt/stamp/gate/purpose reader exists"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_exact_sealed_scope_blob_is_required(bundle):
     _assert_validation_surface()
     assert hasattr(add, "escape_validation_eligibility"), \
         "RED: no centralized sealed-scope/blob reader exists"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_committed_descendant_validation_can_bind(bundle):
     _assert_validation_surface()
     assert hasattr(add, "filing_commit_for_delta"), \
         "RED: no durable filing-commit anchor reader exists"
 
 
+@pytest.mark.xfail(strict=True, reason="red-first check for a Task still in direction; 3.7.0 ships without it and ADD 4.0 retires the engine, so it is never built")
 def test_mixed_match_refuses_atomically_with_actionable_reason(bundle):
     assert add.learn(bundle, "method", "shared ordinary", evidence="/tasks/filing.md")[0]
     _escape(bundle, "shared escaped")
