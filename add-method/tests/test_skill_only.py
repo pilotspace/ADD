@@ -30,8 +30,78 @@ def _method_files(tree: Path) -> set[str]:
             if p.is_file() and "persona-author" not in p.parts and "__pycache__" not in p.parts}
 
 
-def test_the_method_is_one_skill_file_and_two_references():
-    assert _method_files(SKILL) == {"SKILL.md", "references/format.md", "references/explore.md"}
+REFERENCES = ("references/format.md", "references/explore.md", "references/evidence.md",
+              "references/personas.md")
+
+
+def test_the_method_is_one_skill_file_and_four_references():
+    assert _method_files(SKILL) == {"SKILL.md", *REFERENCES}
+
+
+def test_references_are_routed_by_a_trigger():
+    """A reference the skill never sends the model to is dead weight; each is named in SKILL.md."""
+    text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    missing = [r for r in REFERENCES if f"`{r}`" not in text]
+    assert not missing, f"SKILL.md never routes the model to {missing}"
+
+
+# Each closed-loop invariant (ADD_3_6_Closed_Loop_Research.md §17) and the two Verify semantics it
+# adds, with the phrase that states it on the path the model walks — SKILL.md, not a reference.
+CLOSED_LOOP = {
+    "C1 rule origin": "derived:",
+    "C2 forward coverage": "at least one per Must and Reject",
+    "C3 verifier potency": "falsifier",
+    "C4 independent evidence": "counter-lens",
+    "C5 regression floor": "regression:",
+    "C6 artifact identity": "Tag only",
+    "C7 runtime mapping": "observes:",
+    "C8 escape prevention": "prevention",
+    "C9 dependency impact": "consumers",
+    "C10 historical immutability": "fixes:",
+    "C11 ceremony tripwire": "is a Task now",
+    "C12 ceremony economics": "yield",
+    "§5 second reader before the seal": "second reader",
+    "§10.1 PASS is an evidence claim": "PASS means",
+}
+
+
+def test_every_closed_loop_invariant_is_stated():
+    text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    missing = [k for k, phrase in CLOSED_LOOP.items() if phrase not in text]
+    assert not missing, f"SKILL.md does not state {missing}"
+
+
+def test_task_template_carries_risks_and_falsifier():
+    text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    block = re.search(r"```markdown\n(.*?)```", text, re.S).group(1)
+    assert re.search(r"^risks: ", block, re.M), "the task template has no risks: slot"
+    assert "falsifier:" in block, "the CHECKS line has no falsifier slot"
+
+
+PERSONA_DIRS = (PKG / "personas", REPO / ".add" / "personas")
+
+
+def _fm(path: Path) -> str:
+    return path.read_text(encoding="utf-8").split("---", 2)[1]
+
+
+def test_starter_personas_carry_routing_fields():
+    """covers-risks routes by the task's risks:, evidence names what the lens must prove, and
+    counter-lens names the orthogonal lens a refuter loads (ADD_Dynamic_Persona_Research.md §7.2)."""
+    problems = []
+    for d in PERSONA_DIRS:
+        names = {p.stem for p in d.glob("*.md")}
+        assert names, f"no personas in {d}"
+        for p in sorted(d.glob("*.md")):
+            fm = _fm(p)
+            for field in ("covers-risks:", "evidence:", "counter-lens:"):
+                if not re.search(rf"^{field} *\S", fm, re.M):
+                    problems.append(f"{p.relative_to(REPO)} lacks {field}")
+            m = re.search(r"^counter-lens: *(.+)$", fm, re.M)
+            for name in (re.split(r"[,\s\[\]]+", m.group(1)) if m else []):
+                if name and (name not in names or name == p.stem):
+                    problems.append(f"{p.relative_to(REPO)} counter-lens {name!r} is not another persona")
+    assert not problems, "\n".join(problems)
 
 
 def test_skill_md_stays_short():
