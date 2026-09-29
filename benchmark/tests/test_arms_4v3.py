@@ -30,7 +30,7 @@ from benchmark.schema.run_record import BenchError
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 ARMS_DIR = REPO_ROOT / "benchmark" / "arms"
-ADD37_SHA = "fba544562ace60388ffd034e30a1a420a25e9c59"
+ADD37_SHA = "d0af5bb3793e6033394127f0eb7ecd81aca4fd5f"
 ADD37_WORKTREE = pathlib.Path(
     "/Users/tindang/workspaces/tind-repo/AIDD-Book/.claude/worktrees/release-3-7")
 

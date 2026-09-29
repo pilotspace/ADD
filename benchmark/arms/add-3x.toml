@@ -10,13 +10,13 @@ name = "add-3x"
 # receipt it cannot digest outside a git working tree, and parity demands it).
 setup_steps = [
   "uv venv .venv --clear",
-  "python3 {REPO_ROOT}/benchmark/arms/verify_pin.py /Users/tindang/workspaces/tind-repo/AIDD-Book/.claude/worktrees/release-3-7 fba544562ace60388ffd034e30a1a420a25e9c59",
+  "python3 {REPO_ROOT}/benchmark/arms/verify_pin.py /Users/tindang/workspaces/tind-repo/AIDD-Book/.claude/worktrees/release-3-7 d0af5bb3793e6033394127f0eb7ecd81aca4fd5f",
   "uv pip install -e /Users/tindang/workspaces/tind-repo/AIDD-Book/.claude/worktrees/release-3-7/add-method --python .venv/bin/python",
   ".venv/bin/pilotspace-add init --yes --non-interactive --force",
   "python3 {REPO_ROOT}/benchmark/arms/workspace_git.py",
 ]
 prompt_wrapper = "add-loop"
-pin = "fba54456 (release/3.7.0 git worktree @ .claude/worktrees/release-3-7) — ADD 3.7.0"
+pin = "d0af5bb3 (release/3.7.0 git worktree @ .claude/worktrees/release-3-7) — ADD 3.7.0"
 
 # Fairness floor (identical across all arms) — MILESTONE.md "Shared decisions".
 same_model = true
