@@ -39,8 +39,8 @@ step; cut the round-trips:
   checks and `refreeze` before any code.
 - **Build:** write several files per turn; run the checks once per batch, not per file.
 - **Verify = two turns.** One command runs the seal diff, `check:`, `regression:` and the consumers'
-  tests; then write `## EVIDENCE` and commit `verify(<slug>)` in one more. Floor work adds one
-  subagent before the seal and one at refute — never on ordinary work.
+  tests; then write `## EVIDENCE` and commit `verify(<slug>)` in one more. Only floor work adds the
+  second reader and the counter-lens refute.
 
 ## Size the work — you route and go
 
@@ -55,8 +55,9 @@ step; cut the round-trips:
 least a Task — never Quick. When in doubt, size up. Nobody approves the route; the human reviews after.
 
 **Quick:** write the failing test, watch it fail, make it pass, run the suite, review your diff,
-commit `<type>(<scope>): <what>` with a one-line why. If the work turns out to touch the floor, or
-needs an existing check weakened, it is a Task now: stop editing and write the task file first.
+commit `<type>(<scope>): <what>` with a one-line why. If the change turns out to touch the floor, or
+needs a check weakened, it is a Task now: stop and write the task file first. A security issue you
+only pass by (already there, outside the ask) stays out of your diff but leads the report as a HARD-STOP.
 
 ## The task loop — Direction → Build → Verify
 
@@ -107,10 +108,10 @@ strategy: <how> · check: <this task's tests> · regression: <the full suite | a
 Run the checks: **they must fail because the behavior is absent** — not on an import error or a
 typo. A check that is green before the build proves nothing; fix it.
 
-**Second reader (floor work).** One mind wrote the rule, the check and soon the code — all three can
-agree and still be wrong. Before sealing, a fresh subagent loads the counter-lens (§ Personas), reads
-only the request and the task file, and returns the likeliest wrong readings of RULES and
-ASSUMPTIONS. Fix what holds. No subagents → reread the task file cold under that lens.
+**Second reader — every floor task, however small.** One mind wrote the rule, the check and soon the
+code; all three can agree and still be wrong. Before sealing, the counter-lens (§ Personas) reads only
+the request and the task file and names the likeliest wrong readings of RULES and ASSUMPTIONS; fix
+what holds. Security · data · architecture: a fresh subagent does it. Otherwise a cold reread will do.
 
 **Seal:** set `status: build`; commit the task file and its check files as `freeze(<slug>): <goal>`.
 They are frozen now; `status:` changes again only in the verify commit.
@@ -139,10 +140,10 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
    keyboard and screen-reader reach, an agent's tool use and side effects (`references/evidence.md`).
 5. **Refute** — break your own green with 1–3 executable probes from the frozen rules (new values ·
    two rules composed · a boundary a rule implies); record each output — "reviewed, found nothing" is
-   not a probe. On floor work a fresh subagent loading the counter-lens reads the task file before the
-   diff and writes them. A probe that breaks it: back to Build, or refreeze if the rule was wrong.
+   not a probe. Floor work: the counter-lens writes them, task file before diff (a fresh subagent for
+   security · data · architecture). A probe that breaks it: back to Build, or refreeze the rule.
 6. **Verdict** — exactly one, in `## EVIDENCE` with freeze sha, head sha, commands, exit codes,
-   counts, consumers, residue, probes, and `lens:` (who looked, what they caught):
+   counts, consumers, residue, probes, and `lens:` (who looked, what they caught; or `none — why`):
    - `PASS` — seal intact, fresh green, consumers green, residue clean. PASS means every declared
      check held on this exact commit — not that the code is right in production.
    - `RISK-ACCEPTED` — a known non-security risk, with reason and owner.
@@ -177,12 +178,11 @@ task — goal, verdict, freeze sha, evidence, and **every ASSUMPTION and `derive
 
 ## Personas — lenses that pick what must be proven
 
-`.add/personas/<name>.md` holds a project's expert lenses: `flow:` the beats it serves ·
-`covers-risks:` · `evidence:` what it must see proven · `counter-lens:` its orthogonal reader.
-Lead lens = the best fit on beat and `risks:`; add one more only for a risk the lead leaves bare.
-None in the project → `personas-index/use-when.md` in the teacher corpus; none fits → proceed.
-The second reader and the refuter load the lead's `counter-lens:`. A persona advises; it never
-lowers a rule here. Routing, `lens:` traces and upkeep: `references/personas.md`.
+`.add/personas/<name>.md` holds expert lenses: `flow:` (beats) · `covers-risks:` · `evidence:` (what
+it must see proven) · `counter-lens:` (its orthogonal reader). Lead = best fit on beat and `risks:`;
+one more only for a risk the lead leaves bare. None in the project → `personas-index/use-when.md`;
+none fits → proceed. The second reader and the refuter load the lead's `counter-lens:`. A persona
+advises, never lowers a rule. Routing, `lens:` traces and upkeep: `references/personas.md`.
 
 ## Non-negotiable rules
 
