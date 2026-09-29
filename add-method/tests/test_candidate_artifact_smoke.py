@@ -211,13 +211,20 @@ def test_publish_consumes_smoked_artifacts_without_rebuild():
     assert text.count("python3 -m build") == 1, "publish jobs rebuild or do not build candidate"
 
 
-def test_previous_tag_is_strictly_older():
+def test_previous_tag_is_strictly_older(tmp_path):
+    """CI checks out shallow with no tags, so the selection runs in a scratch repo that holds
+    exactly the tags it must choose between — never the ambient clone's tag list."""
     text = PUBLISH.read_text(encoding="utf-8")
     selection = next(line.strip() for line in text.splitlines()
                      if line.strip().startswith("PREVIOUS_VERSION="))
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-C", str(tmp_path)]
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "base"], check=True)
+    for tag in ("v3.3.0", "v3.4.0", "v3.5.0", "v3.6.0", "v3.10.0"):
+        subprocess.run([*git, "tag", tag], check=True)
     proc = subprocess.run(
         ["bash", "-c", selection + '\nprintf "%s\\n" "$PREVIOUS_VERSION"'],
-        cwd=REPO, env={**os.environ, "REF_NAME": "v3.5.0"},
+        cwd=tmp_path, env={**os.environ, "REF_NAME": "v3.5.0"},
         capture_output=True, text=True, timeout=10,
     )
     assert proc.returncode == 0, proc.stderr

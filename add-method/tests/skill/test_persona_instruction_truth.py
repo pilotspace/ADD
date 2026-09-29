@@ -354,8 +354,11 @@ def test_persona_skill_mirrors_are_byte_identical():
         path.name: path.read_bytes() for path in BUNDLED_TEMPLATES.glob("*.md.tmpl")
     }
     assert bundled_templates == source_templates, "source and bundled persona templates diverge"
-    live_templates = {path.name: path.read_bytes() for path in LIVE_TEMPLATES.glob("*.md.tmpl")}
-    assert live_templates == source_templates, "source and live installed persona templates diverge"
+    # `.add/tooling/` is the repo's own gitignored install: a fresh checkout (CI) has none, and
+    # an absent install cannot drift. Where it exists, it must match the source byte for byte.
+    if LIVE_TEMPLATES.is_dir():
+        live_templates = {path.name: path.read_bytes() for path in LIVE_TEMPLATES.glob("*.md.tmpl")}
+        assert live_templates == source_templates, "source and live installed persona templates diverge"
 
 
 def test_persona_initialization_claim_matches_seeded_templates(tmp_path):
