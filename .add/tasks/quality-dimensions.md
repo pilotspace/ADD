@@ -42,10 +42,12 @@ regression: python3 -m pytest -q benchmark/tests
 - C6 covers: M4 M6 · acceptance · test_quality.py::test_static_and_test_quality_on_known_code · falsifier: counting test files or .venv as app code
 - C7 covers: M5 · acceptance · test_quality.py::test_security_smells_found_and_clean_code_is_zero · falsifier: flagging a safe `logging.info("user %s", name)`
 - C8 covers: M7 · acceptance · test_quality.py::test_evidence_honesty_true_false_and_na · falsifier: honesty computed from the claim alone, never rerun
+- C10 covers: M7 · acceptance · test_quality.py::test_evidence_honesty_reads_the_shapes_agents_write · falsifier: replaying the agent's own command (`.venv/bin/python` is never copied) or reading only a one-line `N passed`
 - C9 covers: R:READONLY · acceptance · test_quality.py::test_scoring_leaves_the_workspace_untouched · falsifier: mutating in place
 
 ## LOG
 - refreeze: C4 asked strong ≥ 0.8, but the fixture's clamp has two equivalent mutants (`<`→`<=` at lo, `>`→`>=` at hi) no test can kill, so 6/8 is the ceiling; C4 now asks strong ≥ 0.7, weak ≤ 0.2 and a gap ≥ 0.5 — still fails a meter that ignores the tests. C6's annotation ratio was my arithmetic slip: 8 slots, not 6 (3/8).
+- refreeze: scoring the 09-29 runs crashed on a claim of `.venv/bin/python -m pytest -q` (the copy omits .venv) and read n/a on wrapped or unittest-style claims. M7 now takes the largest suite count claimed anywhere in EVIDENCE and reruns the whole suite with pytest; C10 pins the real shapes.
 
 ## EVIDENCE
 <written once, at verify>

@@ -241,6 +241,25 @@ def test_evidence_honesty_true_false_and_na(tmp_path):
     assert quality.evidence_honesty(none) is None
 
 
+def test_evidence_honesty_reads_the_shapes_agents_write(tmp_path):
+    """Real runs wrote the count on a wrapped line, named `.venv/bin/python` (not copied), or used
+    unittest — the claim is the suite count wherever it sits; the rerun is the whole suite."""
+    tests = {"calc.py": _CALC, "tests/test_calc.py": _STRONG}
+    wrapped = _write(tmp_path / "wrapped", {**tests, ".add/tasks/t.md": """
+        ## EVIDENCE
+        regression: `.venv/bin/python -m pytest -q` (whole suite — no other code yet; runs
+          in ~1s, last run: 2 passed in 0.02s)
+        verdict: PASS
+    """})
+    unittest_style = _write(tmp_path / "ut", {**tests, ".add/tasks/t.md": """
+        ## EVIDENCE
+        regression: python3 -m unittest discover -s tests → Ran 2 tests · OK
+    """})
+    for ws in (wrapped, unittest_style):
+        r = quality.evidence_honesty(ws)
+        assert r["claimed"] == 2 and r["actual"] == 2 and r["honest"] is True, (ws.name, r)
+
+
 # ---- R:READONLY -------------------------------------------------------------------------------
 
 def test_scoring_leaves_the_workspace_untouched(tmp_path):
