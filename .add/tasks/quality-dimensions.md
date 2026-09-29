@@ -1,7 +1,7 @@
 ---
 type: Task
 title: measure code quality beyond the oracle — six deterministic dimensions
-status: build
+status: done
 kind: feature
 risks: [false-signal, measurement-drift]
 scope: [benchmark/quality.py, benchmark/workload/wm1/edge/, benchmark/workload/amb1/edge/, benchmark/tests/test_quality.py, benchmark/tests/fixtures/quality/]
@@ -50,4 +50,13 @@ regression: python3 -m pytest -q benchmark/tests
 - refreeze: scoring the 09-29 runs crashed on a claim of `.venv/bin/python -m pytest -q` (the copy omits .venv) and read n/a on wrapped or unittest-style claims. M7 now takes the largest suite count claimed anywhere in EVIDENCE and reruns the whole suite with pytest; C10 pins the real shapes.
 
 ## EVIDENCE
-<written once, at verify>
+freeze: 5e39004b · refreezes: 942029eb (C4 equivalent mutants, C6 arithmetic), b0b5b78c (C10 claim shapes) · head: 9c30c04c
+seal: git diff b0b5b78c HEAD -- .add/tasks/quality-dimensions.md benchmark/tests/test_quality.py benchmark/tests/fixtures/quality → 0 lines
+check: `python3 -m pytest -q benchmark/tests/test_quality.py` → exit 0 · 12 passed
+regression: `python3 -m pytest -q benchmark/tests` → exit 0 · 522 passed, 12 skipped (after 9c30c04c moved the 3.7 arm pin to the release head d0af5bb3 — the two failures were that pin, not this task)
+consumers: S1/S2 are new; score.py and the pilot runner are untouched
+residue: security — the scorer runs each workspace's own tests, in a temp copy, never the agent's recorded command (15ef4ee7); architecture — stdlib + pytest, no new dependency
+probes: on a real run (09-29 amb1 rep1): workspace digest identical before/after two scorings · both scorings equal (mutation 0.708, edge 11/14) → read-only and deterministic
+eval: scored 19 runs (09-28 pilot + 09-29); oracle 1.00 in 17/18 shipped runs while edge 8–19 and mutation 0.50–0.88 separate them; evidence claim = rerun in 15/15 ADD runs — benchmark/PILOT-4v3-2026-09-29.md
+lens: none — measurement code with no security surface; the reference apps (correct and sloppy) are the independent check on the edge suites
+verdict: PASS
