@@ -1,12 +1,17 @@
 ---
 name: add
 description: >-
-  ADD (AI-Driven Development) — the AI plans, builds and verifies; the human reviews the result.
-  Each change is sized, then Direction (rules · assumptions · failing checks, sealed by a git commit)
-  → Build (to green) → Verify (seal intact · fresh green · consumers · a refute by a second lens ·
-  evidence); persona lenses are routed by the task's risks. Use whenever a repo has `.add/`, or the
-  user says "add", "/add", "start a task", "specify this", "ADD method", or wants spec- and
-  tests-first discipline over vague-prompt coding. Resumes across sessions from `.add/` and git.
+  Use this skill when the user wants AI work they can trust without watching every step: the AI
+  fixes direction first (rules, assumptions, failing checks sealed in git), builds to green, then
+  proves the result with evidence for the human to review. Trigger when a repo has `.add/`, the
+  user says "add", "/add", "start a task", "specify this" or "ADD method", asks for ADD status, or
+  wants to resume ADD work. Also trigger when the user wants rigor instead of vibe-coding: spec-
+  and tests-first work, no editing tests until they pass, and proof before merge. It also covers
+  evidence-first investigations, where cited findings and what they mean are the deliverable
+  before any code changes. Examples: tracing a regression, evaluating options, or researching a
+  question. It fits features, migrations, security- or data-sensitive changes and multi-task
+  milestones. Do not use it for routine one-off edits, plain test writing, quick CI fixes or docs
+  where the user hasn't asked for this kind of rigor.
 user-invocable: true
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, evidence, task, explore, persona]
@@ -17,9 +22,8 @@ metadata: { author: add, version: "4.0.0", format: ABF-1 }
 
 # ADD — direction · evidence · a durable bundle
 
-You are the planner and the hands. Fix direction before the build, trust the result only on
-evidence you produced, and leave a bundle (`.add/`) the next session and the reviewing human can
-read. No engine, no CLI: your tools are files, git, and the project's own test command.
+You are the planner and the hands: fix direction before the build, trust only evidence you produced,
+leave a bundle (`.add/`) the next session and the reviewer can read. Your tools: files, git, tests.
 
 ## Orient — every session, first, in one command
 
@@ -39,8 +43,7 @@ step; cut the round-trips:
   checks and `refreeze` before any code.
 - **Build:** write several files per turn; run the checks once per batch, not per file.
 - **Verify = two turns.** One command runs the seal diff, `check:`, `regression:` and the consumers'
-  tests; then write `## EVIDENCE` and commit `verify(<slug>)` in one more. Only floor work adds the
-  second reader and the counter-lens refute.
+  tests; then write `## EVIDENCE` and commit `verify(<slug>)` in one more.
 
 ## Size the work — you route and go
 
@@ -118,7 +121,7 @@ They are frozen now; `status:` changes again only in the verify commit.
 
 ### 2 · Build — code to green, inside the lines
 
-Write code until every check passes. Three lines you do not cross:
+Write code until every check passes, never crossing these three lines:
 1. **Never edit a sealed check or the contract to get green.** A hard check is telling you about the code.
 2. **Never move a `gives:` surface silently.** Internals are free.
 3. **Stay inside `scope:`.** Needing another path means the plan was wrong.
@@ -131,9 +134,7 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
 1. **Seal intact:** `F=$(git log -1 --format=%H --grep='freeze(<slug>)')`, then
    `git diff $F HEAD -- .add/tasks/<slug>.md <check files>` must print nothing.
 2. **Fresh green:** on the committed tree (clean `git status`), run `check:` and `regression:`.
-   Record the real exit codes and counts from output you saw — never a result you did not run.
-3. **Consumers:** a changed `gives:` surface → `git grep` its users and run their tests. A broken
-   consumer is not a PASS.
+3. **Consumers:** a changed `gives:` surface → `git grep` its users, run their tests; a broken one blocks PASS.
 4. **Residue** — what passing tests cannot show. Read the diff for **security** (authz, injection,
    secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens —
    migration and rollback, resource ceilings, privacy in logs, retries and a failing dependency,
@@ -187,8 +188,7 @@ advises, never lowers a rule. Routing, `lens:` traces and upkeep: `references/pe
 ## Non-negotiable rules
 
 <constraints>
-1. **Direction before build.** No production code before RULES · ASSUMPTIONS · CHECKS exist and the
-   checks have failed for the right reason.
+1. **Direction before build.** No production code until RULES · ASSUMPTIONS · CHECKS exist and fail right.
 2. **Evidence, not inspection.** Trusted because checks you ran pass on the committed tree and the
    residue was read. A green proves the checks you wrote ran — never that they were enough.
 3. **Never weaken a sealed check or edit the contract to pass.** Changed intent is a visible `refreeze`.
