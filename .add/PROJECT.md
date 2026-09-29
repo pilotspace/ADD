@@ -12,5 +12,5 @@ stage: mvp
 ---
 ## CARD
 goal: the method and its book — shipped as a skill, dogfooded on itself
-state: 4.0.0 cut on feat/add-4-skill-only (milestone add-4-skill-only done; full suite 128 pass); 3.7.0 (PR #224) is the last engine release; the 3.x bundle is archived at archive/add-3x-bundle/
+state: 4.0.0 cut on feat/add-4-skill-only (milestone add-4-skill-only done; close-research-gaps PASS — closed-loop invariants and persona routing stated in the skill, 4 references; full suite 134 pass); 3.7.0 (PR #224) is the last engine release; the 3.x bundle is archived at archive/add-3x-bundle/
 next: human review of the 4.0 PR, merge after #224, tag v4.0.0
