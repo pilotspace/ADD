@@ -102,8 +102,11 @@ def test_mutation_score_separates_strong_and_weak_suites(tmp_path):
     weak = _write(tmp_path / "weak", {"calc.py": _CALC, "tests/test_calc.py": _WEAK})
     s, w = quality.mutation_score(strong), quality.mutation_score(weak)
     assert s["tried"] >= 4 and w["tried"] >= 4, (s, w)
-    assert s["score"] >= 0.8, s
+    # clamp's `x < lo`→`<=` and `x > hi`→`>=` are equivalent mutants (same result at the boundary),
+    # so no suite can kill them: the strong ceiling here is 6/8, and the meter must still separate.
+    assert s["score"] >= 0.7, s
     assert w["score"] <= 0.2, w
+    assert s["score"] - w["score"] >= 0.5, (s, w)
 
 
 def test_mutation_score_is_na_on_red_baseline(tmp_path):
@@ -176,7 +179,8 @@ def test_static_and_test_quality_on_known_code(tmp_path):
     assert s["duplicate_functions"] == 1, s
     assert s["bare_excepts"] == 1 and s["broad_except_pass"] == 1, s
     assert s["long_functions"] == 0, s
-    assert s["annotation_ratio"] == pytest.approx(3 / 6), s  # branchy: 2 params + return annotated
+    # slots: branchy 2 params + return, dup_a/dup_b 1 + return each, risky return = 8; branchy's 3 annotated
+    assert s["annotation_ratio"] == pytest.approx(3 / 8), s
     t = quality.test_quality(ws)
     assert t["tests"] == 2 and t["zero_assert_tests"] == 1, t
     assert t["asserts_per_test"] == pytest.approx(1.0), t
