@@ -42,10 +42,12 @@ status: direction | build | done | dropped
 milestone: <slug>            # omit when standalone
 kind: feature | fix | refactor | explore | docs | test | data | infra | ui | security | release | integration
 sensitivity: none | security | data | architecture
+risks: [authorization, compatibility]   # failure classes this change could cause; [] when none
 scope: [src/auth/session.py, tests/auth/test_session_expiry.py]
 gives:
   - S1 POST /sessions -> 201 {id, expires_at}
 needs: [tasks/session-store.md#gives]   # surfaces from other tasks this one builds on
+fixes: session-store@8be0d44            # only on a successor to an escaped defect (evidence.md §11)
 ---
 ## CARD
 goal: expired sessions are refused
@@ -54,6 +56,7 @@ why: support saw week-old sessions still acting after password resets
 ## RULES
 - M1 a session within its lifetime is accepted (from: request)
 - R:EXPIRED a session past `expires_at` is refused with 401 "session expired" (from: docs/auth.md)
+- R:REVOKED a session issued before the user's last password reset is refused (from: derived: the CARD's why)
 
 ## ASSUMPTIONS
 - A1 [when] the boundary second is not specified → `expires_at` itself is already expired → one second of access
@@ -63,10 +66,12 @@ why: support saw week-old sessions still acting after password resets
 strategy: compare against a clock port, not the wall clock
 check: pytest tests/auth/test_session_expiry.py
 regression: pytest
+observes: R:EXPIRED → auth_refused_total{reason="expired"} · alert if 0 for 24h after rollout
 
 ## CHECKS
-- C1 covers: M1 · acceptance · tests/auth/test_session_expiry.py::test_live_session_accepted
-- C2 covers: R:EXPIRED, A1 · acceptance · tests/auth/test_session_expiry.py::test_expired_at_boundary_refused
+- C1 covers: M1 · acceptance · tests/auth/test_session_expiry.py::test_live_session_accepted · falsifier: every session refused
+- C2 covers: R:EXPIRED, A1 · acceptance · tests/auth/test_session_expiry.py::test_expired_at_boundary_refused · falsifier: `expires_at < now`
+- C3 covers: R:REVOKED · acceptance · tests/auth/test_session_expiry.py::test_pre_reset_session_refused · falsifier: checks expiry only
 
 ## LOG
 - refreeze: C2 aimed at the wrong clock; now uses the injected clock
@@ -76,8 +81,10 @@ freeze: 3f2a91c · head: 8be0d44
 seal: git diff 3f2a91c 8be0d44 -- .add/tasks/session-expiry.md tests/auth/test_session_expiry.py → empty
 check: `pytest tests/auth/test_session_expiry.py` → exit 0 · 2 passed
 regression: `pytest` → exit 0 · 318 passed
+consumers: S1 unchanged → none
 residue: security — refusal leaks no session id; concurrency — n/a; architecture — clock port only
-refute: expires_at = now + 1ms → accepted; now - 1ms → refused · held
+probes: `pytest .add/tasks/session-expiry.probes/` → 3 passed (now±1ms; reset during a live request)
+lens: build=feature-builder · refute=security-reviewer (counter) · found: 0 confirmed, 0 rejected
 verdict: PASS
 ```
 
@@ -145,11 +152,16 @@ type: Persona
 title: <the lens, in a phrase>
 flow: design, verify, advisor      # the beats it serves
 task-kinds: feature, security
+covers-risks: [authorization, secrets]   # failure classes it is good at catching
+evidence: [negative-path acceptance, bypass probe]   # what it wants proven
+counter-lens: <another persona's file name>          # its orthogonal reader at verify
 use-when: <when to load it>
 not-when: <when not to>
 ---
 <what this expert checks, prefers and refuses — distilled, not copied>
 ```
+
+Routing, the counter-lens, `lens:` traces, evals and lifecycle: `personas.md`.
 
 ## Non-code work
 

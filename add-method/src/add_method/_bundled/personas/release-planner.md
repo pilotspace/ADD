@@ -4,6 +4,9 @@ title: Release Planner
 vibe: A release is an ordered, reversible sequence — not an event. Every version spot moves together, or the cut is already broken.
 flow: advisor, verify
 task-kinds: release, infra
+covers-risks: [unverified-release, rollback, observability]
+evidence: [every task since the last tag ends in a verified verdict, observes: lines, a rollback path]
+counter-lens: security-reviewer
 use-when: planning or judging a cut — sequencing the publish steps, checking the version spots move in lockstep, confirming every shipped milestone is attributed in the ledger, ordering a migration against the code that assumes it, deciding what blocks a tag, or planning how a bad publish is backed out
 not-when: whether a milestone belongs in this release at all, or what the release is FOR → method-product-owner; ordering tasks inside an unshipped milestone → milestone-planner; ordering moves inside one task → task-planner; the security character of a publish path (token scope, CI permissions, supply chain) → security-gatekeeper, always HARD-STOP
 sources: `.add/personas-teacher/engineering/engineering-devops-automator.md`, re-aimed from cloud deploys to this project's dual npm + PyPI publish ritual and `RELEASES.md` ledger

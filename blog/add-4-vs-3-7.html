@@ -244,7 +244,7 @@ const STACK = {
   ],
   "4.0": [
     { id: "human", k: "Human", v: "Reviews after", d: "the session report / PR — HARD-STOPs first, every assumption listed" },
-    { id: "agent", k: "Agent", v: "One skill: SKILL.md + 2 references", d: "174 lines · the model plans; fresh subagents where the skill says" },
+    { id: "agent", k: "Agent", v: "One skill: SKILL.md + 4 references", d: "200 lines · the model plans; fresh subagents where the skill says" },
     { id: "tools", k: "Tools", v: "git · the project's test command", d: "freeze(<slug>) commit is the seal · git diff proves it held" },
     { id: "bundle", k: "Bundle .add/", v: "Plain markdown the model maintains", d: "PROJECT · specs · milestones · tasks · personas" },
   ],
@@ -294,7 +294,7 @@ const KEPT = [
   ["invariants: bind everything", "PROJECT.md invariants hold for every change, Quick included."],
   ["A durable bundle", "Resume across sessions from .add/ — five lens specs, EXIT-proven milestones."],
   ["The learning loop", "Deltas → decisions that bind; an escaped defect names its missing check."],
-  ["Personas as lenses", "Project personas, the teacher corpus and persona-author."],
+  ["Personas as lenses", "Routed by the task's risks; a counter-lens refutes; the teacher corpus and persona-author stay."],
 ];
 
 const CHANGED = [
@@ -303,7 +303,8 @@ const CHANGED = [
   ["Tamper tripwire → git diff", "git diff <freeze> HEAD -- <sealed files> must print nothing."],
   ["Run receipt → EVIDENCE", "Real command, exit code and counts written in the task file."],
   ["add gate → verify commit", "verify(<slug>): <verdict>, with freeze and head sha recorded."],
-  ["Roster agents → the model", "It plans itself; a fresh subagent refutes security · data · architecture."],
+  ["Roster agents → the model", "It plans itself; on floor work a counter-lens subagent reads before the seal and refutes after."],
+  ["Engine refusals → stated loop", "Tripwire, consumers, tag-only-verified and escape prevention are skill rules, not refusal codes."],
   ["Installers", "4,142 → 791 lines, no dependencies, 3.x cleanup built in."],
 ];
 
@@ -342,6 +343,9 @@ const MAP = [
   ["add learn / deltas / fold", "a line in ## Deltas; promote to Decisions that bind"],
   ["add milestone-done", "tick each EXIT box with its evidence"],
   ["add wave / join", "one git worktree per task, disjoint scope:"],
+  ["quick-lane tripwire", "Quick work that touches the floor is a Task now"],
+  ["gives: refreeze marks consumers stale", "Verify runs every consumer's tests"],
+  ["add release <tag>", "tag only verified work; observes: what to watch"],
   ["doctor --sync · graph.json · index.md", "nothing — nothing is compiled"],
 ];
 

@@ -4,6 +4,9 @@ title: the shipped-behaviour lens — a feature is what someone else can now do
 vibe: a feature is the smallest diff that changes what a user can DO, and nothing beside it
 flow: design, build
 task-kinds: feature
+covers-risks: [regression, compatibility, installer-parity]
+evidence: [fresh green on the committed tree, npm and pip install the same tree]
+counter-lens: security-reviewer
 use-when: a task adds or changes a user-facing behaviour — an installer flag, a skill instruction, a surface, an error someone will read, a contract another task will `need:`
 not-when: method prose or a budget call (method-steward), or the security character of a change (security-reviewer)
 description: the design/build lens for work that ships an affordance — it measures the feature by what a user can now do, holds the diff to what that requires, and refuses the surface nobody asked for

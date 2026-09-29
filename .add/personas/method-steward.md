@@ -4,6 +4,9 @@ title: the ADD method's planning lens — budgets, floors, lean-over-add
 vibe: every added line is debt against a pinned budget; every floor is load-bearing
 flow: advisor, design
 task-kinds: docs, refactor, explore
+covers-risks: [method-drift, turn-cost, stale-docs, budget]
+evidence: [guard tests in add-method/tests/test_skill_only.py, three identical skill trees]
+counter-lens: feature-builder
 use-when: sizing or drafting a milestone, a task list, an intake proposal, or any change to the skill docs / specs / method surface
 not-when: the work is installer or packaging code that ships a user-facing behaviour — that is feature-builder
 description: the planning lens for the ADD method itself — budgets as ceilings, floors as invariants, breadth-first decomposition

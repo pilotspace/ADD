@@ -6,7 +6,7 @@
 
 ## In one paragraph
 
-ADD 4.0 removes the engine. There is no `.add/tooling/`, no `cli.py`, no `add.py`, no `add <verb>` commands, no refusal codes and no agent roster. The method is one skill file — `SKILL.md` with two references, `format.md` and `explore.md` — that the agent follows with the tools every project already has: files, git, and the project's own test command. There is also no approval step: the agent routes, seals, builds and verifies without stopping, and the human reviews afterwards from a report that lists every assumption it took.
+ADD 4.0 removes the engine. There is no `.add/tooling/`, no `cli.py`, no `add.py`, no `add <verb>` commands, no refusal codes and no agent roster. The method is one skill file — `SKILL.md` with four references: `format.md` (file shapes), `explore.md` (the research lane), `evidence.md` (the closed loop from intent to production) and `personas.md` (routing lenses) — that the agent follows with the tools every project already has: files, git, and the project's own test command. There is also no approval step: the agent routes, seals, builds and verifies without stopping, and the human reviews afterwards from a report that lists every assumption it took.
 
 ## Why
 
@@ -25,14 +25,20 @@ What the engine enforced turned out to be expressible without it:
 | `add refreeze` / change requests | a `refreeze(<slug>): <why>` commit, reason under `## LOG` |
 | `add run` writing a Run receipt | real command output — command, exit code, counts — written into `## EVIDENCE` |
 | `add gate PASS \| RISK-ACCEPTED \| HARD-STOP` | the same three verdicts, written into `## EVIDENCE`, committed as `verify(<slug>): <verdict>` |
-| `add refute` stamps and refute tiers | 1–3 probes from the sealed rules; a fresh subagent for security · data · architecture |
-| `add interview` and the human freeze | `## ASSUMPTIONS`, reviewed afterwards in the session report |
+| `add refute` stamps and refute tiers | 1–3 executable probes from the sealed rules; on floor work a fresh subagent loading the counter-lens persona writes them after the build |
+| `add interview` and the human freeze | `## ASSUMPTIONS` and `derived:` rules, reviewed afterwards in the session report; on floor work a second reader (a fresh subagent under the counter-lens) challenges them before the seal |
+| a Must names its source | `(from: request \| <file> \| <spec> \| derived: <why>)` on each rule; each check names its `falsifier:` |
+| the regression floor PLAN line | `regression:` in PLAN — the full suite, `affected: … — why`, or `none — why` |
+| a refreeze that moves `gives:` marks consumers stale | Verify step 3: `git grep` the surface's users and run their tests; a broken consumer is not a PASS |
+| the quick-lane tripwire | Quick work that turns out to touch the floor "is a Task now" — stop and write the task file |
+| `add release <tag>` binding a tag to receipts | tag only a commit whose tasks since the last tag each end in a `verify(` commit; `observes:` names what to watch after release |
+| an escape drains only with why-missed + prevention; closed history superseded | a successor task with `fixes: <slug>@<verify sha>`, a reproducing check, why the checks missed it, and a bound prevention |
 | `add status` | read `.add/PROJECT.md` and the open task files; `git log` |
 | `add new` | write the task or milestone file from `format.md` |
 | `add learn` / `add deltas` / `add fold` | a line in the spec's `## Deltas`; promotion to `## Decisions that bind` |
 | `add milestone-done` goal gate | tick each EXIT box with its evidence; `status: done` when all are ticked |
 | `add wave` / `add join` | one git worktree per independent task, disjoint `scope:`, merged one at a time |
-| `add advise` / persona records | load the persona that fits before Direction or Verify |
+| `add advise` / persona records | route a lead persona by the task's `risks:` against each persona's `covers-risks:`; its `counter-lens:` reads at verify; a `lens:` line in EVIDENCE records what it caught |
 | `add doctor --sync`, `graph.json`, compiled `index.md`, `log.md` | nothing — nothing is compiled; the files are the state |
 | `add-worker` / `add-advisor` agents | removed; the model plans and spawns fresh subagents where the skill says to |
 

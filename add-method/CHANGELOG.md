@@ -15,8 +15,9 @@ fidelity (`benchmark/BENCHMARK.md`), and most of its growth guarded its own stam
 work. 3.7.0 is the last engine release.
 
 ### Changed
-- **The method is `skill/add/SKILL.md`** (174 lines) plus `references/format.md` (the `.add/` file
-  shapes) and `references/explore.md` (the research lane). Lanes, the floor, Direction → Build →
+- **The method is `skill/add/SKILL.md`** (200 lines) plus `references/format.md` (the `.add/` file
+  shapes), `references/explore.md` (the research lane), `references/evidence.md` (the closed loop
+  from intent to production) and `references/personas.md` (routing lenses). Lanes, the floor, Direction → Build →
   Verify, red-first checks, residue review and the three verdicts carry over.
 - **Git is the seal.** Direction ends with a `freeze(<slug>)` commit of the task file and its check
   files; a changed contract is a visible `refreeze(<slug>): <why>`; Verify diffs the sealed files
@@ -27,6 +28,17 @@ work. 3.7.0 is the last engine release.
   is still a HARD-STOP verdict — the task stays open and the finding leads the report.
 - **The `.add/` bundle is maintained by hand**: `PROJECT.md`, `specs/`, `milestones/`, `tasks/`,
   `personas/`. A 3.x bundle reads as-is; its compiled files are history.
+- **The closed loop is stated, not enforced.** Each rule names its source or is marked `derived:`;
+  each check names the plausible wrong build it fails (`falsifier:`); a task names its `risks:`,
+  which pick the persona, a second kind of evidence and the residue lenses. Floor work gets a
+  second reader before the seal and a counter-lens refute with executable probes after the build.
+  Verify runs the tests of every consumer of a changed `gives:` surface. Quick work that turns out
+  to touch the floor becomes a Task. A tag goes only on verified work; risky work names what to
+  watch after release (`observes:`); an escaped defect opens a successor (`fixes:`) that closes
+  only with a bound prevention.
+- **Personas are routed by risk.** A persona carries `covers-risks:`, `evidence:` and
+  `counter-lens:`; the lead lens is picked by the task's `risks:`, at most one more covers a bare
+  risk, and a `lens:` line in EVIDENCE records what each lens caught.
 - **Starter personas** ship as plain persona files in `personas/` and are seeded into
   `.add/personas/`; the vendored teacher corpus and `persona-author` stay.
 

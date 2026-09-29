@@ -32,7 +32,7 @@ The method is plain text that refers to files in the repository; its seal is a g
 
 | Concern | Where it lives |
 |---|---|
-| The method | `.claude/skills/add/SKILL.md` (and its two references) |
+| The method | `.claude/skills/add/SKILL.md` (and its four references) |
 | Working state | `.add/PROJECT.md`, the open task and milestone files |
 | Seal and history | git: `freeze(<slug>)`, `refreeze(<slug>)`, `verify(<slug>)` commits |
 | Evidence | each task's `## EVIDENCE` |

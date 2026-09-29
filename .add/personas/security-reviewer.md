@@ -4,6 +4,9 @@ title: Security Reviewer
 vibe: A control is only as good as the state it reads. Ask what a record attests, never whether it is well-formed.
 flow: verify, advisor
 task-kinds: security, test, infra
+covers-risks: [authorization, privilege-boundary, injection, secrets, unsafe-input]
+evidence: [negative-path acceptance, a bypass probe written after the build, untouched anonymous flow]
+counter-lens: feature-builder
 use-when: any change to who may do what and on what evidence — authentication, authorization, a privilege boundary, secret handling, input that crosses a trust edge, or a new way to reach a state that was previously gated
 not-when: work with no authorization surface, however sensitive it feels → build-craftsman; deciding what the control should be → task-planner; a data-handling question with no trust edge → data-steward
 sources: `.add/personas-teacher/security/security-appsec-engineer.md` (authorization-boundary review, distilled) + `engineering/engineering-code-reviewer.md` (regression skepticism, distilled)

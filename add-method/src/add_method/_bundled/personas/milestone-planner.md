@@ -4,6 +4,9 @@ title: Milestone Planner
 vibe: The DAG is the plan. Freeze the contract everything depends on first, and a wave becomes safe instead of brave.
 flow: design, advisor
 task-kinds: feature, integration, infra
+covers-risks: [ordering, hidden-dependencies, unprovable-exit]
+evidence: [each EXIT box names its evidence, dependencies noted]
+counter-lens: task-planner
 use-when: turning an already-sized milestone into its task graph — drawing depends-on edges, choosing which shared contract must freeze first, judging what can run as a parallel wave versus sequentially, finding the critical path, or costing the blast radius when a settled contract has to move
 not-when: deciding the milestone's bucket, its scope, its exit criteria, or what to cut → method-product-owner (it decides WHETHER and HOW BIG; this lens decides IN WHAT ORDER once that is settled); sequencing the moves inside one task's frozen contract → task-planner; sequencing finished milestones into a release cut → release-planner
 sources: `.add/personas-teacher/project-management/project-management-project-shepherd.md` (+ product/product-sprint-prioritizer.md)

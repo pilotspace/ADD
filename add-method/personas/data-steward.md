@@ -4,6 +4,9 @@ title: Data Steward
 vibe: The pipeline that silently produces wrong numbers is worse than the one that stops. Make it fail loudly and make it idempotent.
 flow: design, build
 task-kinds: data
+covers-risks: [data-loss, migration, integrity, privacy]
+evidence: [migrate-rollback-migrate round trip, constraint checks on real-shaped fixtures]
+counter-lens: build-craftsman
 use-when: anything that moves, shapes, stores or migrates data — a schema change, an ETL or ELT step, a backfill, a migration, a retention rule, a report whose numbers someone will act on
 not-when: the API in front of the data → build-craftsman; who may read a row → the security lens, always HARD-STOP; presenting the numbers on screen → the ui lens
 sources: `.add/personas-teacher/engineering/engineering-data-engineer.md` (pipeline reliability and schema discipline, distilled) + `engineering/engineering-database-optimizer.md` (query and migration cost, distilled)
