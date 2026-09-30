@@ -121,9 +121,7 @@ what holds. Security work: one fresh subagent does it. Anything else: your own c
 
 ### 2 · Build — code to green, inside the lines
 
-Hand the build to one foreground subagent on the fast model (`model: haiku`): its prompt is the task
-file path, the `check:` command and the three lines below; it writes code until every check passes and
-reports what it changed. You stay the judge — Verify runs in this session. The three lines:
+Write code until every check passes, never crossing these three lines:
 1. **Never edit a sealed check or the contract to get green.** A hard check is telling you about the code.
 2. **Never move a `gives:` surface silently.** Internals are free.
 3. **Stay inside `scope:`.** Needing another path means the plan was wrong.
