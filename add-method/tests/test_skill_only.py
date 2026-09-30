@@ -88,15 +88,15 @@ def test_round3_gaps_are_stated():
 
 def test_subagents_are_security_only_one_per_beat_foreground():
     """One amb1 run spawned three subagents and one wm1 run slept on a wakeup waiting for one; the
-    second reader's measured gain came from security work. SKILL.md and both references agree."""
+    second reader's measured gain came from security work. SKILL.md and every reference agree."""
     flat = " ".join((SKILL / "SKILL.md").read_text(encoding="utf-8").split())
     assert "one per beat" in flat and "foreground" in flat, "SKILL.md sets no subagent budget"
     stale = ("subagent for security · data · architecture", "security · data · architecture: a fresh subagent",
-             "Security · data · architecture: a fresh subagent")
-    for name in ("SKILL.md", "references/evidence.md", "references/personas.md"):
+             "Security · data · architecture: a fresh subagent", "parallel subagents")
+    for name in ("SKILL.md", *REFERENCES):
         body = " ".join((SKILL / name).read_text(encoding="utf-8").split())
         hits = [s for s in stale if s in body]
-        assert not hits, f"{name} still sends data/architecture work to a subagent: {hits}"
+        assert not hits, f"{name} still sends work to subagents beyond the budget: {hits}"
 
 
 PERSONA_DIRS = (PKG / "personas", REPO / ".add" / "personas")
