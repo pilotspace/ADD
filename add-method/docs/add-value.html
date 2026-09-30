@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What ADD buys Claude Code — measured</title>
+<meta name="description" content="Claude Code with and without the ADD 4.0 skill, same pinned model: stronger tests, a floor that always holds, evidence you can re-run — and what it costs.">
+<style>
+.viz-root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --add: #2a78d6; --van: #eb6834;
+  --good: #006300; --warning: #fab219; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --add: #3987e5; --van: #d95926; --good: #0ca30c;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --add: #3987e5; --van: #d95926; --good: #0ca30c;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root {
+  background: var(--page); color: var(--text-primary); min-height: 100vh;
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--add); }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; color: var(--text-secondary); font-size: 14px; }
+.topbar button { font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.hero { padding: 48px 0 24px; }
+.eyebrow { color: var(--text-secondary); font-size: 14px; letter-spacing: .02em; }
+h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.12; margin: 8px 0 16px; font-weight: 700; }
+h1 .accent { color: var(--add); }
+.lede { font-size: 18px; color: var(--text-secondary); max-width: 700px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 28px 0 8px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.tile .big { font-size: 34px; font-weight: 700; line-height: 1.1; }
+.tile .sub { color: var(--text-secondary); font-size: 14px; margin-top: 6px; }
+.tile .vs { color: var(--muted); font-size: 13px; margin-top: 4px; }
+section.scene { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin: 24px 0; transition: opacity .7s ease, transform .7s ease; }
+.js section.scene:not(.in) { opacity: 0; transform: translateY(24px); }
+h2 { font-size: 24px; margin: 0 0 6px; line-height: 1.25; }
+.kicker { color: var(--text-secondary); margin: 0 0 20px; max-width: 720px; }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--text-secondary); margin: 0 0 14px; }
+.key { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw-add { background: var(--add); } .sw-van { background: var(--van); }
+/* paired horizontal bars */
+.bars { display: grid; gap: 16px; }
+.row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; border-radius: 8px; padding: 4px; outline: none; }
+.row:focus-visible, .row:hover { background: color-mix(in srgb, var(--grid) 55%, transparent); }
+.row .lab { font-size: 14px; color: var(--text-secondary); }
+.pair { display: grid; gap: 2px; position: relative; padding-right: 96px; }
+.track { position: relative; height: 16px; border-left: 1px solid var(--axis); }
+.bar { position: absolute; left: 0; top: 2px; height: 12px; width: 0; border-radius: 0 4px 4px 0; transition: width 1.1s cubic-bezier(.2,.7,.2,1); }
+.bar.add { background: var(--add); } .bar.van { background: var(--van); }
+.val { position: absolute; top: -1px; font-size: 13px; color: var(--text-primary); white-space: nowrap; padding-left: 6px; opacity: 0; transition: opacity .4s ease .9s; font-variant-numeric: tabular-nums; }
+.in .val { opacity: 1; }
+.note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+/* unit charts */
+.floor { margin: 0 0 22px; }
+.floor h3 { font-size: 16px; margin: 0 0 8px; font-weight: 600; }
+.units { display: grid; grid-template-columns: 110px 1fr auto; gap: 10px; align-items: center; margin: 6px 0; }
+.units .who { font-size: 14px; color: var(--text-secondary); }
+.dots { display: flex; flex-wrap: wrap; gap: 6px; }
+.dot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; transform: scale(0); transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
+.in .dot { transform: scale(1); }
+.dot.ok-add { background: var(--add); } .dot.ok-van { background: var(--van); }
+.dot.fail { background: var(--critical); }
+.units .count { font-size: 14px; font-variant-numeric: tabular-nums; }
+/* loop */
+.loop svg { width: 100%; height: auto; display: block; }
+.node rect { fill: var(--surface-1); stroke: var(--axis); stroke-width: 1.5; }
+.node text { fill: var(--text-primary); font: 600 15px system-ui, sans-serif; }
+.node .small { fill: var(--text-secondary); font: 12px system-ui, sans-serif; }
+.node.pulse rect { animation: pulse 6s infinite; }
+.node.n2 rect { animation-delay: 2s; } .node.n3 rect { animation-delay: 4s; }
+@keyframes pulse { 0%, 30% { stroke: var(--add); stroke-width: 3; } 34%, 100% { stroke: var(--axis); stroke-width: 1.5; } }
+.edge { stroke: var(--axis); stroke-width: 1.5; fill: none; }
+.traveller { fill: var(--add); }
+.gitlog { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; margin-top: 14px; display: grid; gap: 6px; }
+.gitlog div { opacity: 0; transform: translateX(-10px); transition: opacity .5s ease, transform .5s ease; }
+.in .gitlog div { opacity: 1; transform: none; }
+.in .gitlog div:nth-child(2) { transition-delay: .6s; } .in .gitlog div:nth-child(3) { transition-delay: 1.2s; }
+.sha { color: var(--muted); }
+/* terminal */
+.term { background: var(--page); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 190px; white-space: pre-wrap; }
+.term .prompt { color: var(--add); }
+.term .ok { color: var(--good); font-weight: 600; }
+.term .quiet { color: var(--muted); }
+.split { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: center; }
+@media (max-width: 720px) { .split { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } }
+/* slope */
+.slope svg { width: 100%; max-width: 700px; height: auto; display: block; }
+.slope .gridline { stroke: var(--grid); stroke-width: 1; }
+.slope .tick { fill: var(--muted); font: 12px system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.slope .line { fill: none; stroke-width: 2; stroke-dasharray: 600; stroke-dashoffset: 600; transition: stroke-dashoffset 1.6s ease; }
+.in .slope .line { stroke-dashoffset: 0; }
+.slope .l-add { stroke: var(--add); } .slope .l-van { stroke: var(--van); }
+.slope .m-add { fill: var(--add); stroke: var(--surface-1); stroke-width: 2; } .slope .m-van { fill: var(--van); stroke: var(--surface-1); stroke-width: 2; }
+.slope .end { fill: var(--text-primary); font: 13px system-ui, sans-serif; }
+/* ranges */
+.range { display: grid; grid-template-columns: 110px 1fr 70px; gap: 12px; align-items: center; margin: 8px 0; }
+.range .rtrack { position: relative; height: 16px; background: color-mix(in srgb, var(--grid) 60%, transparent); border-radius: 4px; }
+.range .band { position: absolute; top: 2px; height: 12px; border-radius: 4px; background: var(--add); transform: scaleX(0); transform-origin: left; transition: transform 1s ease; }
+.in .range .band { transform: scaleX(1); }
+.range .pct { font-size: 14px; font-variant-numeric: tabular-nums; }
+/* rules */
+.rule { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--grid); }
+.rule:first-child { border-top: 0; }
+.rule .what { font-weight: 600; }
+.rule .metric { color: var(--text-secondary); font-size: 14px; }
+.ba { font-variant-numeric: tabular-nums; font-size: 18px; white-space: nowrap; }
+.ba .arrow { display: inline-block; margin: 0 8px; color: var(--muted); transition: transform .6s ease; }
+.in .ba .arrow { transform: translateX(3px); }
+.chip { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); margin-left: 10px; }
+.chip .icon { font-weight: 700; }
+.chip.good .icon { color: var(--good); } .chip.warning .icon { color: #b07a00; } .chip.critical .icon { color: var(--critical); }
+/* tooltip, table, footer */
+#tip { position: fixed; pointer-events: none; background: var(--text-primary); color: var(--page); font-size: 13px; padding: 6px 10px; border-radius: 6px; opacity: 0; transition: opacity .15s; z-index: 10; max-width: 280px; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--text-secondary); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 12px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+td.num { font-variant-numeric: tabular-nums; }
+.fine { font-size: 13px; color: var(--text-secondary); }
+.cta { display: grid; gap: 8px; }
+.cta code { display: block; background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font: 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+footer { padding: 24px 0 64px; color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) {
+  section.scene, .bar, .val, .dot, .gitlog div, .slope .line, .range .band, .ba .arrow { transition: none !important; }
+  section.scene { opacity: 1; transform: none; }
+  .node.pulse rect { animation: none; }
+  .slope .line { stroke-dashoffset: 0; }
+  .dot { transform: scale(1); }
+  .val, .gitlog div { opacity: 1; transform: none; }
+  .range .band { transform: scaleX(1); }
+}
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <div class="topbar">
+    <span>ADD 4.0 · measured, rounds 3–5 on Sonnet 5 · <a href="./add-vs-vanilla.html">round 6 on Sonnet 5.5: the two flows, side by side</a></span>
+    <button type="button" id="theme" aria-label="Switch between light and dark theme">◐ Theme</button>
+  </div>
+
+  <header class="hero">
+    <div class="eyebrow">Claude Code with and without the ADD skill · same pinned model · n = 3 per arm per workload</div>
+    <h1>Claude Code writes the code.<br><span class="accent">ADD makes it something you can trust.</span></h1>
+    <p class="lede">ADD is one skill file. Before any code, the agent writes the rules, its guesses and the checks that must fail — and seals them in a git commit. Then it builds to green and proves it. Here is what that measurably changes, and what it costs.</p>
+    <div class="tiles" id="hero-tiles">
+      <div class="tile"><div class="big" data-count="0.79" data-dec="2">0.79</div><div class="sub">share of 24 seeded bugs its own tests caught (amb1)</div><div class="vs">vanilla: 0.53</div></div>
+      <div class="tile"><div class="big"><span data-count="27">27</span> of 27</div><div class="sub">runs whose claimed test count matched a fresh rerun</div><div class="vs">vanilla makes no claim to check</div></div>
+      <div class="tile"><div class="big"><span data-count="0">0</span> of 13</div><div class="sub">runs that stalled on a contradictory spec</div><div class="vs">vanilla: 2 of 7 shipped nothing</div></div>
+      <div class="tile"><div class="big">2.2–2.9×</div><div class="sub">the dollars per run — the price of the above</div><div class="vs">correctness oracle: both arms pass</div></div>
+    </div>
+  </header>
+  <noscript><p class="fine">Without JavaScript the charts do not draw. The numbers: mutation score 0.68 vs 0.51 (wm1) and 0.79 vs 0.53 (amb1); runs that built code with no tests 0 of 12 vs 2 of 5; runs that stalled on a contradictory spec 0 of 13 vs 2 of 7; held-out edge cases 19 of 19 vs 16.7 of 19 (wm1); claimed test counts matched a rerun in 27 of 27 runs; cost 2.2–2.9× per run. Full table: <a href="https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-09-add-4.0-vs-vanilla.md">the results page</a>.</p></noscript>
+
+  <section class="scene loop" aria-labelledby="h-loop">
+    <h2 id="h-loop">The loop — every beat leaves something on disk</h2>
+    <p class="kicker">Nothing that matters lives in the chat. A fresh session reads the task file and <code>git log</code> and loses nothing; a reviewer diffs the seal instead of trusting a summary.</p>
+    <svg viewBox="0 0 640 156" role="img" aria-label="Direction, then Build, then Verify, each ending in a git commit">
+      <path id="loop-path" class="edge" d="M 190 56 L 230 56 M 410 56 L 450 56 M 100 104 L 540 104 C 540 150, 100 150, 100 104"/>
+      <g class="node pulse n1"><rect x="10" y="20" width="180" height="72" rx="12"/><text x="100" y="50" text-anchor="middle">Direction</text><text class="small" x="100" y="72" text-anchor="middle">rules · guesses · red checks</text></g>
+      <g class="node pulse n2"><rect x="230" y="20" width="180" height="72" rx="12"/><text x="320" y="50" text-anchor="middle">Build</text><text class="small" x="320" y="72" text-anchor="middle">to green · seal untouched</text></g>
+      <g class="node pulse n3"><rect x="450" y="20" width="180" height="72" rx="12"/><text x="540" y="50" text-anchor="middle">Verify</text><text class="small" x="540" y="72" text-anchor="middle">fresh run · probes · verdict</text></g>
+      <circle class="traveller" r="6" cx="0" cy="0">
+        <animateMotion id="travel" dur="6s" repeatCount="indefinite" path="M 100 104 L 320 104 L 540 104 C 540 150, 100 150, 100 104"/>
+      </circle>
+    </svg>
+    <div class="gitlog" aria-label="the commits the loop leaves">
+      <div><span class="sha">1 ·</span> freeze(booking-api): rules, assumptions, failing checks — sealed</div>
+      <div><span class="sha">2 ·</span> feat(booking): build to green — sealed files untouched</div>
+      <div><span class="sha">3 ·</span> verify(booking-api): PASS — commands, exit codes, counts in the task file</div>
+    </div>
+  </section>
+
+  <section class="scene" aria-labelledby="h-mut">
+    <h2 id="h-mut">Tests that catch real bugs</h2>
+    <p class="kicker">We seeded 24 bugs into each finished app and counted how many the agent's <em>own</em> tests caught. Every ADD check has to name the plausible wrong build it fails — and it shows.</p>
+    <div class="legend"><span class="key"><span class="swatch sw-add"></span>Claude Code + ADD 4.0</span><span class="key"><span class="swatch sw-van"></span>Claude Code, vanilla</span></div>
+    <div class="bars" id="chart-mut"></div>
+    <p class="note">Mutation score, 0–1. In round 5 on amb1 only one vanilla run wrote tests; that run scored higher.</p>
+  </section>
+
+  <section class="scene" aria-labelledby="h-floor">
+    <h2 id="h-floor">A floor that always holds</h2>
+    <p class="kicker">One dot per run. <span aria-hidden="true">✕</span> marks a run that fell through the floor. Left alone, the agent sometimes ships no tests, stops to ask and delivers nothing, or crashes on a malformed request. With ADD it wrote its guesses down and kept going.</p>
+    <div id="chart-floors"></div>
+  </section>
+
+  <section class="scene" aria-labelledby="h-edge">
+    <h2 id="h-edge">Edge cases it never saw</h2>
+    <p class="kicker">A held-out suite the agent never sees: null and number bodies, wrong types, timezone offsets. ADD's checks now send inputs the way a real caller sends them.</p>
+    <div class="legend"><span class="key"><span class="swatch sw-add"></span>ADD 4.0</span><span class="key"><span class="swatch sw-van"></span>vanilla</span></div>
+    <div class="bars" id="chart-edge"></div>
+    <p class="note">Held-out cases passed, mean of 3 runs (round 5). Part of this is taught: the skill names malformed bodies, and the suite tests them.</p>
+  </section>
+
+  <section class="scene" aria-labelledby="h-ev">
+    <h2 id="h-ev">Evidence you can re-run</h2>
+    <div class="split">
+      <div class="term" id="term" aria-live="off"></div>
+      <div>
+        <p class="kicker">Every task ends with a verdict and the exact commands behind it. We reran each suite ourselves.</p>
+        <div class="tile"><div class="big"><span id="ev-count">27</span> of 27</div><div class="sub">claimed test counts matched a fresh rerun (15 + 6 + 6 runs across three rounds)</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene slope" aria-labelledby="h-rot">
+    <h2 id="h-rot">Why the record lives on disk — context rot</h2>
+    <p class="kicker">An earlier measurement (ADD 2.0.0, n = 1 per arm): over six evolving milestones, one long conversation let requirement coverage decay and never recover. A fresh session per milestone, resuming from files, held the line.</p>
+    <div class="legend"><span class="key"><span class="swatch sw-add"></span>fresh session, resumed from disk</span><span class="key"><span class="swatch sw-van"></span>one long conversation</span></div>
+    <svg viewBox="0 0 700 260" id="chart-rot" role="img" aria-label="Requirement coverage at milestone 1 and milestone 6"></svg>
+  </section>
+
+  <section class="scene" aria-labelledby="h-cost">
+    <h2 id="h-cost">The honest cost</h2>
+    <p class="kicker">ADD is not free. It spends turns writing the contract before the code. On these workloads both arms pass the correctness oracle, so the gains above are in tests, robustness and trust — not in the pass rate.</p>
+    <div class="legend"><span class="key"><span class="swatch sw-add"></span>ADD 4.0</span><span class="key"><span class="swatch sw-van"></span>vanilla</span></div>
+    <div class="bars" id="chart-cost"></div>
+    <h3 style="font-size:16px;margin:26px 0 6px">Where ADD's tokens go</h3>
+    <div id="chart-beats"></div>
+  </section>
+
+  <section class="scene" aria-labelledby="h-rules">
+    <h2 id="h-rules">What changed the model — and what didn't</h2>
+    <p class="kicker">We added four rules and measured each one. The rule that named something the agent must <em>write</em> — a check — changed its behaviour. Advice about how to think mostly didn't.</p>
+    <div id="chart-rules"></div>
+  </section>
+
+  <section class="scene" aria-labelledby="h-try">
+    <h2 id="h-try">Try it on your Claude Code</h2>
+    <div class="cta">
+      <code>npx @pilotspace/add init</code>
+      <code>pip install pilotspace-add &amp;&amp; pilotspace-add init</code>
+      <code>/plugin marketplace add pilotspace/ADD</code>
+    </div>
+    <details>
+      <summary>Every number on this page, as a table</summary>
+      <table id="table"><thead><tr><th>measure</th><th>vanilla</th><th>ADD 4.0</th></tr></thead><tbody></tbody></table>
+    </details>
+    <p class="fine"><strong>Read before quoting.</strong> Same model (<code>claude-sonnet-5 --effort medium</code>), n = 3 per arm per workload — direction, not proof. "Vanilla" is Claude Code carrying the operator's own <code>~/.claude</code> config, which already asks for red/green TDD, so it is not bare Claude Code. Some runs were rerun after an account change; one run's cost is an estimate. Sources: <a href="https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-09-add-4.0-vs-vanilla.md">the results page</a> and the three pilot reports it links. <a href="./">Read the book</a>.</p>
+  </section>
+
+  <footer>ADD — AI-Driven Development · MIT · <a href="https://github.com/pilotspace/ADD">pilotspace/ADD</a></footer>
+</div>
+<div id="tip" role="tooltip"></div>
+</div>
+
+<script type="application/json" id="add-data">
+{
+  "meta": {"version": "4.0.0", "model": "claude-sonnet-5 --effort medium", "n": "3 per arm per workload", "source": "benchmark/results/2026-09-add-4.0-vs-vanilla.md"},
+  "seededBugs": 24,
+  "mutation": [
+    {"label": "wm1 · round 4", "vanilla": 0.51, "add": 0.68},
+    {"label": "amb1 · round 4", "vanilla": 0.53, "add": 0.79},
+    {"label": "wm1 · round 5", "vanilla": 0.62, "add": 0.71},
+    {"label": "amb1 · round 5", "vanilla": 0.83, "add": 0.78}
+  ],
+  "floors": [
+    {"label": "Built code but wrote no tests", "vanilla": {"fail": 2, "runs": 5}, "add": {"fail": 0, "runs": 12}},
+    {"label": "Stalled on a contradictory spec and shipped nothing", "vanilla": {"fail": 2, "runs": 7}, "add": {"fail": 0, "runs": 13}},
+    {"label": "A malformed request body crashed the server", "vanilla": {"fail": 3, "runs": 5}, "add": {"fail": 0, "runs": 6}}
+  ],
+  "edges": [
+    {"label": "wm1", "total": 19, "vanilla": 16.7, "add": 19},
+    {"label": "amb1", "total": 14, "vanilla": 10, "add": 13}
+  ],
+  "evidence": {"honest": 27, "runs": 27, "rounds": [15, 6, 6], "example": 26},
+  "rot": {"milestones": 6, "longChat": [0.92, 0.75], "fromDisk": [1.0, 1.0]},
+  "cost": [
+    {"label": "wm1 · round 4", "vanilla": 0.73, "add": 1.60, "x": 2.2},
+    {"label": "amb1 · round 4", "vanilla": 0.60, "add": 1.61, "x": 2.7},
+    {"label": "wm1 · round 5", "vanilla": 0.60, "add": 1.67, "x": 2.8},
+    {"label": "amb1 · round 5", "vanilla": 0.45, "add": 1.31, "x": 2.9}
+  ],
+  "beats": [
+    {"label": "Direction", "lo": 41, "hi": 44},
+    {"label": "Build", "lo": 53, "hi": 54},
+    {"label": "Verify", "lo": 2, "hi": 5}
+  ],
+  "rules": [
+    {"label": "Checks send inputs the way a real caller does", "metric": "runs where a malformed body crashed the server", "before": 4, "after": 0, "of": 6, "verdict": "transferred"},
+    {"label": "A silence about who may act → least privilege", "metric": "runs that shipped owner-only cancel", "before": 0, "after": 1, "of": 3, "verdict": "weak"},
+    {"label": "Report the costliest guess first", "metric": "reports that led with it", "before": 0, "after": 2, "of": 6, "verdict": "weak"},
+    {"label": "Direction in three turns", "metric": "Direction messages on wm1", "before": 21, "after": 23, "verdict": "no"}
+  ]
+}
+</script>
+<script>
+(function () {
+  "use strict";
+  document.querySelector(".viz-root").classList.add("js");
+  var data = JSON.parse(document.getElementById("add-data").textContent);
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var tip = document.getElementById("tip");
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function tipFor(node, text) {
+    node.tabIndex = 0;
+    node.setAttribute("aria-label", text);
+    function show(e) {
+      tip.textContent = text;
+      var r = node.getBoundingClientRect();
+      var x = e && e.clientX ? e.clientX : r.left + 20;
+      var y = e && e.clientY ? e.clientY : r.top;
+      tip.style.left = Math.min(x + 14, window.innerWidth - 300) + "px";
+      tip.style.top = (y - 36) + "px";
+      tip.style.opacity = 1;
+    }
+    function hide() { tip.style.opacity = 0; }
+    node.addEventListener("pointermove", show);
+    node.addEventListener("pointerleave", hide);
+    node.addEventListener("focus", function () { show(null); });
+    node.addEventListener("blur", hide);
+  }
+
+  // paired bars: rows of {label, vanilla, add}; scale max; fmt for the direct labels
+  function pairedBars(host, rows, max, fmt, extra) {
+    rows.forEach(function (r) {
+      var row = el("div", "row");
+      row.appendChild(el("div", "lab", r.label));
+      var pair = el("div", "pair");
+      [["add", "ADD 4.0"], ["vanilla", "vanilla"]].forEach(function (k) {
+        var track = el("div", "track");
+        var bar = el("div", "bar " + (k[0] === "add" ? "add" : "van"));
+        bar.dataset.w = (100 * r[k[0]] / (r.max || max)).toFixed(2);
+        var val = el("div", "val", fmt(r[k[0]], r, k[0]));
+        val.style.left = "calc(" + bar.dataset.w + "% )";
+        track.appendChild(bar); track.appendChild(val); pair.appendChild(track);
+      });
+      row.appendChild(pair);
+      tipFor(row, r.label + " — ADD 4.0: " + fmt(r.add, r, "add") + " · vanilla: " + fmt(r.vanilla, r, "vanilla") + (extra ? extra(r) : ""));
+      host.appendChild(row);
+    });
+  }
+
+  pairedBars(document.getElementById("chart-mut"), data.mutation, 1, function (v) { return v.toFixed(2); });
+  pairedBars(document.getElementById("chart-edge"), data.edges.map(function (e) {
+    return {label: e.label + " (of " + e.total + ")", add: e.add, vanilla: e.vanilla, total: e.total, max: e.total};
+  }), 19, function (v, r) { return v + " of " + r.total; });
+  pairedBars(document.getElementById("chart-cost"), data.cost, 2, function (v, r, k) {
+    return "$" + v.toFixed(2) + (k === "add" ? "  (" + r.x + "×)" : "");
+  });
+
+  // unit charts: one dot per run
+  var floors = document.getElementById("chart-floors");
+  data.floors.forEach(function (f) {
+    var box = el("div", "floor");
+    box.appendChild(el("h3", null, f.label));
+    [["add", "ADD 4.0", "ok-add"], ["vanilla", "vanilla", "ok-van"]].forEach(function (k, ki) {
+      var line = el("div", "units");
+      line.appendChild(el("div", "who", k[1]));
+      var dots = el("div", "dots");
+      var s = f[k[0]];
+      for (var i = 0; i < s.runs; i++) {
+        var failed = i < s.fail;
+        var d = el("span", "dot " + (failed ? "fail" : k[2]), failed ? "✕" : "");
+        d.style.transitionDelay = reduce ? "0s" : (ki * 0.3 + i * 0.06) + "s";
+        dots.appendChild(d);
+      }
+      line.appendChild(dots);
+      line.appendChild(el("div", "count", s.fail + " of " + s.runs));
+      tipFor(line, k[1] + ": " + s.fail + " of " + s.runs + " runs — " + f.label.toLowerCase());
+      box.appendChild(line);
+    });
+    floors.appendChild(box);
+  });
+
+  // slope chart: coverage at milestone 1 and milestone 6
+  var svg = document.getElementById("chart-rot"), NS = "http://www.w3.org/2000/svg";
+  function s(tag, attrs, text) {
+    var n = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (a) { n.setAttribute(a, attrs[a]); });
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  var x0 = 90, x1 = 400, yOf = function (v) { return 220 - (v - 0.7) / 0.3 * 190; };
+  [0.75, 0.9, 1.0].forEach(function (t) {
+    svg.appendChild(s("line", {"class": "gridline", x1: x0 - 20, x2: x1 + 20, y1: yOf(t), y2: yOf(t)}));
+    svg.appendChild(s("text", {"class": "tick", x: x0 - 30, y: yOf(t) + 4, "text-anchor": "end"}, t.toFixed(2)));
+  });
+  svg.appendChild(s("text", {"class": "tick", x: x0, y: 250, "text-anchor": "middle"}, "milestone 1"));
+  svg.appendChild(s("text", {"class": "tick", x: x1, y: 250, "text-anchor": "middle"}, "milestone " + data.rot.milestones));
+  [["fromDisk", "add", "fresh session from disk"], ["longChat", "van", "one long conversation"]].forEach(function (k) {
+    var v = data.rot[k[0]];
+    svg.appendChild(s("path", {"class": "line l-" + k[1], d: "M " + x0 + " " + yOf(v[0]) + " L " + x1 + " " + yOf(v[1])}));
+    svg.appendChild(s("circle", {"class": "m-" + k[1], cx: x0, cy: yOf(v[0]), r: 5}));
+    svg.appendChild(s("circle", {"class": "m-" + k[1], cx: x1, cy: yOf(v[1]), r: 5}));
+    svg.appendChild(s("text", {"class": "end", x: x1 + 12, y: yOf(v[1]) + 4}, v[1].toFixed(2) + " — " + k[2]));
+  });
+
+  // beat ranges
+  var beats = document.getElementById("chart-beats");
+  data.beats.forEach(function (b, i) {
+    var r = el("div", "range");
+    r.appendChild(el("div", "lab", b.label));
+    var t = el("div", "rtrack");
+    var band = el("div", "band");
+    band.style.left = b.lo + "%";
+    band.style.width = Math.max(b.hi - b.lo, 1) + "%";
+    band.style.transitionDelay = reduce ? "0s" : (i * 0.2) + "s";
+    t.appendChild(band); r.appendChild(t);
+    r.appendChild(el("div", "pct", b.lo + "–" + b.hi + "%"));
+    tipFor(r, b.label + ": " + b.lo + "–" + b.hi + "% of ADD's context tokens");
+    beats.appendChild(r);
+  });
+
+  // rules
+  var chips = {transferred: ["good", "✓", "transferred"], weak: ["warning", "~", "weak"], no: ["critical", "✕", "did not transfer"]};
+  var rules = document.getElementById("chart-rules");
+  data.rules.forEach(function (r) {
+    var row = el("div", "rule");
+    var left = el("div");
+    left.appendChild(el("div", "what", r.label));
+    left.appendChild(el("div", "metric", r.metric));
+    row.appendChild(left);
+    var right = el("div", "ba");
+    right.appendChild(el("span", null, String(r.before)));
+    right.appendChild(el("span", "arrow", "→"));
+    right.appendChild(el("span", null, r.after + (r.of ? " of " + r.of : "")));
+    var c = chips[r.verdict], chip = el("span", "chip " + c[0]);
+    chip.appendChild(el("span", "icon", c[1]));
+    chip.appendChild(el("span", null, c[2]));
+    right.appendChild(chip);
+    row.appendChild(right);
+    rules.appendChild(row);
+  });
+
+  // table view: every number on the page
+  var tb = document.querySelector("#table tbody");
+  function tr(a, b, c) { var r = el("tr"); r.appendChild(el("td", null, a)); r.appendChild(el("td", "num", b)); r.appendChild(el("td", "num", c)); tb.appendChild(r); }
+  data.mutation.forEach(function (m) { tr("mutation score, " + m.label, m.vanilla.toFixed(2), m.add.toFixed(2)); });
+  data.floors.forEach(function (f) { tr(f.label, f.vanilla.fail + " of " + f.vanilla.runs, f.add.fail + " of " + f.add.runs); });
+  data.edges.forEach(function (e) { tr("held-out edge cases, " + e.label, e.vanilla + " of " + e.total, e.add + " of " + e.total); });
+  tr("claimed test count = fresh rerun", "no claim", data.evidence.honest + " of " + data.evidence.runs);
+  tr("requirement coverage, milestone 1 → " + data.rot.milestones + " (ADD 2.0.0, n = 1)", data.rot.longChat[0].toFixed(2) + " → " + data.rot.longChat[1].toFixed(2) + " (long chat)", data.rot.fromDisk[0].toFixed(2) + " → " + data.rot.fromDisk[1].toFixed(2) + " (from disk)");
+  data.cost.forEach(function (c) { tr("dollars per run, " + c.label, "$" + c.vanilla.toFixed(2), "$" + c.add.toFixed(2) + " (" + c.x + "×)"); });
+  data.beats.forEach(function (b) { tr("ADD tokens in " + b.label, "—", b.lo + "–" + b.hi + "%"); });
+  data.rules.forEach(function (r) { tr("rule: " + r.label + " — " + r.metric, String(r.before), r.after + (r.of ? " of " + r.of : "")); });
+
+  // terminal
+  var lines = [
+    ["prompt", "$ git diff $(git log -1 --format=%H --grep='freeze(booking-api)') HEAD -- .add/tasks/booking-api.md tests/"],
+    ["quiet", "(no output — the seal is intact)"],
+    ["prompt", "$ python -m pytest -q"],
+    ["ok", data.evidence.example + " passed"],
+    ["prompt", "$ git commit -m 'verify(booking-api): PASS'"],
+    ["quiet", "EVIDENCE: freeze sha · head sha · commands · exit codes · counts · probes"]
+  ];
+  var term = document.getElementById("term"), typed = false;
+  function typeTerm() {
+    if (typed) return; typed = true;
+    if (reduce) { lines.forEach(function (l) { term.appendChild(el("div", l[0], l[1])); }); return; }
+    var li = 0;
+    (function nextLine() {
+      if (li >= lines.length) return;
+      var l = lines[li++], d = el("div", l[0], ""); term.appendChild(d);
+      var ci = 0;
+      (function nextChar() {
+        d.textContent = l[1].slice(0, ++ci);
+        if (ci < l[1].length) setTimeout(nextChar, l[0] === "prompt" ? 14 : 4);
+        else setTimeout(nextLine, 260);
+      })();
+    })();
+  }
+
+  // count-up on the hero tiles and the evidence tile
+  function countUp(node, to, dec) {
+    if (reduce) { node.textContent = to.toFixed(dec); return; }
+    var t0 = null;
+    function step(t) {
+      if (!t0) t0 = t;
+      var p = Math.min((t - t0) / 1200, 1), e = 1 - Math.pow(1 - p, 3);
+      node.textContent = (to * e).toFixed(dec);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  document.querySelectorAll("[data-count]").forEach(function (n) {
+    countUp(n, parseFloat(n.dataset.count), parseInt(n.dataset.dec || "0", 10));
+  });
+
+  // reveal scenes: grow bars, type the terminal, count evidence
+  function reveal(sec) {
+    sec.classList.add("in");
+    sec.querySelectorAll(".bar").forEach(function (b) { b.style.width = b.dataset.w + "%"; });
+    if (sec.contains(term)) { typeTerm(); countUp(document.getElementById("ev-count"), data.evidence.honest, 0); }
+  }
+  var scenes = document.querySelectorAll("section.scene");
+  if (reduce || !("IntersectionObserver" in window)) {
+    scenes.forEach(reveal);
+    var svgLoop = document.querySelector(".loop svg");
+    if (reduce && svgLoop && svgLoop.pauseAnimations) svgLoop.pauseAnimations();
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { reveal(en.target); io.unobserve(en.target); } });
+    }, {threshold: 0.18});
+    scenes.forEach(function (sc) { io.observe(sc); });
+  }
+
+  // theme toggle: flips against whatever is showing now
+  document.getElementById("theme").addEventListener("click", function () {
+    var root = document.documentElement;
+    var dark = root.dataset.theme ? root.dataset.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+  });
+})();
+</script>
+</body>
+</html>

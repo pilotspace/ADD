@@ -41,6 +41,29 @@ work. 3.7.0 is the last engine release.
   risk, and a `lens:` line in EVIDENCE records what each lens caught.
 - **Starter personas** ship as plain persona files in `personas/` and are seeded into
   `.add/personas/`; the vendored teacher corpus and `persona-author` stay.
+- **Rules the benchmark asked for** (2026-09-29 → 30, tasks `close-benchmark-gaps` and
+  `value-over-ceremony`): every RULES id sits on some `covers:` line; cheap guesses are checked
+  now and marked `found:`; checks send inputs the way a real caller sends them — the body itself
+  malformed as well as each field, and every value form the spec allows (a timestamp with and
+  without an offset); a silence about who may act or see takes the least-privilege reading; the
+  report lists assumptions costliest if wrong first; Direction is a batched three-turn plan.
+- **Subagents only for security work.** A fresh subagent runs the second reader and the refute
+  for security work only — at most one per beat, in the foreground; every other floor task gets a
+  cold reread under the counter-lens. The Explore lane keeps the same budget.
+
+### Measured
+- **ADD 4.0 vs vanilla Claude Code**, same pinned model, n = 3 per arm per workload
+  ([results](../benchmark/results/2026-09-add-4.0-vs-vanilla.md)): ADD's own tests catch more seeded
+  bugs (mutation score 0.68 vs 0.51 and 0.79 vs 0.53), it held every held-out edge case on wm1, it
+  never shipped without tests or halted on a contradictory spec, and its claimed test counts matched
+  a fresh rerun in 27 of 27 runs — at 2.2–2.9× the dollars. The correctness oracle is saturated on
+  these workloads. New benchmark tooling: `benchmark/quality.py` (held-out edge suites, mutation
+  score, static quality, security smells, test quality, evidence honesty).
+- **Round 6, on Sonnet 5.5** ([PILOT](../benchmark/PILOT-4v3-2026-09-30-r6.md)): ADD costs 1.7–2.1× vanilla's
+  dollars and 4.0–5.1× its minutes. Vanilla ties on held-out edges and mutation; ADD keeps its lead
+  on reading a spec's silences (owner-only cancel in 3 of 3 runs against 0 of 3). Switching models by
+  beat (a Haiku main session with a Sonnet 5.5 advisor) was measured and refuted. A side-by-side
+  animated flow page, `docs/add-vs-vanilla.html`, plays one real run of each.
 
 ### Removed
 - The `add` CLI and every verb (`status`, `new`, `freeze`, `run`, `gate`, `learn`, …), the engine

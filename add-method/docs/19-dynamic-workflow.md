@@ -36,7 +36,7 @@ Commit `freeze(<slug>): <goal>`. The questions and the budget are now sealed —
 
 ## 2 · Investigate
 
-Read code, run experiments, read docs and sources. Read-only research fans out: give parallel subagents disjoint questions, and merge their facts. Spikes and prototypes are throwaway — a scratch branch or directory, labelled as such — never production code.
+Read code, run experiments, read docs and sources. Split the work into disjoint questions and answer them in turn; the subagent budget holds here too — at most one, in the foreground, for a question whose reading would flood your context. Spikes and prototypes are throwaway — a scratch branch or directory, labelled as such — never production code.
 
 ## 3 · Findings — cited, or not a finding
 
@@ -73,6 +73,6 @@ Durable lessons go to `.add/specs/`.
 
 Not every unknown needs a lane. When a guess in Direction can be checked in a minute, check it and append the answer to the assumption line: `· found: <answer> (evidence: <file:line | command>)`. A priced guess is legitimate; a discharged one is better. A guess that grows past a quick probe is the signal to open an Explore task instead.
 
-## Reads fan out; writes serialize
+## Reads are free; writes serialize
 
-Parallel reading is free: research questions, spec reads and codebase surveys can run in many subagents at once, and their facts merge. The moment a stream would *write* — an edit, a seal, a decision that binds a contract — it rejoins the serialized path described in [08 · Parallel work](./08-parallel-work.md).
+Reading never needs the seal: research questions, spec reads and codebase surveys can run in any order, and their facts merge. The moment a stream would *write* — an edit, a seal, a decision that binds a contract — it rejoins the serialized path described in [08 · Parallel work](./08-parallel-work.md).

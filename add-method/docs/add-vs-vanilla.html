@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vanilla Claude vs Claude + ADD — the same request, two flows</title>
+<meta name="description" content="Two real runs on Claude Sonnet 5.5, one spec that contradicts itself: vanilla Claude Code and Claude Code with the ADD skill, played side by side on one clock.">
+<style>
+.viz-root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --add: #2a78d6; --van: #eb6834;
+  --good: #006300; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --add: #3987e5; --van: #d95926; --good: #0ca30c;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --add: #3987e5; --van: #d95926; --good: #0ca30c;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 40px; }
+a { color: var(--add); }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; color: var(--text-secondary); font-size: 14px; }
+button, select { font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, select:focus-visible, .brow:focus-visible { outline: 2px solid var(--add); outline-offset: 2px; }
+.hero { padding: 36px 0 12px; }
+.eyebrow { color: var(--text-secondary); font-size: 14px; }
+h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.12; margin: 8px 0 14px; }
+h1 .accent { color: var(--add); }
+.lede { font-size: 18px; color: var(--text-secondary); max-width: 760px; margin: 0; }
+h2 { font-size: 24px; margin: 0 0 6px; line-height: 1.25; }
+.kicker { color: var(--text-secondary); margin: 0 0 18px; max-width: 760px; }
+/* controls + shared clock */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 12px; }
+.clock { font: 600 22px ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; margin-left: auto; }
+.lanes { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 22px 16px 12px; display: grid; gap: 16px; }
+.lane { display: grid; grid-template-columns: 110px minmax(0, 1fr) 120px; gap: 12px; align-items: center; font-size: 14px; }
+.lane .who { color: var(--text-secondary); }
+.ltrack { position: relative; height: 18px; border-left: 1px solid var(--axis); }
+.lfill { position: absolute; left: 0; top: 3px; height: 12px; width: 0; border-radius: 0 4px 4px 0; }
+.lane.van .lfill { background: var(--van); }
+.lane.add .lfill { background: var(--add); }
+.beat { position: absolute; top: -17px; font-size: 11px; color: var(--muted); white-space: nowrap; transform: translateX(-50%); }
+.tick { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--axis); }
+.lane .end { font-variant-numeric: tabular-nums; }
+.axis { display: grid; grid-template-columns: 110px minmax(0, 1fr) 120px; gap: 12px; font-size: 12px; color: var(--muted); }
+.axis .scale { display: flex; justify-content: space-between; }
+/* panes */
+.panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+@media (max-width: 860px) { .panes { grid-template-columns: minmax(0, 1fr); } .lane, .axis { grid-template-columns: 72px minmax(0, 1fr) 90px; } .clock { font-size: 18px; } }
+.pane { min-width: 0; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: opacity .6s ease; }
+.pane.idle { opacity: .72; }
+.phead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.phead .name { font-weight: 700; }
+.phead .src { font-size: 12px; color: var(--muted); }
+#pane-vanilla .phead { box-shadow: inset 4px 0 0 var(--van); }
+#pane-add .phead { box-shadow: inset 4px 0 0 var(--add); }
+.status { font-size: 13px; padding: 8px 16px; color: var(--text-secondary); border-bottom: 1px solid var(--border); min-height: 37px; }
+.status .done { color: var(--good); font-weight: 700; }
+.log { font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 12px 16px; height: 420px; overflow-y: auto; background: var(--page); }
+.line { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; margin: 0 0 8px; animation: rise .45s ease both; }
+.line .t { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.line .b { white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.beat-d .b::before { content: "Direction · "; color: var(--add); font-weight: 700; }
+.line.beat-b .b::before { content: "Build · "; color: var(--add); font-weight: 700; }
+.line.beat-v .b::before { content: "Verify · "; color: var(--add); font-weight: 700; }
+.ok { color: var(--good); font-weight: 700; }
+.red { color: var(--critical); font-weight: 700; }
+.hl { background: color-mix(in srgb, var(--add) 16%, transparent); border-radius: 3px; padding: 0 3px; }
+.hl-van { background: color-mix(in srgb, var(--van) 18%, transparent); border-radius: 3px; padding: 0 3px; }
+.quiet { color: var(--muted); }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.disk { padding: 10px 16px 14px; border-top: 1px solid var(--border); font-size: 13px; min-height: 150px; }
+.disk h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+.file { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; padding: 2px 0; animation: rise .45s ease both; }
+.file .path { overflow-wrap: anywhere; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.file .note { color: var(--text-secondary); }
+.file.commit .path { color: var(--add); }
+.static { font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 12px 16px; }
+/* reveal sections */
+section.scene { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 26px; margin: 24px 0; transition: opacity .7s ease, transform .7s ease; }
+.js section.scene.later:not(.in) { opacity: 0; transform: translateY(20px); }
+.cmp { display: grid; grid-template-columns: 190px 1fr 1fr; border-top: 1px solid var(--grid); }
+.cmp > div { min-width: 0; padding: 12px 10px; border-bottom: 1px solid var(--grid); }
+.cmp .q { font-weight: 600; }
+.cmp .hv { color: var(--van); font-weight: 700; font-size: 13px; }
+.cmp .ha { color: var(--add); font-weight: 700; font-size: 13px; }
+@media (max-width: 720px) { .cmp { grid-template-columns: 1fr; } .cmp .qh { display: none; } }
+/* scoreboard */
+.board { display: grid; gap: 14px; }
+.brow { display: grid; grid-template-columns: 230px minmax(0, 1fr) 140px; gap: 12px; align-items: center; padding: 6px; border-radius: 8px; }
+.brow:hover { background: color-mix(in srgb, var(--grid) 55%, transparent); }
+.brow .lab { font-size: 14px; color: var(--text-secondary); }
+.pair { display: grid; gap: 3px; padding-right: 120px; }
+.btrack { position: relative; height: 16px; border-left: 1px solid var(--axis); }
+.bbar { position: absolute; left: 0; top: 2px; height: 12px; width: 0; border-radius: 0 4px 4px 0; transition: width 1.1s cubic-bezier(.2,.7,.2,1); }
+.bbar.van { background: var(--van); } .bbar.add { background: var(--add); }
+.btrack + .btrack .bbar.van, .btrack:nth-child(4n+3) .bbar { margin-top: 0; }
+.bval { position: absolute; left: 0; top: -1px; font-size: 12px; white-space: nowrap; padding-left: 6px; font-variant-numeric: tabular-nums; transition: left 1.1s cubic-bezier(.2,.7,.2,1); }
+.btrack:nth-child(2n+1):not(:first-child) { margin-top: 6px; }
+.chip { display: inline-flex; gap: 5px; align-items: center; font-size: 13px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); }
+.chip .i { font-weight: 700; }
+.chip.pay .i { color: var(--critical); } .chip.tie .i { color: var(--muted); } .chip.add .i { color: var(--add); } .chip.van .i { color: var(--van); }
+.dots { display: flex; gap: 6px; align-items: center; }
+.dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--axis); transform: scale(0); transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
+.in .dot { transform: scale(1); }
+.dot.on.van { background: var(--van); border-color: var(--van); } .dot.on.add { background: var(--add); border-color: var(--add); }
+.dotrow { display: grid; grid-template-columns: 60px auto; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); margin: 2px 0; }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--text-secondary); margin: 0 0 14px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+.sw.van { background: var(--van); } .sw.add { background: var(--add); }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .cards { grid-template-columns: minmax(0, 1fr); } .brow { grid-template-columns: minmax(0, 1fr); } .pair { padding-right: 90px; } }
+.card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; background: var(--page); }
+.card h3 { margin: 0 0 6px; font-size: 17px; }
+.card.van h3 { color: var(--van); } .card.add h3 { color: var(--add); }
+#tip { position: fixed; pointer-events: none; background: var(--text-primary); color: var(--page); font-size: 13px; padding: 6px 10px; border-radius: 6px; opacity: 0; transition: opacity .15s; z-index: 10; max-width: 320px; }
+details { margin-top: 12px; }
+summary { cursor: pointer; color: var(--text-secondary); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 10px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+.fine { font-size: 13px; color: var(--text-secondary); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .js section.scene.later:not(.in) { opacity: 1; transform: none; }
+  .dot { transform: scale(1); }
+}
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+
+<div class="topbar">
+  <span>ADD · <a href="./">the book</a> · <a href="./add-value.html">the measured tour</a></span>
+  <button id="theme" type="button" aria-label="Toggle light and dark theme">◐ Theme</button>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Round 6 · Claude Sonnet 5.5 · two real runs, condensed from their transcripts</div>
+  <h1>Same request. Same model. <span class="accent">Two flows.</span></h1>
+  <p class="lede">Both runs got a booking-service spec that contradicts itself (a conflict is <code>202</code>
+  waitlisted <em>and</em> <code>409</code> rejected) and says nothing on six other decisions. Watch where each
+  one puts its decisions, and what that costs.</p>
+</header>
+
+<div class="controls" role="group" aria-label="Playback">
+  <button id="play" type="button">▶ Play</button>
+  <button id="replay" type="button">↺ Replay</button>
+  <label class="fine">speed
+    <select id="speed" aria-label="Playback speed">
+      <option value="3">3×</option>
+      <option value="6" selected>6×</option>
+      <option value="20">20×</option>
+    </select>
+  </label>
+  <span class="clock" id="clock">t = 0 s</span>
+</div>
+
+<div class="lanes" aria-label="Both runs on one clock">
+  <div class="lane van"><span class="who">🏃 vanilla</span><div class="ltrack" id="lane-van"><div class="lfill"></div></div><span class="end" id="end-van">…</span></div>
+  <div class="lane add"><span class="who">🛡️ + ADD</span><div class="ltrack" id="lane-add"><div class="lfill"></div></div><span class="end" id="end-add">…</span></div>
+  <div class="axis"><span></span><div class="scale"><span>0 s</span><span>50 s</span><span>100 s</span><span>150 s</span><span>200 s</span></div><span></span></div>
+</div>
+
+<div class="panes">
+  <div class="pane" id="pane-vanilla">
+    <div class="phead"><span class="name">🏃 vanilla Claude Code</span><span class="src mono">vanilla-amb/rep1</span></div>
+    <div class="status" id="st-van">waiting to start</div>
+    <div class="log" id="log-van" aria-live="polite"></div>
+    <noscript><div class="static">46 s: done, $0.28. "The spec contradicts itself. Item 1 says a conflicting create is waitlisted with 202; item 2 says 409." Default: waitlist (202); opt-out "waitlist": false → 409, in the chat reply. Who may cancel: not raised, so anyone. On disk: app/ and tests/test_app.py (7 tests).</div></noscript>
+    <div class="disk"><h3>In the repo afterwards</h3><div id="disk-van"></div></div>
+  </div>
+  <div class="pane" id="pane-add">
+    <div class="phead"><span class="name">🛡️ Claude Code + ADD</span><span class="src mono">add-4-amb/rep1</span></div>
+    <div class="status" id="st-add">waiting to start</div>
+    <div class="log" id="log-add" aria-live="polite"></div>
+    <noscript><div class="static">195 s: done, $0.63. Direction wrote .add/tasks/booking-waitlist.md (17 rules, 8 assumptions, 19 checks) and sealed it at 97 s with freeze(booking-waitlist). Build turned 19 checks green. Verify found the seal intact, reran fresh, and committed verify(booking-waitlist): PASS at 186 s. A1 records the contradiction; R:OWNER makes cancel owner-only, sealed by check C11.</div></noscript>
+    <div class="disk"><h3>In the repo afterwards</h3><div id="disk-add"></div></div>
+  </div>
+</div>
+
+<section class="scene later" id="where">
+  <h2>Where did the decisions go?</h2>
+  <p class="kicker">Both runs built working code, and both caught the contradiction. The difference is where each
+  decision lives once the chat is gone, and the guess nobody asked about.</p>
+  <div class="cmp">
+    <div class="qh"></div><div class="hv">🏃 vanilla</div><div class="ha">🛡️ + ADD</div>
+    <div class="q">The 202-vs-409 contradiction</div>
+    <div>Caught it. Chose waitlist-by-default with a <code>"waitlist": false</code> opt-out, <strong>in its chat reply</strong>.</div>
+    <div>Caught it. Made the same choice, <strong>as ASSUMPTION A1 in the task file</strong>, listed first in the report as the costliest guess.</div>
+    <div class="q">Who may cancel a booking?</div>
+    <div>Anyone. The reply never raises it.</div>
+    <div>The owner only: rule <code>R:OWNER</code>, pinned by sealed check C11.</div>
+    <div class="q">Left in your repo</div>
+    <div>The code and 7 tests.</div>
+    <div>The code, 19 checks, and a task file with 17 rules, 8 assumptions and the evidence, as three commits: <code>freeze</code>, build, <code>verify</code>.</div>
+    <div class="q">Planted ambiguities handled right</div>
+    <div>5 of 7</div>
+    <div>6 of 7</div>
+  </div>
+</section>
+
+<section class="scene later" id="board-scene">
+  <h2>Over three runs each: what you get, what you pay</h2>
+  <p class="kicker">One pair of runs can mislead, so the board shows means over n = 3 runs per arm, on both
+  workloads: wm1, a booking API built from scratch, and amb1, the contradictory spec above.</p>
+  <div class="legend"><span><span class="sw van"></span>vanilla Claude Code</span><span><span class="sw add"></span>Claude Code + ADD</span></div>
+  <div class="board" id="board"></div>
+  <details>
+    <summary>Show the board as a table</summary>
+    <table id="board-table"><thead><tr><th>measure</th><th>vanilla</th><th>+ ADD</th><th>reading</th></tr></thead><tbody></tbody></table>
+  </details>
+  <noscript><p class="fine">Dollars per run: $0.31 vs $0.52 (1.7×) on wm1, $0.33 vs $0.68 (2.1×) on amb1. Minutes per run: 0.8 vs 4.1 (5.1×), 0.85 vs 3.4 (4.0×). Held-out edges: a tie at 19 of 19 and 14 of 14. Mutation: 0.83 vs 0.75 and 0.76 vs 0.79, within noise. Ambiguities handled right: 4.3 vs 5.7 of 7. "Who may cancel?" read as owner-only: 0 of 3 vs 3 of 3. Surfaced the contradiction: 2 of 3 vs 1 of 3.</p></noscript>
+</section>
+
+<section class="scene later" id="which">
+  <h2>Which one should your project use?</h2>
+  <div class="cards">
+    <div class="card van"><h3>🏃 Vanilla Claude Code</h3>
+      <p>For throwaway work: a script, a spike, a one-shot. It runs 4–5× faster at about half the price,
+      and on a strong model the code is as good.</p></div>
+    <div class="card add"><h3>🛡️ Claude Code + ADD</h3>
+      <p>For a product you will still be changing next month, with several milestones, teammates, or anything where
+      <em>who may do this?</em> matters. The decisions outlive the chat, the guesses get reviewed, and the
+      checks cannot quietly weaken. Most changes still take the Quick lane: one red→green test and one commit.</p></div>
+  </div>
+  <p class="fine" style="margin-top:16px">Sources: round 6 of the ADD 4.0 pilot, <code>claude-sonnet-5-5 --effort medium</code>,
+  runs <code>vanilla-amb/rep1</code> and <code>add-4-amb/rep1</code>, condensed from their transcripts
+  (<a href="https://github.com/pilotspace/ADD/blob/main/benchmark/PILOT-4v3-2026-09-30-r6.md">pilot report</a> ·
+  <a href="https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-09-add-4.0-vs-vanilla.md">results page</a>).
+  "Vanilla" carries the operator's own <code>~/.claude</code> config, which already asks for red/green TDD. Both
+  workloads are saturated at Sonnet 5.5, and n = 3 shows a direction, not proof.</p>
+</section>
+
+</div>
+<div id="tip" role="tooltip"></div>
+</div>
+
+<script type="application/json" id="flow-data">
+{
+ "meta": {"model": "claude-sonnet-5-5", "effort": "medium", "runs": ["vanilla-amb/rep1", "add-4-amb/rep1"], "results": "benchmark/results/2026-09-add-4.0-vs-vanilla.md"},
+ "vanilla": {
+  "done": 46, "cost": 0.28, "tests": 7, "right": 5,
+  "events": [
+   {"t": 0, "text": ["$ ls -la; git log; python3 --version"], "note": "reads the repo"},
+   {"t": 31, "text": ["writes app/ and tests/test_app.py in one command"], "disk": [["app/", "the service, stdlib only"], ["tests/test_app.py", "7 tests"]]},
+   {"t": 34, "text": ["runs the tests: ", ["ok", "7 OK"], " · smoke run: GET /bookings → []"]},
+   {"t": 46, "text": ["replies: ", ["hl-van", "The spec contradicts itself."], " Item 1 says a conflicting create is waitlisted with 202; item 2 says 409. Default: waitlist (202). Opt-out: \"waitlist\": false → 409. Other choices: 401 without a token, naive times as UTC, 422 inside the 24h window…"]},
+   {"t": 46, "text": [["quiet", "who may cancel someone else's booking? not raised, so any caller can"]]}
+  ]
+ },
+ "add": {
+  "done": 195, "cost": 0.63, "rules": 17, "assumptions": 8, "checks": 19, "right": 6, "beats": [["Direction", 0, 97], ["Build", 97, 138], ["Verify", 138, 195]],
+  "events": [
+   {"t": 0, "text": ["$ cat .add/PROJECT.md; ls -R .add"], "note": "orients"},
+   {"t": 56, "beat": "d", "text": ["writes .add/tasks/booking-waitlist.md: 17 rules, 8 assumptions, 19 checks"], "disk": [[".add/tasks/booking-waitlist.md", "the contract"]]},
+   {"t": 56, "beat": "d", "text": [["hl", "A1 [which]"], " requests 1 (waitlist, 202) and 2 (reject, 409) contradict → default waitlist; 409 only with \"waitlist\": false → cost if wrong: callers expecting 409 get 202"]},
+   {"t": 56, "beat": "d", "text": [["hl", "A3 [who]"], " cancel is owner-only (403) → rule R:OWNER, check C11"]},
+   {"t": 97, "beat": "d", "text": ["runs the checks: ", ["red", "19 run, failures=1, errors=18"], " → commits ", ["hl", "freeze(booking-waitlist)"]], "disk": [["tests/", "19 checks, sealed"], ["freeze(booking-waitlist)", "commit"]]},
+   {"t": 110, "beat": "b", "text": ["writes app/store.py and app/server.py (stdlib, one lock, body cap)"]},
+   {"t": 138, "beat": "b", "text": [["ok", "19 tests OK"], " · commits the build · live probe with curl"], "disk": [["app/", "the service, stdlib only"], ["feat(app): booking service…", "commit"]]},
+   {"t": 154, "beat": "v", "text": ["port 8765 is held by another process: left alone, re-probes on a free port"]},
+   {"t": 159, "beat": "v", "text": ["fresh run on the committed tree · git diff freeze..HEAD -- task tests → ", ["ok", "empty"]]},
+   {"t": 186, "beat": "v", "text": ["writes EVIDENCE, commits ", ["hl", "verify(booking-waitlist): PASS"]], "disk": [["verify(booking-waitlist): PASS", "commit"]]},
+   {"t": 195, "text": ["reports: \"Decisions I made in place of the human (costliest if wrong first): 1. The spec contradicts itself… 2. Cancellation is owner-only…\""]}
+  ]
+ },
+ "board": [
+  {"key": "dollars", "label": "dollars per run", "unit": "$", "pay": true, "rows": [["wm1", 0.31, 0.52, 1.7], ["amb1", 0.33, 0.68, 2.1]]},
+  {"key": "minutes", "label": "minutes per run", "unit": "min", "pay": true, "rows": [["wm1", 0.8, 4.1, 5.1], ["amb1", 0.85, 3.4, 4.0]]},
+  {"key": "edges", "label": "held-out edge cases passed", "reading": "tie", "rows": [["wm1", 19, 19, 19], ["amb1", 14, 14, 14]]},
+  {"key": "mutation", "label": "seeded bugs its own tests catch", "reading": "tie", "rows": [["wm1", 0.83, 0.75, 1], ["amb1", 0.76, 0.79, 1]]},
+  {"key": "ambiguity", "label": "planted ambiguities handled right, of 7", "reading": "add", "rows": [["amb1", 4.3, 5.7, 7]]},
+  {"key": "owner", "label": "\"who may cancel?\" read as owner-only", "reading": "add", "dots": [0, 3, 3]},
+  {"key": "contradiction", "label": "surfaced the spec's contradiction", "reading": "van", "dots": [2, 1, 3]}
+ ]
+}
+</script>
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  root.classList.add("js");
+  var data = JSON.parse(document.getElementById("flow-data").textContent);
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var END = 200, T_MAX = data.add.done;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // el("span", "cls", ["text", node, ["ok", "styled text"]]) — text only ever lands via textContent
+  function el(tag, cls, kids) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    (kids || []).forEach(function (k) {
+      if (k == null) return;
+      if (typeof k === "string") n.appendChild(document.createTextNode(k));
+      else if (Array.isArray(k)) n.appendChild(el("span", k[0], [k[1]]));
+      else n.appendChild(k);
+    });
+    return n;
+  }
+  function setKids(node, kids) { node.textContent = ""; (kids || []).forEach(function (k) { node.appendChild(typeof k === "string" ? document.createTextNode(k) : k); }); }
+
+  $("theme").addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") === "dark" ||
+      (!root.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    root.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  data.add.beats.forEach(function (b) {
+    var tick = el("div", "tick"); tick.style.left = (b[1] / END * 100) + "%";
+    var lab = el("div", "beat", [b[0]]); lab.style.left = ((b[1] + b[2]) / 2 / END * 100) + "%";
+    $("lane-add").appendChild(tick); $("lane-add").appendChild(lab);
+  });
+
+  var sides = {
+    van: { run: data.vanilla, log: $("log-van"), disk: $("disk-van"), st: $("st-van"), fill: document.querySelector("#lane-van .lfill"), end: $("end-van"), pane: $("pane-vanilla"), i: 0, shown: {} },
+    add: { run: data.add, log: $("log-add"), disk: $("disk-add"), st: $("st-add"), fill: document.querySelector("#lane-add .lfill"), end: $("end-add"), pane: $("pane-add"), i: 0, shown: {} }
+  };
+
+  function beatAt(t) {
+    var b = data.add.beats.filter(function (x) { return t >= x[1] && t < x[2]; })[0];
+    return b ? b[0] : "Verify";
+  }
+
+  function emit(side, ev) {
+    var body = el("span", "b", ev.text.concat(ev.note ? [["quiet", " — " + ev.note]] : []));
+    side.log.appendChild(el("div", "line" + (ev.beat ? " beat-" + ev.beat : ""), [el("span", "t", [ev.t + " s"]), body]));
+    side.log.scrollTop = side.log.scrollHeight;
+    (ev.disk || []).forEach(function (d) {
+      if (side.shown[d[0]]) return;
+      side.shown[d[0]] = true;
+      var commit = d[1] === "commit";
+      side.disk.appendChild(el("div", "file" + (commit ? " commit" : ""),
+        [el("span", "path", [(commit ? "● " : "") + d[0]]), el("span", "note", [commit ? "" : d[1]])]));
+    });
+  }
+
+  function money(v) { return "$" + v.toFixed(2); }
+
+  function render(t) {
+    $("clock").textContent = "t = " + Math.floor(t) + " s";
+    Object.keys(sides).forEach(function (k) {
+      var s = sides[k], run = s.run, evs = run.events;
+      while (s.i < evs.length && evs[s.i].t <= t) { emit(s, evs[s.i]); s.i++; }
+      s.fill.style.width = (Math.min(t, run.done) / END * 100) + "%";
+      if (t >= run.done) {
+        var kids = [el("span", "done", ["✓ done"]), " at " + run.done + " s · " + money(run.cost)];
+        var idle = k === "van" && t < T_MAX;
+        if (idle) kids.push(" · idle while ADD keeps working");
+        setKids(s.st, kids);
+        s.pane.classList.toggle("idle", idle);
+        s.end.textContent = run.done + " s · " + money(run.cost);
+      } else if (t > 0) {
+        s.st.textContent = k === "add" ? "working · " + beatAt(t) : "working";
+      }
+    });
+    if (t >= T_MAX) reveal();
+  }
+
+  var revealed = false;
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    ["where", "board-scene", "which"].forEach(function (id, n) {
+      setTimeout(function () { $(id).classList.add("in"); if (id === "board-scene") growBoard(); }, reduce ? 0 : 400 + n * 500);
+    });
+  }
+
+  // scoreboard: bars for magnitudes, unit dots for counts, a chip for the reading
+  var tip = $("tip");
+  function showTip(e, text) { tip.textContent = text; tip.style.opacity = 1; tip.style.left = (e.clientX + 14) + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+  function hideTip() { tip.style.opacity = 0; }
+  var CHIP = { pay: ["pay", "▲", "you pay"], tie: ["tie", "=", "a tie"], add: ["add", "●", "ADD ahead"], van: ["van", "●", "vanilla ahead"] };
+  var tbody = document.querySelector("#board-table tbody");
+  function tr(cells) { tbody.appendChild(el("tr", null, cells.map(function (c) { return el("td", null, [c]); }))); }
+
+  data.board.forEach(function (m) {
+    var reading = m.pay ? "pay" : m.reading, tipText, body;
+    if (m.dots) {
+      var dotrow = function (who, n, of) {
+        var dots = el("span", "dots");
+        for (var i = 0; i < of; i++) dots.appendChild(el("span", "dot " + who + (i < n ? " on" : "")));
+        return el("div", "dotrow", [el("span", null, [who === "van" ? "vanilla" : "+ ADD"]), dots]);
+      };
+      body = el("div", null, [dotrow("van", m.dots[0], m.dots[2]), dotrow("add", m.dots[1], m.dots[2])]);
+      tipText = m.label + ": vanilla " + m.dots[0] + " of " + m.dots[2] + ", + ADD " + m.dots[1] + " of " + m.dots[2];
+      tr([m.label, m.dots[0] + " of " + m.dots[2], m.dots[1] + " of " + m.dots[2], CHIP[reading][2]]);
+    } else {
+      var fmt = function (v) { return m.unit === "$" ? money(v) : m.unit === "min" ? v + " min" : String(v); };
+      body = el("div", "pair");
+      tipText = m.label + ":";
+      m.rows.forEach(function (r) {
+        var max = m.pay ? Math.max(r[1], r[2]) * 1.05 : r[3];
+        ["van", "add"].forEach(function (who, j) {
+          var v = r[1 + j], w = v / max * 100;
+          var bar = el("div", "bbar " + who); bar.setAttribute("data-w", w);
+          var val = el("span", "bval", [(j === 0 ? r[0] + " " : "") + fmt(v) + (j === 1 && m.pay ? " · " + r[3].toFixed(1) + "×" : "")]);
+          val.setAttribute("data-v", w);
+          body.appendChild(el("div", "btrack", [bar, val]));
+        });
+        tipText += " " + r[0] + " vanilla " + fmt(r[1]) + ", + ADD " + fmt(r[2]) + (m.pay ? " (" + r[3].toFixed(1) + "×)" : "") + ";";
+        tr([m.label + " (" + r[0] + ")", fmt(r[1]), fmt(r[2]), (m.pay ? r[3].toFixed(1) + "× " : "") + CHIP[reading][2]]);
+      });
+    }
+    var c = CHIP[reading];
+    var row = el("div", "brow", [el("span", "lab", [m.label]), body,
+      el("span", "verdict", [el("span", "chip " + c[0], [el("span", "i", [c[1]]), c[2]])])]);
+    row.tabIndex = 0;
+    row.setAttribute("aria-label", tipText);
+    row.addEventListener("mousemove", function (e) { showTip(e, tipText); });
+    row.addEventListener("mouseleave", hideTip);
+    $("board").appendChild(row);
+  });
+  function growBoard() {
+    document.querySelectorAll(".bbar").forEach(function (b) { b.style.width = b.getAttribute("data-w") + "%"; });
+    document.querySelectorAll(".bval").forEach(function (v) { v.style.left = v.getAttribute("data-v") + "%"; });
+  }
+
+  // playback on one shared clock
+  var t = 0, playing = false, last = 0, started = false;
+  function frame(now) {
+    if (!playing) return;
+    t = Math.min(T_MAX, t + (now - last) / 1000 * Number($("speed").value));
+    last = now;
+    render(t);
+    if (t >= T_MAX) { pause(); return; }
+    requestAnimationFrame(frame);
+  }
+  function play() {
+    if (t >= T_MAX) return;
+    started = true; playing = true; $("play").textContent = "⏸ Pause";
+    last = performance.now(); requestAnimationFrame(frame);
+  }
+  function pause() { playing = false; $("play").textContent = "▶ Play"; }
+  function reset() {
+    pause(); t = 0;
+    Object.keys(sides).forEach(function (k) {
+      var s = sides[k]; s.i = 0; s.shown = {}; s.log.textContent = ""; s.disk.textContent = "";
+      s.fill.style.width = "0"; s.end.textContent = "…"; s.st.textContent = "waiting to start"; s.pane.classList.remove("idle");
+    });
+    render(0);
+  }
+  $("play").addEventListener("click", function () { if (playing) pause(); else play(); });
+  $("replay").addEventListener("click", function () { reset(); play(); });
+
+  // #t=97 opens the page at that moment of the shared clock, paused
+  var seek = /^#t=(\d+)$/.exec(location.hash);
+  if (seek) {
+    started = true; t = Math.min(T_MAX, Number(seek[1])); render(t);
+    if (t >= T_MAX) growBoard();
+  } else if (reduce || !window.requestAnimationFrame) {
+    t = T_MAX; render(T_MAX); growBoard();
+    [sides.van.log, sides.add.log].forEach(function (l) { l.scrollTop = 0; });
+  } else if ("IntersectionObserver" in window) {
+    render(0);
+    new IntersectionObserver(function (entries, obs) {
+      if (entries[0].isIntersecting && !started) { play(); obs.disconnect(); }
+    }, { threshold: 0.4 }).observe($("pane-add"));
+  } else {
+    render(0); play();
+  }
+})();
+</script>
+</body>
+</html>

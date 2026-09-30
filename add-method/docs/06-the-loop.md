@@ -64,7 +64,7 @@ Ground once for the milestone, then run each task through the loop. **A mileston
 Every session ends with a report the human can act on. It is the review surface that replaced up-front approval, so it is written to make disagreeing easy:
 
 1. **`HARD-STOP`s and open risks first.** A security finding is never buried.
-2. **Per task:** the goal, the verdict, the freeze commit, the evidence, and **every assumption the agent took** — the decisions the human did not make.
+2. **Per task:** the goal, the verdict, the freeze commit, the evidence, and **every assumption the agent took, costliest if wrong first** — the decisions the human did not make. "Any caller may cancel any booking" goes above "errors are JSON".
 3. **What is next.** Update `PROJECT.md`'s CARD (`state:` and `next:`).
 
 Open a pull request when the repository uses them; the report is its description.

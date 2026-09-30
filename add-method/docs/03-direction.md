@@ -54,7 +54,7 @@ A<n> [<dim>] <what is not said> → <reading taken> → <cost if wrong>
 
 | dim | the question |
 |---|---|
-| `who` | who may do this? (authorization, ownership) |
+| `who` | who may do this, or see it? (authorization, ownership) — silent means the least-privilege reading: only the owner. Widening access later is compatible; narrowing it breaks callers |
 | `which` | which cases are in, which are out? |
 | `when` | boundaries — inclusive or exclusive? timing? |
 | `absent` | what happens when a value is missing? defaults? |
@@ -101,7 +101,7 @@ The `check:` command runs this task's checks; the `regression:` command runs the
 C<n> covers: <M/R/A ids> · <mode> · <test id>
 ```
 
-At least one check per Must and per Reject, each aimed at **the most plausible wrong implementation** — a check that any implementation passes is decoration. Prefer **acceptance** checks through the public seam; add a **property** check where an invariant can be named, and a **contract** check where a consumer exists. Keep the task's checks in files of their own, so the seal covers them cleanly. A Must you cannot encode as a check is not understood yet.
+At least one check per Must and per Reject — every RULES id sits on some `covers:` line — each aimed at **the most plausible wrong implementation**; a check that any implementation passes is decoration. Checks send inputs the way a real caller sends them, not the way your code expects: each value in every form the spec allows (a timestamp with and without an offset), and malformed input refused, never a crash — the body itself (not JSON, `null`, a number, a list) as well as each field. Both of the benchmark's escapes on 4.0 were a check that shared the builder's picture of the input. Prefer **acceptance** checks through the public seam; add a **property** check where an invariant can be named, and a **contract** check where a consumer exists. Keep the task's checks in files of their own, so the seal covers them cleanly. A Must you cannot encode as a check is not understood yet.
 
 ### ▶ Example — CHECKS
 
