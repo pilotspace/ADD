@@ -1,7 +1,7 @@
 ---
 type: Task
 title: ADD's benchmark arms run on Sonnet only — the Haiku advisor arm retires and the lean skill keeps Build in the Sonnet session
-status: build
+status: done
 kind: change
 risks: [measurement-validity]
 scope: [benchmark/arms/, benchmark/tests/test_arm_models.py, benchmark/tests/test_arms.py]
@@ -37,4 +37,9 @@ regression: python3 -m pytest -q benchmark/tests
 ## LOG
 
 ## EVIDENCE
-<written once, at verify>
+verdict: PASS
+- seal: `git diff e11b2a5a HEAD -- benchmark/tests .add/tasks` is empty before this record
+- fresh: `python3 -m pytest -q benchmark/tests/test_arm_models.py benchmark/tests/test_arms.py` → 11 passed (C1–C5; red at freeze: C1 C2 C3 C5 failed, each for its falsifier's reason)
+- regression: `python3 -m pytest -q benchmark/tests` → 531 passed, 12 skipped
+- probe (M2): `diff add-method/skill/add/SKILL.md benchmark/arms/variants/add-4-lean/SKILL.md` → 2 hunks (stubs, persona grep); no "haiku" in the variant
+- residue: `add-4-advisor` survives only in the two task records and the test asserting it is gone; round-6 run records keep it as history
