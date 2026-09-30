@@ -1,7 +1,7 @@
 ---
 type: Task
 title: the docs tell the truth about the merged 4.0 skill and what it measurably buys Claude Code — plus an animated page that shows it
-status: build
+status: done
 kind: docs
 risks: [overclaim, stale-docs]
 scope: [README.md, add-method/README.md, add-method/CHANGELOG.md, add-method/docs/, benchmark/results/2026-09-add-4.0-vs-vanilla.md, add-method/tests/test_docs_value.py]
@@ -47,4 +47,15 @@ regression: cd add-method && python3 -m pytest -q
 - C9 covers: M8 · acceptance · tests/test_docs_value.py::test_value_page_is_linked · falsifier: the page ships but nothing links to it
 
 ## EVIDENCE
-<written once, at verify>
+verdict: PASS
+freeze: 2a40874b · head: 1499657e
+seal: `git diff 2a40874b HEAD -- .add/tasks/docs-4-value.md add-method/tests/test_docs_value.py` → empty
+check: `cd add-method && python3 -m pytest -q tests/test_docs_value.py` → exit 0, 9 passed
+regression: `cd add-method && python3 -m pytest -q` → exit 0, 148 passed (includes the 8 front-door honesty guards); `python3 -m pytest -q benchmark/tests` → exit 0, 522 passed, 12 skipped; `uvx --with-requirements requirements-docs.txt --from mkdocs mkdocs build --strict` → built, add-value.html published beside the chapters
+consumers: S1 `add-method/docs/add-value.html` — linked from README.md, add-method/README.md and docs/README.md (C9); no code consumes it
+residue: docs and a static page; no security surface (the page loads nothing remote, builds its DOM with textContent, no innerHTML). Rendered and read in light, dark, a 560px narrow layout, with motion (6 s virtual time, 0 console errors) and with reduced motion; fixed on sight: clipped slope-chart labels, the loop's dot over a node label, labels past full-length bars, and scenes invisible without JavaScript (now hidden only under a `js` class, with a `<noscript>` summary). Palette: slots 1–2 of the reference palette, `validate_palette.js` all checks PASS in light and dark
+probes:
+- P1 every number in the page's visible text (tags, scripts and styles stripped; version and model strings removed) is on the results page → none stray
+- P2 each cost multiple the page draws matches its dollar pair within 0.05 → none off (2.19→2.2, 2.68→2.7, 2.78→2.8, 2.91→2.9)
+- P3 the C1 sentence scan, run while building, found three stale pages the audit had missed — ch 08, the glossary, and ch 20's table — all fixed; the worked example's data-task subagent was reframed as authorization (security) work
+lens: own cold reread (docs, not security) — caught the no-JS blank page and the hero tile that called a share a count
