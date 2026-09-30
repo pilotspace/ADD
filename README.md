@@ -60,6 +60,7 @@ git, and your project's own test command.
 ## ✨ Highlights
 
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, so a fresh session resumes with the full picture instead of a drifting memory. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
+- 🧪 **Tests that catch real bugs** — on ADD 4.0.0 with Claude Code (n=3 per arm), ADD's own tests caught more seeded bugs than vanilla's — 0.68 vs 0.51 and 0.79 vs 0.53 — at 2.2–2.9× the cost ([measured](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-09-add-4.0-vs-vanilla.md)).
 - 🔒 **Checks sealed before the build** — the rules and the failing checks are committed together as `freeze(<slug>)`; weakening a check to get green shows up in `git diff`, and a changed contract is a visible `refreeze` commit with its reason.
 - 🔬 **Know it's correct without reading every line** — every task ends `PASS`, `RISK-ACCEPTED` or `HARD-STOP`, with the exact commands, exit codes and counts from a fresh run, a read of what tests cannot show, and an attempt to break its own green. Evidence you can re-run, never a diff that merely *looks* right.
 - 🙋 **Every guess on the record** — each silence in your request becomes an assumption: what was not said, the reading taken, the cost if wrong. That list is what you review.
@@ -88,6 +89,24 @@ and asks you to read the report afterwards. That is the whole trade.
 **Rule of thumb:** building something you'll throw away this week? Vanilla is fine. Building
 something you'll still be changing next month? The Direction pass pays for itself the first time
 the agent *doesn't* re-break a feature you shipped three milestones ago.
+
+## Measured on 4.0 — what ADD buys Claude Code
+
+The same Claude Code and pinned model, with and without the ADD skill; n = 3 per arm per workload
+([results](./benchmark/results/2026-09-add-4.0-vs-vanilla.md) · [animated tour](https://pilotspace.github.io/ADD/add-value.html)).
+
+| | vanilla Claude Code | + ADD 4.0 |
+|---|---|---|
+| seeded bugs its own tests catch (mutation score, wm1 · amb1) | 0.51 · 0.53 | **0.68 · 0.79** |
+| runs that built code with no tests | 2 of 5 | **0 of 12** |
+| runs that halted on a contradictory spec and shipped nothing | 2 of 7 | **0 of 13** |
+| held-out edge cases passed (wm1) | 16.7 of 19 | **19 of 19** |
+| claimed test count = a fresh rerun | no claim made | **27 of 27** |
+| dollars per run | $0.45–0.73 | $1.31–1.67 — **2.2–2.9×** |
+| correctness oracle | passes | passes — saturated, so no gain is shown either way |
+
+<sub>**Fine print:** "vanilla" here is Claude Code carrying the operator's own `~/.claude` config
+(which already asks for red/green TDD), not bare Claude Code. Small n: direction, not proof.</sub>
 
 ---
 

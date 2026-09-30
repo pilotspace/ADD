@@ -8,7 +8,7 @@
 
 The default is one task at a time. Two kinds of work can go wider:
 
-- **Read-only research** — questions, spec reads, codebase surveys — fans out to subagents freely. Facts merge.
+- **Read-only research** — questions, spec reads, codebase surveys — needs no seal and can run in any order; facts merge. Within one session the subagent budget still holds: at most one per beat, in the foreground, and only where its reading would flood the context.
 - **Independent tasks** — when a milestone's next tasks do not depend on each other — can build at the same time, **each in its own git worktree and branch, with disjoint `scope:`**.
 
 Writes serialize per tree. Two agents never write the same working tree, and two parallel tasks never share a file in `scope:`. That one rule is what makes parallel builds unable to race.

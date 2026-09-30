@@ -49,6 +49,7 @@ of what it decided and on what evidence. Full walkthrough: the [Quickstart](./GE
 ## Highlights
 
 - 📉 **Your agent stops re-breaking last month's work** — every decision lives on disk, in the task files and specs under `.add/`, so a fresh session resumes with the full picture. Measured: quality held flat where a long conversation decayed (six-milestone benchmark, n=1 per arm, ADD 2.0.0, pinned model — [report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)).
+- 🧪 **Tests that catch real bugs** — on ADD 4.0.0 with Claude Code (n=3 per arm), ADD's own tests caught more seeded bugs than vanilla's — 0.68 vs 0.51 and 0.79 vs 0.53 — at 2.2–2.9× the cost ([measured](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-09-add-4.0-vs-vanilla.md)).
 - 🔒 **Checks sealed before the build** — the task file and its checks are committed together as `freeze(<slug>)`. Weakening a check to get green shows up in `git diff`; a changed contract is a visible `refreeze` commit with its reason.
 - 🔬 **A verdict backed by evidence, not a plausible diff** — every task ends `PASS`, `RISK-ACCEPTED` or `HARD-STOP`, written with the exact commands, exit codes and counts from a fresh run on the committed tree, plus a read of what tests cannot show and an attempt to break the green.
 - 🙋 **Every guess on the record** — each silence in the request becomes an assumption line: what was not said, the reading taken, the cost if wrong. That list is what you review.
@@ -88,6 +89,24 @@ milestone started a **fresh session resuming from disk**, the floors held at 1.0
 The lesson: nothing that matters may live only in the chat.
 
 <sub>**Honesty note:** on this friendly workload spec-kit also held the restart floors, and ran cheaper — we published the retraction of our own earlier collapse claim. ADD 4.0 removed its engine because the engine's ceremony cost more than it protected; see [what changed in 4.0](https://pilotspace.github.io/ADD/20-whats-new-in-4/).</sub>
+
+## Measured on 4.0 — what ADD buys Claude Code
+
+The same Claude Code and pinned model, with and without the ADD skill; n = 3 per arm per workload
+([results](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-09-add-4.0-vs-vanilla.md) · [animated tour](https://pilotspace.github.io/ADD/add-value.html)).
+
+| | vanilla Claude Code | + ADD 4.0 |
+|---|---|---|
+| seeded bugs its own tests catch (mutation score, wm1 · amb1) | 0.51 · 0.53 | **0.68 · 0.79** |
+| runs that built code with no tests | 2 of 5 | **0 of 12** |
+| runs that halted on a contradictory spec and shipped nothing | 2 of 7 | **0 of 13** |
+| held-out edge cases passed (wm1) | 16.7 of 19 | **19 of 19** |
+| claimed test count = a fresh rerun | no claim made | **27 of 27** |
+| dollars per run | $0.45–0.73 | $1.31–1.67 — **2.2–2.9×** |
+| correctness oracle | passes | passes — saturated, so no gain is shown either way |
+
+<sub>**Fine print:** "vanilla" here is Claude Code carrying the operator's own `~/.claude` config
+(which already asks for red/green TDD), not bare Claude Code. Small n: direction, not proof.</sub>
 
 ## Install
 

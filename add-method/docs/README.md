@@ -14,6 +14,8 @@ The method's center in one sentence: **the agent is the hands; ADD is the memory
 
 ADD 4.0 is **one skill file** the agent follows. There is no engine, no CLI and no approval step. The tools are the ones every project already has: files, git, and the project's own test command. The human reviews the work after it is done, from a report that lists every assumption the agent took.
 
+**What it measurably buys Claude Code** — stronger tests, a floor that always holds, evidence you can re-run, and what that costs — is shown in [an animated tour of the 4.0 benchmark](./add-value.html).
+
 Read it once front to back, then keep it open as a manual. Part I explains *why* the method has its shape; Part II walks the loop; Part III covers operating it; Part IV and the appendices are reference. One worked example, *transferring money between a user's own accounts*, runs through the whole book.
 
 ## The method in one paragraph

@@ -62,7 +62,7 @@ A green nobody tried to break is reported, not earned. Run one to three probes d
 
 Never invent a requirement: an expected answer that cannot be derived from the sealed rules and assumptions is a spec silence, and belongs in the report as a question — not a finding. A probe that breaks the green is a defect: back to Build, or a refreeze if the rule itself was wrong. A probe that holds can stay in the repository as an ordinary regression test.
 
-For **security, data or architecture** work, do not refute your own work alone: spawn a fresh subagent that reads the task file *before* the diff and tries to break it. A builder tends to share its own misunderstanding with its own checks; a fresh reader does not.
+On floor work, do not refute from inside the builder's frame: read the task file *before* the diff, under the lead persona's counter-lens, and write the probes from the rules. For **security work**, a fresh subagent does this, at most one per beat and in the foreground; for everything else, your own cold reread does it. A builder tends to share its own misunderstanding with its own checks; a reader who starts from the rules does not.
 
 ## 5 · Verdict — exactly one, written down
 
@@ -109,5 +109,5 @@ A `HARD-STOP` leaves `status: build`. Fix it through Direction if you can — an
 - [ ] The sealed files are unchanged since the latest freeze or refreeze commit.
 - [ ] `check:` and `regression:` ran fresh on the committed tree; real exit codes and counts are recorded.
 - [ ] Security, concurrency and architecture residue read, plus the kind-specific lens; new code is wired.
-- [ ] One to three refute probes ran (a fresh subagent for security, data or architecture work).
+- [ ] One to three refute probes ran (a fresh subagent writes them only for security work; otherwise a cold reread).
 - [ ] Exactly one verdict is in `## EVIDENCE`, and the verify commit is made.

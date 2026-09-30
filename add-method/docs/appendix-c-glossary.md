@@ -76,7 +76,7 @@ Every term the method uses, defined once.
 
 **Residue** — what passing tests cannot show: security, concurrency, architecture, plus a lens by kind (migration reversibility, rollback path, accessibility, retries).
 
-**Refute** — one to three probes derived only from the sealed rules, trying to break the green. A fresh subagent does it for security, data or architecture work.
+**Refute** — one to three probes derived only from the sealed rules, trying to break the green. A fresh subagent does it for security work; a cold reread under the counter-lens does it otherwise.
 
 **EVIDENCE** — the task section written once at Verify: freeze and head commits, seal result, commands with exit codes and counts, residue and refute notes, verdict.
 
@@ -120,4 +120,4 @@ Every term the method uses, defined once.
 
 **Worktree stream** — one independent task built in its own git worktree and branch, with `scope:` disjoint from every other stream. See [08](./08-parallel-work.md).
 
-**Fan-out** — read-only research spread across subagents; facts merge, writes serialize.
+**Fan-out** — read-only research split into disjoint questions whose facts merge; writes serialize. Within a session the subagent budget holds: at most one per beat, in the foreground.

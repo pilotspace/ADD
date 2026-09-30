@@ -229,7 +229,7 @@ $ python3 -m pytest -q                                      → exit 0
 
 **Residue.** Security — ownership is checked before amount or balance, so no error reveals whether an id exists. Concurrency — check and debit run under one lock, and C6 now proves it. Architecture — one new module, no new dependency.
 
-**Refute.** The task is `sensitivity: data`, so the skill has a fresh subagent read the task file before the diff and derive probes from the sealed rules. Three probes, run against the real build:
+**Refute.** The task decides who may move money out of an account — authorization, which is security work — so the skill has one fresh subagent read the task file before the diff and derive probes from the sealed rules. Three probes, run against the real build:
 
 ```text
 smallest amount, exact balance: a->b 1 -> {'from_balance': 0, 'to_balance': 1}

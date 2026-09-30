@@ -24,8 +24,10 @@ Every exit check in the book, collected. Each list comes from its chapter — [0
 - [ ] Grounded in the code the task touches and the binding decisions in `.add/specs/`.
 - [ ] Every required behavior is a Must, every refusal a Reject with a named error, each citing its source.
 - [ ] Every public surface swept on `who · which · when · absent · order · experience`; each silence is one assumption line, or retired with a reason; cheap guesses checked and marked `found:`.
+- [ ] A silence about who may act or see takes the least-privilege reading: only the owner.
 - [ ] `scope:`, `gives:`, `check:` and `regression:` written.
 - [ ] Every Must and Reject covered by a check aimed at a plausible wrong implementation; checks in files of their own.
+- [ ] Checks send inputs the way a real caller sends them: the body itself malformed as well as each field, and every value form the spec allows.
 - [ ] The checks ran and failed because the behavior is absent.
 - [ ] `status: build`; task file and check files committed as `freeze(<slug>)`.
 
@@ -42,7 +44,7 @@ Every exit check in the book, collected. Each list comes from its chapter — [0
 - [ ] `check:` and `regression:` ran fresh on a clean, committed tree; real exit codes and counts recorded.
 - [ ] Residue read: security, concurrency, architecture, plus the kind's lens (migration reversibility · rollback path · keyboard and screen-reader reach · retries and idempotency).
 - [ ] New code is wired: each new entry point has a production caller.
-- [ ] One to three refute probes derived from the sealed rules; a fresh subagent for security, data or architecture work.
+- [ ] One to three refute probes derived from the sealed rules; a fresh subagent only for security work, a cold reread otherwise.
 - [ ] Exactly one verdict in `## EVIDENCE` — `PASS`, `RISK-ACCEPTED` (non-security, with reason and owner) or `HARD-STOP` — and the `verify(<slug>): <verdict>` commit made.
 - [ ] A security finding is a `HARD-STOP` at the top of the report.
 
@@ -51,7 +53,7 @@ Every exit check in the book, collected. Each list comes from its chapter — [0
 - [ ] Lessons recorded as deltas with evidence in the matching spec.
 - [ ] Deltas that held are promoted to `## Decisions that bind`.
 - [ ] Milestone EXIT boxes ticked only with evidence on the line.
-- [ ] The report leads with HARD-STOPs and open risks, then per task: goal, verdict, freeze commit, evidence, every assumption taken.
+- [ ] The report leads with HARD-STOPs and open risks, then per task: goal, verdict, freeze commit, evidence, every assumption taken — costliest if wrong first.
 - [ ] `PROJECT.md`'s CARD updated (`state:`, `next:`).
 
 ---

@@ -41,6 +41,24 @@ work. 3.7.0 is the last engine release.
   risk, and a `lens:` line in EVIDENCE records what each lens caught.
 - **Starter personas** ship as plain persona files in `personas/` and are seeded into
   `.add/personas/`; the vendored teacher corpus and `persona-author` stay.
+- **Rules the benchmark asked for** (2026-09-29 → 30, tasks `close-benchmark-gaps` and
+  `value-over-ceremony`): every RULES id sits on some `covers:` line; cheap guesses are checked
+  now and marked `found:`; checks send inputs the way a real caller sends them — the body itself
+  malformed as well as each field, and every value form the spec allows (a timestamp with and
+  without an offset); a silence about who may act or see takes the least-privilege reading; the
+  report lists assumptions costliest if wrong first; Direction is a batched three-turn plan.
+- **Subagents only for security work.** A fresh subagent runs the second reader and the refute
+  for security work only — at most one per beat, in the foreground; every other floor task gets a
+  cold reread under the counter-lens. The Explore lane keeps the same budget.
+
+### Measured
+- **ADD 4.0 vs vanilla Claude Code**, same pinned model, n = 3 per arm per workload
+  ([results](../benchmark/results/2026-09-add-4.0-vs-vanilla.md)): ADD's own tests catch more seeded
+  bugs (mutation score 0.68 vs 0.51 and 0.79 vs 0.53), it held every held-out edge case on wm1, it
+  never shipped without tests or halted on a contradictory spec, and its claimed test counts matched
+  a fresh rerun in 27 of 27 runs — at 2.2–2.9× the dollars. The correctness oracle is saturated on
+  these workloads. New benchmark tooling: `benchmark/quality.py` (held-out edge suites, mutation
+  score, static quality, security smells, test quality, evidence honesty).
 
 ### Removed
 - The `add` CLI and every verb (`status`, `new`, `freeze`, `run`, `gate`, `learn`, …), the engine
