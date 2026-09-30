@@ -59,6 +59,11 @@ work. 3.7.0 is the last engine release.
   a fresh rerun in 27 of 27 runs — at 2.2–2.9× the dollars. The correctness oracle is saturated on
   these workloads. New benchmark tooling: `benchmark/quality.py` (held-out edge suites, mutation
   score, static quality, security smells, test quality, evidence honesty).
+- **Round 6, on Sonnet 5.5** ([PILOT](../benchmark/PILOT-4v3-2026-09-30-r6.md)): ADD costs 1.7–2.1× vanilla's
+  dollars and 4.0–5.1× its minutes. Vanilla ties on held-out edges and mutation; ADD keeps its lead
+  on reading a spec's silences (owner-only cancel in 3 of 3 runs against 0 of 3). Switching models by
+  beat (a Haiku main session with a Sonnet 5.5 advisor) was measured and refuted. A side-by-side
+  animated flow page, `docs/add-vs-vanilla.html`, plays one real run of each.
 
 ### Removed
 - The `add` CLI and every verb (`status`, `new`, `freeze`, `run`, `gate`, `learn`, …), the engine
