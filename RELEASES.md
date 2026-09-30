@@ -1,5 +1,73 @@
 # Releases
 
+For the next version tag, the release workflow first builds one wheel, one
+sdist, and one npm tarball from the tagged checkout. Its candidate report names
+the tag commit/tree, measured SHA-256 of each file, tool versions, fresh install,
+older-to-candidate upgrade, installed npm/pip payload comparison, and a local
+PASS or refusal with stage and path. The two publisher jobs recheck the uploaded
+hash file, then publish the same checked package bytes. Copying the wheel and
+sdist into PyPI's clean `dist/` directory changes their location, not their
+contents; the job compares the copied hashes before publication.
+
+This report proves **local candidate package bytes**. It does not establish
+which bytes a registry serves, the CI identity behind an attestation, or whether
+the registry accepted both packages. A future release row should cite the
+candidate report and upload digests as local evidence, then separately record
+the npm/PyPI publication and any registry provenance that was actually observed.
+If the candidate gate refuses, fix the named artifact or installer stage and
+build a new candidate from the corrected commit; do not reuse a green source
+suite as a substitute for package installation.
+
+## 3.6.0 — 2026-09-10
+theme: the loop drains, and our own tests stop passing on refusals — `R:UNDRAINED` at `milestone-done`, `add fold --reject|--bind`, and four checks that were passing on nothing
+milestones: two (per CHANGELOG [3.6.0]); named milestone records live in `.add/milestones/`
+waivers: none recorded
+actor: Trusting <tindang.ht97@gmail.com> (git)
+evidence: tag `v3.6.0` -> 65827f08, PR #222. CHANGELOG dates the release 2026-09-08; the tag was pushed 2026-09-10. Detail: `add-method/CHANGELOG.md` [3.6.0].
+BACKFILL NOTE: reconstructed 2026-09-15 from git tags and the CHANGELOG, NOT from a contemporaneous release record. The per-release milestone/task rosters, waiver lists and suite counts that entries 1.x-2.5.0 carry were never written for 3.x and are not invented here.
+
+## 3.5.0 — 2026-09-04
+theme: a read is an address you can follow, and it costs what it is worth — `add show` (26th verb), `--json` on `show`/`search`, bounded two-way graph walk, intake read-cost cut by more than half
+waivers: none recorded
+actor: Trusting <tindang.ht97@gmail.com> (git)
+evidence: tag `v3.5.0` -> 4f052b81, PR #215. Detail: `add-method/CHANGELOG.md` [3.5.0].
+BACKFILL NOTE: as 3.6.0 above.
+
+## 3.4.0 — 2026-09-03
+theme: a guard asks whether what a stamp attests is TRUE, not whether the stamp is well-formed — and what `new` writes is what the engine reads
+waivers: none recorded
+actor: Trusting <tindang.ht97@gmail.com> (git)
+evidence: tag `v3.4.0` -> 8f7fe66a, PR #212. Detail: `add-method/CHANGELOG.md` [3.4.0].
+BACKFILL NOTE: as 3.6.0 above.
+
+## 3.3.0 — 2026-09-01
+theme: the seal has to mean something under every verdict, and the one approval has to be asked for out loud — `add interview` (24th verb) puts a node's open decisions to a human before the approval
+waivers: none recorded
+actor: Trusting <tindang.ht97@gmail.com> (git)
+evidence: tag `v3.3.0` -> 1e80dd34, PR #209. Detail: `add-method/CHANGELOG.md` [3.3.0].
+BACKFILL NOTE: as 3.6.0 above.
+
+## 3.2.0 — 2026-08-12
+theme: experience becomes a question the plan must answer — a sixth sweep dimension, `experience`, which `freeze` refuses a standard-depth task for leaving unswept
+waivers: none recorded
+actor: Trusting <rainstone1029x@gmail.com> (git)
+evidence: tag `v3.2.0` -> 8783b228, PR #204. Detail: `add-method/CHANGELOG.md` [3.2.0].
+BACKFILL NOTE: as 3.6.0 above.
+
+## 3.1.0 — 2026-08-12
+theme: the dynamic path — the Explore lane as a first-class Task kind with a hard budget and a cited `## FINDINGS` sufficiency gate, adaptive routing over a byte-identical trust spine, and a 4x faster engine
+waivers: none recorded
+actor: Trusting <rainstone1029x@gmail.com> (git)
+evidence: tag `v3.1.0` -> 6ea72b72, PR #200. Detail: `add-method/CHANGELOG.md` [3.1.0].
+BACKFILL NOTE: as 3.6.0 above.
+
+## 3.0.0 — 2026-08-11
+theme: MAJOR — the method core rebuilt on the ABF-1 bundle format with a NO-EXEC notary engine, superseding the 2.x/OKF surface. The 3-beat loop is Direction -> Build -> Verify, trusted on a fresh bound receipt rather than a plausible diff. Release claim unchanged since the first beta: auditability, not correctness.
+waivers: none recorded
+actor: Trusting <rainstone1029x@gmail.com> (git)
+evidence: tag `v3.0.0` -> 67979961, PR #196; hardened through `3.0.0-beta.1` and `3.0.0-beta.2` (tag `v3.0.0-beta.2` -> 107b253f, PR #195). Detail: `add-method/CHANGELOG.md` [3.0.0].
+BACKFILL NOTE: as 3.6.0 above.
+
 ## 2.5.0 — 2026-07-25
 milestones: persona-template-completeness (the persona template as one coherent artifact — four legs with a bar each · `## Escalation` optional+routable · book reconciled with the load set the surfaces actually read · three planner personas at task/milestone/release altitude · the 12 orphaned preset templates retired — closed 4/4, 5/5 criteria)
 loose tasks: seed-method-personas (#182 — init/migrate SEED the three method-lens planners via `_seed_persona_file`, never-clobber, load-proven against the rendered `status --all` roster and both built artifacts) · SKILL.md persona-seeding ladder (select → fold → author; generic fallback never blocks) · lock-reclaim-hardening closed+archived with its exit criterion finally written

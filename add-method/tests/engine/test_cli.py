@@ -17,10 +17,10 @@ import add  # noqa: E402
 import cli  # noqa: E402
 
 # Verbs the CLI wires in v1 — every one has a real engine function.
-WIRED = {"init", "status", "new", "freeze", "run", "gate", "done", "brief", "learn", "show",
+WIRED = {"init", "status", "new", "freeze", "repair", "run", "gate", "done", "brief", "learn", "show",
          "milestone-done", "deltas", "fold", "reopen", "drop", "milestone-archive", "doctor",
          "wave", "join",
-         "advise", "locate", "todo", "upgrade", "replan", "check", "interview", "search", "refute"}
+         "advise", "locate", "todo", "upgrade", "replan", "check", "interview", "search", "refute", "release"}
 
 
 def _run(root, *argv):
@@ -42,7 +42,7 @@ def test_run_timeout_flag_reaches_the_engine(tmp_path, monkeypatch):
     _run(tmp_path, "new", "Task", "slow", "--title", "slow")
     seen = {}
 
-    def fake(root, cid, command, cwd=None, timeout=add.RUN_TIMEOUT, junit=None):
+    def fake(root, cid, command, cwd=None, timeout=add.RUN_TIMEOUT, junit=None, floor=False):
         seen["timeout"] = timeout
         return {"note": "ok", "receipt": {"exit": 0}}
 

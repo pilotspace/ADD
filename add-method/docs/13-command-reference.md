@@ -29,6 +29,7 @@ Create a node and take it through Direction to the one approval.
 | `freeze` | the one human approval — closes Direction, opens Build. `--by`, `--authority` | `add freeze reject-overlap --by "tindang" --authority human` |
 | `brief` | compile the sealed direction into the working XML prompt — and, on a frozen task, record an `act: brief` stamp: the entry into Build. The gate refuses a `PASS` whose receipts predate that entry. `--phase`, `--for-subagent`, `--by` | `add brief reject-overlap` |
 | `replan` | record a steering amendment on a frozen task — one additive `act: replan` stamp carrying the note; the seal, the checks and the gate are untouched. A frozen `gives:`/check change stays a change-request (refreeze), never a replan. `--note`, `--by` | `add replan reject-overlap --note "pivoting to sorted-merge"` |
+| `repair` | route an actively frozen Task's failure: `implementation` keeps Build only while every sealed surface still matches; `change` or `unknown` returns to Direction and invalidates old Build evidence until refreeze. `--kind implementation\|change\|unknown`, `--cause`, optional `--by` | `add repair reject-overlap --kind unknown --cause "retry meaning is unspecified"` |
 
 ## The loop
 
@@ -54,6 +55,7 @@ Group tasks into one user-request scope; close it on met exit criteria.
 | `milestone-done` | close a milestone — refuses while any `## EXIT` box is unchecked | `add milestone-done auth-layer` |
 | `check` | mark (or `--off` unmark) a checklist box by 1-based index, and record who did it. `--section` narrows to one `## SECTION`; `--all` takes every box | `add check auth-layer 2 --by "Ada"` |
 | `milestone-archive` | retire a done milestone — refuses one that is not done | `add milestone-archive auth-layer` |
+| `release` | bind a tag's tree to the receipts that verified it — appends `act: release` (tag, tree sha, receipt cids) to a done milestone after READ-ONLY git (`rev-parse`, `ls-tree`) proves the tag's tree holds every scope blob the members' gated receipts recorded; refuses `R:UNANCHORED` naming the task, the path and both blobs, `R:NOTDONE`, `R:NOSUCHTAG`. `--milestone` (repeatable) and `--by` required; `--artifact name@digest` and `--build ref` are recorded verbatim, never verified. The engine never tags, publishes or deploys | `add release v3.7.0 --milestone loop-that-closes --by "Tin" --artifact add-method@sha256:… --build gha://run/42` |
 | `deltas` | list open deltas across the specs — the carried inventory. `--status open\|folded\|rejected` | `add deltas --status open` |
 | `fold` | retag a named open delta folded (human consolidation) into a spec `domain\|system\|experience\|quality\|method` | `add fold domain "half-open"` |
 

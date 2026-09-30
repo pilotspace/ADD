@@ -137,8 +137,8 @@ def test_no_caller_is_blind_to_the_change():
 
 
 
-MESSAGE_DIGEST = "981619eaad210c563757a0ae8a7e1c810b547b84f7cb50f3020effa1e1df8285"  # re-aimed @ refute-tier-and-changed: one refusal message joins with `refute()` (BADTIER) — no existing message reworded. prior: a7fa8b83… @ refute-verb
-MESSAGE_COUNT = 106  # re-aimed @ refute-tier-and-changed: +BADTIER. prior: 105 @ refute-verb
+MESSAGE_DIGEST = "acf5829cabfc7d9395a2ce0948bdf2daf30a3f1575597f520d189a35b2e1fa20"  # re-aimed @ repair-or-contract-change: new repair refusal paths and old-seal Build-entry guards, with no existing message removed. prior: 4b736f06… @ carries-preserves-responsibility
+MESSAGE_COUNT = 138  # re-aimed @ repair-or-contract-change: seven new repair and old-seal refusals. prior: 131 @ carries-preserves-responsibility
 
 
 def _message_digest() -> tuple:

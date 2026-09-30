@@ -79,11 +79,12 @@ The `Framings weighed:` line shows what was considered and dropped, so the chose
 
 ## PLAN — the contract, the strategy, the scope
 
-PLAN turns the grounded code into the shape neighbours can depend on. It carries three things:
+PLAN turns the grounded code into the shape neighbours can depend on. It carries four things:
 
 - **The contract shape** — the interface this node publishes: the endpoints, functions, or messages, their request and response shapes, the names (drawn from the project glossary so one concept has one name everywhere), and a contracted response for every error code the rules reject. This shape becomes the node's **frozen `gives:`** — the interface other nodes depend on and the build is not allowed to disturb.
 - **The build strategy** — how the code will satisfy the rules, and any place where correctness depends on more than shape (a transaction boundary, an ordering guarantee).
 - **The `scope:` tokens** — the paths this node may touch. Scope is also the *freshness set*: the files a verify receipt must observe unchanged. Nothing outside scope is edited during Build.
+- **The regression floor** — one line, `regression: full | affected · <command> · <why>` or `regression: none · <why>`: the host suite that runs beside the node's own checks. A task's checks prove the change; they do not prove the host still stands, and a floor kept in memory is how a task ships green over a red host. At a plan-or-human floor `freeze` refuses a task without the line (`R:NOFLOOR`), and the gate refuses a PASS whose declared floor was never run fresh and green (`R:FLOORUNRUN`, [05 · Verify](./05-verify.md)).
 
 ### The frozen contract is the decision point
 

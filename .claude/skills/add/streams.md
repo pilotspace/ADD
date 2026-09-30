@@ -9,9 +9,9 @@ nothing behaves exactly as the 3-beat loop already does.
 > verdict. *Parallel streams* (below): N mutually-independent tasks built at once, each in its own
 > worktree, joined losslessly. Both keep the four floors; neither lets a subagent own a gate.
 
-The engine stays **NO-EXEC**: it never spawns, never reads a persona on the build path. `add brief
---for-subagent` *composes* the core; **the skill wraps and spawns**; the engine records only that
-the verdict is present. Selection, spawn and fold are your judgment.
+The engine stays **NO-EXEC**: it reads Persona frontmatter to compose `add brief --for-subagent`,
+but never spawns, executes, or evaluates the Persona body. **The skill wraps and spawns**; the
+engine records the verdict. Selection, spawn and fold are your judgment.
 
 ## The four floors — a subagent never buys these back
 

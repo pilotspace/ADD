@@ -44,6 +44,10 @@ beat: build · next: add run
 - R:BAD something forbidden -> "BAD"
 </reject>
 
+## PLAN
+contract: fixture
+regression: none · fixture
+
 ## CHECKS
 - test_one · covers: M1, R:BAD · proves the rule and the reject
 red-first: every check MUST fail first.
@@ -137,7 +141,9 @@ def test_path_floored_node_passes_with_a_lens(tmp_path):
     """covers: M2 — the floor binds lens PRESENCE; a lensed path-floored node still passes."""
     root, cid = _repo_with_node(tmp_path, "src/auth/login.py", ["src/auth/**"],
                                 lens={"advised_by": "sec-reviewer"})
-    add.refute(root, cid, by="v", held=True)          # the refute rung binds at a human floor too
+    # `--tier T2`: a human floor also reads the tier CLAIM (R:SELFREFUTE), and a fixture that
+    # reaches the lens rung must get past the refute rung first. The lens claim is untouched.
+    add.refute(root, cid, by="v", held=True, tier="T2")   # the refute rung binds at a human floor too
     ok, note = add.gate(root, cid, "PASS", by="human:tindang")
     assert ok is True, f"a lensed path-floored node must still pass: {note}"
 

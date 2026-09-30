@@ -9,5 +9,5 @@ generated: { by: add/3.0.0, at: 2026-08-08 }
 ---
 ## CARD
 goal: the method, its engine and its book — shipped, dogfooded on itself, and trustworthy because its own bundle holds
-state: 3.6.0 cut (unpublished) · loop-that-drains and rules-that-hold-for-us both closed
+state: 3.6.0 PUBLISHED (tag v3.6.0 · 65827f08 · PR #222 · npm + PyPI) · next release unnumbered, in flight on feat/loop-that-closes: loop-that-closes closed 10 of 11, seal-what-you-signed building, state-that-tells-truth in direction
 next: add todo

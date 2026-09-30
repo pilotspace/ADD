@@ -84,12 +84,14 @@ def test_todo_beat_is_stamp_derived(tmp_path, draft):
     assert beats["open2"] in add.SCAFFOLD_KINDS, \
         f"an unauthored task is at none of {add.SCAFFOLD_KINDS}: {beats}"
     # beta-2 (R:UNBRIEFED): the build beat's first verb is the ENTRY — a sealed task that has
-    # not recorded a brief points at `add brief`; the run hint takes over once it has.
+    # not recorded a brief points at `add brief`; once briefed, an unrun Task opens its PLAN
+    # rather than borrowing a different Task's last test command.
     assert "add brief" in verbs["open1"], f"the build beat points at the entry first: {verbs}"
     add.brief_stamp(tmp_path, "/tasks/open1.md", by="cli")
     items, _ = add.todo(tmp_path)
     verbs = {cid.rsplit("/", 1)[-1][:-3]: nxt for cid, _, nxt in items}
-    assert "add run" in verbs["open1"], f"once briefed, the build beat points at the run: {verbs}"
+    assert verbs["open1"] == "add show open1", (
+        f"once briefed without an owned run, the build beat opens its PLAN: {verbs}")
     assert "add freeze" in verbs["open2"], f"the direction beat points at the freeze: {verbs}"
     assert "build:" in note, note
 

@@ -30,22 +30,22 @@ argues Explore-first ("high" is judgment, never a numeric gate):
 
 ### Quick — direct, no node
 **Refused first, whatever the size.** A change that trips the closed floor (security · data · architecture),
-adds or alters a `gives:` surface anything else consumes, or touches frozen scope takes a Task —
-however small it is. Only then size it: at most ~3 adjacent files, a diff one
-reviewer reads in one sitting, an unknowns tally of zero. Small **new behavior** is admitted — the
-lane is bounded by size and blast radius, not by whether the specs already cover it.
+adds or alters a `gives:` surface anything else consumes, or touches frozen scope takes a Task — however
+small. Run `add locate <path>` per file BEFORE the first edit — it names the floor, and any node
+whose scope holds that path — while changing course is free. Only then size it: ~3 adjacent files, one sitting's diff,
+zero unknowns. Small **new behavior** is admitted — bounded by size and blast radius, not by coverage.
 
-**Route and go.** State one line — `quick: <intent> — <fit>` — and proceed. You do NOT wait for a
-confirm here; the human vetoes after the fact, and "make it a task" always wins. Task · Explore ·
-Milestone keep the confirm-first rule unchanged.
+**Route and go.** State one line — `quick: <intent> — <fit>` — and proceed. You do NOT wait for a confirm
+here; the human vetoes after the fact, and "make it a task" always wins. Task · Explore · Milestone
+keep the confirm-first rule unchanged.
 
 **The receipt** is the commit — its body names the check you ran and its result — plus exactly one learn line:
 `add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <sha>` — a real lesson when one was learned,
-otherwise the trace `"quick: <intent>"`. That learn line is the ONLY bundle write; a Quick
-change never writes under `.add/tasks|runs|milestones`.
+otherwise the trace `"quick: <intent>"`. It is the ONLY bundle write — nothing lands under
+`.add/tasks|runs|milestones` — so it is where the engine reads your commit back: ANY lesson whose
+sha touched an UNROUTED sensitive path is refused `R:QUICKSIZEUP`; a `quick:` one, also for scope.
 
-**Sizing up reuses today's vocabulary** — no new lane, tier, verb or stamp. medium = a Task at `--depth quick`;
-large = a Task at `standard|deep`, or a Milestone when it spans tasks.
+**Sizing up reuses today's vocabulary** — no new lane, tier, verb or stamp. medium = a Task at `--depth quick`; large = a Task at `standard|deep`, or a Milestone when it spans tasks.
 
 **The five steps**, in order:
 1. the route line `quick: <intent> — <fit>`;
@@ -93,7 +93,7 @@ route says what to create, the third column what you still owe, the fourth what 
 
 | the change (kind · size) | route | effort · review | what persists |
 |---|---|---|---|
-| **mechanical**, or small **behavior** — ≤3 adjacent files, one-sitting diff, zero unknowns | direct — no node | inline card before the edit · red→green · `invariants:` hold · self-review | the commit + one `add learn` line |
+| **mechanical**, or small **behavior** — ≤3 adjacent files, one-sitting diff, zero unknowns | direct — no node | inline card · red→green · `invariants:` hold · self-review + the kind's residue lens | the commit + one `add learn` line |
 | one **behavior** worth a frozen contract | Task, `--depth quick` or `standard` | advisor pressure-test at direction · human freeze · receipt-backed verify | the node · its frozen contract · a run receipt |
 | an unanswered **question** — investigate · evaluate · research | Task, `--kind explore` | a hard budget · cited findings · sufficiency gate | the node + its cited `## FINDINGS` |
 | a **theme**, or a slice spanning tasks | Milestone | persona-led plan · breadth-first task list · goal-gate at close | the milestone + its task nodes |
@@ -105,8 +105,8 @@ to prove it did. A change that fits no rung cleanly sizes UP to the next one.
 ## Change-request — touching already-frozen scope
 
 If the request modifies a **frozen** contract or a shipped promise, it is not new scope — it is a
-change-request back to Direction of the affected node (§3.5: the old `gives:` stays, a `refreeze` stamp
-lands, dependents that `need:` it are flagged stale). Never fork the truth into a parallel node.
+change-request back to Direction of the affected node (FORMAT §3.5: the old `gives:` stays, a `refreeze` stamp
+lands, dependents that `need:` it are flagged stale — `needs_stale` in doctor and todo, R:STALENEEDS at a rung-bound consumer's gate). Never fork the truth into a parallel node.
 
 ## What you emit (the proposal)
 

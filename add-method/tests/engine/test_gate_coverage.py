@@ -39,6 +39,10 @@ beat: build · next: add run
 - R:BAD something forbidden -> "BAD"
 </reject>
 
+## PLAN
+contract: fixture
+regression: none · fixture
+
 ## CHECKS
 - test_one · covers: M1 · proves the first
 - test_two · covers: M2, R:BAD · proves the second and the reject
@@ -107,7 +111,9 @@ def test_security_pass_without_lens_refuses(tmp_path):
 def test_security_pass_with_lens_is_recorded(tmp_path):
     """covers: M1 — the same security node with `advised_by:` set gates PASS."""
     root, cid = _repo_with_node(tmp_path, "security", lens={"advised_by": "sec-rev"})
-    add.refute(root, cid, by="v", held=True)          # the refute rung binds at a human floor too
+    # `--tier T2`: a human floor also reads the tier CLAIM (R:SELFREFUTE), and a fixture that
+    # reaches the lens rung must get past the refute rung first. The lens claim is untouched.
+    add.refute(root, cid, by="v", held=True, tier="T2")   # the refute rung binds at a human floor too
     ok, note = add.gate(root, cid, "PASS", by="human:tindang")
     assert ok is True, note
 

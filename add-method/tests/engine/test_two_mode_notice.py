@@ -23,8 +23,8 @@ beat: direction · next: add freeze
 
 ## RULES
 <must>
-- M1 the first rule
-- M2 the second rule
+- M1 the first rule (from: the fixture's own brief)
+- M2 the second rule (from: the fixture's own brief)
 </must>
 <reject>
 - R:BAD something forbidden -> "BAD"
@@ -39,6 +39,7 @@ beat: direction · next: add freeze
 - A6 [experience] covers: S1 · n/a · fixture
 
 ## PLAN
+regression: none · fixture
 contract: S1
 budget: ~5 tool calls
 

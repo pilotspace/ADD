@@ -136,6 +136,22 @@ def _drive_deltas(tmp_path):
     return add.deltas(tmp_path)[1]
 
 
+def _drive_locate_names_the_floor(tmp_path):
+    """quick-lane-tripwire: intake.md's Quick step sends the direct lane to `add locate` BEFORE the
+    first edit, so the claim that it names the FLOOR and any owning node is DRIVEN, not reworded —
+    a pre-edit instruction nobody proves is exactly the doc-lie this guard exists to catch.
+
+    An earlier round of this task wrote the claim while `locate` read `scope:` alone, and this
+    guard caught it. The verb now reads the floor too, so the same sentence is provable — one
+    fixture, both halves, or the sentence is half true again and nothing says so."""
+    add.init(tmp_path, "code", "T")
+    idx = tmp_path / "index.md"
+    n = add.read(idx, "T2")
+    add.write(idx, f"---\n{add.set_key(n['raw'], 'sensitive_paths', '[src/auth/**]')}\n---\n" + n["body"])
+    add.new(tmp_path, "Task", "billing", title="billing", scope=["src/auth/token.py"])
+    return add.locate(tmp_path, "src/auth/token.py")[1]
+
+
 # ---- the registry: claim -> (driver, the substring its stdout MUST carry) -------------------
 #
 # Keyed by the file the claim lives in plus a fragment identifying the sentence, so a reworded
@@ -151,6 +167,8 @@ REGISTRY = {
     ("SKILL.md", "names next"): (_drive_status_names_the_beat, "next:"),
     ("SKILL.md", "counts them down"): (_drive_todo_counts_unswept, "unswept"),
     ("personas.md", "outside"): (_drive_routing_key_report, "outside the closed taxonomy"),
+    ("intake.md", "names the floor, and any node"): (_drive_locate_names_the_floor, "floor human"),
+    ("intake.md", "whose scope holds that path"): (_drive_locate_names_the_floor, "billing"),
 }
 UNPROVABLE = {}          # a claim whose bundle state cannot be built — reported BY NAME (M5)
 

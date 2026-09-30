@@ -23,7 +23,7 @@ def git(*args, cwd):
     return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True)
 
 DRAFTED_RULES = """<must>
-- M1 the admit path is atomic
+- M1 the admit path is atomic (from: the fixture's own brief)
 </must>
 <reject>
 - R:OVERADMIT two callers must never both take the last token -> "OVERADMIT"

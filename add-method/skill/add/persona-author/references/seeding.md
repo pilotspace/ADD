@@ -21,7 +21,7 @@ and a verbose motivational body (`## 🧠 Identity & Memory`, `## 🎯 Core Miss
 
 | ADD schema | Seed from the teacher | Action |
 |---|---|---|
-| `name:` | frontmatter `name` | carry across |
+| `title:` | frontmatter `name` | convert name to node title |
 | `vibe:` | frontmatter `vibe` | carry across (tighten to one line) |
 | `flow:` | the division folder — `design/` → `design`; a review/audit persona → `verify`/`advisor` | **infer, then confirm** against the closed values |
 | `task-kinds:` | the domain (a `design/` lens → `ui`; a data persona → `data`) | **you pick** from the closed taxonomy |
@@ -41,7 +41,7 @@ A subagent file: frontmatter `name · description · model · color`, the `descr
 
 | ADD schema | Seed from the subagent | Action |
 |---|---|---|
-| `name:` / `vibe:` | frontmatter `name`; **vibe has no source** | carry name; **write a one-line vibe** |
+| `title:` / `vibe:` | frontmatter `name`; **vibe has no source** | map name to title; **write a one-line vibe** |
 | `flow:` / `task-kinds:` | the `<example>` Contexts name the work (review → `verify`; build → `build`) | infer flow + kinds, confirm against the closed sets |
 | `use-when:` / `not-when:` | the `Use when: …` clause in `description`; each `<commentary>` names a core capability | carry `use-when`; **add `not-when`** |
 | `## Identity` | the opening `You are a **…**` paragraph | distil to earned perspective |
@@ -73,8 +73,8 @@ not survive the seed:
 
 ## After the seed
 
-Record provenance honestly: add a `source:` frontmatter line naming the seed — the teacher slug,
-or `agents/<file>` — (the contract lists `source` as an optional field). Then run the **Workflow** in `SKILL.md` over the
-seeded draft — every section still faces its judgment bar — then `cli.py doctor` until it reports
+Record provenance honestly: add optional `sources:` frontmatter naming the seed — the teacher slug
+or `agents/<file>`. Convert teaching `source:` to node `sources:` and `name:` to `title:`. Then run the **Workflow** in `SKILL.md` over the
+seeded draft — every section still faces its judgment bar — then `python3 .add/tooling/cli.py doctor` until it reports
 no findings, and sweep the `<…>` placeholders yourself (the engine does not lint them). A seed
 that never had the Success-Metrics and Anti-patterns columns filled is not done.

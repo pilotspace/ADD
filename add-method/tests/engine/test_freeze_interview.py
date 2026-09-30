@@ -39,10 +39,11 @@ def _authored(root, slug="t", rejects=1, na=0, **fields):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 the lister")
+    t = t.replace("regression: <full | affected · <cmd> · <why> — or none · <why>>", "regression: none · fixture")  # regression-floor: fixtures freeze without a host suite
     # `freeze` refuses a template `goal:` — the ONE approval approves the goal.
     t = t.replace("goal: <one line>", "goal: the lister lists only the caller's rows.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
-               "## RULES\n<must>\n- M1 the lister returns only the caller's rows\n</must>",
+               "## RULES\n<must>\n- M1 the lister returns only the caller's rows (from: the fixture's own brief)\n</must>",
                t, flags=re.S)
     rj = "\n".join(f'- R:R{i} thing {i} happens -> "R{i}"' for i in range(1, rejects + 1))
     t = re.sub(r"<reject>\n.*?\n</reject>", f"<reject>\n{rj}\n</reject>", t, flags=re.S)
@@ -288,9 +289,10 @@ def test_an_empty_question_set_needs_no_interview(tmp_path):
     t = p.read_text(encoding="utf-8")
     t = t.replace("- S1 <the surface this publishes — an endpoint, function, or section>",
                   "- S1 the lister")
+    t = t.replace("regression: <full | affected · <cmd> · <why> — or none · <why>>", "regression: none · fixture")  # regression-floor: fixtures freeze without a host suite
     t = t.replace("goal: <one line>", "goal: the lister lists only the caller's rows.")
     t = re.sub(r"## RULES\n<must>\n.*?\n</must>",
-               "## RULES\n<must>\n- M1 the lister returns only the caller's rows\n</must>",
+               "## RULES\n<must>\n- M1 the lister returns only the caller's rows (from: the fixture's own brief)\n</must>",
                t, flags=re.S)
     t = re.sub(r"<reject>\n.*?\n</reject>", "<reject>\n</reject>", t, flags=re.S)
     t = re.sub(r"## ASSUMPTIONS\n.*?\nevery `gives:`", "## ASSUMPTIONS\nevery `gives:`",

@@ -109,14 +109,13 @@ def test_every_hint_names_something_that_runs(bundle):
 
     bare = add.status(bundle)
     nxt = next(l for l in bare.splitlines() if l.startswith("next:"))
-    # A notary cannot invent a project's test command before it has ever seen one, so the build
-    # hint is a template exactly until the first run — and never after. Drive one and re-read.
-    assert "<test cmd>" in nxt, "fixture: the slot is already gone, so this proves nothing"
+    # A build Task with no own narrow run opens its PLAN. The bundle's last command may belong
+    # to a different Task, so no test command is projected onto an unrun node.
+    assert nxt == "next: add show t000", f"unrun Task did not open its PLAN: {nxt!r}"
     add.run(bundle, "/tasks/t000.md", ["python3", "-c", "print('ok')"])
     nxt = next(l for l in add.status(bundle).splitlines() if l.startswith("next:"))
-    assert not SLOT.search(nxt), (
-        f"R:PLACEHOLDER_NEXT — the next line still hands back a slot after a real run "
-        f"recorded the command: {nxt!r}")
+    assert nxt.startswith("next: add run t000 -- python3 -c") and not SLOT.search(nxt), (
+        f"R:PLACEHOLDER_NEXT — the next line did not replay t000's own run: {nxt!r}")
 
     everything = add.status(bundle, all=True)
     for line in everything.splitlines():

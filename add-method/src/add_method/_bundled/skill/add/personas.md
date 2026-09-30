@@ -9,10 +9,10 @@ A persona is a **lens, not a voice**. Tone and the deliverable's shape live in t
 contract; the persona owns *judgment* — the rules it refuses to wave through, the smells it suspects,
 the done-bar it measures against. A persona duplicating voice or shape is dead weight.
 
-> **Command status.** Persona growth rides the delta loop — `add learn` (emit), `add fold`
-> (consolidate at close), and `add status` (orient) are all **wired** (the real `add` CLI).
+> **Command status.** Persona growth rides the wired `learn` and `fold` verbs;
+> `python3 .add/tooling/cli.py status` resumes the bundle through its installed CLI.
 
-## The four machine-readable parts (what the engine checks, presence-based)
+## The four author-reviewed body parts (the engine does not check their presence)
 
 - **Identity** — the stance, with *earned perspective*: what this lens has seen succeed or fail.
   Scars, not a résumé (e.g. *a payments engineer who treats money as exact*).
@@ -27,16 +27,16 @@ the done-bar it measures against. A persona duplicating voice or shape is dead w
   (`engagement +40%`) is the signature rot of weak persona corpora — never write one.
 
 Frontmatter: `add new Persona` scaffolds **seven** slots — `vibe:` (the one line this lens keeps
-true) · `flow:` (design · build · advisor · verify) · `task-kinds:` (from the closed taxonomy) ·
+true) · `flow:` (design · build · advisor · verify) · `task-kinds:` (feature · refactor · test · docs · ui · security · data · infra · release · integration · explore) ·
 `use-when:` (the boundary that routes THIS persona over its siblings) · `not-when:` (the near-miss
-that belongs to a named sibling) · `description:` · `sources:`. All are hand-authored — the engine
-records a slot and judges no slot's content.
+that belongs to a named sibling) · `description:` · `sources:`. All are hand-authored. The engine
+does not judge quality; `doctor` diagnoses invalid authored `flow:` and `task-kinds:` values.
 
-Two of them are **read by the roster's selector**, so leaving them blank costs you the routing:
-`agents/add-worker.md` picks a project persona whose `flow:` names the beat's surface AND whose
-`task-kinds:` covers the task's declared `kind:` (`agents/add-advisor.md` does the same for
-`advisor`/`verify`). Both draw from a CLOSED vocabulary and `add doctor` reports a value outside
-it. The rest route a human reader, not a selector.
+Two of them are **read by the roster's selector**: `flow:` must name the beat's surface;
+omitting `task-kinds:` broadens candidate fit across declared kinds, including security, while
+an authored kind list filters the task's `kind:` (`agents/add-worker.md` and
+`agents/add-advisor.md`). Both draw from a CLOSED vocabulary and `doctor` reports invalid
+authored values. Candidate fit never grants gate or security authority.
 
 Optional `## Abilities` (lead with the ORIENT commands the lens runs on load), `## Anti-patterns`
 (guilty-until-proven instincts; always include **read-before-you-assert**), `## Escalation`. Full
@@ -61,9 +61,9 @@ ADD does not invent personas from nothing; it learns them from a **teacher** —
 agent definitions at the engine's `.add/personas-teacher/`, read **off-build** by the AI while
 drafting, **never a runtime dependency** (nothing in the engine imports or needs it). `add init`
 vendors this corpus into `.add/personas-teacher/` so a standalone bundle carries its own
-teacher. Setup proposes a starter persona
-or two that fit the domain (from `.add/specs/domain.md` + `system.md`); the human confirms. Seeding
-writes `.add/personas/<slug>.md` and nothing else — no behaviour changes until a task applies one.
+teacher. `init` also seeds every shipped starting-persona template and reports new names.
+Existing project personas are never overwritten. Adapt the roster to the domain; its presence
+does not grant approval or change behavior until a task applies a lens.
 Don't start blank: distil the nearest teacher entry down to the four parts, then own it.
 
 ## Grow — observe → delta → fold (the human folds)
@@ -102,7 +102,7 @@ A persona changes *how carefully* the work is done; it never changes *what passe
 <constraints>
 - **security = HARD-STOP** — always, whatever persona was adopted. A stronger persona never buys it back.
 - **High-risk scope still escalates** to the human; a persona is expertise, not permission.
-- **The engine stays NO-EXEC** — it never spawns, runs, or reads a persona on the build path. Select,
-  load, and apply is the orchestrating agent's judgment; the engine only records that the record is
-  present. Direction, freeze, evidence, and the gate stay exactly as strict as before.
+- **The engine stays NO-EXEC** — it reads Persona frontmatter to present candidates and inject a
+  selected lens into `brief`; it never spawns, executes, or evaluates the Persona body. Selection
+  and application stay with the orchestrating agent. Direction, freeze, evidence, and gate stay strict.
 </constraints>

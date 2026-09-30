@@ -23,9 +23,9 @@ noise), and the latency of anything under load. Same definition of "correct" —
 
 ## Turn observation into the next spec delta
 
-Every defect, surprise, or new need is written as a **delta** re-entering at DIRECTION (`deltas.md`):
-tagged, evidence-carried, `open`. The AI may cluster telemetry and *draft* the delta; the production
-calls — what to roll back, what to prioritise — stay human.
+Classify every production observation: EXPECTED (no delta) · RULE_VIOLATION (a Must or Reject broke —
+`add learn --escape` with a why-missed and a prevention; it never folds unprevented) · SPEC_SILENCE (nothing
+forbade it — a delta re-entering DIRECTION as a new assumption or edge, never a Must). Rollback and priority stay human.
 
 ## The goal-gate (what holds the loop open)
 
@@ -35,7 +35,7 @@ ARE the human's goal-met affirmation: the engine reads the tally, never judges t
 the last box releases the gate — write it with `add check`, which records WHO checked, rather than
 by hand, which records nobody. The gate fires only when criteria exist — write exit criteria to
 hold a milestone open. `milestone-done` is the only path to `done`; `milestone-archive` refuses a
-milestone not done. One gate, no quiet way around it.
+milestone not done; `add release <tag>` binds a tag's tree to the receipts. One gate, no quiet way around it.
 
 ## The loop
 
@@ -82,8 +82,8 @@ When the goal is genuinely met, close deliberately:
 When a deepened verify finds a criterion unmet on a task already `done`, `add reopen <task> --to
 <beat> --reason "..."` returns it to the flow with a recorded reason and a reset gate — fired by
 this loop's judgment, not the engine's. A reopen fires while the milestone is still **active** (the
-goal-gate held it open). The one residual — reopening a task inside an already-closed milestone — is
-surfaced by `add status --check` as incoherent and resolved by hand for now.
+goal-gate held it open). Inside a `done` or `archived` milestone it is REFUSED (R:CLOSEDHISTORY):
+succeed it instead — `add new Task <slug>-2 --supersedes /tasks/<slug>.md` keeps the closed record.
 
 <constraints>
 - **Goal-gated close** — never close on tasks-done; the exit-criteria boxes are the only release.

@@ -38,6 +38,10 @@ beat: build · next: add run
 - A5 [order] covers: S1 · n/a · fixture
 - A6 [experience] covers: S1 · n/a · fixture
 
+## PLAN
+contract: fixture
+regression: none · fixture
+
 ## CHECKS
 - test_one · covers: M1 · acceptance · the rule
 - test_two · covers: R:BAD · acceptance · the reject
@@ -65,7 +69,8 @@ def _bundle(tmp_path, slug="rung", *, depth="standard", sensitivity="data", kind
     raw = n["raw"].replace("  - S1 <the surface this publishes — an endpoint, function, or section>", "  - S1 book()")
     body = BODY
     if kind == "explore":
-        body = BODY.replace("## CHECKS", "## PLAN\nbudget: ~10 tool calls\n\n## FINDINGS\n- F1 (answers M1) · the first rule holds · (evidence: src/service.py:1)\n\n## CHECKS")
+        body = BODY.replace("## PLAN\n", "## PLAN\nbudget: ~10 tool calls\n").replace(
+            "## CHECKS", "## FINDINGS\n- F1 (answers M1) · the first rule holds · (evidence: src/service.py:1)\n\n## CHECKS")
     add.write(path, f"---\n{raw}\n---\n{body}")          # status stays `direction`: the beat is DERIVED from stamps
     ok, note = add.freeze(root, cid, "human:tindang")
     assert ok, note

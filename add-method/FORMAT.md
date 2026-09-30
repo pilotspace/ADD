@@ -262,8 +262,8 @@ refines
 
 One term, because one term is what this bundle's corpus earns. A vocabulary is admitted a term
 at a time, and the bar is a **live instance in the same change that adds it** — not a plausible
-use. Three of the seven edge keys above (`tasks`, `relates_to`, `supersedes`) have zero live uses
-in the bundle that defines them; that is the measured cost of admitting a term on plausibility.
+use. `supersedes` earned its writer and its reader in 3.7 — `new --supersedes` resolves the
+predecessor and `reopen` names the form; `tasks` and `relates_to` still have zero live uses.
 
 An unrecognised rel is *recorded* (`unknown_rel`, `info`), never rejected — law 3, exactly as an
 unrecognised `type:` is. Recording it does **not** suppress the entry's target: the containment
@@ -375,6 +375,157 @@ apart will read the second as the first.
 
 Derived from `add.py:neighborhood`.
 
+### §3.5 The refreeze and its consumers
+
+A second `freeze` on a sealed node is a **refreeze**: the old `gives:` stays in the record, a
+`refreeze` stamp lands, and `verified:` stays append-only — so list order is chronology and
+no clock is consulted. A refreeze is how a frozen contract moves: never a silent edit.
+
+Every freeze and refreeze stamp carries these contract keys:
+
+```
+gives: "sha256:<16hex>"                        the digest over this node's canonical gives: list alone
+scope: "sha256:<16hex>"                        compact-JSON digest of its sorted, duplicate-free scope: set
+needs: "/tasks/p.md#gives=<sha8>,/tasks/x.md#findings=?"   what a consumer read, per needs: entry
+```
+
+`gives:` is the published surface as it stood. `needs:` is written only when the node declares
+`needs:`, and pins each `#gives` target's digest **as the consumer read it at its own freeze** —
+a pin taken at the provider's freeze would say nothing about what the consumer built on. What
+it reads is the provider's **stamped** digest — the `gives:` key of its latest freeze or refreeze
+stamp — never the live list: a provider not yet frozen, or frozen before this key existed, is
+pinned `?`, and a `gives:` edited without a refreeze moves no pin. Any other need (an explore's
+`#findings`, a bare file, a target the graph cannot resolve, a ref whose text carries a pin or
+stamp delimiter — `,` `=` `"` `'` `{` `}` `[` `]` or whitespace — and so cannot be serialized,
+written with those characters stripped) is pinned `?`, because
+only `gives:` is a frozen contract the direction digest seals; no token in the string carries an
+inner delimiter, and a reader accepts only exact `<ref>=<sha8|?>` tokens. **The unit of a pin
+is the resolved target and its fragment**: a provider named twice, or under two spellings that
+resolve alike, is pinned once, under the first spelling written; two fragments of one node are
+two pins — decided in the writer, never healed by a reader. A scalar `gives:` is one surface.
+
+Three readers compare pins to the provider's stamped digest — **digests, never dates**: two
+nodes' stamps are not one chronology. All three, and the refreeze note, speak only of **open**
+consumers (not `done`, `dropped` or `archived`): `add freeze` is not a verb a closed task can take.
+
+- **`doctor`** emits one `warn` finding `needs_stale` per (consumer, provider) pair whose pinned
+  digest differs, naming both nodes and both digests, sorted by consumer.
+- **`todo`** appends `(needs stale: <provider>#gives moved — add freeze <slug>)` to the consumer's
+  row at any beat.
+- **the consumer's `gate PASS`** refuses `R:STALENEEDS` at §8.4's arming (`standard|deep`, computed
+  floor `plan|human`, not `explore`), naming the provider and the fix: read the new fragment and
+  `add freeze` again — the re-cross. Evidence-class: `RISK-ACCEPTED` and `HARD-STOP` are never
+  refused by it.
+
+The refreeze that moved a `gives:` names, in its own success note, the open consumers whose pin
+differs from the digest it just stamped — the same comparison, so a round trip names none. **The provider is never refused or delayed by what its consumers pinned** — it cannot
+know their intent. Consumers are found by walking every open Task's latest freeze stamp for a pin on this node at
+read time — the one source the note, `doctor`, `todo` and the gate share; the live `needs:` list
+is unsealed and a draft until a freeze pins it — never from a
+stored back-reference (law 1).
+
+A stamp with no `needs:` key was written before the pin existed. It answers nothing: no finding,
+no refusal — a reader MUST treat the absence as *unknown*. Its next refreeze writes the pin.
+
+`scope:` is separate from `direction:` and `binding:` so introducing scope seals does not rewrite
+what existing contract digests mean. Routing and quick-lane ownership read only the latest freeze
+or refreeze stamp. They accept it only when its scope digest is well formed and equals the current
+frontmatter scope digest; ordering and duplicate entries are semantically inert. A legacy,
+malformed, or stale scope seal authorizes no path until a human refreeze records current coverage.
+
+Derived from `add.py:freeze`, `add.py:scope_seal_digest`, `add.py:_latest_scope_seal`,
+`add.py:_scoped_by_any`, `add.py:quick_hit`, `add.py:needs_pins`, `add.py:stale_needs`,
+`add.py:consumers_of`, `add.py:doctor`, `add.py:todo`, `add.py:gate`.
+
+### §3.5a Carried Task obligations
+
+A destination Task MAY accept an original Task Must with a `carries:` list. Each entry has one
+exact mapping, for example:
+
+```
+carries:
+  - "/tasks/original.md#RULES:M1 -> /tasks/destination.md#RULES:M2"
+```
+
+Both endpoints must name one real authored Must. The right endpoint must belong to the Task
+declaring the list. A source must have a current readable freeze-class direction seal; if that
+exact source Must was itself carried in, its mapping must also have an accepted, current carry
+seal. One original Must cannot be claimed twice, one destination Must cannot ambiguously accept
+several originals, and a chain cannot revisit an obligation. A direct self-edge is invalid even
+when it names two different Musts in the same Task. Passing through the same Task again via a
+different Must in a longer chain is allowed. `freeze` refuses these defects before writing a stamp.
+
+A Task freeze/refreeze stamps `carries: "sha256:<16hex>"` over compact JSON of the sorted, exact
+list entries. The destination accepts its list only while its **latest** freeze-class stamp
+matches its current list; `gate` and `done` recheck this before writing. Missing or stale seals
+cannot be treated as approval. The inherited authority floor is the maximum of the destination's
+own floor, every original's computed floor, and each original's latest stamped freeze authority.
+If a Task ever accepted a non-empty carry, its stamped authority remains a floor for later
+refreezes and downstream transfers even after the current list is corrected or removed.
+A human-floor carry requires an interview of the current transfer signed `human:<name>`, a
+destination freeze signed `human:<name>`, and a closing gate signed `human:<name>`; an empty name
+does not satisfy any of these claims. Security has neither a risk-accepted exit nor a `done --override`
+shortcut over HARD-STOP. Neither accepting nor
+closing a carry rewrites the original Task, its receipts, or its milestone's EXIT accounting.
+
+Derived from `add.py:_carry_entries`, `add.py:carry_digest`, `add.py:_carry_problem`,
+`add.py:authority_for`, `add.py:freeze`, `add.py:gate`, `add.py:done`.
+
+### §3.5b Repair versus a change of direction
+
+`add repair <task> --kind implementation|change|unknown --cause <text> [--by <actor>]` routes
+an open, actively frozen Task. A successful stamp records `act: repair`, the declared `kind`,
+one-line `cause`, `to: build|direction`, and `authority: process`. A blank cause, invalid kind,
+non-Task, done Task, unfrozen Task, or Task already returned to Direction writes nothing.
+
+`implementation` keeps Build only when the latest active freeze has readable, matching
+`direction:`, `binding:`, `gives:`, `scope:`, and applicable `carries:` seals. A missing or malformed legacy seal is
+unknown coverage, not permission to keep building. If a sealed surface changed, an
+`implementation` claim refuses without a stamp; the operator must choose `change` or `unknown`.
+Those kinds return to Direction even when the change is semantic and the authored text has not
+yet moved. `replan` remains steering that changes no frozen surface.
+
+A `repair to: direction` or `reopen to: direction` stamp invalidates every earlier freeze, brief,
+run, and gate for this Task. Derived beat/next, `brief`, `run`, closing `gate`, and direct `done`
+use the same active-freeze boundary; `run` refuses before executing or writing a receipt. A
+later freeze/refreeze restores Build only
+at the newly computed authority floor. Historical stamps stay in the ledger as history.
+
+Derived from `add.py:repair`, `add.py:_direction_return_index`, `add.py:_active_freeze_stamp`,
+`add.py:_beat_of`, `add.py:brief_stamp`, `add.py:run`, `add.py:gate`, `add.py:done`, and
+`cli.py:build_parser`.
+
+### §3.6 Moved milestone EXIT criteria
+
+An authored `## EXIT` checkbox may be `[x]` (met), `[ ]` (unmet), or `[~]`
+(moved). All three count in the original milestone's denominator; `[~]` is never
+met, and fenced examples count as none. A fence's opener kind and width govern
+its closer; a `~~~` sequence inside an active backtick fence is quoted content,
+not a second opener. A moved line MUST start with a unique
+`C<n>` identity and carry exactly one parenthesized locator:
+
+```
+- [~] C2 original obligation (moves-to: /milestones/dest.md#EXIT:C1)
+- [ ] C1 destination obligation (accepts: /milestones/src.md#EXIT:C2)
+```
+
+The destination MUST be a distinct, real Milestone EXIT criterion with that exact
+`C<n>` identity and reciprocal `accepts:` locator. A new Milestone freeze/refreeze
+stamp carries `exit: "sha256:<16hex>"` over its canonical `## EXIT` direction:
+ordinary `[ ]`/`[x]` completion ticks normalize alike, while identities,
+locators, criterion text, and `[~]` remain distinct. The
+destination's latest freeze-class stamp MUST carry the digest of its current EXIT;
+an older stamp without `exit:` or a later edit cannot establish acceptance.
+`milestone-done` follows moved targets to a non-moved criterion, refuses missing,
+ambiguous, unfrozen, or cyclic chains by the original source identity, and names
+the original `met/total` and moved identities on an accepted close. The ordinary
+`check` verb shows moved boxes in its index list but refuses to mark or unmark
+them. This locator is authored EXIT text, not a §3.2 frontmatter graph edge or
+an inferred `carries:` authority transfer.
+
+Derived from `add.py:_box_lines`, `add.py:exit_digest`, `add.py:_resolve_exit_move`,
+`add.py:milestone_done`, and `add.py:check`.
+
 ---
 
 ## §4 Read tiers
@@ -456,7 +607,7 @@ A `Task` body has eight `## ` sections, in order:
 ## CARD         goal / why / beat · next
 ## RULES        <must> M<n> … </must> and <reject> R:<NAME> … -> "<NAME>" </reject>
 ## ASSUMPTIONS  A<n> — what the spec does NOT say, the reading taken, the cost if wrong
-## PLAN         contract / scope
+## PLAN         contract / scope / the regression floor (§8.5)
 ## EDGES        E<n> — boundary and failure cases a check must cover (optional)
 ## CHECKS       one line per check, each bound by `covers:` (§8.3)
 ## EVIDENCE     a view written by the verbs — `receipt:` at run, `refute:` at refute, `gate:` at gate
@@ -641,7 +792,7 @@ Required evidence by beat (`add.py:1899`):
 |---|---|
 | `direction` | none |
 | `build` | `run-receipt` |
-| `verify` | `run-receipt`, `covers-bound` |
+| `verify` | `run-receipt`, `covers-bound`, and a fresh green floor receipt when the PLAN declares one (§8.5) |
 
 ### §8.1 Freshness and the scope digest
 
@@ -664,7 +815,18 @@ file at the time of the run.
 
 A file that has vanished since the run is a difference, not an absence.
 
-Derived from `add.py:1468-1490`.
+**The anchor.** Inside a git working tree that has a commit, a receipt also records
+`head: <sha>` — the commit `HEAD` named when the run *started*, before the command could
+move it — and, over a non-empty digest, `committed: true | false`: `true` exactly when
+every `scope_digest` entry carries the blob `HEAD`'s tree holds at that path. `committed`
+is decided by those blobs and nothing else — a dirty file outside scope does not flip it,
+and it is never derived from whole-tree cleanliness. Outside git, or on an unborn branch
+(a git dir and no commit yet), **neither key is written** and the receipt's `note:` names
+the cause; a reader MUST treat an absent key as *unknown*, never as `false` — a receipt
+written before these keys existed lacks them the same way. This is what lets a release
+cite the tree a receipt verified rather than reconstruct it.
+
+Derived from `add.py:run`, `add.py:_committed_to_head`.
 
 ### §8.2 The receipt kind ladder
 
@@ -725,7 +887,13 @@ T2 a fresh session · T3 a human; T0 is nobody and T4 a CI recipe, so neither is
 `R:BADTIER`); the flag makes independence countable, `by:` beside it says whether the claim is
 true. `changed:` names what the probes moved while the outcome still held — a `held` that changed
 the build is the yield `--found` alone undercounts, and it is what a bench trigger reads. The gate
-reads neither key: `_refute_of` weighs presence and outcome only (law 3).
+reads `tier:` beside the outcome, from the SAME stamp, and nothing else about the reader: at a
+`human` floor a `PASS` is refused while the latest citing refute claims `T1` or no tier at all
+(`R:SELFREFUTE`); at `plan` that state is a notice on the recorded success, and a tier the ladder
+cannot read is refused with the rest — an unreadable claim is one the engine cannot honour, the
+same law `sensitivity_floor` states for a declaration (`R:SILENT_FLOOR`). The claim is otherwise
+recorded as handed — never weighed against `by:`, `probes:` or who signs the gate (law 3) — and
+`changed:` is read by nothing at the gate at all.
 
 The gate READS it: at `standard|deep` depth on a Task whose computed floor (§3.1) is `plan` or
 `human`, a `PASS` is refused while no refute stamp cites the gated receipt (`R:UNREFUTED`), and
@@ -734,6 +902,82 @@ while the latest citing stamp reads `outcome: refuted` (`R:REFUTED`). Both are e
 a `process` floor and `kind: explore` are exempt.
 
 Derived from `add.py:refute`, `add.py:_refute_of`, `add.py:gate`.
+
+### §8.5 The regression floor
+
+A task's own checks prove the change; they do not prove the host still stands. The host suite
+is therefore a **decision the PLAN records**, on one line:
+
+```
+regression: full · <command> · <why>
+regression: affected · <command> · <why>
+regression: none · <why>
+```
+
+`·` separates the fields, so a floor command may not contain it. `full` and `affected` name a
+command; `none` names only a reason. `affected` is the author's claim about the command — the
+engine records the word and runs what it is handed, and cannot tell a three-test run from a full
+one. A template line, a mode with no command, or a `none` with no why is **no floor**.
+
+Two rungs read it, both armed exactly where §8.4's refute rung arms (`standard|deep`, computed
+floor `plan|human`, not `explore`), so the mechanical lane never pays:
+
+- **`freeze` refuses a rung-bound task with no floor** (`R:NOFLOOR`) and names the line to add.
+- **`gate PASS` refuses a declared `full|affected` floor that was never run, ran stale, or ran
+  red** (`R:FLOORUNRUN`), naming which, with the PLAN's own command as the fix. Evidence-class:
+  `RISK-ACCEPTED` and `HARD-STOP` are never refused by it.
+
+The floor is recorded by `add run <slug> --floor -- <command>`: an ordinary receipt (§8.1–§8.2
+apply unchanged — digest, freshness, exit, kind) carrying one more key, `floor: regression`, and
+a run stamp carrying the same. **`latest_receipt` never returns a floor receipt**: the full
+suite passed off as the gated narrow run would lose the narrow run's binding behind it
+(`R:FLOORASGATE`); `latest_floor_receipt` answers for the floor. Freshness is the same digest
+rule as the gated receipt, so the two receipts the gate reads cite one tree; either may be
+recorded first. The hint that replays the floor command is `todo`'s, which holds the body;
+`status` and `run`'s note read stamps only and print the beat's default, and the gate names
+the command on refusal. A floor declared on an exempt rung is recorded and never read.
+
+Derived from `add.py:regression_floor`, `add.py:freeze`, `add.py:run`, `add.py:latest_floor_receipt`, `add.py:gate`.
+
+### §8.6 The release stamp
+
+A `PASS` proves a source state and a receipt names the commit it observed (§8.1); nothing yet
+said which tree a **tag** shipped. `add release <tag> --milestone <m> --by <name>` appends one
+stamp to each named milestone that is `done` or `archived` (`R:NOTDONE` otherwise):
+
+```
+{ by, at, act: release, authority: process, tag: "v3.7.0", tree: <the tag's tree sha>,
+  receipts: "/tasks/a.d/runs/3.md,/tasks/b.d/runs/1.md"[, artifact: "…"][, build: "…"] }
+```
+
+**The anchor.** For every member Task (`milestone:` names the slug, cid order) with status
+`done`, the receipt its newest CLOSING gate stamp cites (`act: gate`, outcome `PASS` or
+`RISK-ACCEPTED` — the verdicts `done` reads; a later `HARD-STOP` is a finding and entitles
+nothing) that postdates the member's last `act: reopen` (a reopen resets the gate, so a verdict
+before it anchors nothing) — never the latest run, which may postdate the verdict, and never a
+floor receipt (§8.5) — is
+read and each of its `scope_digest` blobs is compared to the blob the tag's tree holds at that
+path — one `ls-tree` over the tag. One mismatch or absent path refuses `R:UNANCHORED`, naming the
+task, the path and both blobs; a done member whose gated receipt carries no content digest, or
+whose cited receipt is gone, is unanchorable and refuses by name; a member with no closing gate
+stamp citing a receipt (an explore, a hand-marked done) is skipped by name in the success note,
+and a member that is not `done` is named there too, with its status — the note is what did not
+anchor, the stamp is what did; a milestone in which no member anchors refuses, naming its
+not-done members — a tree and no receipts is a label. No
+ordering rule: a tag cut before the PASS whose tree still holds the same blobs is honestly
+anchored — the comparison is the whole claim. A tag git cannot resolve refuses `R:NOSUCHTAG`.
+
+**Read-only, never outward.** The verb calls git through `rev-parse` and `ls-tree` only. It
+never runs `tag`, `push`, `publish` or any command that acts outward: the engine is a notary
+without credentials, and the tag itself stays the human's act (`R:OUTWARD`). `artifact:` and
+`build:` are recorded verbatim exactly when handed and **never** verified — SLSA-style
+provenance is the pipeline's to produce and consume (`R:PROVENANCEJUDGED`).
+
+A milestone released twice carries two stamps, newest last. `status --all` names the newest tag
+at the released row's end — the row stays one line: the title yields first, then the tag is cut;
+`show <m>` carries the stamp, so "which tree shipped, proven by which receipts" is one read.
+
+Derived from `add.py:release`, `add.py:_anchor`, `add.py:_tag_tree`, `add.py:_tree_blobs`, `add.py:status`.
 
 ---
 

@@ -99,6 +99,16 @@ everything you anticipated; a controlled release is your protection against what
 not. The tag is the human-gated trigger; the archived milestone is the engine's receipt that
 the goal-gate was met.
 
+One record does cross the line, in the engine's direction only: **`add release <tag>
+--milestone <m>`** binds the tag the human cut to the receipts that verified the milestone. It
+resolves the tag's tree with read-only git and proves that tree holds every scope blob the
+members' gated receipts recorded — the same blobs `add run` digested — then appends
+`act: release` (tag, tree, receipt cids) to the milestone. A tree that moved after the PASS
+refuses `R:UNANCHORED`, naming the task, the path and both blobs. `--artifact name@digest` and
+`--build ref` are recorded verbatim and never verified: provenance is the pipeline's to produce
+and consume. The engine still never tags, publishes or deploys — it records which tree shipped,
+proven by which receipts, so production telemetry is evidence about a known build.
+
 ## 16.6 · Watch and the hotfix path — re-entering observe
 
 A release is not the finish line; it is where the most reliable information finally appears.

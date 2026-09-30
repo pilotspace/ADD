@@ -26,7 +26,7 @@ beat: build · next: add run
 
 ## RULES
 <must>
-- M1 the first rule
+- M1 the first rule (from: the fixture's own brief)
 </must>
 <reject>
 - R:BAD something forbidden -> "BAD"
@@ -43,6 +43,10 @@ beat: build · next: add run
 ## EDGES
 - E1 Given A(owner me, 100) and B(owner me, 0) · When transfer(A→B, 30) · Then A=70, B=30, result ok
 - E2 <a boundary or failure case a check must cover — optional>
+
+## PLAN
+contract: fixture
+regression: none · fixture
 
 ## CHECKS
 - test_one · covers: M1, E1 · acceptance · runs E1 through the port
@@ -183,14 +187,14 @@ def test_refute_is_wired_and_counted(repo):
     sub = next(a for a in cli.build_parser()._actions
                if getattr(a, "choices", None) and isinstance(a.choices, dict))
     assert "refute" in sub.choices, sorted(sub.choices)
-    assert len(sub.choices) == 28, sorted(sub.choices)
+    assert len(sub.choices) == 30, sorted(sub.choices)   # re-aimed @ repair-or-contract-change: public repair verb. prior: 29 @ release-stamp
     wired = (REPO / "tests" / "engine" / "test_cli.py").read_text(encoding="utf-8")
     assert '"refute"' in wired[wired.find("WIRED = {"):wired.find("}", wired.find("WIRED = {"))]
-    for rel, needle in (("tests/skill/test_search_registry.py", "n == 28"),
-                        ("tests/engine/test_show_verb.py", "28 verbs"),
-                        ("tests/engine/test_authoring_beat.py", "== 28"),
-                        ("README.md", "28 verbs")):
-        assert needle in (REPO / rel).read_text(encoding="utf-8"), f"{rel}: pin not re-aimed to 28"
+    for rel, needle in (("tests/skill/test_search_registry.py", "n == 30"),
+                        ("tests/engine/test_show_verb.py", "30 verbs"),
+                        ("tests/engine/test_authoring_beat.py", "== 30"),
+                        ("README.md", "30 verbs")):   # re-aimed @ repair-or-contract-change: 29 -> 30
+        assert needle in (REPO / rel).read_text(encoding="utf-8"), f"{rel}: pin not re-aimed to 30"
     fmt = (REPO / "FORMAT.md").read_text(encoding="utf-8")
     assert re.search(r"^### §8\.4 .*refute", fmt, re.M), "FORMAT §8.4 does not state the refute stamp"
     assert "act: refute" in fmt

@@ -336,6 +336,10 @@ def write(path: Path, text: str) -> None:
 
 EDGE_KEYS = ("depends_on", "needs", "tasks", "milestone", "relates_to", "task", "supersedes")
 
+# A milestone whose history is PUBLISHED: its goal-gate answered, its exit boxes checked. Named
+# once, so `reopen` and any later reader ask one list ("shipped" is a release word, not a close).
+CLOSED_MILESTONE_STATES = ("done", "archived")
+
 # The SECOND edge family (FORMAT §3.2). `relations:` carries typed edges between CONCEPTS —
 # `<source delta id> <rel> <target ref>` — where `EDGE_KEYS` carries untyped edges between NODES.
 #
@@ -794,7 +798,14 @@ def show(root, ref: str, expand: int = NEIGHBORHOOD_DEFAULT) -> tuple:
     # a reader actually wants — what this node is FOR — was only in the CARD, or missing when the
     # CARD was still scaffold.
     titled = _title_of(fm)
-    lines = [f"{cid}  [{status}]  {head}{('  ·  ' + titled) if titled else ''}".rstrip(), ""]
+    lines = [f"{cid}  [{status}]  {head}{('  ·  ' + titled) if titled else ''}".rstrip()]
+    # A released milestone answers "which tree shipped, proven by which receipts" in its header
+    # (release-stamp, M5): one line per `act: release` stamp, oldest first, never the body's.
+    for st in fm.get("verified") or []:
+        if isinstance(st, dict) and st.get("act") == "release":
+            lines.append(f"act: release {dot} {st.get('tag')} {dash} tree {str(st.get('tree'))[:12]} "
+                         f"{dot} receipts {st.get('receipts') or dash} {dot} by {st.get('by')} at {st.get('at')}")
+    lines.append("")
     lines.append(view["body"].rstrip())
     if view["rows"]:
         lines += ["", f"related (depth {expand} {dot} {down} declared here {dot} "
@@ -841,7 +852,7 @@ def _delta_ids(body: str) -> dict:
     (R:REUSEDID) and a duplicate must resolve deterministically rather than by scan order.
     """
     out = {}
-    for line in body.splitlines():
+    for line in live_lines(body):
         match = DELTA_LINE.match(line.strip())
         if not match:
             continue
@@ -851,19 +862,44 @@ def _delta_ids(body: str) -> dict:
     return out
 
 
+def authored_section(body, heading: str) -> str:
+    """The `## <heading>` section as the AUTHORING walker sees it — fences blanked, the heading
+    canonicalised, and only the seven sections a human writes in.
+
+    `_section_of` on a raw body is a FIFTH reader of "where a section is": it matches `## RULES`
+    spelled exactly that way, at column zero, wherever it appears — so `## RULES (frozen)`, `##
+    RULES:` and an indented heading all read as NO section, and a ```` ```markdown ```` example of
+    the grammar reads as THE section. `rules_of` was routed through `_authored_rules` for exactly
+    this reason (E30); the SEAL and the INTERVIEW were not, and the twenty-eighth T2 refute walked
+    through the gap: on such a node `confirm` wrote a Must's `(from: …)` tail and `direction_digest`
+    did not move — a sourced and an unsourced Must sealed alike (R:DIGESTDRIFT) — because the whole
+    Must/Reject payload was outside the seal, which also let a frozen Must be replaced under a
+    build with no drift refusal at all. Same fact, one reader.
+    """
+    return _section_of(_authored_rules(str(body or "")), heading)
+
 def _section(body: str, slug: str) -> str:
-    """The body section under the heading whose kebab-cased text is `slug`."""
+    """The body section under the heading whose kebab-cased text is `slug`.
+
+    Read through the ONE heading walker (`_headings`): this slicer deciding for itself what a
+    heading is made it a SECOND reader of the rule — fence-blind, so a heading spelled only inside
+    a fenced example opened a section, and `_prevention_resolves` consults `resolve` FIRST, so a
+    quoted `## my example` addressed a section a prevention bound to while the `- E9` beside it
+    was correctly refused (twenty-second T2 refute, E36).
+    """
     out, inside = [], False
-    for line in body.splitlines(keepends=True):
-        if line.startswith("#"):
+    for line, level, name in _headings(body):
+        # Level TWO only: M2 freezes "a deeper `###` opens none", and the authoring walk reads a
+        # `#` title and a `###` sub-heading as CONTENT of the section they sit in. This slicer
+        # opened a section for each, so a prevention naming one folded (E37).
+        if level == 2:
             if inside:
                 break
-            text = line.lstrip("#").strip().lower()
-            inside = "-".join(re.findall(r"[a-z0-9]+", text)) == slug
+            inside = "-".join(re.findall(r"[a-z0-9]+", (name or "").lower())) == slug
             continue
         if inside:
             out.append(line)
-    return "".join(out).strip()
+    return "\n".join(out).strip()
 
 
 def _is_template(value) -> bool:
@@ -875,8 +911,12 @@ def _is_template(value) -> bool:
     ref away from an authored `## GIVES` section to the placeholder above it. A slot
     nobody has filled is not an answer, so resolution falls through to the heading.
     """
-    items = value if isinstance(value, list) else [value]
-    return bool(items) and all("<" in str(i) and ">" in str(i) for i in items)
+    items = [i for i in (value if isinstance(value, list) else [value])
+             if i is not None and str(i).strip() != ""]
+    # EMPTY is unauthored too: `scope:` seeds empty and `verified:` starts `[]`, and both resolved
+    # — a prevention named a key nobody had filled and the escape folded (E37). Same law as the
+    # placeholder: a slot nobody has filled is not an answer.
+    return not items or all("<" in str(i) and ">" in str(i) for i in items)
 
 
 def resolve(graph: dict, ref: str, src: str = "") -> tuple:
@@ -1129,9 +1169,50 @@ def _last_gate_outcome(fm: dict):
     return outcome
 
 
+def _effective_gate_stamp(fm: dict):
+    """Latest readable gate after reopen; a verdictless legacy gate cannot clear a known stop."""
+    stamps = [s for s in (fm or {}).get("verified") or [] if isinstance(s, dict)]
+    last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"),
+                      default=-1)
+    gates = [s for s in stamps[last_reopen + 1:] if s.get("act") == "gate"]
+    readable = ("PASS", "RISK-ACCEPTED", "HARD-STOP")
+    return next((s for s in reversed(gates) if str(s.get("outcome")) in readable),
+                gates[-1] if gates else None)
+
+
 def _delta_lines(body: str) -> list:
-    """The append-only delta line-items in a spec body (deltas.md grammar begins `- [`)."""
-    return [ln for ln in body.splitlines(keepends=True) if ln.lstrip().startswith("- [")]
+    """Every delta in a spec body as ONE item — its head line plus the continuation lines the
+    grammar joins into it (`joined_deltas`), text unchanged.
+
+    Harvesting head lines alone dropped a wrapped escape's whole tail on the way into main, so a
+    delta the stream's own `fold` refused R:UNPREVENTED folded there at exit 0: the readers joined
+    the unit and the writers severed it (tenth T2 refute, E22).
+    """
+    # Membership comes from the ONE reader of it (`delta_spans`, over the live view, E47); the TEXT
+    # is harvested raw, because a delta main merely QUOTES in a fence is not one main holds and
+    # reading it as held dropped the stream's refused escape at the merge (E38). A walk of its own
+    # here was a second reader of which lines a delta holds.
+    lines = body.splitlines(keepends=True)
+    return ["".join(lines[i] for i in idx) for idx in delta_spans(lines).values()]
+
+
+def _delta_insert_at(lines: list, i: int) -> int:
+    """Where a new delta goes under the `## Deltas` heading at `lines[i]` — newest-first, but never
+    BETWEEN a delta's head and its continuation lines.
+
+    An unconditional `i + 2` spliced a new head into a wrapped delta, grafting one lesson's tail
+    onto another: the escape folded and the innocent lesson refused R:UNPREVENTED (E22).
+    """
+    marks = list(_headings(lines))
+    at = i + 1
+    while at < len(marks):
+        line, level, _ = marks[at]
+        # A fenced example is neither a delta nor the next section — the scan walks past it and the
+        # new line lands where every reader looks (E38). The next `## ` still ends the section.
+        if level == 2 or (level == 0 and DELTA_LINE.match(str(line).strip())):
+            return at
+        at += 1
+    return at
 
 
 def _delta_identity(line: str) -> str:
@@ -1143,52 +1224,100 @@ def _delta_identity(line: str) -> str:
     """
     s = line.strip()
     after = s.split("]", 1)[1] if "]" in s else s
-    return after.split("(evidence:", 1)[0].strip()
+    # The LAST marker, as every other reader of this line reads it (E10, E18): splitting at the
+    # first one truncated two different lessons to one identity, and the merge dropped both (E40).
+    return after.rsplit("(evidence:", 1)[0].strip() if "(evidence:" in after else after.strip()
 
 
-def _union_into_deltas(path: Path, incoming: list) -> bool:
-    """Append each delta line not already present, under `## Deltas` (as `learn` does). Idempotent.
+# ONE address, read the way `resolve` reads it — whitespace on either side of the `#` and all.
+# A third reader with a stricter pattern let a re-mint skip every spelling E26 blesses, and the
+# escape its stream refused folded in main (twentieth T2 refute, E34). A hit is re-emitted
+# canonical, so the merged line carries the address every reader agrees on.
+DELTA_ADDR = re.compile(r"/specs/([^/#\s]+)\.md\s*#\s*([A-Za-z0-9:_]+)")
+
+
+def _merge_deltas(root: Path, per_spec: dict) -> set:
+    """Union each stream's delta lines into main's specs. Returns the spec filenames it changed.
 
     `join` is the SECOND writer of delta lines, and the one that can mint a duplicate address.
     Streams branch from one base, so two of them mint the same next id for two different lessons;
-    this union then carries both while writing back MAIN's frontmatter, discarding the streams'
-    counters. An INCOMING line whose id is already taken here is re-minted above the high-water.
-    The line already in place never moves — ids retire in place, and a renumber would silently
-    re-point every relation aimed at them (R:RENUMBER).
+    this union carries both while writing back MAIN's frontmatter, discarding the streams' counters.
+    An incoming line whose id is already taken here is re-minted above the high-water. A line
+    already in place never moves — ids retire in place, and a renumber would silently re-point
+    every relation aimed at them (R:RENUMBER).
+
+    Two passes, because a re-mint moves an address that lines in OTHER specs may name: mint every
+    spec first, collecting one remap PER STREAM, then re-point that stream's own lines with its own
+    remap. Scoping the remap to the spec being written left a cross-lens prevention naming the id
+    it used to have; applying it to every fresh line re-pointed a second stream's tail whose own id
+    never moved (nineteenth T2 refute, E33).
     """
-    node = read(path, "T2")
-    lines = node["body"].splitlines(keepends=True)
-    present = {ln for ln in lines if ln.lstrip().startswith("- [")}
-    fresh = [ln for ln in dict.fromkeys(incoming) if ln not in present]  # dedupe incoming, drop known
-    if not fresh:
-        return False
-    taken = set(_delta_ids_in(lines))
-    seq = _delta_high_water(node["raw"], lines)
-    letter, remapped = _delta_letter(path.stem), []
-    for line in fresh:
-        m = DELTA_LINE.match(line.strip())
-        did = parse_delta_head(m.group(1))["id"] if m else None
-        if did and did in taken:
-            seq += 1
-            fresh_id = f"{letter}{seq}"
-            line = line.replace(f"· {did} ·", f"· {fresh_id} ·", 1)
-            did = fresh_id
-        if did:
-            taken.add(did)
-            tail = re.search(r"(\d+)\Z", did)
-            if tail:
-                seq = max(seq, int(tail.group(1)))
-        remapped.append(line)
-    fresh = remapped
-    for i, line in enumerate(lines):
-        if line.startswith("## Deltas"):
-            at = i + 2 if i + 1 < len(lines) else i + 1
+    minted, remaps, touched = {}, {}, set()
+    for name, entries in per_spec.items():
+        path = root / "specs" / name
+        node = read(path, "T2")
+        lines = node["body"].splitlines(keepends=True)
+        present = set(_delta_lines(node["body"]))
+        seen, fresh = set(), []
+        for ix, line in entries:                       # dedupe incoming, drop what main already holds
+            if line not in present and line not in seen:
+                seen.add(line)
+                fresh.append((ix, line))
+        if not fresh:
+            continue
+        taken = set(_delta_ids_in(lines))
+        seq = _delta_high_water(node["raw"], lines)
+        letter, out = _delta_letter(path.stem), []
+        for ix, line in fresh:
+            m = DELTA_LINE.match(line.strip())
+            did = parse_delta_head(m.group(1))["id"] if m else None
+            if did and did in taken:
+                seq += 1
+                fresh_id = f"{letter}{seq}"
+                line = line.replace(f"· {did} ·", f"· {fresh_id} ·", 1)
+                remaps.setdefault(ix, {})[f"/specs/{path.stem}.md#{did}"] = f"/specs/{path.stem}.md#{fresh_id}"
+                did = fresh_id
+            if did:
+                taken.add(did)
+                tail = re.search(r"(\d+)\Z", did)
+                if tail:
+                    seq = max(seq, int(tail.group(1)))
+            out.append((ix, line))
+        minted[name] = (out, seq)
+
+    for name, (entries, seq) in minted.items():
+        path = root / "specs" / name
+        node = read(path, "T2")
+        lines = node["body"].splitlines(keepends=True)
+        # Substituted in ONE pass over the whole address, so a chain of re-mints cannot re-point a
+        # line twice and a stream only ever follows its OWN moves.
+        fresh = [DELTA_ADDR.sub(
+            lambda m, r=remaps.get(ix, {}): r.get(f"/specs/{m.group(1)}.md#{m.group(2)}", m.group(0)), line)
+            for ix, line in entries]
+        i = heading_index(lines, "deltas")
+        if i >= 0:
+            at = _delta_insert_at(lines, i)
             lines[at:at] = fresh
-            break
-    else:
-        lines += ["\n## Deltas\n\n"] + fresh
-    write(path, f"---\n{set_key(node['raw'], 'delta_seq', str(seq))}\n---\n{''.join(lines)}")
-    return True
+        else:
+            lines += ["\n## Deltas\n\n"] + fresh
+        merged = "".join(lines)
+        # Every other delta writer recomputes the counter from the body it wrote; the merge did
+        # not, so `status` reported one open delta where `deltas` listed two (E41).
+        raw = set_key(set_key(node["raw"], "delta_seq", str(seq)), "open_deltas", str(open_delta_count(merged)))
+        write(path, f"---\n{raw}\n---\n{merged}")
+        touched.add(name)
+    return touched
+
+
+def _admits(fm: dict) -> bool:
+    """Does this stream node contribute to a join? Gated, and not HARD-STOP.
+
+    ONE reader: the pre-flight asked only whether a node was GATED while the merge asks this, and
+    they disagreed on exactly one input — a HARD-STOPped stream, the security case, refused a whole
+    wave's join over a spec it would never touch (thirty-first T2 refute, E45).
+    """
+    gated = any(isinstance(st, dict) and st.get("act") == "gate" for st in ((fm or {}).get("verified") or []))
+    return gated and _last_gate_outcome(fm or {}) != "HARD-STOP"
 
 
 def join(root, stream_dirs) -> tuple:
@@ -1215,10 +1344,46 @@ def join(root, stream_dirs) -> tuple:
                           f'its index, and this path does not -> "R:PHANTOMSTREAM"'
                           f"\nnext: check the path, then add join <stream>/.add")
 
+    # A writer must be able to LAND before anything is copied: main's spec must be readable, or a
+    # carried lesson lands where no reader looks and the join reports success (E43). Checked here,
+    # with the other all-or-nothing checks, because a refusal after the copy is the partial merge.
+    for d in stream_dirs:
+        # …only for a stream that can CONTRIBUTE: one with no ADMITTED node writes nothing, and
+        # refusing over a spec the join would never touch is a refusal nobody can act on (E44).
+        # The same predicate the merge applies — asking "is it gated" while the merge asks "gated
+        # and not HARD-STOP" made one rejected stream, the security case, block a whole wave (E45).
+        if not any(_admits(read(tp, "T2")["fm"] or {})
+                   for tp in sorted((Path(d) / "tasks").glob("*.md"))):
+            continue
+        for sp in sorted((Path(d) / "specs").glob("*.md")):
+            # The STREAM's spec first: that is where the escape lives, and a fence there makes
+            # `_delta_lines` yield [] — indistinguishable from a stream that filed nothing, so the
+            # merge reported success and the refused escape was gone (thirty-first refute, E45).
+            for side, node in (("the stream's ", read(sp, "T2")),
+                               ("", read(root / "specs" / sp.name, "T2")
+                                if (root / "specs" / sp.name).is_file() else None)):
+                if node is None or (side == "" and not _delta_lines(read(sp, "T2")["body"])):
+                    continue
+                why = unreadable_spec(node)
+                if why:
+                    return None, (f"cannot join — {side}specs/{sp.name} would not be readable at the line: "
+                                  f'{why}, so a carried lesson would be lost -> "R:UNREADABLE"'
+                                  f"\nnext: add doctor   (it names the file), then add join {d}")
+                # `_delta_lines` rebuilds only the lines `delta_spans` HOLDS, so a severed tail is
+                # dropped at the merge and main folds a laundered, marker-less delta at exit 0 —
+                # the escape its own stream refused (thirty-fourth T2 refute, E48). The merge asks
+                # what `fold` asks, on both sides, before it copies anything.
+                stray = orphan_tail(node["body"])
+                if stray:
+                    return None, (f"cannot join — {side}specs/{sp.name} carries `{stray[:60]}`, an escape's "
+                                  f'tail that belongs to no delta, and the merge would drop it -> "R:UNPREVENTED"'
+                                  f"\nnext: join the tail back onto its delta with a space or a tab, "
+                                  f"then add join {d}")
+
     merged, skipped, specs_touched, conflicts = [], [], set(), []
     incoming = {}  # spec filename -> delta lines contributed by admitted streams (gathered, then partitioned)
 
-    for d in stream_dirs:
+    for stream_ix, d in enumerate(stream_dirs):
         d = Path(d)
         admitted = False
         for tp in sorted((d / "tasks").glob("*.md")):
@@ -1234,6 +1399,9 @@ def join(root, stream_dirs) -> tuple:
                 skipped.append({"slug": slug, "reason": "HARD-STOP"})
                 continue  # R:MERGEHARDSTOP — a rejected stream's node never enters main
             # PASS / RISK-ACCEPTED: copy the node + its receipts byte-for-byte (lossless, no shutil).
+            # `add init` writes no `tasks/`, so a first join raised FileNotFoundError with no `R:`
+            # code — every exit is a refusal or a record (E24), and this one is a record (E39).
+            (root / "tasks").mkdir(parents=True, exist_ok=True)
             (root / "tasks" / tp.name).write_bytes(tp.read_bytes())
             # Provenance: a stream built under a lens (`persona:`, stamped by wave) records
             # `advised_by:` on the DELIVERED node — audit-grade, derived from the stream, never
@@ -1253,23 +1421,25 @@ def join(root, stream_dirs) -> tuple:
         if admitted:  # only an admitted stream's lessons fold in (a HARD-STOP/dropped stream's do not)
             for sp in sorted((d / "specs").glob("*.md")):
                 if (root / "specs" / sp.name).is_file():
-                    incoming.setdefault(sp.name, []).extend(_delta_lines(read(sp, "T2")["body"]))
+                    incoming.setdefault(sp.name, []).extend(
+                        (stream_ix, ln) for ln in _delta_lines(read(sp, "T2")["body"]))
 
     # Partition the gathered deltas per spec: a lesson filed with two different dispositions across
     # streams is a CONFLICT (flag it, insert neither variant); everything else unions as before.
-    for name, lines in incoming.items():
+    clean_per_spec = {}
+    for name, entries in incoming.items():
         groups = {}
-        for ln in lines:
-            groups.setdefault(_delta_identity(ln), []).append(ln)
+        for ix, ln in entries:
+            groups.setdefault(_delta_identity(ln), []).append((ix, ln))
         clean = []
         for ident, variants in groups.items():
-            distinct = list(dict.fromkeys(variants))
+            distinct = list(dict.fromkeys(ln for _, ln in variants))
             if len(distinct) > 1:
                 conflicts.append({"spec": name, "identity": ident, "variants": distinct})
             else:
-                clean.append(distinct[0])
-        if _union_into_deltas(root / "specs" / name, clean):
-            specs_touched.add(name)
+                clean.append(variants[0])
+        clean_per_spec[name] = clean
+    specs_touched |= _merge_deltas(root, clean_per_spec)
 
     load(root)  # M4: regenerate graph.json from the merged files — never copied from a stream
     result = {"merged": merged, "skipped": skipped, "specs": sorted(specs_touched), "conflicts": conflicts}
@@ -1334,7 +1504,7 @@ PROFILES = {
 
 # The engine version — one source of truth. `_stamp`, `init`'s `engine:`/`tooling_engine:` stamps,
 # and the drift-warn all read this, so a version bump is a single edit (M4).
-ENGINE = "add/3.6.0"
+ENGINE = "add/3.7.0"
 # Where `init` vendors from: the engine lives beside this file; the seed corpus sits at the bundle
 # root as its own managed tree (`.add/personas-teacher/` installed; `add-method/personas-teacher/`
 # in the package). `parents[1]` resolves both. Module-level so a test can repoint them to simulate a
@@ -1815,7 +1985,9 @@ BODIES = {
             "`[<dim>] n/a · <why>` retires one. one line, one silence — split, never bundle. "
             "`· probe: <what shipped behavior must show>` declares a reading checkable: "
             "cite its A id from CHECKS and the gate holds the PASS to it.\n\n"
-            "## PLAN\ncontract: <the shape this publishes>\n\n"
+            "## PLAN\ncontract: <the shape this publishes>\n"
+            "regression: <full | affected · <cmd> · <why> — or none · <why>>\n"
+            "- O<n> covers: <M ids> · signal <metric> · window <w> · threshold <t> · action <alert|rollback>\n\n"
             "## EDGES\n- E1 <a boundary or failure case a check must cover — optional>\n\n"
             "## CHECKS\n- <test_name> · covers: M1 · <what it proves>\nred-first: every check MUST fail first.\n\n"
             "## EVIDENCE\nreceipt: <runs/<n>.md>\ngate: <PASS | RISK-ACCEPTED | HARD-STOP>\n\n"
@@ -1879,6 +2051,37 @@ def _under(path: str, base: str) -> bool:
     return path == base or path.startswith(base + "/")
 
 
+def _in_bundle_frame(parent, rels):
+    """`rels` — repo-root-relative, the way every git command prints them whatever the cwd — as
+    the BUNDLE's own entries are written, or None when git cannot say where the bundle sits.
+
+    `scope:` and `sensitive_paths:` are written relative to the bundle PARENT. For any bundle
+    below the repo root — this project's own `add-method/.add` is one — the two bases differ, so
+    an unnormalised comparison silently matches nothing (the sensitive floor goes inert) or
+    everything (a permanent refusal), depending on which side was prefixed. A path ABOVE the
+    parent is DROPPED, not merely left unstripped: no entry of this bundle could ever name it.
+
+    ONE reader, because the working-tree walker and the commit walker had this fact twice and it
+    was wrong in both, differently: `--show-prefix` is read with `strip=False` and only git's own
+    newline removed, since a directory is entitled to a LEADING space and the default strip ate
+    it — ` nest/` came back as `nest/`, every path then failed `startswith` and was dropped, and
+    the floor went entirely inert for that bundle.
+    """
+    prefix = _git(parent, "rev-parse", "--show-prefix", strip=False)
+    if prefix is None:
+        return None
+    prefix = prefix.rstrip("\n")
+    out = []
+    for rel in rels:
+        if prefix:
+            if not rel.startswith(prefix):
+                continue
+            rel = rel[len(prefix):]
+        if rel:
+            out.append(rel)
+    return out
+
+
 def _changed_paths(root) -> list:
     """Repo-relative paths the working tree has touched vs HEAD, or `[]` when git cannot say.
 
@@ -1890,14 +2093,7 @@ def _changed_paths(root) -> list:
     out = _git(root, "status", "--porcelain", "-z", "--untracked-files=all", strip=False)
     if not out:
         return []
-    # `git status` prints REPO-ROOT-relative paths whatever the cwd, while `scope:` entries are
-    # written relative to the BUNDLE PARENT. For any bundle below the repo root — this project's
-    # own `add-method/.add` is one — the two bases differ, so every sensitive edit compared a
-    # prefixed path against an unprefixed scope entry and refused permanently (2026-09-01 review).
-    prefix = _git(root, "rev-parse", "--show-prefix")
-    if prefix is None:
-        return []
-    recs, seen, i = out.split("\0"), [], 0
+    recs, raw, i = out.split("\0"), [], 0
     while i < len(recs):
         rec, i = recs[i], i + 1
         if len(rec) < 4:
@@ -1910,13 +2106,12 @@ def _changed_paths(root) -> list:
         if ("R" in xy or "C" in xy) and i < len(recs) and recs[i]:
             pending.append(recs[i])
             i += 1
-        for rel in pending:
-            if prefix:
-                if not rel.startswith(prefix):
-                    continue  # above the bundle parent — no `scope:` entry could ever name it
-                rel = rel[len(prefix):]
-            if rel and rel not in seen:
-                seen.append(rel)
+        raw.extend(pending)
+    # `root` IS the bundle parent here — this walker's one caller passes `root.parent`.
+    seen = []
+    for rel in _in_bundle_frame(root, raw) or []:
+        if rel not in seen:
+            seen.append(rel)
     return seen
 
 
@@ -1961,16 +2156,38 @@ def _report_predates_run(path, started: float) -> bool:
         return True
 
 
+FENCE_MARKER = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
+
+
+def _fence_step(line: str, active):
+    """Advance one Markdown fence; an inner marker of another kind is content."""
+    m = FENCE_MARKER.match(line)
+    if m is None:
+        return active, False
+    marker, tail = m.groups()
+    kind, width = marker[0], len(marker)
+    if active is None:
+        if kind == "`" and "`" in tail:
+            return active, False  # a backtick opener cannot contain backticks in its info string
+        return (kind, width), True
+    if kind == active[0] and width >= active[1] and not tail.strip():
+        closed = None
+        return closed, True
+    return active, False
+
+
 def _fence_balanced(text: str) -> bool:
-    """True when every ``` / ~~~ fence in `text` is closed.
+    """True when every real ``` / ~~~ fence in `text` is closed.
 
     `_box_lines` SKIPS fenced regions, so an unclosed fence silently swallows every box after
     it. For the goal-gate that turned real unchecked criteria into `total == 0` — the "no exit
     criteria" branch, which CLOSES the milestone (2026-09-01 review). A gate that cannot read
     its own input must refuse, never tally zero.
     """
-    return sum(1 for ln in text.splitlines()
-               if ln.strip().startswith(("```", "~~~"))) % 2 == 0
+    active = None
+    for line in text.splitlines():
+        active, _boundary = _fence_step(line, active)
+    return active is None
 
 
 def _oneline(note) -> str:
@@ -1992,23 +2209,224 @@ def _oneline(note) -> str:
 
 
 def authority_for(graph: dict, cid: str) -> str:
-    """`max(sensitivity floor, A17 sensitive-path floor)` — FORMAT §3.1.
+    """The local floor plus every original obligation carried into this Task.
 
     A17 is a path match against `index.md`'s `sensitive_paths:`, so a notary may perform it:
     it is mechanical, and it outranks the declared `sensitivity:` in one direction only.
     """
-    import fnmatch
-    node = graph.get(cid) or {}
-    fm = node.get("fm") or {}
-    floor = sensitivity_floor(fm.get("sensitivity"))
-
     patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
-    scope = _scope_list(fm)
-    for entry in (scope if isinstance(scope, list) else [scope]):
-        for pattern in (patterns if isinstance(patterns, list) else [patterns]):
-            if _paths_touch(str(entry), str(pattern)):
-                return "human"  # A17 — unstrikeable, and never lowered
-    return floor
+    def local(key):
+        fm = ((graph.get(key) or {}).get("fm") or {})
+        floor = sensitivity_floor(fm.get("sensitivity"))
+        for entry in _scope_list(fm):
+            for pattern in (patterns if isinstance(patterns, list) else [patterns]):
+                if _paths_touch(str(entry), str(pattern)):
+                    return "human"  # A17 — unstrikeable, and never lowered
+        # A refreeze may correct a carry, but deleting its current list cannot erase the
+        # authority that accepted it. Keep the strongest historical carried floor.
+        for stamp in (fm.get("verified") or []):
+            if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze") \
+                    and _has_carry_history_stamp(stamp):
+                claim = str(stamp.get("authority") or "")
+                if claim in AUTHORITY_ORDER:
+                    floor = max((floor, claim), key=AUTHORITY_ORDER.index)
+        return floor
+
+    def inherited(key, seen):
+        if key in seen:
+            return local(key)  # the carry validator reports the cycle before any write
+        floor = local(key)
+        node = graph.get(key) or {}
+        edges, _ = _carry_entries(node.get("fm") or {})
+        if key != cid and edges:
+            stamp = _latest_freeze_stamp(node.get("fm") or {})
+            if str((stamp or {}).get("carries") or "") != carry_digest(node):
+                edges = []  # a source's draft or stale carries transfer no authority
+        for source, _dest in edges:
+            source_cid = source.partition("#")[0]
+            if source_cid not in graph:
+                continue  # the carry validator reports the dangling address
+            stamp = _latest_freeze_stamp((graph[source_cid].get("fm") or {}))
+            stamped = str((stamp or {}).get("authority") or "")
+            levels = [floor, inherited(source_cid, seen | {key})]
+            if stamped in AUTHORITY_ORDER:
+                levels.append(stamped)
+            floor = max(levels, key=AUTHORITY_ORDER.index)
+        return floor
+
+    return inherited(cid, set())
+
+
+_CARRY_ADDRESS = r"/tasks/[A-Za-z0-9][A-Za-z0-9._-]*\.md#RULES:M[1-9][0-9]*"
+_CARRY_EDGE = re.compile(rf"\A({_CARRY_ADDRESS}) -> ({_CARRY_ADDRESS})\Z")
+
+
+def _latest_freeze_stamp(fm: dict):
+    return next((s for s in reversed((fm or {}).get("verified") or [])
+                 if isinstance(s, dict) and s.get("act") in ("freeze", "refreeze")), None)
+
+
+def _direction_return_index(fm: dict) -> int:
+    """Last lifecycle stamp that explicitly withdrew Build authority."""
+    return max((i for i, stamp in enumerate((fm or {}).get("verified") or [])
+                if isinstance(stamp, dict) and stamp.get("act") in ("repair", "reopen")
+                and stamp.get("to") == "direction"), default=-1)
+
+
+def _active_freeze_stamp(fm: dict):
+    """Latest freeze-class stamp unless a later lifecycle act returned to Direction."""
+    stamps = (fm or {}).get("verified") or []
+    freeze_at = max((i for i, stamp in enumerate(stamps)
+                     if isinstance(stamp, dict)
+                     and stamp.get("act") in ("freeze", "refreeze")), default=-1)
+    direction_at = _direction_return_index(fm)
+    if freeze_at < 0 or direction_at > freeze_at:
+        return None
+    return stamps[freeze_at]
+
+
+def _old_seal(fm: dict) -> bool:
+    """True when history contains a seal that a later repair explicitly invalidated."""
+    return _latest_freeze_stamp(fm) is not None and _active_freeze_stamp(fm) is None
+
+
+def _human_signer(value) -> bool:
+    """A human authority claim needs a named signer, not just its namespace."""
+    name = str(value or "")
+    return name.startswith("human:") and bool(name[len("human:"):].strip())
+
+
+def _carry_entries(fm: dict) -> tuple:
+    """Parse only the Task carry grammar; malformed values never become partial edges."""
+    raw = (fm or {}).get("carries")
+    if raw is None or raw == []:
+        return [], None
+    if not isinstance(raw, list):
+        return [], f"R:BAD_CARRY `carries:` must be a list of exact Must mappings; got {raw!r}"
+    out = []
+    for value in raw:
+        if not isinstance(value, str) or not (match := _CARRY_EDGE.fullmatch(value)):
+            return [], f"R:BAD_CARRY malformed mapping {value!r}; use /tasks/source.md#RULES:M1 -> /tasks/destination.md#RULES:M1"
+        out.append(match.groups())
+    return out, None
+
+
+def carry_digest(node: dict) -> str:
+    """Seal the complete authored list with an unambiguous, exact-entry encoding."""
+    entries = (node.get("fm") or {}).get("carries") or []
+    payload = json.dumps(sorted(entries), ensure_ascii=False, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _has_carry_history_stamp(stamp: dict) -> bool:
+    """A non-empty accepted mapping leaves a durable authority floor."""
+    sealed = str(stamp.get("carries") or "")
+    return bool(sealed) and sealed != carry_digest({"fm": {"carries": []}})
+
+
+def _has_carry_history(fm: dict) -> bool:
+    return any(isinstance(s, dict) and s.get("act") in ("freeze", "refreeze")
+               and _has_carry_history_stamp(s) for s in ((fm or {}).get("verified") or []))
+
+
+def _carry_problem(graph: dict, cid: str, *, accepted: bool) -> str:
+    """Validate one transfer and its original chain without modifying either Task."""
+    fm = ((graph.get(cid) or {}).get("fm") or {})
+    edges, problem = _carry_entries(fm)
+    if problem:
+        return problem
+    if accepted and _has_carry_history(fm):
+        stamp = _latest_freeze_stamp(fm)
+        sealed = str((stamp or {}).get("carries") or "")
+        if not re.fullmatch(r"sha256:[0-9a-f]{16}", sealed) or sealed != carry_digest(graph[cid]):
+            return f"R:UNACCEPTED_CARRY {cid} changed its accepted carries after freeze"
+    if not edges:
+        return ""
+    if fm.get("type") != "Task":
+        return f"R:BAD_CARRY {cid} is not a Task"
+
+    claims, targets, edge_by_destination = {}, {}, {}
+    for owner, node in graph.items():
+        other, _ = _carry_entries((node.get("fm") or {}))
+        for source, destination in other:
+            claims.setdefault(source, []).append(destination)
+            targets.setdefault(destination, []).append(source)
+            edge_by_destination[destination] = (source, owner)
+
+    def check_edge(source, destination, owner, require_seal):
+        if len(claims[source]) > 1:
+            return f"R:DUPLICATE_CARRY {source} is claimed by more than one destination obligation"
+        if len(targets[destination]) > 1:
+            return f"R:BAD_CARRY {destination} ambiguously accepts several originals"
+        if destination.partition("#")[0] != owner:
+            return f"R:BAD_CARRY {source} targets {destination}, outside {owner}"
+        if source.partition("#")[0] == owner:
+            return f"R:CYCLIC_CARRY {source} -> {destination} is a self-edge"
+        node = graph.get(owner)
+        original = graph.get(source.partition("#")[0])
+        if node is None or ((node.get("fm") or {}).get("type") != "Task"):
+            return f"R:BAD_CARRY {destination} is not a readable Task Must"
+        if original is None or ((original.get("fm") or {}).get("type") != "Task"):
+            return f"R:BAD_CARRY {source} is not a readable Task Must"
+        for endpoint, locator in ((original, source), (node, destination)):
+            ids = list(must_lines(read(endpoint["path"], "T2")["body"]).values())
+            if ids.count(locator.rpartition(":")[2]) != 1:
+                return f"R:BAD_CARRY {source} -> {destination} names a missing or ambiguous Must"
+        source_stamp = _active_freeze_stamp(original.get("fm") or {})
+        direction = str((source_stamp or {}).get("direction") or "")
+        if not re.fullmatch(r"sha256:[0-9a-f]{16}", direction) \
+                or direction != direction_digest(read(original["path"], "T2")):
+            return f"R:UNACCEPTED_CARRY {source} has no readable current freeze-class direction"
+        # Removing an intermediate Task's `carries:` after its acceptance must not erase its
+        # lineage from the graph. The latest source seal still records what it accepted.
+        if _has_carry_history(original.get("fm") or {}) \
+                and str((source_stamp or {}).get("carries") or "") != carry_digest(original):
+            return f"R:UNACCEPTED_CARRY {source} changed its accepted carries after freeze"
+        stamped = str(source_stamp.get("authority") or "")
+        if stamped not in AUTHORITY_ORDER or AUTHORITY_ORDER.index(stamped) < AUTHORITY_ORDER.index(authority_for(graph, source.partition("#")[0])):
+            return f"R:LOWERED_CARRY_AUTHORITY {source} has no freeze at its inherited floor"
+        if stamped == "human" and not _human_signer(source_stamp.get("by")):
+            return f"R:LOWERED_CARRY_AUTHORITY {source} has no human freeze signer"
+        if require_seal:
+            stamp = _active_freeze_stamp(node.get("fm") or {})
+            sealed = str((stamp or {}).get("carries") or "")
+            if not re.fullmatch(r"sha256:[0-9a-f]{16}", sealed) or sealed != carry_digest(node):
+                return f"R:UNACCEPTED_CARRY {destination} has no latest seal for its current carries"
+            if str(stamp.get("direction") or "") != direction_digest(read(node["path"], "T2")):
+                return f"R:UNACCEPTED_CARRY {destination} changed its Musts after acceptance"
+            dest_authority = str(stamp.get("authority") or "")
+            if dest_authority not in AUTHORITY_ORDER or AUTHORITY_ORDER.index(dest_authority) < AUTHORITY_ORDER.index(authority_for(graph, owner)):
+                return f"R:LOWERED_CARRY_AUTHORITY {destination} must refreeze at its inherited floor"
+            if dest_authority == "human" and not _human_signer(stamp.get("by")):
+                return f"R:LOWERED_CARRY_AUTHORITY {destination} has no human freeze signer"
+        return ""
+
+    # Shape errors, especially a cycle, precede attestation errors: a self-edge cannot have a
+    # valid source freeze yet, but the useful refusal is the identity loop the author must fix.
+    for source, destination in edges:
+        if source.partition("#")[0] == cid:
+            return f"R:CYCLIC_CARRY {source} -> {destination} is a self-edge"
+    for _source, destination in edges:
+        current, seen = destination, set()
+        while current in edge_by_destination:
+            if current in seen:
+                return f"R:CYCLIC_CARRY {destination} revisits {current}"
+            seen.add(current)
+            current = edge_by_destination[current][0]
+
+    # Follow the one named obligation through accepted links. Re-entering a Task through a
+    # different Must is legal; only revisiting the same Must is a cycle.
+    for source, destination in edges:
+        current, owner, require_seal = (source, destination), cid, accepted
+        while True:
+            link_source, link_destination = current
+            if (bad := check_edge(link_source, link_destination, owner, require_seal)):
+                return bad
+            if link_source not in edge_by_destination:
+                break
+            upstream_source, upstream_owner = edge_by_destination[link_source]
+            current, owner, require_seal = (upstream_source, link_source), upstream_owner, True
+    return ""
 
 
 def _transition(root, cid: str, sets: dict = None, appends: list = None) -> tuple:
@@ -2136,6 +2554,25 @@ def new(root, node_type: str, slug: str, **fields) -> tuple:
     # accepted and `doctor` reported no findings, so the task silently lost its lens for life.
     # Absence stays legal: `kind:` is optional, and a missing value is not an unreadable one
     # -> "R:SILENT_KIND".
+    # The THIRD slot `new` judges: `supersedes:` is the edge that carries closed history forward,
+    # and an edge to a node that does not exist is worse than no edge — `show` renders it
+    # `— unresolved` and the successor's own provenance is a claim nobody can follow. Resolved
+    # HERE, so the key holds a cid whatever the author typed (a bare slug or an address), which is
+    # what `edges()` and `neighborhood()` already assume of every EDGE_KEYS value
+    # -> "R:PHANTOMPREDECESSOR".
+    sup = fields.get("supersedes")
+    if sup not in (None, "", []):
+        landed = []
+        for ref in (sup if isinstance(sup, list) else [sup]):
+            target, _ = resolve_ref(root, str(ref))
+            if target is None or "#" in target:
+                return None, (f"`--supersedes {ref}` resolves to no node — a successor that cannot "
+                              f'name its predecessor records no history at all -> "R:PHANTOMPREDECESSOR"'
+                              f"\nnext: add status   (it lists what this bundle holds), "
+                              f"then add new {node_type} {slug} --supersedes <slug or cid>")
+            landed.append(target)
+        fields["supersedes"] = landed
+
     kind = fields.get("kind")
     if kind not in (None, "") and str(kind) not in PERSONA_TASK_KINDS:
         return None, (f"unroutable kind {str(kind)!r} — no persona can declare it in `task-kinds:`, "
@@ -2254,6 +2691,8 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                       + " · ".join(stubs)
                       + f"\nnext: author {slug}'s RULES, ASSUMPTIONS and CHECKS, "
                         f"then add freeze {slug}")
+    if (carry_error := _carry_problem(graph, cid, accepted=False)):
+        return None, f"cannot freeze `{slug}` — {carry_error}\nnext: repair its `carries:` mapping and source approval"
 
     # No surfaces would mean nothing to sweep — a one-line off switch for the whole gate.
     if _section_of(node_t2.get("body") or "", "ASSUMPTIONS").strip() \
@@ -2344,7 +2783,10 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
     claims_human = (sfm_type := (node_t2.get("fm") or {}).get("type")) == "Milestone" \
         and str(authority or "") == "human"
     if authority_for(graph, cid) == "human" or claims_human:
-        owed = interview_gap(node_t2, entry.get("fm") or {})
+        owed = interview_gap(node_t2, entry.get("fm") or {},
+                             require_human_signer=(bool(_carry_entries(entry.get("fm") or {})[0])
+                             or _has_carry_history(entry.get("fm") or {}))
+                             and authority_for(graph, cid) == "human")
         if owed:
             shown = ", ".join(owed[:6]) + (f" (+{len(owed) - 6} more)" if len(owed) > 6 else "")
             forward = (f"\nnext: add interview {slug} — or stamp the honest lower claim, "
@@ -2354,29 +2796,79 @@ def freeze(root, cid: str, by: str, authority: str = None) -> tuple:
                           f"decisions no human has been shown: {shown}"
                           f' -> "R:UNINTERVIEWED"' + forward)
 
+    # R:NOFLOOR (regression-floor) — the host suite is a decision the PLAN records, never a memory:
+    # the 3.2 cut shipped a task green over a red host because the floor lived in prose. Armed
+    # exactly where the refute rung arms, so the mechanical lane, quick depth and an explore never pay.
+    if _rung_bound(graph, cid, entry.get("fm") or {}) and regression_floor(node_t2) is None:
+        return None, (f"cannot freeze `{slug}` — `## PLAN` carries no regression floor: a rung-bound task "
+                      f'says what host suite runs beside its own checks -> "R:NOFLOOR"\nnext: add one line '
+                      f"to ## PLAN — `regression: full | affected · <cmd> · <why>` or `regression: none · "
+                      f"<why>` — then add freeze {slug}")
     authority, floor_err = claimed_authority(authority, authority_for(graph, cid), "freeze", slug)
     if floor_err:
-        return None, f"cannot freeze `{slug}` — " + floor_err
+        code = "R:LOWERED_CARRY_AUTHORITY " if _carry_entries(entry.get("fm") or {})[0] \
+            or _has_carry_history(entry.get("fm") or {}) else ""
+        return None, f"cannot freeze `{slug}` — " + code + floor_err
+    if (_carry_entries(entry.get("fm") or {})[0] or _has_carry_history(entry.get("fm") or {})) \
+            and authority == "human" \
+            and not _human_signer(by):
+        return None, (f"cannot freeze `{slug}` — R:LOWERED_CARRY_AUTHORITY a human-floor carry "
+                      f"needs this destination's own `human:` signer\nnext: add freeze {slug} --by \"human:<name>\"")
     stamps = (entry.get("fm") or {}).get("verified") or []
     act = "refreeze" if any(s.get("act") in ("freeze", "refreeze") for s in stamps
                             if isinstance(s, dict)) else "freeze"
+    # consumers-go-stale (FORMAT §3.5): the stamp pins the published surface alone and, on a
+    # consumer, what it read from each `#gives` it needs — so a moved contract is a digest
+    # comparison any later reader can make, with no clock and no stored back-reference.
+    prev_gives = next((str(x.get("gives")) for x in reversed(stamps)
+                       if isinstance(x, dict) and x.get("act") in ("freeze", "refreeze") and "gives" in x), None)
+    new_gives = gives_digest(node_t2)
+    pins = needs_pins(graph, cid)
+    exit_pin = (f', exit: "{exit_digest(node_t2)}"'
+                if (node_t2.get("fm") or {}).get("type") == "Milestone" else "")
     node, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{_oneline(by)}", at: {_today()}, act: {act}, authority: {authority}, '
                      f'direction: "{direction_digest(node_t2)}", '
-                     f'binding: "{binding_digest(node_t2)}" }}')])
+                     f'binding: "{binding_digest(node_t2)}", gives: "{new_gives}", '
+                     f'scope: "{scope_seal_digest(node_t2)}"'
+                     + (f', carries: "{carry_digest(node_t2)}"' if sfm_type == "Task" else "")
+                     + (f', needs: "{pins}"' if pins else "") + exit_pin + " }")])
     if err:
         return None, err + "\nnext: add status"
+    stale_note = ""
+    if act == "refreeze" and prev_gives and prev_gives != new_gives:
+        # The M3 comparison, not a `prev != new` proxy: name exactly the open consumers whose pin
+        # differs from the digest just stamped — a round trip back to a pinned digest names none
+        # (found by the fourth T2 refute).
+        cons = [c for c in consumers_of(graph, cid)
+                if (pin := _pins_of(graph, c).get(cid)) and pin != _short(new_gives)]
+        if cons:
+            slugs = [c.rsplit("/", 1)[-1][:-3] for c in cons]
+            stale_note = (f"\nnotice: `gives:` moved — consumers now stale: {', '.join(slugs)} — each "
+                          f"re-crosses ({' · '.join(f'add freeze {x}' for x in slugs)})")
     # A NOTICE, never a refusal (two-mode-notice): armed exactly where the refute rung arms, so
     # the mechanical lane never pays for a rule aimed at payments. The stamp above is already
     # written; this line only names what the router asks for and the author can still add.
     notice = ""
     if _rung_bound(graph, cid, entry.get("fm") or {}):
+        # A NOTICE, never a refusal: the human floor already REFUSES an unsourced Must through the
+        # interview (it is an open decision like any other), and below that floor the tail is a
+        # habit being taught, not a gate being added -> "R:SOURCEASREFUSAL".
+        # The ONE beat where a human reads the whole node, and only there (A3): below it the slot
+        # is a habit being taught, not a gate being added -> "R:OBSERVEASREFUSAL".
+        if authority_for(graph, cid) == "human" and not observes(node_t2):
+            notice += (f"\nnotice: no observes: line — name the runtime signal that would show "
+                       f"M{rules_of(node_t2)[0][1:] if rules_of(node_t2) else '<n>'} broken (PLAN, O<n>)")
+        unsourced = [mid for mid, _ in _musts_without_source(node_t2)]
+        if unsourced:
+            notice += (f"\nnotice: {', '.join(unsourced)} carry no from: — a Must is what you were "
+                       f"told; add interview {slug} or write (from: …)")
         single = single_mode_musts(entry)
         if single:
-            notice = (f"\nnotice: {', '.join(f'{m} ({w})' for m, w in single)} "
+            notice += (f"\nnotice: {', '.join(f'{m} ({w})' for m, w in single)} "
                       f"{'carries' if len(single) == 1 else 'carry'} one evidence mode — a plan-floor "
                       f"Must carries two (direction.md § router)")
-    return node, (f"{act} recorded at authority `{authority}`" + notice
+    return node, (f"{act} recorded at authority `{authority}`" + notice + stale_note
                   + f"\nnext: add brief {slug} — record the build entry, then build "
                   f"(`add run {slug} -- <cmd>`)")
 
@@ -2391,12 +2883,24 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     node = graph.get(cid)
     if node is None:
         return None, ["node"], f"no such node: {cid}\nnext: add status"
+    if _old_seal(node.get("fm") or {}):
+        return None, ["seal"], (f"cannot record `done` — R:OLDSEAL {cid} returned to Direction; "
+                                f"the prior freeze and gate cannot close it\nnext: add freeze {cid}")
+
+    if (carry_error := _carry_problem(graph, cid, accepted=True)):
+        return None, ["carries"], f"cannot record `done` — {carry_error}\nnext: repair and refreeze {cid}"
 
     required = authority_for(graph, cid)
+    if (_carry_entries(node.get("fm") or {})[0] or _has_carry_history(node.get("fm") or {})) \
+            and required == "human" and override is not None:
+        return None, ["authority"], ("cannot record `done` — R:LOWERED_CARRY_AUTHORITY "
+                                      "a security carry's HARD-STOP cannot be overridden")
     stamps = [s for s in ((node["fm"] or {}).get("verified") or []) if isinstance(s, dict)]
     # a reopen RESETS the gate (loop.md): only gates that postdate the last reopen entitle `done`,
     # so a stale pre-reopen PASS cannot re-entitle a task the loop returned to a beat.
-    last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"), default=-1)
+    last_reopen = max((i for i, s in enumerate(stamps) if s.get("act") == "reopen"),
+                      default=-1)
+    last_reopen = max(last_reopen, _direction_return_index(node.get("fm") or {}))
     gates = [(i, s) for i, s in enumerate(stamps)
              if i > last_reopen and s.get("act") == "gate"]
     # A gate's VERDICT, not merely its existence. A HARD-STOP is a finding written down, not a
@@ -2408,16 +2912,32 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
     # OPEN rather than stranding them. Only a verdict that reads as HARD-STOP withholds `done`.
     gates = [(i, s) for i, s in gates
              if s.get("outcome") is None or str(s.get("outcome")) in CLOSING_VERDICTS]
-    entitled = [(i, s) for i, s in gates
-                if AUTHORITY_ORDER.index(str(s.get("authority", "process"))) >=
-                AUTHORITY_ORDER.index(required)]
+    def gate_rank(stamp):
+        claim = str(stamp.get("authority") or "")
+        return AUTHORITY_ORDER.index(claim) if claim in AUTHORITY_ORDER else -1
+
+    entitled = [(i, s) for i, s in gates if gate_rank(s) >= AUTHORITY_ORDER.index(required)]
+    if (_carry_entries(node.get("fm") or {})[0] or _has_carry_history(node.get("fm") or {})) \
+            and required == "human":
+        freeze_stamp = _latest_freeze_stamp(node.get("fm") or {})
+        if not _human_signer((freeze_stamp or {}).get("by")):
+            return None, ["authority"], ("cannot record `done` — R:LOWERED_CARRY_AUTHORITY "
+                                          "this destination has no human freeze signer")
+        if entitled and not any(_human_signer(s.get("by")) for _, s in entitled):
+            return None, ["authority"], ("cannot record `done` — R:LOWERED_CARRY_AUTHORITY "
+                                          "this destination has no human closing gate signer")
+        entitled = [(i, s) for i, s in entitled if _human_signer(s.get("by"))]
     # The seal, checked at the terminal write. `gate` refuses an unsealed PASS (R:UNSEALED, #206)
     # and — since this task — an unsealed RISK-ACCEPTED too, but `done` is the verb that actually
     # writes `status: done`, and it counted a gate stamp without ever asking whether the ONE
     # approval had happened. Any (re)freeze BEFORE the entitling gate satisfies it; a refreeze
     # recorded afterwards (the re-cross pattern) is not required to.
-    seal_at = min((i for i, s in enumerate(stamps)
-                   if s.get("act") in ("freeze", "refreeze")), default=None)
+    direction_return = _direction_return_index(node.get("fm") or {})
+    seal_at = (min((i for i, s in enumerate(stamps)
+                    if s.get("act") in ("freeze", "refreeze")), default=None)
+               if direction_return < 0 else
+               min((i for i, s in enumerate(stamps) if i > direction_return
+                    and s.get("act") in ("freeze", "refreeze")), default=None))
     slug = cid.rsplit('/', 1)[-1][:-3]
 
     missing, fix = [], f"add gate {slug}"
@@ -2455,7 +2975,7 @@ def done(root, cid: str, override: str = None, by: str = None) -> tuple:
         missing.append(f"a gate stamp (none recorded; `{required}` or above is required)")
     elif not entitled:
         missing.append(f"a gate at authority `{required}` — highest recorded is "
-                       f"`{max((s for _, s in gates), key=lambda s: AUTHORITY_ORDER.index(str(s.get('authority', 'process')))).get('authority')}`")
+                       f"`{max((s for _, s in gates), key=gate_rank).get('authority')}`")
     elif seal_at is None or all(i < seal_at for i, _ in entitled):
         missing.append("a freeze preceding the gate — the ONE human approval ADD asks for did "
                        "not happen, so this gate closed a node nobody ever approved")
@@ -2493,6 +3013,21 @@ def reopen(root, cid: str, to: str, reason: str) -> tuple:
         return None, f"only a done task is reopened — {cid} is `{fm.get('status')}`\nnext: add status"
     if to not in ACTIVE_STATES:
         return None, f"`{to}` is not a beat ({' · '.join(ACTIVE_STATES)})\nnext: reopen --to build"
+    # loop.md called this "resolved by hand" and pointed at a `status --check` finding the engine
+    # never had. A reopen inside a CLOSED milestone rewrites history the goal-gate already
+    # published: the milestone's exit boxes were checked against this task being done, and its
+    # `verified[]` carries a PASS that the close depended on. The successor form keeps both —
+    # the old node stands untouched, the new one names it -> "R:CLOSEDHISTORY".
+    ms_ref = fm.get("milestone")
+    ms_cid, _ = resolve_ref(root, str(ms_ref)) if ms_ref not in (None, "") else (None, "")
+    ms_status = str(((scan(root).get(ms_cid or "") or {}).get("fm") or {}).get("status") or "")
+    if ms_status in CLOSED_MILESTONE_STATES:
+        slug = cid.rsplit("/", 1)[-1][:-3]
+        return None, (f"cannot reopen `{cid}` — its milestone {ms_cid} is `{ms_status}`, and the close "
+                      f"that published it counted this task done: reopening rewrites history a goal-gate "
+                      f'already answered for -> "R:CLOSEDHISTORY"'
+                      f"\nnext: add new Task {slug}-2 --supersedes /tasks/{slug}.md --milestone "
+                      f"<an open milestone>   (the old node, its receipts and its PASS stand)")
     # a stamp is a pre-formatted ABF flow-map STRING, not a dict — a dict serialises as Python
     # repr (`{'by': …}`) and parses back with quoted keys, so `s.get("act")` would miss it.
     stamp = f'{{ by: loop, at: {_today()}, act: reopen, to: {to}, reason: "{reason}" }}'
@@ -2507,14 +3042,14 @@ def _box_lines(body: str, section: str = None):
     milestones do) would otherwise shift every index, so the number a human counts off the
     rendered file would not be the number the verb writes to.
     """
-    out, fence, inside, here = [], False, section is None, "body"
+    out, fence, inside, here = [], None, section is None, "body"
     lines = body.splitlines()
     for i, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith("```") or stripped.startswith("~~~"):
-            fence = not fence
+        fence, boundary = _fence_step(line, fence)
+        if boundary:
             continue
-        if fence:
+        if fence is not None:
             continue
         if line.startswith("## "):
             here = stripped[3:].strip()
@@ -2632,6 +3167,16 @@ def check(root, cid: str, indices, off: bool = False, section: str = None,
                            f"criterion:\n{listed_t}\n"
                            f"next: author the criterion, then add check {slug} <n>")
 
+    # A moved criterion retains its original obligation. Its index remains visible, but
+    # neither `check` nor `uncheck` may silently turn that transfer into an ordinary box.
+    moved_indices = [n for n in sorted(set(indices))
+                     if BOX.match(body.splitlines()[boxes[n - 1][0]]).group(1) == "~"]
+    if moved_indices:
+        return None, (f"cannot check moved box {', '.join(map(str, moved_indices))} in {cid} "
+                      f"— `[~]` retains its original obligation; NOTHING was written\n"
+                      f"next: repair its `moves-to:` and destination `accepts:`, then "
+                      f"add milestone-done {slug}")
+
     want, lines, moved = not off, body.splitlines(keepends=True), []
     for n in sorted(set(indices)):
         i, marked, text, where_box = boxes[n - 1]
@@ -2671,6 +3216,54 @@ def milestone_window_anchor(fm: dict):
     return _as_date(gen.get("at")) if isinstance(gen, dict) else None
 
 
+EXIT_LOCATOR = re.compile(r"\A(/milestones/[A-Za-z0-9][A-Za-z0-9._-]*\.md)#EXIT:(C[1-9][0-9]*)\Z")
+EXIT_ID = re.compile(r"\A(C[1-9][0-9]*)\b")
+
+
+def _exit_link(text: str, name: str):
+    """One exact parenthesized locator, or None when the author left it ambiguous."""
+    links = re.findall(r"\(\s*" + re.escape(name) + r":\s*([^)]*)\)", text)
+    return links[0].strip() if len(links) == 1 and text.count(name + ":") == 1 else None
+
+
+def _resolve_exit_move(graph, source_cid: str, source_id: str, text: str, seen: set):
+    """Follow an accepted move to a terminal criterion; return (reject code, reason)."""
+    target = _exit_link(text, "moves-to")
+    if target is None:
+        return "R:ORPHAN_MOVE", "one exact `(moves-to: ...)` locator is required"
+    parsed = EXIT_LOCATOR.fullmatch(target)
+    if parsed is None:
+        return "R:DANGLING_MOVE", f"invalid Milestone EXIT locator {target!r}"
+    target_cid, target_id = parsed.groups()
+    key = (target_cid, target_id)
+    if key in seen:
+        return "R:CYCLIC_MOVE", f"move revisits {target_cid}#EXIT:{target_id}"
+    entry = graph.get(target_cid)
+    if entry is None or (entry.get("fm") or {}).get("type") != "Milestone":
+        return "R:DANGLING_MOVE", f"target {target_cid} is not a real Milestone"
+    target_doc = read(entry["path"], "T2")
+    target_exit = _section_of(target_doc["body"], "EXIT")
+    if not _fence_balanced(target_exit):
+        return "R:DANGLING_MOVE", f"target {target_cid} has an unreadable EXIT section"
+    boxes = _box_lines(target_exit)
+    matches = [(i, criterion) for i, _marked, criterion, _section in boxes
+               if (m := EXIT_ID.match(criterion)) and m.group(1) == target_id]
+    if len(matches) != 1:
+        return "R:DANGLING_MOVE", f"target {target_cid}#EXIT:{target_id} is absent or ambiguous"
+    i, criterion = matches[0]
+    if _exit_link(criterion, "accepts") != f"{source_cid}#EXIT:{source_id}":
+        return "R:REJECTED_MOVE", f"target {target_cid}#EXIT:{target_id} has no reciprocal acceptance"
+    stamps = (entry.get("fm") or {}).get("verified") or []
+    latest = next((s for s in reversed(stamps) if isinstance(s, dict)
+                   and s.get("act") in ("freeze", "refreeze")), None)
+    if not latest or latest.get("exit") != exit_digest(target_doc):
+        return "R:REJECTED_MOVE", f"target {target_cid}#EXIT:{target_id} has no current EXIT-bound freeze"
+    state = BOX.match(target_exit.splitlines()[i]).group(1)
+    if state == "~":
+        return _resolve_exit_move(graph, target_cid, target_id, criterion, seen | {key})
+    return "", ""
+
+
 def milestone_done(root, cid: str) -> tuple:
     """Close a milestone — but only when its GOAL is met (loop.md's goal-gate).
 
@@ -2707,13 +3300,36 @@ def milestone_done(root, cid: str) -> tuple:
                        f"so the goal-gate cannot tally its boxes; it does not close on an input it "
                        f"cannot read\nnext: close the fence in {slug}'s `## EXIT`, "
                        f"then add milestone-done {slug}")
-    tally = [marked for _, marked, _, _ in _box_lines(exit_body)]
-    checked, unchecked, total = sum(tally), len(tally) - sum(tally), len(tally)
+    boxes = _box_lines(exit_body)
+    lines = exit_body.splitlines()
+    moved = [(i, text) for i, _marked, text, _section in boxes
+             if BOX.match(lines[i]).group(1) == "~"]
+    checked, total = sum(marked for _, marked, _, _ in boxes), len(boxes)
+    for i, text in moved:
+        ident = EXIT_ID.match(text)
+        source_id = ident.group(1) if ident else "C?"
+        if ident is None or sum(bool((m := EXIT_ID.match(t)) and m.group(1) == source_id)
+                                for _j, _marked, t, _section in boxes) != 1:
+            code, reason = "R:ORPHAN_MOVE", "source EXIT identity is absent or duplicated"
+        else:
+            code, reason = _resolve_exit_move(graph, cid, source_id, text, {(cid, source_id)})
+        if code:
+            return None, (f"{code} — {cid}#EXIT:{source_id}: {reason}; "
+                          f"original tally {checked}/{total}, moved {len(moved)}\n"
+                          f"next: repair EXIT {source_id}'s move and accepted destination, "
+                          f"then add milestone-done {slug}")
 
+    unchecked = total - checked - len(moved)
     if unchecked:
         return None, (f"milestone_goal_unmet ({checked}/{total} exit criteria)\n"
                        f"next: check the remaining boxes in {cid.lstrip('/')}, then "
                        f"add milestone-done {slug}")
+
+    if (node.get("fm") or {}).get("status") == "done":
+        moved_note = (f", moved {len(moved)} ({', '.join(EXIT_ID.match(t).group(1) for _i, t in moved)})"
+                      if moved else "")
+        return True, (f"{cid} already done ({checked}/{total} exit criteria met{moved_note}) "
+                      f"— historical closure unchanged\nnext: add status")
 
     # The MEMBERS, before the lesson drain: a milestone that closes on its exit criteria while
     # still holding unauthored tasks abandons them, and until now said nothing at all. That is
@@ -2784,7 +3400,9 @@ def milestone_done(root, cid: str) -> tuple:
                 seen.add(name)
                 who.append(name)
     credit = f", checked by {', '.join(who)}" if who else ", checked by hand (unstamped)"
-    return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{credit})"
+    transfer = (f", moved {len(moved)} ({', '.join(EXIT_ID.match(t).group(1) for _i, t in moved)})"
+                if moved else "")
+    return True, (f"{cid} milestone done ({checked}/{total} exit criteria met{transfer}{credit})"
                   f"{empty}{skipped}\nnext: add status")
 
 
@@ -2863,6 +3481,7 @@ ROW_WIDTH, SLUG_W = 100, 28
 # The widest beat word plus its brackets (`[abandoned]`), so the type column lines up whatever
 # the beat is.
 BEAT_W = 11
+TITLE_FLOOR = 12   # the least a title keeps when a release tag shares its row
 BEAT_KEYS = ("beat", "state")
 # The one canonical next verb per beat — read by `status`'s frontier hint and `render_card`, so a
 # repaired CARD's `next:` matches its beat instead of freezing at the direction-time affordance.
@@ -2886,8 +3505,7 @@ BEAT_NEXT = {"scaffold": AUTHOR_NEXT["Task"], "direction": "add freeze {slug}",
              # `<test cmd>` is the one slot a NOTARY cannot fill from the bundle — but it need
              # not guess: `run` is handed the real command every time it is called, and now
              # remembers the last one on `index.md`. Until the first run this stays a template;
-             # after it, the hint replays the command that actually worked in this project
-             # (`_last_test_cmd`) -> "R:PLACEHOLDER_NEXT".
+             # after it, the hint replays that Task's own Run computation at T0.
              "build": ('add run {slug} -- <test cmd> '
                        '--junitxml="${{TMPDIR:-/tmp}}/add-run.xml"'),
              "verify": 'add gate {slug} PASS --by "<name>"', "done": "add status"}
@@ -2909,8 +3527,7 @@ def _is_frozen(node) -> bool:
     """True once a task carries a freeze/refreeze stamp — the signal that authoring is done and the
     frontier hint should point at `brief` (build), not `freeze`. Status stays `direction` until done,
     so the beat is stamp-derived, not read from the status field."""
-    stamps = (node.get("fm") or {}).get("verified") or []
-    return any(isinstance(s, dict) and s.get("act") in ("freeze", "refreeze") for s in stamps)
+    return _active_freeze_stamp(node.get("fm") or {}) is not None
 
 
 def _milestone_stubs(node: dict) -> list:
@@ -3007,6 +3624,58 @@ def replan(root, cid: str, note: str, by: str = "builder") -> tuple:
                  f"\nnext: keep building (`add run {slug} -- <cmd>` when green)")
 
 
+def repair(root, cid: str, kind: str, cause: str, by: str = "builder") -> tuple:
+    """Route a Build failure under its seal, or visibly return changed/unknown intent."""
+    root = Path(root)
+    graph = scan(root)
+    node = graph.get(cid)
+    slug = cid.rsplit("/", 1)[-1][:-3]
+    if node is None:
+        return None, f'R:WRONGNODE no such open frozen Task: {cid}\nnext: add status'
+    fm = node.get("fm") or {}
+    if fm.get("type") != "Task" or fm.get("status") in ANSWERED or not _is_frozen(node):
+        return None, (f'R:WRONGNODE `{slug}` is not an open actively frozen Task'
+                      f'\nnext: add status')
+    if kind not in ("implementation", "change", "unknown"):
+        return None, (f"unknown repair kind {kind!r} — use implementation | change | unknown"
+                      f"\nnext: add repair {slug} --kind <kind> --cause \"<concrete cause>\"")
+    if not str(cause or "").strip():
+        return None, (f'R:CAUSELESS a repair route needs a concrete cause'
+                      f'\nnext: add repair {slug} --kind {kind} --cause "<concrete cause>"')
+
+    current = read(node["path"], "T2")
+    seal = _active_freeze_stamp(fm) or {}
+    expected = {
+        "direction": direction_digest(current),
+        "binding": binding_digest(current),
+        "gives": gives_digest(current),
+        "scope": scope_seal_digest(current),
+    }
+    carry_edges, carry_error = _carry_entries(fm)
+    if not carry_error and (carry_edges or _has_carry_history(fm) or "carries" in seal):
+        expected["carries"] = carry_digest(current)
+    intact = not carry_error and all(re.fullmatch(r"sha256:[0-9a-f]{16}", str(seal.get(key) or ""))
+                 and str(seal.get(key)) == digest for key, digest in expected.items())
+    if kind == "implementation" and not intact:
+        return None, (f'R:SEAL_TOUCH `{slug}` no longer matches every sealed contract surface; '
+                      f'an implementation claim cannot authorize drift or unknown coverage'
+                      f'\nnext: add repair {slug} --kind change|unknown --cause "<what changed>"')
+
+    destination = "build" if kind == "implementation" else "direction"
+    text = _oneline(cause)
+    stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: repair, authority: process, '
+             f'kind: {kind}, cause: "{text}", to: {destination} }}')
+    _, err = _transition(root, cid, sets={"status": "direction"},
+                         appends=[("verified", stamp)])
+    if err:
+        return None, err + "\nnext: add status"
+    if destination == "build":
+        return cid, (f"implementation repair recorded on `{slug}` — approved intent is unchanged"
+                     f"\nnext: keep building (`add run {slug} -- <cmd>` when green)")
+    return cid, (f"{kind} repair returned `{slug}` to Direction — the prior seal is historical"
+                 f"\nnext: revise the direction, then add freeze {slug}")
+
+
 def card_drift(graph: dict, body_of=None) -> list:
     """Nodes whose `## CARD` contradicts frontmatter — the defect e4's transition created.
 
@@ -3101,6 +3770,17 @@ def locate(root, query: str, all: bool = False) -> tuple:
     (M3 · M4 · R:NOWAYBACK). Only `done` collapses: an archived or reopened node is not settled.
     """
     graph = scan(Path(root))
+    # The FLOOR first, because the floor is checked FIRST and always wins (A5/A11) and this is the
+    # one PRE-EDIT step the direct lane runs — S2's whole promise is that it fires "while changing
+    # course is still free". Reading `scope:` alone answered `no node scopes …` for a path the
+    # bundle had declared sensitive: a false all-clear on the security half, from the step meant to
+    # prevent the very refusal `learn` would hand back after the commit. Same patterns, same
+    # matcher as `quick_hit` and A17 — one reader, never a second copy of the rule.
+    patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
+    floor = next((str(pat) for pat in (patterns if isinstance(patterns, list) else [patterns])
+                  if _paths_touch(str(query), str(pat))), None)
+    lede = (f"`{query}` matches the sensitive pattern `{floor}` — floor human; a change here is a "
+            f"node, however small\n" if floor else "")
     hits = []
     for cid, node in sorted(graph.items()):
         fm = node["fm"] or {}
@@ -3110,10 +3790,10 @@ def locate(root, query: str, all: bool = False) -> tuple:
                 hits.append((cid, fm.get("status", "—"), str(entry)))
                 break
     if not hits:
-        return [], f"no node scopes `{query}`\nnext: add status"
+        return [], lede + f"no node scopes `{query}`\nnext: add status"
     listed = hits if all else [h for h in hits if h[1] != "done"]
     closed = len(hits) - len(listed)
-    parts = [f"{len(hits)} node(s) scope `{query}`:"]
+    parts = [lede + f"{len(hits)} node(s) scope `{query}`:"]
     parts += [f"  · {cid.rsplit('/', 1)[-1][:-3]:<28} [{st}]  ({entry})" for cid, st, entry in listed]
     if closed:
         parts.append(f"  … {closed} done owner(s) not listed (`--all`)")
@@ -3164,10 +3844,22 @@ def _beat_of(node, t2=None, graph=None) -> str:
     """
     fm = node.get("fm") or {}
     st = fm.get("status")
-    if st in ("done", "dropped", "archived") or st in ("build", "verify"):
+    if st in ("done", "dropped", "archived"):
+        return st
+    if _old_seal(fm):
+        return "direction"
+    if st in ("build", "verify"):
         return st
     stamps = [s for s in (fm.get("verified") or []) if isinstance(s, dict)]
-    if any(s.get("act") == "run" for s in stamps):
+    last_repair = max((i for i, s in enumerate(stamps)
+                       if s.get("act") == "repair" or (s.get("act") == "reopen"
+                       and s.get("to") == "direction")), default=-1)
+    # A floor stamp (`floor: regression`) never closes the build beat: the narrow run is the
+    # receipt that binds CHECKS, and a floor-first run read as `verify` made `status` point at
+    # the gate with no narrow receipt at all (found by the second T2 refute of regression-floor,
+    # R:FLOORASGATE, E9) — the same filter `_latest_run_cid` and `latest_receipt` apply.
+    if any(i > last_repair and s.get("act") == "run" and not s.get("floor")
+           for i, s in enumerate(stamps)):
         return "verify"
     if _is_frozen(node):
         return "build"
@@ -3206,18 +3898,27 @@ def _refute_of(stamps: list, receipt_cid: str):
     stamp with no `receipt:` cites nothing. Reads presence and outcome only — never `probes:`, the
     note, or who signed (law 3: a notary that judged a probe would be a guard).
     """
-    outcome = None
+    outcome, tier = None, None
     for s in stamps:
         if isinstance(s, dict) and s.get("act") == "refute" \
                 and receipt_cid and str(s.get("receipt", "")) == receipt_cid:
-            outcome = str(s.get("outcome") or "")
-    return outcome
+            # The tier travels WITH the outcome, from the same stamp, so the gate cannot read one
+            # read's verdict beside another's independence claim. It is a CLAIM and stays one:
+            # never `by:`, never `probes:`, never the note, never who signs the gate — an engine
+            # that compared names would be judging an identity it cannot verify (R:TIERJUDGED).
+            outcome, tier = str(s.get("outcome") or ""), (str(s.get("tier")) if s.get("tier") else None)
+    return outcome, tier
 
 
 def _latest_run_cid(stamps: list):
-    """The receipt cid of the newest `act: run` stamp, or None — read from the record, not the disk."""
+    """The receipt cid of the newest NARROW `act: run` stamp, or None — read from the record, not the disk.
+
+    A floor stamp (`floor: regression`) is skipped, exactly as `latest_receipt` skips the floor
+    receipt: the T2 refute of regression-floor found this reader taking the floor as the latest
+    run, so the hint demanded a refute the gate never asked for (R:FLOORASGATE, E7).
+    """
     return next((str(s.get("receipt") or "") for s in reversed(stamps)
-                 if isinstance(s, dict) and s.get("act") == "run"), None)
+                 if isinstance(s, dict) and s.get("act") == "run" and not s.get("floor")), None)
 
 
 def _rung_bound(graph: dict, cid: str, fm: dict) -> bool:
@@ -3228,12 +3929,242 @@ def _rung_bound(graph: dict, cid: str, fm: dict) -> bool:
         and authority_for(graph, cid) in ("plan", "human")
 
 
+FLOOR_LINE = re.compile(r"^regression:\s*(full|affected|none)\s*·\s*(.*)$", re.M)
+
+
+def regression_floor(node: dict):
+    """`{mode, cmd, why}` from the PLAN's `regression:` line (regression-floor), or None.
+
+    `full | affected · <cmd> · <why>` or `none · <why>`. A template line (`<…>`), a mode with no
+    command, or a `none` with no why is no floor — the freeze demands the decision, never the
+    slot. `affected` is the AUTHOR's claim about the command: the engine records the word and
+    runs what it is handed, and cannot tell a three-test run from a full one (FORMAT §8.5).
+    """
+    m = FLOOR_LINE.search(_section_of((node or {}).get("body") or "", "PLAN"))
+    if not m:
+        return None
+    mode, rest = m.group(1), m.group(2).strip()
+    if "<" in rest:
+        return None
+    if mode == "none":
+        return {"mode": mode, "cmd": "", "why": rest} if rest else None
+    cmd, _, why = rest.partition("·")
+    cmd, why = cmd.strip(), why.strip()
+    return {"mode": mode, "cmd": cmd, "why": why} if (cmd and why) else None
+
+
+OBSERVE_ACTIONS = ("alert", "rollback")
+# `- O<n> covers: <M ids> · signal <text> · window <text> · threshold <text> · action alert|rollback`
+# The field ORDER is fixed (A5) so one regex reads every line and the brief prints them the same
+# way; the three middle fields are free text (A2) — the engine names a slot, it cannot judge a
+# metric. A line that does not match is not an observe: `doctor` names it, `observes` skips it.
+OBSERVE_LINE = re.compile(
+    r"^\s*-\s*(O\d+)\s+covers:\s*(?P<covers>[^·]+?)\s*·\s*signal\s*(?P<signal>[^·]+?)\s*·\s*"
+    r"window\s*(?P<window>[^·]+?)\s*·\s*threshold\s*(?P<threshold>[^·]+?)\s*·\s*"
+    r"action\s*(?P<action>\S+)\s*$")
+OBSERVE_HEAD = re.compile(r"^\s*-\s*(O\d+)\b")
+
+
+def observes(node: dict) -> list:
+    """`[{id, covers, signal, window, threshold, action}]` for every well-formed observe in PLAN.
+
+    The runtime signal that would show a Must broken — loop.md's "the CHECKS have a second life as
+    monitors" given the slot it never had. NOTHING in the engine decides anything from these: a
+    monitor's verdict is production's evidence, never the bundle's (R:OBSERVEASGATE). They ride
+    `## PLAN`, which no digest seals, so writing one after a freeze is neither drift nor a re-cross.
+    """
+    out = []
+    for line in live_lines(_section_of((node or {}).get("body") or "", "PLAN")):
+        m = OBSERVE_LINE.match(str(line))
+        if not m or PLACEHOLDER.search(re.sub(r"`[^`]*`", "", str(line))):
+            continue
+        if m.group("action") not in OBSERVE_ACTIONS:
+            continue
+        covers = [c.strip() for c in m.group("covers").replace(",", " ").split() if c.strip()]
+        if not covers:
+            continue
+        out.append({"id": m.group(1), "covers": covers, "signal": m.group("signal").strip(),
+                    "window": m.group("window").strip(), "threshold": m.group("threshold").strip(),
+                    "action": m.group("action")})
+    return out
+
+
+def malformed_observes(node: dict) -> list:
+    """`[(id, line)]` for every `- O<n>` line in PLAN that `observes` could not read.
+
+    The other half of one question, asked HERE so the reader that skips and the finding that names
+    can never disagree: a line nobody reads and nobody names is the slot silently not working.
+    """
+    good = {o["id"] for o in observes(node)}
+    return [(m.group(1), str(line).strip())
+            for line in live_lines(_section_of((node or {}).get("body") or "", "PLAN"))
+            if (m := OBSERVE_HEAD.match(str(line))) and m.group(1) not in good]
+
+
+def gives_digest(node: dict) -> str:
+    """The digest over a node's canonical `gives:` list alone (consumers-go-stale, FORMAT §3.5)."""
+    gives = (node.get("fm") or {}).get("gives") or []
+    gives = [gives] if isinstance(gives, str) else gives           # a scalar is one surface (E15)
+    return "sha256:" + hashlib.sha256(_canon("\n".join(str(g) for g in gives)).encode()).hexdigest()[:16]
+
+
+def scope_seal_digest(node: dict) -> str:
+    """Digest the authored `scope:` as a normalized set (scope-in-the-seal, FORMAT §3.5).
+
+    Ordering and duplicate entries do not change what the node declares, so neither may force a
+    human refreeze. Entry text remains otherwise exact: changing a path or pattern moves the seal.
+    """
+    entries = sorted({str(entry) for entry in _scope_list((node or {}).get("fm") or {})})
+    payload = json.dumps(entries, ensure_ascii=False, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _latest_scope_seal(node: dict):
+    """Latest freeze-class stamp iff it seals this node's current `scope:`; else None.
+
+    Missing, malformed and stale scope seals all fail closed. Only the latest freeze-class stamp
+    can authorize current scope; an older matching freeze cannot outrank a later refreeze.
+    """
+    stamps = (node.get("fm") or {}).get("verified") or []
+    latest = next((stamp for stamp in reversed(stamps)
+                   if isinstance(stamp, dict) and stamp.get("act") in ("freeze", "refreeze")), None)
+    if latest is None:
+        return None
+    sealed = str(latest.get("scope") or "")
+    if not re.fullmatch(r"sha256:[0-9a-f]{16}", sealed):
+        return None
+    return latest if sealed == scope_seal_digest(node) else None
+
+
+def _short(digest: str) -> str:
+    return str(digest or "").split(":")[-1][:8]
+
+
+def stamped_gives(graph: dict, cid: str):
+    """The `gives:` digest a node's latest (re)freeze stamp attests — None when no stamp carries one.
+
+    This is the ONE unit every pin reader compares against (found by the fourth T2 refute): the
+    live `gives:` list is a draft until a freeze seals it, so a provider not yet frozen, or frozen
+    before the key existed, pins `?`, and a `gives:` edited without a refreeze moves nothing.
+    """
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    return next((str(x["gives"]) for x in reversed(fm.get("verified") or [])
+                 if isinstance(x, dict) and x.get("act") in ("freeze", "refreeze") and x.get("gives")), None)
+
+
+def _pins_of(graph: dict, cid: str) -> dict:
+    """`{provider_cid: pinned8}` from the node's latest (re)freeze stamp — `?` pins and non-`#gives` dropped.
+
+    Empty when the stamp carries no `needs:` key (written before the pin existed — answers
+    nothing) or the node is not an open Task.
+    """
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    stamps = [x for x in (fm.get("verified") or []) if isinstance(x, dict) and x.get("act") in ("freeze", "refreeze")]
+    if not stamps or "needs" not in stamps[-1] or not _open_task(graph, cid):
+        return {}
+    out = {}
+    for entry in str(stamps[-1].get("needs") or "").split(","):
+        # The pin is the text after the LAST `=`: a ref whose own text carried a delimiter was
+        # pinned `?` by the writer, and that `?` must read back as `?` (found by the fifth T2
+        # refute — `partition` on the first `=` read a pasted digest as attested).
+        # … and only an exact `<ref>=<sha8|?>` token counts, `<ref>` carrying no `=` — the writer
+        # stripped every delimiter from a ref it could not attest (E16), so any other shape is
+        # text nobody stamped.
+        m = re.fullmatch(r"([^=,\"'{}\[\]\s]*)=([0-9a-f]{8}|\?)", entry.strip())
+        if m and m.group(2) != "?" and m.group(1).endswith("#gives"):
+            out.setdefault(_norm(cid, m.group(1)), m.group(2))
+    return out
+
+
+# The pin's delimiters (`,` `=`), the stamp line's (`"` `'` `{` `}` `[` `]`) and whitespace: a ref
+# carrying any of them cannot be attested, and is written with them stripped (E16, E17).
+_PIN_UNSAFE = re.compile(r"""[,="'{}\[\]\s]""")
+
+
+def needs_pins(graph: dict, cid: str) -> str:
+    """`"<target>#gives=<sha8>[,…]"` — what a consumer froze on, or "" when it declares no `needs:`.
+
+    Only a `#gives` fragment is a frozen contract; any other need (an explore's `#findings`, a
+    bare file) is pinned `?` and never reported stale. A target the graph cannot resolve, or one
+    with no freeze stamp attesting a `gives:` digest, is `?` too.
+    """
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    needs = fm.get("needs") or []
+    out = []
+    # Each distinct (resolved node, FRAGMENT) once, under its first-written spelling: a provider
+    # named twice, or under two spellings `_norm` resolves alike, is one pair — decided in the
+    # writer so no reader has to heal it (found by the second and third T2 refutes: M1, E7, E8).
+    # The fragment is part of the key: `#findings` and `#gives` on one node are two pins, and a
+    # delimiter-carrying spelling never shadows an honest one (sixth T2 refute, E14).
+    seen = {}
+    for ref in (str(r).strip() for r in (needs if isinstance(needs, list) else [needs])):
+        node_key = _norm(cid, ref) if ".md" in ref else None
+        key = (node_key, ref.partition("#")[2]) if node_key else ref
+        seen.setdefault(key, ref)
+    for ref in seen.values():
+        target = _norm(cid, ref) if ".md" in ref else None
+        # A ref carrying a pin delimiter (`,` or `=`) cannot be serialized, so it cannot be
+        # attested: pinned `?` however it resolves (E13).
+        serializable = not _PIN_UNSAFE.search(ref)
+        attested = stamped_gives(graph, target) if serializable and ref.endswith("#gives") and target in graph else None
+        # An unserializable ref is written with those characters STRIPPED, so no token in the
+        # stamp string ever carries an inner `,` or `=` for a reader to split on (E16), nor a
+        # `"` or `{` for the flow-map parser to trip on — the pin takes the discipline every
+        # interpolated value takes through `_oneline` (E17, eighth T2 refute).
+        out.append(f"{ref}={_short(attested)}" if attested else f"{_PIN_UNSAFE.sub('', ref)}=?")
+    return ",".join(out)
+
+
+def stale_needs(graph: dict, cid: str) -> list:
+    """`[(provider_cid, pinned8, current8)]` — every `#gives` this node froze on that has since moved.
+
+    Read from the node's latest (re)freeze stamp: a stamp with no `needs:` key was written before
+    the pin existed and answers nothing (never a finding, never a refusal). Compared against the
+    provider's STAMPED digest (`stamped_gives`), never its live list. Digests decide, never dates
+    — two nodes' stamps are not one chronology (R:CLOCKPIN).
+    """
+    out = []
+    for target, pinned in _pins_of(graph, cid).items():
+        current = stamped_gives(graph, target)
+        if current and _short(current) != pinned:
+            out.append((target, pinned, _short(current)))
+    # Sorted at the SOURCE, so every reader — doctor, todo, the gate — names each provider once,
+    # in cid order; the pin's written order decides nothing (found by the T2 refutes: A5/E6 the
+    # order, M3/E7 the unit — `_pins_of` keeps the first pin per resolved target).
+    return sorted(out)
+
+
+def consumers_of(graph: dict, cid: str) -> list:
+    """Every open Task whose latest freeze stamp PINS this node's `#gives` — walked from the graph, never stored.
+
+    Sourced from the stamp, like every other pin reader, never from the live `needs:` list: that
+    list is unsealed and a draft until a freeze pins it, so the refreeze note and `doctor` name
+    the same consumers whatever a hand edit did in between (found by the ninth T2 refute, E18).
+    """
+    return sorted(c for c in graph if cid in _pins_of(graph, c))
+
+
+def _open_task(graph: dict, cid: str) -> bool:
+    """A Task that can still take `add freeze` — not done, dropped or archived (E9)."""
+    fm = (graph.get(cid) or {}).get("fm") or {}
+    return fm.get("type") == "Task" and str(fm.get("status") or "") not in ("done", "dropped", "archived")
+
+
 def _last_test_cmd(root) -> str:
     """The last command `run` was given in this bundle, or "" — remembered, never guessed."""
     index = Path(root) / "index.md"
     if not index.is_file():
         return ""
     return str((read(index, "T0")["fm"] or {}).get("test_cmd") or "").strip()
+
+
+def _task_test_cmd(graph: dict, cid: str) -> str:
+    """Latest narrow Run computation owned by this Task, using scanned frontmatter only."""
+    receipt_cid = _latest_run_cid((graph[cid]["fm"] or {}).get("verified") or [])
+    run_fm = ((graph.get(receipt_cid or "") or {}).get("fm") or {})
+    if run_fm.get("type") != "Run" or str(run_fm.get("task") or "") != cid:
+        return ""
+    return str(run_fm.get("computation") or "").strip()
 
 
 def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
@@ -3258,20 +4189,34 @@ def _next_verb(graph: dict, cid: str, t2=None, root=None) -> str:
     # that produced the word, not by a per-row hint.
     if beat in ("scaffold",) + SCAFFOLD_KINDS:
         return AUTHOR_NEXT.get(str(fm.get("type")), AUTHOR_NEXT["Task"]).format(slug=slug)
+    # The floor rung's affordance (regression-floor): a declared host suite with no fresh green
+    # receipt is named first, with the PLAN's own command — only when the caller holds the body
+    # (`todo` does); `status` scans at T0 and the gate names the same line on refusal.
+    if beat == "verify" and t2 is not None and root is not None and _rung_bound(graph, cid, fm):
+        floor = regression_floor(t2)
+        if floor and floor["mode"] in ("full", "affected"):
+            fr, _ = latest_floor_receipt(root, cid)
+            if fr is None or str(fr.get("exit")) != "0" or not fresh(fr, Path(root).parent)[0]:
+                return f"add run {slug} --floor -- {floor['cmd']}"
     # The refute rung's affordance: at the verify beat a rung-bound task points at `add refute`
     # until a refute cites its latest run — the gate would refuse R:UNREFUTED otherwise, and the
     # first contact with a rung should be a hint, not a refusal.
     if beat == "verify" and _rung_bound(graph, cid, fm):
         stamps = fm.get("verified") or []
         last_run = _latest_run_cid(stamps)
-        if last_run and _refute_of(stamps, last_run) is None:
+        if last_run and _refute_of(stamps, last_run)[0] is None:
             return f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>"'
     hint = BEAT_NEXT.get(beat, "add status").format(slug=slug)
-    # Replay the command this project actually ran, when there is one. A hint carrying `<test cmd>`
-    # is a sentence shaped like a command; a cold agent following it types angle brackets into a
-    # shell (R:PLACEHOLDER_NEXT).
-    if "<test cmd>" in hint and root is not None and (last := _last_test_cmd(root)):
-        hint = hint.replace("<test cmd>", last)
+    # A global last command belongs to another Task as often as this one. The scanned Run
+    # frontmatter carries the exact computation for the Task's own latest narrow stamp.
+    if "<test cmd>" in hint:
+        owned = _task_test_cmd(graph, cid)
+        if not owned:
+            return f"add show {slug}"  # inspect its PLAN before supplying a new command
+        if any(re.search(rf"(?:^|\s){re.escape(flag)}(?:=|\s)", owned)
+               for flag in JUNIT_FLAGS):
+            return f"add run {slug} -- {owned}"  # it already writes the report
+        hint = hint.replace("<test cmd>", owned)
     return hint
 
 
@@ -3339,6 +4284,11 @@ def todo(root, milestone: str = None) -> tuple:
                     bits.append(f"{one} single-mode Must{'s' if one > 1 else ''}")
                 if bits:
                     hint = f"  ({' · '.join(bits)})"
+        # consumers-go-stale: at any beat, a consumer whose pinned `#gives` moved says so and names
+        # the verb; appended after the beat's own hint so a tuned chain keeps its first word.
+        for provider, _p, _c in stale_needs(graph, cid):
+            hint += (f"  (needs stale: {provider.rsplit('/', 1)[-1][:-3]}#gives moved — "
+                     f"add freeze {cid.rsplit('/', 1)[-1][:-3]})")
         lines.append(f"  · {cid.rsplit('/', 1)[-1][:-3]:<24} → {nxt}{hint}")
     where = f" under `{milestone}`" if milestone else ""
     return items, f"{len(items)} open task(s){where}:\n" + "\n".join(lines)
@@ -3497,7 +4447,15 @@ def status(root, all: bool = False, check: bool = False) -> str:
         slug = cid.rsplit("/", 1)[-1][:-3]
         lead = f"  · {slug[:SLUG_W]:<{SLUG_W}} {('[' + str(beat) + ']'):<{BEAT_W}} " \
                f"{str(fm.get('type', '')):<9} "
-        out.append((lead + _title_of(fm, ROW_WIDTH - len(lead))).rstrip())
+        # A released milestone names its tag at the row's end (release-stamp, M5): the newest
+        # `act: release` stamp, so "which tag shipped this" is answered without opening the file.
+        tag = next((str(st.get("tag")) for st in reversed(fm.get("verified") or [])
+                    if isinstance(st, dict) and st.get("act") == "release" and st.get("tag")), "")
+        # One row is ONE line (a-roadmap R:ROWBLOAT): the title yields first, down to a floor of
+        # TITLE_FLOOR characters, then the tag itself is cut — never a negative width, which
+        # sliced the title from its end (found by the T2 refute, E8).
+        tail = f" · {tag[:max(0, ROW_WIDTH - len(lead) - 3 - TITLE_FLOOR)]}" if tag else ""
+        out.append((lead + _title_of(fm, ROW_WIDTH - len(lead) - len(tail)) + tail).rstrip())
     if not all and len(shown) > MAX_LINES:
         # The hint names a command that RUNS and actually produces the withheld rows. It used to
         # print under `--all` too, advising the flag already in force — a hint that cannot change
@@ -3514,16 +4472,24 @@ def status(root, all: bool = False, check: bool = False) -> str:
         counted = " · ".join(f"{n} {t}" for t, n in sorted(tally.items()))
         out.append(f"  … {counted} carrying no state — not listed (`--all`)")
 
-    # M6: a resume point that omits the last session is not a resume point. The most recent
-    # stamp across the board, named — ABSENT rather than guessed when nothing has happened (E6).
+    # M6: name the last recorded act. Day-only stamps cannot order different nodes, so the
+    # append index resolves same-day acts within a node and CID makes cross-node ties stable.
     acts = []
     for cid, n in graph.items():
-        for st in (n["fm"] or {}).get("verified") or []:
+        for i, st in enumerate((n["fm"] or {}).get("verified") or []):
             if isinstance(st, dict) and st.get("at") and st.get("act"):
-                acts.append((str(st["at"]), str(st["act"]), cid.rsplit("/", 1)[-1][:-3]))
+                acts.append((str(st["at"]), i, cid, str(st["act"]),
+                             cid.rsplit("/", 1)[-1][:-3]))
     if acts:
-        when, act, who = max(acts)
-        out.append(f"  last: {act} {who} · {when}")
+        when, _, _, act, who = max(acts)
+        # Cross-node stamps with the same date have no recorded global order. Name the
+        # deterministic representative, but mark the tie rather than claiming chronology.
+        tied_nodes = {c for day, _, c, _, _ in acts if day == when}
+        suffix = f" · {when}" + (" · day tie" if len(tied_nodes) > 1 else "")
+        lead = f"  last: {act} "
+        who_room = max(1, ROW_WIDTH - len(lead) - len(suffix))
+        shown_who = who if len(who) <= who_room else who[:who_room - 1] + "…"
+        out.append(f"{lead}{shown_who}{suffix}")
 
     drift = card_drift(graph) if check else []
     if drift:
@@ -3546,7 +4512,7 @@ def status(root, all: bool = False, check: bool = False) -> str:
     frontier = ready(graph)
     waiting = [c for c in active(graph) if (graph[c]["fm"] or {}).get("status") == "verify"]
     if waiting:
-        nxt = f"next: add gate {waiting[0].rsplit('/', 1)[-1][:-3]}"
+        nxt = f"next: {_next_verb(graph, waiting[0], root=root)}"
     elif frontier:
         f0 = frontier[0]
         # Through `_next_verb`, so this hint and `todo`'s arrow cannot disagree — the stamp test
@@ -3556,8 +4522,8 @@ def status(root, all: bool = False, check: bool = False) -> str:
     elif any((n["fm"] or {}).get("type") == "Milestone" for n in graph.values()):
         # A slot only the HUMAN can fill — a slug nobody has chosen — is legitimate guidance; the
         # defect R:PLACEHOLDER_NEXT names is a slot the ENGINE could have filled and did not
-        # (`<test cmd>`, which `run` now remembers). Spelled in full, so what is typed around the
-        # slot is copy-pasteable.
+        # (`<test cmd>`, which `run` now records per Task). Spelled in full, so what is typed
+        # around the human-authored slug slot is copy-pasteable.
         nxt = 'next: add new Task <slug> --title "<one line>"'
     else:
         nxt = 'next: add new Milestone <slug> --title "<one line>"' 
@@ -3568,6 +4534,51 @@ def status(root, all: bool = False, check: bool = False) -> str:
         # printed the same thing: nothing (A4 · M5).
         answered = sum(1 for c in graph if (graph[c]["fm"] or {}).get("status") in ANSWERED)
         out.append(f"  nothing needs you — {answered} answered, {len(hidden)} carrying no state")
+
+    # The current consequence is per OPEN Task. A later non-gate act remains global activity,
+    # but cannot resolve a stopped Task; only a later gate (or reopen) changes that verdict.
+    open_tasks = [c for c, n in graph.items()
+                  if (n["fm"] or {}).get("type") == "Task"
+                  and (n["fm"] or {}).get("status") not in ANSWERED]
+    if open_tasks:
+        stops = [c for c in open_tasks
+                 if str((_effective_gate_stamp(graph[c]["fm"] or {}) or {}).get("outcome"))
+                 == "HARD-STOP"]
+        if stops:
+            now_cid = min(stops, key=lambda c: (rank(c), c))
+        else:
+            # Follow the existing final runnable route when it names an open Task. A milestone
+            # or a human-authored slug slot does not become a made-up current Task.
+            route = re.search(r"\badd [a-z][a-z-]* ([a-z0-9][a-z0-9-]*)\b", nxt)
+            route_cid = f"/tasks/{route.group(1)}.md" if route else ""
+            now_cid = route_cid if route_cid in open_tasks else min(
+                open_tasks, key=lambda c: (rank(c), c))
+        slug = now_cid.rsplit("/", 1)[-1][:-3]
+        beat = _beat_of(graph[now_cid], None, graph)
+        gate_stamp = _effective_gate_stamp(graph[now_cid]["fm"] or {})
+        verdict = str((gate_stamp or {}).get("outcome") or "none")
+        if verdict not in ("PASS", "RISK-ACCEPTED", "HARD-STOP"):
+            verdict = "none"
+        suffix = f" · beat={beat} · last-gate={verdict}"
+        slug_room = max(1, ROW_WIDTH - len("  now: ") - len(suffix))
+        shown_slug = slug if len(slug) <= slug_room else slug[:slug_room - 1] + "…"
+        out.append(f"  now: {shown_slug}{suffix}")
+        if gate_stamp:
+            receipt_cid = str(gate_stamp.get("receipt") or "")
+            same_task_run = re.fullmatch(
+                rf"/tasks/{re.escape(slug)}\.d/runs/(\d+)\.md", receipt_cid)
+            receipt_token = (f"runs/{same_task_run.group(1)}.md"
+                             if same_task_run else "unrecorded")
+            fragment = ("FINDINGS" if gate_stamp.get("kind") == "sources"
+                        and not receipt_cid else "verified")
+            ref = f"/tasks/{slug}.md#{fragment}"
+            lead = f"  evidence: receipt={receipt_token} · ref="
+            if len(lead + ref) > ROW_WIDTH:
+                room = max(1, ROW_WIDTH - len(lead))
+                end = f"#{fragment}"
+                ref = (ref[:room - len(end) - 1] + "…" + end
+                       if room > len(end) + 1 else end[:room])
+            out.append(lead + ref)
     return "\n".join(out + [nxt])
 
 
@@ -3621,6 +4632,72 @@ def _git_blobs(root, rels: list) -> dict:
     return dict(zip(rels, lines)) if len(lines) == len(rels) else {}
 
 
+def _scope_files(root, entry) -> list:
+    """The files ONE `scope:` entry names, as absolute paths — the single reading of what an entry
+    covers (M2).
+
+    Lifted out of `scope_digest` so the freshness set and every other question about an entry give
+    the SAME answer. A glob is read with `Path.glob`, where `*` does NOT cross a `/`; `fnmatch`'s
+    `*` does, and reading an entry that way let one unfrozen node created by anyone —
+    `add new Task junk --scope '**'`, exit 0, no freeze, no human — stand the sensitive floor down
+    for every path in the bundle, while that node's own freshness set was EMPTY. A node that holds
+    no files has routed nothing.
+    """
+    root, entry = Path(root), str(entry)
+    if not entry:
+        return []
+    try:
+        candidates = _scope_candidates(root, entry)
+    except (NotImplementedError, ValueError, OSError):
+        # An entry no walker can resolve — `/etc/*` is a NotImplementedError from `Path.glob`,
+        # `/etc/hosts` a ValueError from `relative_to` — names no file HERE, and that is the whole
+        # answer. It must not raise: `learn` now reads EVERY node's scope, so one node anyone can
+        # write turned the direct lane's one bundle write into a traceback instead of a refusal
+        # (R:LANEBLOCKED), and `gate` reads them too.
+        return []
+    out = []
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            rel = path.relative_to(root)
+        except ValueError:
+            continue          # resolved outside the root — no entry of this bundle names it
+        # Build noise is not the code under review — hashing it would make the digest flap.
+        if "__pycache__" in rel.parts or path.suffix in (".pyc", ".pyo"):
+            continue
+        out.append(path)
+    return out
+
+
+def _scope_candidates(root, entry: str) -> list:
+    """The raw paths one entry expands to, before the file/noise filter."""
+    if any(c in entry for c in "*?["):
+        candidates = sorted(root.glob(entry))
+    else:
+        p = root / entry
+        # A directory scope entry expands to the files beneath it — otherwise a dir-scoped task
+        # gets an empty digest and `gate` cannot establish freshness (field-report finding #6).
+        # Enumerated THROUGH git (tracked + untracked-not-ignored), never a raw walk: the
+        # project's own .gitignore defines its build noise, so `.next/`, `node_modules/` and
+        # friends stay out — a rebuild must not stale a receipt no source edit touched, and
+        # walking a dependency tree must not price the notary (field receipt: a dir scope
+        # digested a whole turbopack cache). A glob or an explicitly named file is a
+        # deliberate declaration and keeps its exact reading.
+        if p.is_dir():
+            listed = _git(root, "ls-files", "-z", "--cached", "--others",
+                          "--exclude-standard", "--", entry)
+            candidates = [root / f for f in sorted((listed or "").split("\0")) if f]
+        else:
+            candidates = [p]
+    return candidates
+
+
+def _scope_holds(root, entry, path) -> bool:
+    """Does `entry` cover `path`? The one question, asked of the one reader."""
+    return any(f.relative_to(Path(root)).as_posix() == str(path) for f in _scope_files(root, entry))
+
+
 def scope_digest(root, scope: list) -> list:
     """`[{path, blob}]` — git blob hashes over the freshness set (FORMAT §8.1, A22).
 
@@ -3632,38 +4709,165 @@ def scope_digest(root, scope: list) -> list:
         return []
     out, rels = [], []
     for entry in sorted(str(s) for s in (scope or [])):
-        if any(c in entry for c in "*?["):
-            candidates = sorted(root.glob(entry))
-        else:
-            p = root / entry
-            # A directory scope entry expands to the files beneath it — otherwise a dir-scoped task
-            # gets an empty digest and `gate` cannot establish freshness (field-report finding #6).
-            # Enumerated THROUGH git (tracked + untracked-not-ignored), never a raw walk: the
-            # project's own .gitignore defines its build noise, so `.next/`, `node_modules/` and
-            # friends stay out — a rebuild must not stale a receipt no source edit touched, and
-            # walking a dependency tree must not price the notary (field receipt: a dir scope
-            # digested a whole turbopack cache). A glob or an explicitly named file is a
-            # deliberate declaration and keeps its exact reading.
-            if p.is_dir():
-                listed = _git(root, "ls-files", "-z", "--cached", "--others",
-                              "--exclude-standard", "--", entry)
-                candidates = [root / f for f in sorted((listed or "").split("\0")) if f]
-            else:
-                candidates = [p]
-        for path in candidates:
-            if not path.is_file():
-                continue
-            rel = path.relative_to(root)
-            # Build noise is not the code under review — hashing it would make the digest flap.
-            if "__pycache__" in rel.parts or path.suffix in (".pyc", ".pyo"):
-                continue
-            rels.append(rel)
+        rels.extend(f.relative_to(root) for f in _scope_files(root, entry))
     hashes = _git_blobs(root, [str(r) for r in rels])
     for rel in rels:
         blob = hashes.get(str(rel)) or _git(root, "hash-object", str(rel))
         if blob:
             out.append({"path": rel.as_posix(), "blob": f"sha1:{blob}"})
     return out
+
+
+def _tree_blobs(root, tree: str, paths: list) -> dict:
+    """`{path: blob}` a git tree-ish holds at each path — ONE read-only `ls-tree`, relative to `root`."""
+    listed = _git(root, "ls-tree", "-r", "-z", tree, "--", *[str(p) for p in paths], strip=False)
+    held = {}
+    for rec in (listed or "").split("\0"):
+        if "\t" in rec:
+            meta, path = rec.split("\t", 1)
+            held[path] = meta.split()[2]
+    return held
+
+
+def _committed_to_head(root, digest: list) -> bool:
+    """True iff every `{path, blob}` in `digest` is the blob HEAD's tree holds at that path.
+
+    One `ls-tree` over the digest's paths, output relative to `root` exactly as the digest is.
+    A path HEAD does not hold (untracked, or added since) is a difference, so it answers False.
+    """
+    held = _tree_blobs(root, "HEAD", [d["path"] for d in digest])
+    return all(held.get(str(d["path"])) == str(d["blob"]).replace("sha1:", "", 1) for d in digest)
+
+
+def _tag_tree(root, tag: str):
+    """The tree sha a tag (any tree-ish) resolves to, or None — `rev-parse`, read-only."""
+    sha = _git(root, "rev-parse", "--verify", "-q", f"{tag}^{{tree}}")
+    return sha if sha and re.fullmatch(r"[0-9a-f]{40,64}", sha) else None
+
+
+def _anchor(root, graph: dict, mcid: str, tree: str) -> tuple:
+    """`(ok, detail, receipts, skipped, not_done)` — does `tree` hold every scope blob the milestone's done
+    members' gated receipts recorded? (release-stamp, FORMAT §8.6)
+
+    Members are the Tasks whose `milestone:` names this slug, in cid order; the anchor is the
+    receipt each done member's NEWEST `act: gate` stamp cites — the one the verdict read, never
+    the latest run, which may postdate the verdict red or wider (found by the T2 refute, E7), and
+    never a floor receipt (the gate never cites one, A2). A done member whose gated receipt
+    carries no content digest, or whose cited receipt is gone, cannot be anchored and refuses by
+    name; a member with no gate stamp citing a receipt (an explore, a hand-marked done) is
+    skipped by name. The first mismatch refuses, naming the task, the path and both blobs.
+    """
+    repo = Path(root).parent
+    slug = mcid.rsplit("/", 1)[-1][:-3]
+    members = sorted(c for c, n in graph.items()
+                     if (n["fm"] or {}).get("type") == "Task"
+                     and str((n["fm"] or {}).get("milestone") or "").strip() == slug)
+    receipts, skipped = [], []
+    not_done = [f"{c} ({(graph[c]['fm'] or {}).get('status') or '—'})" for c in members
+                if (graph[c]["fm"] or {}).get("status") != "done"]
+    for cid in members:
+        if (graph[cid]["fm"] or {}).get("status") != "done":
+            continue
+        # The newest CLOSING gate — the verdict `done` reads — and only one that POSTDATES the
+        # member's last `act: reopen`: a reopen resets the gate, so a verdict before it anchors
+        # nothing (second and third T2 refutes, E9, E12). A HARD-STOP after the close cites a
+        # finding's receipt, not a verdict's, and entitles nothing.
+        rcid = None
+        for st in reversed((graph[cid]["fm"] or {}).get("verified") or []):
+            if not isinstance(st, dict):
+                continue
+            if st.get("act") == "reopen":
+                break
+            if st.get("act") == "gate" and st.get("receipt") and str(st.get("outcome") or "PASS") in CLOSING_VERDICTS:
+                rcid = str(st.get("receipt"))
+                break
+        if rcid is None:
+            skipped.append(cid.rsplit("/", 1)[-1][:-3])
+            continue
+        # A cited receipt must be the member's OWN — under `<slug>.d/runs/` — so a hand-edited
+        # stamp can neither borrow another task's digest nor read outside the bundle.
+        own = f"/tasks/{cid.rsplit('/', 1)[-1][:-3]}.d/runs/"
+        if not rcid.startswith(own) or "/../" in rcid or not re.fullmatch(r"\d+\.md", rcid[len(own):]):
+            return False, f"{cid} is unanchorable — its gate cites {rcid}, not a receipt of its own ({own}<n>.md)", [], [], []
+        rpath = root / rcid.lstrip("/")
+        receipt = (read(rpath, "T0")["fm"] or {}).get("receipt") if rpath.is_file() else None
+        if not isinstance(receipt, dict):
+            return False, f"{cid} is unanchorable — the receipt its gate cites, {rcid}, is gone", [], [], []
+        digest = receipt.get("scope_digest") or []
+        if not digest or not all(isinstance(d, dict) and d.get("path") and d.get("blob") for d in digest):
+            return False, f"{cid} is unanchorable — its receipt {rcid} carries no content digest", [], [], []
+        held = _tree_blobs(repo, tree, [d["path"] for d in digest])
+        for d in digest:
+            want = str(d["blob"]).replace("sha1:", "", 1)
+            got = held.get(str(d["path"]))
+            if got != want:
+                return (False, f"{cid} verified {d['path']} at {want}, the tag's tree holds "
+                               f"{got or 'nothing at that path'}", [], [], [])
+        receipts.append(rcid)
+    # A tree and no receipts is a label, not an anchor (A6, E10): name what kept it empty.
+    if not receipts:
+        why = (f"no member anchors — not done: {', '.join(not_done)}" if not_done else
+               "no member anchors — the milestone has no member Task with a closing gate" if members else
+               "no member anchors — the milestone has no member Task")
+        return False, why, [], [], []
+    return True, "", receipts, skipped, not_done
+
+
+def release(root, tag: str, milestones: list, by: str, artifact: str = None, build: str = None) -> tuple:
+    """`add release <tag> --milestone m …` — bind a tag's tree to the receipts that verified it.
+
+    Appends `{ act: release, tag, tree, receipts }` to each named DONE milestone after proving,
+    with READ-ONLY git (`rev-parse`, `ls-tree` — never `tag`, `push`, `publish`: R:OUTWARD), that
+    the tag's tree holds every scope blob the members' gated receipts recorded (R:UNANCHORED
+    otherwise). `--artifact` and `--build` are recorded verbatim when handed and never verified
+    (R:PROVENANCEJUDGED): provenance is the pipeline's to produce and consume. `(stamps, note)`.
+    """
+    root = Path(root)
+    graph = scan(root)
+
+    def refuse(why: str, fix: str) -> tuple:
+        return None, f"cannot release `{tag}` — {why}\nnext: {fix}"
+
+    tree = _tag_tree(root.parent, tag)
+    if not tree:
+        return refuse(f'git resolves no tree for `{tag}` -> "R:NOSUCHTAG"',
+                      "git tag -l — the tag is the human's to cut; release records one that exists")
+    targets = []
+    for m in milestones:
+        mcid = m if m.startswith("/") else f"/milestones/{m}.md"
+        node = graph.get(mcid)
+        if node is None:
+            return refuse(f"no such milestone: {m}", "add status --all")
+        fm = node["fm"] or {}
+        if fm.get("type") != "Milestone":
+            return refuse(f"{mcid} is not a Milestone", "add release <tag> --milestone <milestone>")
+        if fm.get("status") not in ("done", "archived"):
+            return refuse(f'{mcid} is `{fm.get("status") or "—"}`, not done -> "R:NOTDONE"',
+                          f"add milestone-done {m.rsplit('/', 1)[-1].removesuffix('.md')}, then add release {tag}")
+        ok, detail, receipts, skipped, not_done = _anchor(root, graph, mcid, tree)
+        if not ok:
+            return refuse(f'{detail} -> "R:UNANCHORED"',
+                          "cut the tag on the tree the receipts observed, or re-run and re-gate the task on this tree")
+        targets.append((mcid, receipts, skipped, not_done))
+    stamps = []
+    for mcid, receipts, skipped, not_done in targets:
+        extra = "".join([f', artifact: "{_oneline(artifact)}"' if artifact else "",
+                         f', build: "{_oneline(build)}"' if build else ""])
+        stamp = (f'{{ by: "{_oneline(by)}", at: {_today()}, act: release, authority: process, '
+                 f'tag: "{_oneline(tag)}", tree: {tree}, receipts: "{",".join(receipts)}"{extra} }}')
+        _, err = _transition(root, mcid, appends=[("verified", stamp)])
+        if err:
+            return None, err + "\nnext: add status"
+        stamps.append((mcid, receipts, skipped, not_done))
+    lines = []
+    for mcid, receipts, skipped, not_done in stamps:
+        slug = mcid.rsplit("/", 1)[-1][:-3]
+        # The note is what did NOT anchor; the stamp is what did (third T2 refute, E11).
+        lines.append(f"release recorded on {slug}: {tag} → tree {tree[:12]} · anchored by "
+                     f"{len(receipts)} receipt{'' if len(receipts) == 1 else 's'}"
+                     + (f" · skipped (no receipt): {', '.join(skipped)}" if skipped else "")
+                     + (f" · not anchored (not done): {', '.join(not_done)}" if not_done else ""))
+    return stamps, "\n".join(lines) + "\nnext: add status --all"
 
 
 def fresh(receipt: dict, root) -> tuple:
@@ -3725,7 +4929,8 @@ def _sniff_report(command: list):
     return found or None
 
 
-def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, junit=None) -> dict:
+def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, junit=None,
+        floor: bool = False) -> dict:
     """Execute the agent's own command, notarise the result as a Run node.
 
     Never executes anything the caller did not supply. A non-zero exit and a timeout are
@@ -3742,6 +4947,12 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
         return {"path": None, "receipt": {"exit": 1, "ids": "unknown"}, "computation": "",
                 "note": f"no such node: {cid} — no receipt written\nnext: add status"}
     node = graph[cid]
+    if _old_seal(node.get("fm") or {}):
+        slug = cid.rsplit("/", 1)[-1][:-3]
+        return {"path": None, "receipt": {"exit": 1, "ids": "old-seal"}, "computation": "",
+                "note": (f"R:OLDSEAL `{slug}` returned to Direction; the prior freeze cannot "
+                         f"authorize execution and no receipt was written\nnext: revise the "
+                         f"direction, then add freeze {slug}")}
     scope = _scope_list(node.get("fm"))
     # The digest root is the BUNDLE PARENT — the identical root `gate` hands `fresh()` — never
     # the cwd. Field finding (hardening tally #1): a cwd below the project computed the digest
@@ -3749,6 +4960,16 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # gate refused a PASS with a message naming neither the cause nor the fix. `cwd` stays what
     # it says: the command's working directory, nothing more.
     digest = scope_digest(root.parent, scope)
+    # The anchor (receipt-anchored-to-head): HEAD at run START, before the command can move it,
+    # and whether every scope blob is the blob HEAD holds at that path. Read from git as observed
+    # — never derived from `git status` (R:COMMITTEDBYCLAIM: dirt outside scope is not this
+    # receipt's business) and never written when `rev-parse HEAD` did not answer (R:INVENTEDHEAD:
+    # an unborn branch has a git dir and no commit). Absent is UNKNOWN to every reader, and
+    # `committed` is written only over a non-empty digest — agreement over nothing is the
+    # vacuous-check shape.
+    in_git = _git(root.parent, "rev-parse", "--git-dir") is not None
+    head = _git(root.parent, "rev-parse", "HEAD") if in_git else None
+    committed = _committed_to_head(root.parent, digest) if (head and digest) else None
 
     # A2/A3: the flag is an OVERRIDE, so it is consulted first and a sniffed value can never
     # beat a stated one — a runner may write its report where the command line never names it.
@@ -3788,6 +5009,9 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
         degrade = ("scope: declared but no digest recorded — the bundle parent is not a git "
                    "working tree, or the scope paths do not exist there; freshness degrades to mtime")
         note = f"{note}; {degrade}" if note else degrade
+    if scope and in_git and head is None:
+        unborn = "head: the tree has no commit yet — no head recorded, committed unknown"
+        note = f"{note}; {unborn}" if note else unborn
 
     slug = cid.rsplit("/", 1)[-1][:-3]
     runs = root / f"tasks/{slug}.d/runs"
@@ -3820,11 +5044,16 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
                "ids": f"{sum(v == 'pass' for v in ids.values())}/{len(ids)} reported" if ids else "unknown",
                "exit": exit_code,
                "freshness": "content" if digest else "mtime", "at": _today(),
+               **({"floor": "regression"} if floor else {}),
+               **({"head": head} if head else {}),
+               **({"committed": committed} if committed is not None else {}),
                "stdout": stdout.strip().splitlines()[-1] if stdout.strip() else "",
                "note": note}
     body = (f"---\ntype: Run\nruntime: process\ntask: {cid}\n"
             f'computation: "{" ".join(str(c) for c in command)}"\n'
-            f"receipt:\n" + "".join(f"  {k}: {v!r}\n" if k in ("stdout", "note") else f"  {k}: {v}\n"
+            f"receipt:\n" + "".join(f"  {k}: {v!r}\n" if k in ("stdout", "note")
+                                    else f"  {k}: {str(v).lower()}\n" if k == "committed"
+                                    else f"  {k}: {v}\n"
                                     for k, v in receipt.items()) +
             ("  passed:\n" + "".join(f"    - {i}\n" for i in passed) if passed else "") +
             ("  failed:\n" + "".join(f"    - {i}\n" for i in failed) if failed else "") +
@@ -3838,13 +5067,17 @@ def run(root, cid: str, command: list, cwd=None, timeout: int = RUN_TIMEOUT, jun
     # F3: bind the receipt to the task. A receipt no stamp points at is unreachable evidence.
     _transition(root, cid, appends=[("verified",
         f'{{ by: "process:run", at: {_today()}, act: run, authority: process, '
+        f'{"floor: regression, " if floor else ""}'
         f'outcome: {"PASS" if exit_code == 0 else "FAIL"}, receipt: {cid_run} }}')])
     # REMEMBER the command. A notary cannot know a project's test command, but it is handed one
     # on every run — so the build hint stops being `<test cmd>` after the first receipt and starts
     # replaying what actually worked here. Recorded, never guessed; a failing run is still the
     # command this project uses, so the exit code does not gate the memory.
+    # A FLOOR run is not the project's narrow test command: remembering it made the next build
+    # hint replay the full suite as the narrow receipt (found by the T2 refute of regression-floor,
+    # R:FLOORASGATE, E8). The narrow command is the one worth replaying; the floor's lives in PLAN.
     index = root / "index.md"
-    if index.is_file():
+    if index.is_file() and not floor:
         try:
             n_idx = read(index, "T2")
             write(index, f"---\n{set_key(n_idx['raw'], 'test_cmd', ' '.join(str(c) for c in command))}"
@@ -3977,18 +5210,80 @@ class Delta(tuple):
                 f"valid_to={self.valid_to!r})")
 
 
+def joined_deltas(body) -> dict:
+    """`{index of a delta's head line: the whole delta's text}` — the grammar's own unit.
+
+    deltas.md: "a long learning may wrap onto continuation lines — they join into ONE delta".
+    Every reader was per-physical-line, so a wrapped tail carried a prevention the fold rung could
+    not see (sixth T2 refute, E17) and the lister called the grammar's own wrap malformed while
+    the counter counted it (seventh T2 refute, E19). One unit, one answer. Takes a body or its
+    lines; the keys are indices into those lines, so a caller can retag the head it matched.
+    """
+    lines = live_lines(body)
+    return {head: " ".join(str(lines[i]).strip() for i in idx)
+            for head, idx in delta_spans(lines).items()}
+
+
+def delta_spans(body) -> dict:
+    """`{index of a delta's head line: the indices of EVERY line the grammar joins into it}` — the
+    ONE reader of which lines belong to a delta.
+
+    `joined_deltas` answers what a delta SAYS; this answers which lines it HOLDS, and a second
+    walk would be a second reader of one fact. The membership is what `orphan_tail` needs (E47).
+    """
+    lines = live_lines(body)
+    out, head = {}, None
+    for i, line in enumerate(lines):
+        stripped = str(line).strip()
+        if DELTA_LINE.match(stripped):
+            head, out[i] = i, [i]
+        # ANY whitespace indents a continuation — an NBSP-indented tail once dropped out of the
+        # unit entirely and the escape folded at exit 0 (tenth T2 refute's sibling, E23).
+        elif head is not None and stripped and str(line)[:1].isspace():
+            out[head].append(i)
+        else:
+            head = None
+    return out
+
+
+def orphan_tail(body) -> str:
+    """The first line that carries an escape's TAIL but belongs to no delta, or `""`.
+
+    A9: a line-boundary character is whitespace AND a split, so indenting a continuation with one
+    severs the tail from its head — the head stops being an escape, and it folds at exit 0 beside
+    a dangling prevention while `deltas` still prints the tail. No reader can rejoin what the text
+    itself splits, so the refusing reading wins (M2): a tail that belongs to no delta is a
+    MALFORMED delta, not prose (thirty-third T2 refute, E47).
+    """
+    lines = live_lines(body)
+    # The WRITER's own answer to where the deltas are (`heading_index`), so the reader that refuses
+    # and the writer that appends never disagree about the span (E38). Outside it, a tail clause is
+    # prose a spec is entitled to write about itself (A10).
+    start = heading_index(lines, "deltas")
+    if start < 0:
+        return ""
+    end = next((j for j, (_, level, _) in enumerate(_headings(lines))
+                if j > start and level == 2), len(lines))
+    held = {i for idx in delta_spans(lines).values() for i in idx}
+    for i in range(start + 1, end):
+        text = str(lines[i]).strip()
+        if i not in held and TAIL_MARK.search(mask_spans(text)):
+            return text
+    return ""
+
+
 def open_delta_count(body: str) -> int:
     """How many deltas in a spec body are still OPEN. The ONE oracle behind the counter.
 
-    Reads through `parse_delta_head` like every other consumer, and applies the SAME predicate
-    `fold` applies when it decides what to retag — so the number `status` reports and the set
-    `fold` acts on can never disagree by construction. A malformed head (`code` set) is not
-    counted: it is a `doctor` finding of its own, and counting it would put an unreadable line
-    into a total a human is asked to drain.
+    Reads through `parse_delta_head` like every other consumer, over the same joined unit, and
+    applies the SAME predicate `fold` applies when it decides what to retag — so the number
+    `status` reports and the set `fold` acts on can never disagree by construction. A malformed
+    head (`code` set) is not counted: it is a `doctor` finding of its own, and counting it would
+    put an unreadable line into a total a human is asked to drain.
     """
     n = 0
-    for line in body.splitlines():
-        m = DELTA_LINE.match(line.strip())
+    for text in joined_deltas(body).values():
+        m = DELTA_LINE.match(text)
         if m:
             rec = parse_delta_head(m.group(1))
             if rec["code"] is None and rec["status"] == "open":
@@ -4019,7 +5314,7 @@ def _delta_letter(lens: str) -> str:
 def _delta_ids_in(lines) -> list:
     """Every id already spelled in these body lines — the floor no mint may land on."""
     out = []
-    for raw in lines:
+    for raw in live_lines(lines):
         m = DELTA_LINE.match(str(raw).strip())
         if m:
             did = parse_delta_head(m.group(1))["id"]
@@ -4047,7 +5342,491 @@ def _delta_high_water(raw_fm: str, lines) -> int:
     return high
 
 
-def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
+PREVENTION_KINDS = ("check", "monitor", "method", "rule")
+# Kind-agnostic on purpose: a malformed kind, arrow or ref is READ and refused, never skipped
+# (third T2 refute, E13 — a kind-anchored reader let `alert → …` degrade to "no prevention").
+# The LABEL is read case-insensitively — `· Prevention:` is a malformed clause, not an absent
+# one (E13 one level up) — while the KIND stays case-sensitive, as E13 binds it.
+PREVENTION_TAIL = re.compile(r"·\s*prevention\s*:\s*([^·\n]*?)\s*(?=·|$)", re.M | re.I)
+
+
+CODE_SPAN = re.compile(r"`[^`\n]*`")
+# A marker is a marker however it is punctuated: `· escape:` once degraded to not-an-escape
+# and folded beside a dangling prevention — E13's defect one level up (ninth T2 refute, E21).
+# And however it is CASED: `re.I` here and nowhere else made `· Escape` not-an-escape while the
+# clause one level down read `· Prevention:` as malformed, so one byte folded a dangling escape
+# and bound a decision at exit 0 (thirty-third T2 refute, E47). Every site that asks "is this a
+# marker" — the reader, `learn`'s value guard, `--bind`'s — asks THIS object, or the tail-forgery
+# guards go one way and the rung the other (E14, A8).
+ESCAPE_MARK = re.compile(r"·\s*escape\b", re.I)
+
+# An escape's TAIL: what a delta's continuation CARRIES, wherever in the line it falls. Anchoring
+# this at `^` enumerated the shape the read that named it produced — a wrap immediately before
+# `· escape` — so wrapping one word earlier, the shape E17 blesses, left the orphan starting with
+# a word and the head folded at exit 0 (thirty-fourth T2 refute, E48). Read inside `## Deltas` and
+# nowhere else (A10), so prose that MENTIONS a clause blocks no fold.
+TAIL_MARK = re.compile(r"·\s*(?:escape\b|prevention\s*:|why-missed\s*:)", re.I)
+
+
+def balance_spans(value: str) -> str:
+    """`value` with an unpaired backtick closed, so its code spans can never pair with a NEIGHBOUR's.
+
+    `learn` interpolates several values into one delta and masks each ALONE; the reader masks the
+    whole line. One stray backtick in the lesson and one in the why-missed therefore paired across
+    the boundary in the reader's view and swallowed the engine's own `· escape` marker — the tail
+    was written, printed by `deltas`, and invisible to the rung (eighth T2 refute, E20). Balanced
+    values make the two views the same view, the way E15 makes every value one physical line.
+    """
+    value = str(value)
+    return value + "`" if value.count("`") % 2 else value
+
+
+def mask_spans(text) -> str:
+    """`text` with the INSIDE of every backticked span replaced character-for-character by `x`.
+
+    Length-preserving, so an offset into the mask is an offset into the original. Quoting the
+    grammar in a code span is how prose writes ABOUT it, and the writer and the reader must agree
+    on that or one refuses what the other blessed (seventh T2 refute, E18).
+    """
+    return CODE_SPAN.sub(lambda m: "`" + "x" * (len(m.group(0)) - 2) + "`", str(text or ""))
+
+
+def _prevention_of(text: str):
+    """The prevention clauses of an ESCAPE's tail — the text from the `· escape` marker on — as a
+    list of `(kind, ref, ok)`; None when the delta is not an escape.
+
+    Anchored on the MARKER, never on an evidence clause, and read through ONE view of the text: `learn` writes `· escape` and refuses it
+    inside the lesson and inside the evidence, so in a delta the engine wrote it appears once and
+    is the engine's own. Keying on the LAST `(evidence:` let a continuation line open a second
+    evidence channel and push the tail out of view (seventh T2 refute, E18). A plain lesson
+    quoting the grammar is never an escape (E9); an escape with no clause at all returns
+    `[("", "", False)]`, because a missing prevention is not "no prevention" (E13).
+    """
+    raw = str(text or "")
+    # An odd backtick count says the spans do not pair as written — a hand edit the writer never
+    # balanced. The RAW view is then the one that REFUSES, and it decides every clause, not only
+    # the marker: a stray backtick AFTER the marker masked one clause of several and the delta
+    # folded beside a dangling ref (twelfth T2 refute, E25). `learn` balances what it writes, so
+    # an even count is the author's own pairing and a clause inside a closed span is prose (E18).
+    view = raw if raw.count("`") % 2 else mask_spans(raw)
+    if ESCAPE_MARK.search(view) is None:
+        return None
+    # The marker GATES the read; it does not bound it. Scanning from `mark.start()` made the
+    # clause's POSITION decide whether it counts, so one written before the marker — which
+    # `--evidence` could put there — was folded past unread, and a resolving one written before it
+    # was reported absent (ninth T2 refute, E21). A5: the reader looks for `prevention:` anywhere
+    # in the delta, never at a position; M2: every clause it finds must resolve.
+    out = []
+    for hit in PREVENTION_TAIL.finditer(view):
+        clause = raw[hit.start(1):hit.end(1)].strip()
+        m = re.match(r"(check|monitor|method|rule)\s*(?:→|->)\s*(\S.*)$", clause)
+        # A label with nothing after it is a clause the author WROTE: reporting it as no
+        # clause at all names the wrong thing to fix (thirteenth T2 refute, E26).
+        out.append((m.group(1), m.group(2).strip(), True) if m
+                   else (clause or "<nothing after the label>", "", False))
+    return out or [("", "", False)]
+
+
+AUTHORED_SECTIONS = ("RULES", "ASSUMPTIONS", "EDGES", "CHECKS", "OBSERVES", "FINDINGS", "PLAN")
+
+FENCE_RUN = re.compile(r"(`{3,}|~{3,})(.*)$")
+LIST_MARKER = re.compile(r"(?:[-*+]|\d{1,9}[.)])\s+")
+
+
+def _block_at(line: str) -> tuple:
+    """`(quote depth, indent in COLUMNS, the text, carried by a list marker)` — the container a
+    markdown line sits in.
+
+    A fence is a BLOCK, not a line shape: its closer must sit in the same container, and its own
+    content may quote a run without ending it. Matching shapes let an indented run close a fence
+    early and left a blockquoted fence open forever (fifteenth T2 refute, E28); measuring indent in
+    characters, and reading a list marker as mere indentation, let the fence's own content close it
+    (seventeenth T2 refute, E31). A tab is four columns, as every markdown reader counts it.
+    """
+    i, depth = 0, 0
+    while i < len(line):
+        j = i
+        while j < len(line) and line[j] in " \t":
+            j += 1
+        if j < len(line) and line[j] == ">":
+            depth, i = depth + 1, j + 1 + (1 if line[j + 1:j + 2] == " " else 0)
+            continue
+        break
+    rest, indent, listed = line[i:], 0, False
+    while True:
+        while rest[:1] in (" ", "\t"):
+            indent, rest = (indent + 4 - indent % 4 if rest[0] == "\t" else indent + 1), rest[1:]
+        m = LIST_MARKER.match(rest)
+        if not m:
+            return depth, indent, rest, listed
+        indent, rest, listed = indent + m.end(), rest[m.end():], True
+
+
+# `##` then whitespace or nothing — a heading that NAMES nothing still ends the section it
+# follows, and a bare `## ` matching no branch let the walker inherit the previous section's
+# authoring state (twenty-first T2 refute, E35). `###` is a sub-heading and opens nothing.
+HEADING_LINE = re.compile(r"(#{1,6})(?:[ \t]+(.*?))?\s*$")
+
+
+def _headings(body: str):
+    """`(line, heading level, heading text)` for every line — the ONE reader of what an ATX heading
+    IS: fence-masked, at document level, within three columns, level 0 when the line is not one.
+
+    Both the authoring walker and `_section` read through here. Each deciding for itself was the
+    *two readers of one fact* shape: `_section` saw a heading inside a fenced example and opened a
+    section for a prevention to bind, where the authoring walker refused the very same fence
+    (twenty-second T2 refute, E36).
+    """
+    # A LIST is walked as the caller split it: rebuilding it with `"\n".join(rstrip("\n"))` lost
+    # every other line boundary Python knows (\x0b \x0c \x1c \x1d \x1e \x85 \u2028 \u2029), so one such
+    # character re-split a line, every index the walkers hand back shifted by one, and `learn`
+    # spliced a head between a wrapped escape and its continuation (thirty-second T2 refute, E46).
+    lines = (str(body or "").splitlines() if isinstance(body, str)
+             else [(str(line).splitlines() or [""])[0] for line in body])
+    fence = None
+    for line in lines:
+        depth, indent, rest, listed = _block_at(line)
+        run = FENCE_RUN.match(rest)
+        # A fence lives inside the block that opened it: when the blockquote carrying it ends, so
+        # does the fence — no closer needed, and the rules after it are authored again (E29).
+        if fence and depth < fence[0]:
+            fence = None
+        if fence:
+            # The closer: the same container — a line that opens a list item opens a BLOCK and
+            # closes nothing — the same character, at least as long, alone on its line, and
+            # indented no more than three columns past its opener. Anything else is content.
+            if (run and depth == fence[0] and not listed and indent <= fence[1] + 3
+                    and run.group(1)[0] == fence[2][0] and len(run.group(1)) >= len(fence[2])
+                    and not run.group(2).strip()):
+                fence = None
+            yield line, -1, None
+            continue
+        if run and not (run.group(1)[0] == "`" and "`" in run.group(2)):
+            fence = (depth, indent, run.group(1))
+            yield line, -1, None
+            continue
+        # An ATX heading opens a section only at DOCUMENT level, at up to three columns of indent.
+        # One inside a blockquote or a list item is QUOTED: it opened the authoring section back
+        # up, and an id under `## LESSONS` folded an escape and bound a decision (E29).
+        head = HEADING_LINE.match(rest) if not (depth or listed) and indent <= 3 else None
+        yield (line, len(head.group(1)), (head.group(2) or "").strip()) if head else (line, 0, None)
+
+
+def live_lines(body) -> list:
+    """The node's lines with every FENCED line blanked — the ONE view of what text a node LIVES.
+
+    A fence quotes; it never authors. `_authored_rules` held that for rule ids, but `resolve`'s
+    THIRD fragment form read the raw body, so the same fence that refused a quoted `- E9` handed
+    over the quoted delta id beside it and the escape folded and bound a decision — and `deltas`
+    listed that example as a real open delta for a human to drain (twenty-third T2 refute, E37).
+    Takes a body or its lines and returns one line per input line, so an index still addresses the
+    caller's own line.
+    """
+    return ["" if level < 0 else line for line, level, _ in _headings(body)]
+
+
+def unreadable_spec(node) -> str:
+    """Why a writer cannot land a line in this spec, or None — the ONE reader of that question.
+
+    Three writers learned it one at a time: `learn` (E41), `fold --bind` (E42) and the merge, which
+    carries an escape BETWEEN bundles and had no guard at all — it filed a stream's refused escape
+    under a fence that never closes at exit 0, where no reader could see it (twenty-ninth T2
+    refute, E43). Asked BEFORE the write, because a join that refuses after copying a node is the
+    partial merge R:PHANTOMSTREAM forbids.
+    """
+    if node["raw"] is None:
+        return "it has no frontmatter the engine can read (a byte-order mark before the `---` hides it)"
+    # A fence still open at EOF blinds every reader past it. The sentinel is a line that can open
+    # no fence and name no heading, so it comes back masked only when one is still open.
+    if live_lines(str(node["body"]).rstrip("\n") + "\n·")[-1] == "":
+        return "a fence in it never closes, and that blinds every reader past it"
+    return None
+
+
+def heading_index(lines, slug: str) -> int:
+    """The index of the line that OPENS the `## <slug>` section, or -1 — the ONE way a WRITER finds
+    where to write.
+
+    E37 taught every reader to blank a fence and left the writers scanning raw lines, so `learn`
+    wrote a new delta INSIDE a fenced example of the grammar: filed at exit 0 and thereafter
+    invisible to `deltas`, `search`, `status` and `fold`, which is worse than folding unprevented
+    — nobody is ever asked to drain it (twenty-fourth T2 refute, E38). A writer and a reader that
+    disagree about where a section starts is the same *two readers of one fact* shape as ever.
+    """
+    for i, (_, level, name) in enumerate(_headings(lines)):
+        if level == 2 and "-".join(re.findall(r"[a-z0-9]+", (name or "").lower())) == slug:
+            return i
+    return -1
+
+
+def _authored_rules(body: str) -> str:
+    """The sections of a node where a rule is AUTHORED, fenced blocks blanked, headings canonical.
+
+    A prevention resolves to "a RULES/EDGES id whose line is AUTHORED" (M2), and an id merely
+    SPELLED under `## LESSONS` — an engine-written view — or quoted inside a fence is neither: it
+    named nothing anyone could fail on (tenth T2 refute's sibling, E23). The gate's own `rules_of`
+    and `edges_of` read through here too, so "is this id authored" has ONE reader (E30) — and the
+    heading it keeps is re-emitted at column zero, so `_section_of` slices what THIS walker
+    recognised instead of deciding again for itself (seventeenth T2 refute, E31).
+    """
+    out, keep = [], False
+    for line, level, name in _headings(body):
+        # `##` alone opens or ends an authoring section: `###` is a sub-heading and `#` a title,
+        # and both are CONTENT of the section they sit in (twenty-first T2 refute, E35). A fenced
+        # line arrives here as level 0 with nothing kept — the walker already blanked its meaning.
+        if level == 2:
+            # A heading that names nothing authors nothing — and never raises: `add fold` must
+            # exit a refusal or a record, never a traceback (E24).
+            named = (name or "").strip(":;.,").split()
+            keep = bool(named) and named[0].upper() in AUTHORED_SECTIONS
+            # CANONICAL, not verbatim: `_section_of` matches a heading exactly, so re-emitting
+            # `## RULES (frozen)` left `rules_of` and the gate seeing no Musts at all while the
+            # fold rung resolved ids under it — the same heading, two readers (E31, E41).
+            out.append(f"## {named[0].upper()}" if keep else "")
+            continue
+        out.append(line if (keep and level == 0) else "")
+    return "\n".join(out)
+
+
+def _prevention_resolves(root, ref: str) -> bool:
+    """Does a prevention ref name something the bundle or the repo holds? A bundle address (a node,
+    a frontmatter key, a heading, a delta id, or a RULES/EDGES id such as `#M3`) or a repo-relative
+    file — a `::<name>` tail names a check inside the file and is not verified (A2)."""
+    root = Path(root)
+    ref = str(ref or "").strip()
+    if ref.startswith("/"):
+        graph = scan(root)
+        cid, value, why = resolve(graph, ref)
+        if why != "edge_unresolved":
+            return True
+        frag = ref.partition("#")[2].strip()
+        node = graph.get(cid)
+        if node and frag and re.fullmatch(r"(?:[MAEO]\d+|R:[A-Z0-9_]+|F\d+)", frag):
+            # A RULES/EDGES id counts only when its line is authored — a template placeholder
+            # `<…>` is a slot, not a rule anyone could fail on (E8).
+            body = _authored_rules(read(node["path"], "T2")["body"])
+            line = re.search(rf"^\s*-\s*{re.escape(frag)}\b(.*)$", body, re.M)
+            # A `<…>` inside a backticked span is prose (the engine's own placeholder detectors
+            # strip spans first; 92 live RULES/EDGES lines carry one — second T2 refute, E11).
+            # …and it must SAY something: a bare `- M7` is the heading-that-names-nothing one
+            # level down — an id anyone could cite and nobody could fail (twelfth T2 refute, E25).
+            return (line is not None and line.group(1).strip(" :-\t") != ""
+                    and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line.group(1))))
+        return False
+    # A FILE, never a path that merely exists: `.`, a directory, or an empty part before `::`
+    # is the check-that-passes-on-nothing shape (T2 refute, E8) — and it lies INSIDE the repo:
+    # a path that escapes the root through `..` names nothing the repo holds (E12).
+    file_part = ref.split("::", 1)[0].strip()
+    if not file_part:
+        return False
+    repo = root.parent.resolve()
+    try:
+        target = (repo / file_part).resolve()
+        return target.is_file() and repo in target.parents
+    except (ValueError, OSError):
+        # A path the filesystem itself refuses to look at (an embedded NUL, a name too long) names
+        # nothing the repo holds — and a refusal is the answer, never a traceback (E24, E42).
+        return False
+
+
+def _names_an_open_escape(root, ref: str) -> bool:
+    """Does `ref` address a delta that is itself an OPEN escape? Then it binds nothing.
+
+    The self-naming case is the obvious one; a two-cycle — each escape naming the other's id —
+    binds exactly as much, and folded both at exit 0 (twelfth T2 refute, E25).
+    """
+    # Split and strip BOTH sides of the `#` exactly as `resolve` does — a second regex of its own
+    # admitted no whitespace where `resolve` admits it, so `/specs/method.md# M1` resolved for the
+    # ref rung and was invisible to this one, and an escape prevented itself (thirteenth T2
+    # refute, E26). Two readers of one address must read it the same way.
+    head, sep, frag = str(ref or "").strip().partition("#")
+    m = re.fullmatch(r"/specs/([^/#]+)\.md", head.strip()) if sep else None
+    frag = frag.strip()
+    if not m or not frag:
+        return False
+    path = Path(root) / "specs" / f"{m.group(1)}.md"
+    if not path.is_file():
+        return False
+    for text in joined_deltas(read(path, "T2")["body"]).values():
+        head = DELTA_LINE.match(text)
+        if not head:
+            continue
+        rec = parse_delta_head(head.group(1))
+        if rec["id"] == frag and rec["status"] == "open":
+            return _prevention_of(head.group(2)) is not None
+    return False
+
+
+QUICK_MARK = re.compile(r"^\s*quick\s*:", re.I)
+CLOSED_TASK_STATES = ("done", "dropped", "archived")
+
+
+def _commit_paths(root, evidence: str):
+    """The paths a commit changed, or None when this is not a commit the engine can read.
+
+    Two verbs, both READ-ONLY (R:OUTWARD, E6): `rev-parse` decides whether the evidence IS a
+    commit (`--verify -q <ev>^{commit}`), how it sits in the history (`<ev>^@` lists its parents,
+    `--is-shallow-repository` says whether git holds that history at all) and where the bundle
+    sits (`--show-prefix`); `diff-tree` says what the commit touched. Reading the SHAPE with
+    `rev-parse` and not `rev-list` keeps the tripwire to the two verbs E6 enumerates.
+    Recognition is git's, never a shape test — a receipt cid, a path and a line of prose are all
+    things `rev-parse` declines, and a regex guessing at "looks like a sha" would eventually
+    mistake one for the other in the direction that costs the lane its write.
+
+    `_git` already returns None for a missing binary, a tree that is not a repo and a non-zero
+    exit, so every flavour of "the engine cannot look" arrives here as one value (A8).
+    """
+    ev = str(evidence).strip()
+    if not _git(root, "rev-parse", "--verify", "-q", f"{ev}^{{commit}}"):
+        return None
+    # `-z`, because `diff-tree` otherwise renders any path outside ASCII through `core.quotepath`:
+    # `src/auth/tokén.py` arrives as the literal string `"src/auth/tok\303\251n.py"`, quotes and
+    # octal escapes and all, and matches no pattern a human would write. `_changed_paths` reads
+    # `-z` for this exact reason; a floor a non-ASCII filename walks through is not a floor.
+    args = ["diff-tree", "--no-commit-id", "--name-only", "-r", "-z"]
+    # How the commit sits in the history decides how it can be read at all, and the three shapes
+    # need three answers (M1 reads THE COMMIT'S CHANGED PATHS; the flags are how, not what).
+    parents = _git(root, "rev-parse", f"{ev}^@")
+    if parents is None:
+        return None
+    parents = parents.split()
+    rev = [ev]
+    if len(parents) > 1:
+        # A MERGE prints NOTHING at all with one argument: `diff-tree` has no single parent to
+        # pick, so a merge that carried a sensitive path into the branch read as a commit that
+        # changed no files and the lesson landed. A sensitive path arriving by merge is a
+        # sensitive path arriving. Against the FIRST parent, though — `-m` unions the diff
+        # against EVERY parent, and against any parent but the first that is what the OTHER
+        # branch was BEHIND on, so merging a side branch forked before a sensitive path moved on
+        # the trunk was refused naming a file the author never touched (E3, and A6's promise with
+        # it) — the same shape `--root` broke on a shallow clone, one fix to the left. The first
+        # parent is the branch the merge landed ON, so `diff(^1, merge)` is precisely what this
+        # commit introduced, and it loses nothing: an OCTOPUS's first parent lacks every other
+        # branch's contribution, so the one diff still carries them all.
+        rev = [f"{ev}^1", ev]
+    elif not parents:
+        # Parentless is TWO shapes that git reports identically. A repo's genuine FIRST commit
+        # needs `--root` or every path it introduced reads as untouched — and that is the commit
+        # most likely to be someone starting a project by dropping their secrets in. A SHALLOW
+        # clone's boundary commit is GRAFTED to look parentless, and `--root` there lists the
+        # ENTIRE TREE: `git clone --depth 1`, which is what CI checks out by default, turned a
+        # clean README-only commit into a refusal naming a file the author never touched. The
+        # engine genuinely cannot see that commit's diff, and A8 says every flavour of "cannot
+        # look" lands the lesson rather than blocking the lane on it (R:LANEBLOCKED).
+        if _git(root, "rev-parse", "--is-shallow-repository") == "true":
+            return []
+        args.append("--root")
+    out = _git(root, *args, *rev, strip=False)
+    # …and into the BUNDLE's frame, through the one reader the working-tree walker also uses:
+    # reusing A17's MATCHER without A17's FRAME is not "the engine's own match" (M2), and the six
+    # checks that shipped green could not see it — every one built its bundle at the repo root,
+    # where the two frames coincide by accident. From the bundle PARENT, not the bundle, because
+    # `--show-prefix` run inside `.add/` reports one level too deep.
+    # NUL-delimited, so each path is taken whole — a `.strip()` here would eat a leading or
+    # trailing space a filename is entitled to carry. `^1` can repeat nothing, but an octopus
+    # diff may name a path once; the first hit is what `quick_hit` reports either way.
+    return _in_bundle_frame(Path(root).parent, [r for r in (out or "").split("\0") if r])
+
+
+def _scoped_by_any(parent, graph: dict, path: str) -> bool:
+    """Does ANY node — whatever its status — declare `scope:` that HOLDS `path`?
+
+    Status-blind, unlike the OWNER half: an owner asks "whose contract is this, now", which only
+    an open frozen Task can answer, while the floor asks "was this change routed at all", and a
+    done node routed it just as surely as an open one.
+
+    HOLDS, not merely matches: read through `_scope_holds`, the reader M2 names, because this
+    answer stands the security floor down. `fnmatch` let `--scope '**'` disarm every sensitive
+    path in the bundle while the node held no files at all.
+
+    And frozen AT HUMAN AUTHORITY — floored by THIS floor. A freeze stamp alone buys nothing,
+    because a freeze costs no human when A17 cannot see the entry: `authority_for` reads a scope
+    entry with `_paths_touch`, where `_paths_touch('**/*', 'src/auth/**')` is False, so the
+    interview never arms and a bare `add freeze` stamps `process` — while this function reads the
+    SAME entry through the freshness set, where `**/*` holds every file in the tree. The one shape
+    invisible to the human-authority gate was exactly the shape that holds everything, and four
+    commands with no human anywhere took the sensitive floor down bundle-wide.
+
+    The two readers still disagree. What changes is that the disagreement now fails CLOSED: a node
+    A17 reads as `process` routes nothing, however wide its entry, so the only thing that can
+    stand this floor down is a node this floor itself demanded a human for. Status stays blind (a
+    done node routed its work as surely as an open one); the seal, and who signed it, do not.
+
+    WHO SIGNED IT is a separate question from the computed floor, and reading only the floor left
+    the disarm open one gate further left. `freeze` WRITES `authority: human` whenever the floor
+    it computes is human — `claimed_authority(None, floor)` returns the floor, the default `--by`
+    is `cli`, and `interview_gap` has nothing to put to a human when the author left no open
+    decisions, which the author controls. So `add new Persona p --scope src/auth/token.py` then a
+    bare `add freeze p` stamped `authority: human` with no person anywhere, and the floor stood
+    down on it in two commands (2026-09-13, round seven). A `by:` string is still a claim — a
+    notary cannot verify a person — but it is a DELIBERATE claim, and telling `human:<name>` from
+    a default `cli` is the same line the ledger already draws everywhere else.
+    """
+    for cid, node in graph.items():
+        fm = node.get("fm") or {}
+        seal = _latest_scope_seal(node)
+        if seal is None or not str(seal.get("by") or "").startswith("human:") \
+                or str(seal.get("authority") or "") != "human":
+            continue
+        if authority_for(graph, cid) != "human":
+            continue
+        for entry in _scope_list(fm):
+            if _scope_holds(parent, entry, path):
+                return True
+    return False
+
+
+def quick_hit(root, graph: dict, paths: list, owners: bool = True):
+    """`(kind, path, owner)` for the first path a quick commit had no business touching, or None.
+
+    `kind` is `"sensitive"` (owner: the matching pattern) or `"scope"` (owner: the task cid).
+    The floor is read FIRST and wins, because it is unstrikeable and outranks an owner (A5/A11) —
+    a path that is both is reported as sensitive, which is the higher answer.
+
+    `owners=False` reads the FLOOR alone (M1, M3). A floor cannot be gated by a prefix the author
+    picks, so it reads every lesson; an OWNER is a routing hint, and `learn` takes a commit sha OR
+    a task cid as evidence and never both, so a lesson written up about a Task's own work cites
+    that Task's own commit — reading the owner half there would refuse the ordinary case.
+
+    Both matchers are the ENGINE's own, not new ones: `_paths_touch` is what `authority_for` uses
+    for A17, and `_scope_list` is what every scope reader uses. A second matcher here would be one
+    more reader of one fact, which is the defect this milestone has spent six refutes on.
+    """
+    parent = Path(root).parent
+    patterns = ((graph.get("/index.md", {}).get("fm") or {}).get("sensitive_paths")) or []
+    for path in paths:
+        for pattern in (patterns if isinstance(patterns, list) else [patterns]):
+            # …and no node of ANY status scopes it. The tripwire exists to catch a change with NO
+            # node; a path some node already owns is a change that WAS routed, and there is nothing
+            # left to size up. Without this the widened floor closed the prefix evasion and closed
+            # the route for writing up security work with it: an `--escape` post-mortem ABOUT a
+            # security fix necessarily cites that fix's commit, and a write-up of work a done Task
+            # routed cites that Task's commit — both were refused and told to open a node for a
+            # path a node already owned. A refusal an author cannot act on is one they route around.
+            if _paths_touch(path, str(pattern)) and not _scoped_by_any(parent, graph, path):
+                return "sensitive", path, str(pattern)
+    if not owners:
+        return None
+    # OPEN and FROZEN only (M2, A2): a done task's scope is history, and an unfrozen task's scope
+    # is a draft nobody sealed — neither owns anything a quick commit could be trespassing on.
+    for cid in sorted(graph):
+        fm = (graph[cid].get("fm") or {})
+        if fm.get("type") != "Task" or str(fm.get("status") or "") in CLOSED_TASK_STATES:
+            continue
+        if _latest_scope_seal(graph[cid]) is None:
+            continue
+        for entry in _scope_list(fm):
+            for path in paths:
+                # The SAME reader the floor exemption uses, and the one M2 names. If these two
+                # ever diverge, both halves can fire on one path and A5's disjointness — which is
+                # what makes the corrected ordering true — quietly stops holding.
+                if _scope_holds(parent, entry, path):
+                    return "scope", path, cid
+    return None
+
+
+def learn(root, lens: str, lesson: str, evidence: str = None, escape: bool = False,
+          why_missed: str = None, prevention: str = None) -> tuple:
     """Append a lesson to a spec's `## Deltas` in the frozen delta grammar, `open` by default.
 
     Grammar (deltas.md): `- [<COMPETENCY> · <ID> · open · <valid-from>] <lesson> (evidence: <ptr>)`.
@@ -4058,8 +5837,134 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     is the only status `learn` writes; a human moves it to `folded`/`rejected` (the AI never
     self-consolidates).
     """
-    if not evidence:
+    # Presence, never truthiness: an empty value is a flag the caller GAVE, and the engine's own
+    # reader reports an empty evidence clause as `no_evidence` — the writer must not emit one
+    # (fifth T2 refute, E16).
+    if not str(evidence or "").strip():
         return None, "refused: a lesson needs evidence — cite the receipt or decision that caused it"
+    # A delta is ONE physical line and its code spans close inside the value they open in: every
+    # reader of the tail is line-based (E15) and masks spans over the WHOLE line (E20), so the
+    # writer guarantees both here, before its own guard reads what it wrote.
+    lesson = balance_spans(" ".join(str(lesson).split()))
+    evidence = balance_spans(" ".join(str(evidence).split()))
+    # The marker is the ENGINE's: it cannot ride in through a flag the tail reader later trusts —
+    # not the evidence (E14), and not the lesson, which the joined unit made readable too (E18).
+    # Inside a `code span` it is prose, exactly as the reader reads it.
+    for flag, value in (("--evidence", evidence), ("the lesson", lesson)):
+        # `(evidence:` is the grammar's own too — the tail reader keys on it and `_delta_identity`
+        # splits a lesson at it, so two genuinely different lessons carrying one collapsed into a
+        # single false conflict and `join` dropped both refused escapes (twenty-sixth T2 refute,
+        # E40). It was refused in `--why-missed` and the ref (E10) and nowhere else.
+        if "(evidence:" in mask_spans(value):
+            return None, ('cannot file the lesson — `(evidence:` is the grammar\'s own marker and cannot ride '
+                           f'inside {flag} (quote it in a `code span` to write about it) -> "R:UNCAUSED"\n'
+                           f'next: add learn {lens} "<lesson>" --evidence <ref>')
+        if ESCAPE_MARK.search(mask_spans(value)):
+            return None, ('cannot file the lesson — `· escape` is the grammar\'s own marker and cannot ride inside '
+                          f'{flag} (an escape is filed with --escape; quote it in a `code span` to write about it) '
+                          f'-> "R:UNCAUSED"\nnext: add learn '
+                          f'{lens} "<lesson>" --evidence <ref> [--escape --why-missed "…" --prevention "<kind> → <ref>"]')
+    # quick-lane-tripwire: the direct lane's ONE bundle write is where the engine can finally look.
+    # intake.md routes a small change to the direct lane on the author's own judgement and says the
+    # floor is checked FIRST and always wins — and nothing enforced that, so a `quick:` commit into
+    # a sensitive path or a frozen scope left no node, no contract and no receipt. Read before the
+    # write (A9), so a refused quick line writes nothing at all; and never a default-deny — a
+    # bundle that declares no sensitive paths and owns no open scope is a bundle saying there is
+    # nothing here to trespass on (A10).
+    # The FLOOR reads every lesson; the OWNER half reads the `quick:` line alone (M1, M3, E5). A
+    # floor is unstrikeable, so a prefix the author picks cannot gate it — and the refusal used to
+    # END by recommending that prefix be dropped, which made "drop `quick:`" the one-token evasion
+    # this control advertised to the very people it exists for. An owner is a routing hint, and
+    # `learn` takes a commit sha OR a task cid and never both, so a write-up of a Task's own work
+    # cites that Task's own commit: reading the owner half there would refuse the ordinary case.
+    paths = _commit_paths(root, evidence) if evidence else None
+    if paths:
+        # The lane is NEVER blocked on the engine's own inability to look (R:LANEBLOCKED, A8): no
+        # repo, no git, an unreadable sha and evidence that is simply not a commit all read as
+        # "nothing to inspect", and the lesson lands exactly as it did before this rung existed.
+        hit = quick_hit(root, scan(root), paths, owners=bool(QUICK_MARK.match(lesson)))
+        if hit:
+            kind, path, owner = hit
+            why = (f"`{path}` matches the sensitive pattern `{owner}` — floor human"
+                   if kind == "sensitive" else
+                   f"`{path}` lies under {owner}'s frozen `scope:` — that contract owns it")
+            # A MERGE says so, because the author probably did not write that path: `git pull` is
+            # the ordinary way a colleague's sensitive commit arrives on your branch, and no
+            # `diff-tree` flag tells a pull from merging your own work (`-c` reports nothing for
+            # either, which is how the carry went unseen to begin with). The detection stays; the
+            # ADVICE is what has to be true. A6's own cost-if-wrong is the author dropping the
+            # `quick:` prefix, so a refusal that CLOSES on that recommendation teaches the bypass
+            # to exactly the people this control exists for — it is named as the lesser route,
+            # never as the last word.
+            merged = len((_git(root, "rev-parse", f"{str(evidence).strip()}^@") or "").split()) > 1
+            arrived = ("the merge it cites brought in" if merged else "the commit it cites touched")
+            # Every route named must be one the author can actually take, and none of them is the
+            # prefix (M6). The clause that used to sit here recommended dropping `quick:` — which
+            # WORKED on an owner hit, handing out the bypass inside the message that refused it,
+            # FAILED on a floor hit, and read as a no-op for a lesson that never carried a prefix.
+            # Each half names the `next:` that WORKS for it, and the other route as the aside.
+            # `add new Task --scope <path>` is the route where no node owns the path — run against
+            # the task that already owns it, it creates a colliding node and lands the author back
+            # on a byte-identical refusal. M6: every route named must be one they can take.
+            if kind == "scope":
+                nxt = f'next: add learn <lens> "<lesson>" --evidence {owner}'
+                aside = (f"   (or add new Task <slug> --scope {path}, if this is separate work "
+                         f"that contract does not own)")
+            else:
+                nxt = f"next: add new Task <slug> --scope {path}"
+                aside = ("   (a merge carries what the branch was behind on — if that path is not "
+                         "your change, the commit that made it is what needs the node, not this "
+                         "merge)" if merged else
+                         "   (then build it under that contract, and file this lesson against it)")
+            return None, (f"cannot file the lesson — {arrived} {why}, and "
+                          f"the floor is checked FIRST and always wins: a change there is a node, "
+                          f'however small -> "R:QUICKSIZEUP"\n'
+                          f"{nxt}\n{aside}")
+
+    # escape-with-prevention: an escape carries its why-missed and a bound prevention, or it is
+    # not filed — a sentence with no prevention is exactly what folded unprevented before.
+    tail = ""
+    if escape or why_missed is not None or prevention is not None:
+        def uncaused(what: str) -> tuple:
+            return None, (f'cannot file an escape — {what} -> "R:UNCAUSED"\nnext: add learn {lens} '
+                          f'"quick|<lesson>" --evidence <ref> --escape --why-missed "<why the checks missed it>" '
+                          f'--prevention "<check|monitor|method|rule> → <ref>"')
+        if not escape:
+            return uncaused("--why-missed and --prevention belong to an escape; pass --escape to file one")
+        if not str(why_missed or "").strip():
+            return uncaused("no --why-missed — an escape says why the checks did not catch it")
+        if not str(prevention or "").strip():
+            return uncaused("no --prevention — an escape binds what stops the next one")
+        # Split on the FIRST arrow of either spelling; the ref keeps whatever follows as given (E7).
+        # NON-greedy: `\S+` backtracked to the LAST arrow whenever no space separated them, so
+        # `check->tests/x.py->tail` was refused by a message naming a kind nobody wrote — and the
+        # spaced control is why the bound check missed it (twenty-eighth T2 refute, E42).
+        m = re.match(r"\s*(\S*?)\s*(?:→|->)\s*(.*)$", prevention, re.S)
+        kind, ref = (m.group(1), m.group(2).strip()) if m else (prevention.strip(), "")
+        if kind not in PREVENTION_KINDS:
+            return uncaused(f"prevention kind `{kind}` is not one of {'|'.join(PREVENTION_KINDS)}")
+        if not ref:
+            return uncaused(f"prevention `{kind} →` names no ref — a check id, a node address, a file")
+        # The grammar reserves `·` as the tail's delimiter: inside a flag it would end the clause
+        # early and let the reader name a ref nobody bound (T2 refute, E7).
+        if "·" in str(why_missed) or "·" in ref:
+            return uncaused("`·` is the tail's own delimiter — it cannot appear inside --why-missed or the prevention ref")
+        # … and the reader keys the tail on the LAST evidence marker, so an author may not write
+        # one either (second T2 refute, E10 — a dangling escape hid behind it and folded).
+        if "(evidence:" in str(why_missed) or "(evidence:" in ref:
+            return uncaused("`(evidence:` is the grammar's own marker — it cannot appear inside --why-missed or the prevention ref")
+        # The ref is an address, never prose: a backtick in it would open a span over the rest of
+        # the tail, and the clause the rung reads would be the one nobody wrote (E20).
+        if "`" in ref:
+            return uncaused("a backtick cannot appear inside the prevention ref — a ref is an address, not prose")
+        # …and no control character: a NUL reached the filesystem through the resolver and raised
+        # `ValueError: embedded null character`, where every exit is a refusal or a record (E42).
+        # Whitespace is NOT a control character here: a line break in the ref is normalised to one
+        # line, which E15 and E35 froze — only a character no reader can carry is refused.
+        if any((ch < " " or ch == "\x7f") and not ch.isspace() for ch in ref):
+            return uncaused("a control character cannot appear inside the prevention ref — a ref is an address")
+        tail = (f" · escape · why-missed: {balance_spans(' '.join(str(why_missed).split()))}"
+                f" · prevention: {kind} → {' '.join(ref.split())}")
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
@@ -4068,14 +5973,18 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
                        f"\nnext: add learn <{' | '.join(lenses)}> \"<lesson>\" --evidence <ref>")
     comp = LENS_COMP.get(lens, lens.upper())
     node = read(path, "T2")
+    if node["raw"] is None:
+        # No frontmatter the reader can find — a BOM before it is the commonest cause, and `set_key`
+        # raised `AttributeError` on the None where `doctor` already reports `missing_frontmatter`.
+        return None, (f'cannot file the lesson — specs/{lens}.md {unreadable_spec(node)} -> "R:UNREADABLE"'
+                       f'\nnext: add doctor   (it names the file), then add learn {lens} "<lesson>" --evidence <ref>')
     lines = node["body"].splitlines(keepends=True)
     seq = _delta_high_water(node["raw"], lines) + 1
     did = f"{_delta_letter(lens)}{seq}"
-    entry = f"- [{comp} · {did} · open · {_today()}] {lesson} (evidence: {evidence})\n"
-    for i, line in enumerate(lines):
-        if line.startswith("## Deltas"):
-            lines.insert(i + 2 if i + 1 < len(lines) else i + 1, entry)
-            break
+    entry = f"- [{comp} · {did} · open · {_today()}] {lesson} (evidence: {evidence}){tail}\n"
+    i = heading_index(lines, "deltas")
+    if i >= 0:
+        lines.insert(_delta_insert_at(lines, i), entry)
     else:
         lines += ["\n## Deltas\n\n", entry]
     # The counter rides in frontmatter through `set_key`, which replaces ONE scalar and leaves
@@ -4086,6 +5995,18 @@ def learn(root, lens: str, lesson: str, evidence: str = None) -> tuple:
     # number that is merely usually right. Recomputed, never incremented: the oracle is the
     # body, so a hand-edited spec self-corrects on the next `learn`.
     body = "".join(lines)
+    # The writer READS BACK the line it just wrote, as `--bind` does (E39): the id `learn` hands
+    # the author back must address the delta the readers read. A fence that never closes made
+    # every reader blind past it, and both writer branches landed inside it — `deltas` said none,
+    # `show` answered R:NOSUCHNODE for the id `learn` had just minted, and the engine wrote
+    # `open_deltas: 0` itself (twenty-seventh T2 refute, E41). Asking the property, not the shape:
+    # whatever hides the line, the lesson is refused rather than filed into the void.
+    if _delta_ids(body).get(did) != entry.strip():
+        return None, (f'cannot file the lesson — specs/{lens}.md would not be readable at the line: '
+                       f'`{did}` is not addressable in what the write produces (a fence that never closes '
+                       f'blinds every reader past it) -> "R:UNREADABLE"'
+                       f'\nnext: close the fence in specs/{lens}.md (add doctor names it), then add learn '
+                       f'{lens} "<lesson>" --evidence <ref>')
     raw = set_key(raw, "open_deltas", str(open_delta_count(body)))
     write(path, f"---\n{raw}\n---\n{body}")
     hint = ("" if re.search(r"tasks/[^/\s]+\.(md|d/)", str(evidence)) else
@@ -4155,8 +6076,10 @@ def deltas(root, status: str = "open", lens: str = None,
     paths = [q for q in sorted((root / "specs").glob("*.md"))
              if lens is None or q.stem == lens]
     for path in paths:
-        for line in read(path, "T2")["body"].splitlines():
-            stripped = line.strip()
+        # The grammar's unit, not a physical line: a canonically wrapped delta was listed as
+        # malformed while the counter counted it and `fold` read it — three answers about one
+        # delta (seventh T2 refute, E19).
+        for stripped in joined_deltas(read(path, "T2")["body"]).values():
             m = DELTA_LINE.match(stripped)
             # Not every `- [..]` line is a delta; only one that LOOKS like one and fails.
             if m is None or not DELTA_SHAPE.match(stripped):
@@ -4249,18 +6172,23 @@ def _bind_decision(body: str, lens: str, sentence: str, ids: list) -> str:
     cite = ", ".join([delta_address(lens, ids[0])] + [f"#{i}" for i in ids[1:]]) if ids else ""
     entry = f"- {sentence.strip()}" + (f" (from: {cite})" if cite else "") + "\n"
     lines = body.splitlines(keepends=True)
-    start = None
-    for i, line in enumerate(lines):
-        if line.startswith("#") and "-".join(re.findall(r"[a-z0-9]+", line.lstrip("#").strip().lower())) \
-                == "decisions-that-bind":
-            start = i + 1
-            break
+    # The section is found the way `_section` — and therefore `brief` — finds it: level two, at
+    # document level, never one quoted inside a fence. Deciding for itself made this a FOURTH
+    # heading reader, so `--bind` reported "bound 1 decision" at exit 0 into a `###` section or a
+    # fenced heading the brief could not see (twenty-fourth T2 refute, E38).
+    found = heading_index(lines, "decisions-that-bind")
+    start = found + 1 if found >= 0 else None
     if start is None:                        # A10: create it rather than refuse into a hand edit
-        for i, line in enumerate(lines):
-            if line.startswith("## ") and line.strip().lower() == "## deltas":
-                return "".join(lines[:i] + ["## Decisions that bind\n", "\n", entry, "\n"] + lines[i:])
+        at = heading_index(lines, "deltas")
+        if at >= 0:
+            return "".join(lines[:at] + ["## Decisions that bind\n", "\n", entry, "\n"] + lines[at:])
         return "".join(lines + ["\n## Decisions that bind\n", "\n", entry])
-    end = next((j for j in range(start, len(lines)) if lines[j].startswith("#")), len(lines))
+    # One entry per line the caller split, because the walker reads that list itself: the rejoin
+    # this replaced could come back SHORTER (a trailing empty line) or LONGER (any other line
+    # boundary), and both mis-indexed — one raised IndexError, the other spliced a delta in half
+    # (E45, E46).
+    levels = [level for _, level, _ in _headings(lines)]
+    end = next((j for j in range(start, len(lines)) if levels[j] > 0), len(lines))
     content = [j for j in range(start, end) if lines[j].strip()]
     if content and _placeholder_only("".join(lines[j] for j in content)):
         return "".join(lines[:content[0]] + [entry] + lines[content[-1] + 1:end] + lines[end:])
@@ -4284,6 +6212,23 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
         return None, ('R:REJECTBINDS — a lesson judged wrong cannot also be a decision that binds: '
                        '`--reject` retires it, `--bind` promotes it, and one call may do only one\n'
                        'next: add fold <lens> "<match>" --reject   (or --bind "<decision>")')
+    if bind:
+        # `--bind` writes into the spec exactly as `learn` does, so it obeys the same two laws: ONE
+        # physical line, and the engine's own marker cannot ride in through a flag. A newline in
+        # the sentence forged a real open escape at exit 0 — an unguarded delta writer beside the
+        # guarded one (twenty-fourth T2 refute, A8, E38).
+        bind = balance_spans(" ".join(str(bind).split()))
+        # A decision its own readers disown is not written: `brief` renders the section
+        # `unauthored="true"` and `doctor` calls it scaffold, and the next `--bind` discards it —
+        # the writer refuses instead, naming the span rule E11 already froze (E40).
+        if _placeholder_only(f"- {' '.join(str(bind).split())}"):
+            return None, ('cannot bind the decision — every reader would call it scaffold: a bare `<…>` is the '
+                           'template\'s own placeholder. Quote it in a `code span` to write about it '
+                           f'-> "R:UNCAUSED"\nnext: add fold {lens} "{match}" --bind "<decision>"')
+        if ESCAPE_MARK.search(mask_spans(bind)):
+            return None, ('cannot bind the decision — `· escape` is the grammar\'s own marker and cannot ride '
+                           'inside --bind (an escape is filed with `add learn --escape`; quote it in a `code span` '
+                           f'to write about it) -> "R:UNCAUSED"\nnext: add fold {lens} "<match>" --bind "<decision>"')
     path = Path(root) / "specs" / f"{lens}.md"
     if not path.is_file():
         lenses = sorted(q.stem for q in (Path(root) / "specs").glob("*.md"))
@@ -4296,9 +6241,52 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
     # let the two verdicts drift; the verdict is a word, and only the word changes.
     verdict = "rejected" if reject else "folded"
     node = read(path, "T2")
+    why = unreadable_spec(node)
+    if why:
+        # `learn` got this guard and the rung this task is ABOUT did not: plain, `--reject` and
+        # `--bind` all raised `AttributeError` at the write (E42's clause, E43's reach).
+        return None, (f'cannot fold — specs/{lens}.md would not be readable at the line: {why} -> "R:UNREADABLE"'
+                       f'\nnext: add doctor   (it names the file), then add fold {lens} "{match}"')
+
+    whole = joined_deltas(node["body"])
+    stray = orphan_tail(node["body"]) if not reject else ""
+    if stray:
+        return None, (f'cannot fold in specs/{lens}.md — `{stray[:60]}` carries an escape\'s tail but '
+                      f'belongs to no delta: a line-boundary character is not an indent -> "R:UNPREVENTED"'
+                      f'\nnext: join the tail back onto its delta with a space or a tab, '
+                      f'then add fold {lens} "{match}"')
+    # escape-with-prevention: an escape folds (or binds) only when its prevention resolves — read
+    # over EVERY match first, so one dangling prevention refuses the whole call and nothing is
+    # retagged (M3). `--reject` never reads it: a lesson judged wrong has nothing to prevent.
+    if not reject:
+        for text in whole.values():
+            m = DELTA_LINE.match(text)
+            if not m:
+                continue
+            rec = parse_delta_head(m.group(1))
+            if rec["code"] is None and rec["status"] == "open" and match in m.group(2):
+                for kind, ref, well_formed in (_prevention_of(m.group(2)) or []):
+                    if not well_formed:
+                        what = (f"its prevention clause `{kind}` is malformed — the form is "
+                                f"`prevention: <check|monitor|method|rule> → <ref>`" if kind else
+                                "its tail carries `· escape` but no `prevention:` clause")
+                    elif _names_an_open_escape(root, ref):
+                        # An escape still OPEN stops nothing, so naming one binds nothing: the
+                        # lesson itself (E23), or a second escape naming this one back — a cycle
+                        # that folded both at exit 0 (twelfth T2 refute, E25).
+                        what = (f"its prevention `{kind} → {ref}` names an escape that is itself "
+                                f"still open — a prevention binds something that STOPS the next one")
+                    elif not _prevention_resolves(root, ref):
+                        what = f"its prevention `{kind} → {ref}` resolves to nothing"
+                    else:
+                        continue
+                    return None, (f"cannot fold `{rec['id'] or match}` — {what} -> \"R:UNPREVENTED\""
+                                  f"\nnext: write the check|monitor|method|rule it names "
+                                  f"(a node address like /tasks/<slug>.md#M1, or a repo file like tests/<file>::<check>), "
+                                  f"then add fold {lens} \"{match}\"   (or --reject if the lesson did not hold)")
     out, folded, ids = [], 0, []
-    for line in node["body"].splitlines(keepends=True):
-        m = DELTA_LINE.match(line.strip())
+    for i, line in enumerate(node["body"].splitlines(keepends=True)):
+        m = DELTA_LINE.match(whole.get(i, ""))
         if m:
             rec = parse_delta_head(m.group(1))
             if rec["code"] is None and rec["status"] == "open" and match in m.group(2):
@@ -4321,7 +6309,54 @@ def fold(root, lens: str, match: str, reject: bool = False, bind: str = None) ->
     # A7: the retag and the decision land in ONE write, so a decision can never cite a lesson
     # the same call failed to retag.
     if bind:
-        body = _bind_decision(body, lens, bind, ids)
+        bound = _bind_decision(body, lens, bind, ids)
+        # A8 asks ONE question, and the engine answers it by READING BACK what it is about to
+        # write: does the sentence change what the spec's own readers see? `learn` writes its
+        # bracket head first, so a caller's value can never lead the line; `--bind` writes the
+        # sentence at column zero, and one leading with a fence run opened a real block that
+        # blanked the rest of the spec — the dangling escape left `deltas`, `fold` answered
+        # R:NOMATCH forever and the engine wrote `open_deltas: 0` itself — while one leading with
+        # a delta head forged an open delta nobody filed (twenty-fifth T2 refute, E39). Naming the
+        # two shapes would freeze this at the two the read happened to find; the ids and the
+        # sections a reader sees are the property itself.
+        # The sections are read as a SUBSEQUENCE, never an equality: `_bind_decision` may add the
+        # section itself when a spec has none (A10), and that is the engine's own write.
+        after = iter([n for _, lv, n in _headings(bound) if lv == 2])
+        kept = all(any(n == later for later in after) for _, lv, n in _headings(body) if lv == 2)
+        # …and the DECISION lines the readers read. Comparing the ids and the headings was
+        # comparing what the guard happened to know about: `_bind_decision` replaces a section its
+        # placeholder detector calls scaffold, and that detector cannot tell the engine's own seed
+        # line from a decision carrying a bare `<tenant>` — so the next `--bind` deleted one
+        # nobody retired, without a word (twenty-sixth T2 refute, E40). The seed line is the one
+        # exemption: replacing it is the engine's own write (A10).
+        def decisions(text):
+            # The engine's own SEED line is the one exemption — a line that is nothing BUT a
+            # placeholder. A hand-written decision that merely mentions a `<tenant>` is a
+            # decision, and the detector calling it scaffold is what let the clobber through.
+            return [l.strip() for l in _section(text, "decisions-that-bind").splitlines()
+                    if l.strip() and re.sub(r"<[^>]*>", "", l).strip(" -*·\t") != ""]
+        held = all(line in decisions(bound) for line in decisions(body))
+        # …and the question `learn`'s own read-back asks and this one did not: is what it WROTE
+        # ADDRESSABLE? Preservation is not enough, and under a fence that never closes all three
+        # preservation comparisons degrade to empty and pass vacuously — `_bind_decision`'s EOF
+        # branch wrote the decision AND the heading it created inside that fence at exit 0, on the
+        # very spec where `learn` refuses R:UNREADABLE (twenty-eighth T2 refute, E42).
+        if _delta_ids(bound) != _delta_ids(body) or not kept or not held:
+            return None, ('cannot bind the decision — the sentence would change what the spec\'s own readers see: '
+                           'a decision is one line of prose, never a block a reader stops at (a fence run, a delta '
+                           'head). Write it as prose, or quote the markup in a `code span` -> "R:UNCAUSED"\n'
+                           f'next: add fold {lens} "{match}" --bind "<decision>"')
+        # The read-back E42 gave this writer, asked as the property it was always about: the spec
+        # must still be one a writer can LAND in afterwards. Asking only "is my own line
+        # addressable" answered yes for a sentence that blinds every LATER writer — the decision
+        # sat readable at EOF inside the fence it had just opened, and the next `learn` refused
+        # forever (thirty-first T2 refute, E45). One reader, before and after.
+        if (blind := unreadable_spec({"raw": node["raw"], "body": bound})):
+            return None, (f'cannot bind the decision — specs/{lens}.md would not be readable afterwards: '
+                           f'{blind}, so no writer could land a line in it again -> "R:UNREADABLE"'
+                           f'\nnext: write the decision as prose (quote any markup in a `code span`), '
+                           f'then add fold {lens} "{match}" --bind "<decision>"')
+        body = bound
     # Recomputed from the retagged body, so a match that retires three lessons moves the
     # counter by three (E3). A decrement-by-one would be right only for the commonest call.
     raw = set_key(node["raw"], "open_deltas", str(open_delta_count(body)))
@@ -4665,7 +6700,7 @@ def _section_of(body: str, heading: str) -> str:
     return "".join(out)
 
 
-BOX = re.compile(r"^\s*- \[([ xX])\]\s?(.*)$")
+BOX = re.compile(r"^\s*- \[([ xX~])\]\s?(.*)$")
 # The ONE checkbox pattern. `check` writes what `milestone_done` tallies, so a syntax either
 # both see or neither does — two patterns would let the verb tick a box the goal-gate cannot
 # count, and the tally is what the gate refuses on.
@@ -4873,7 +6908,7 @@ def placeholders_in(node: dict, *, card: bool = True) -> list:
     # freezes — `_section_of` reads a missing section as empty (law 3) — so bundles
     # authored before this shipped are not retroactively refused.
     for heading in ("RULES", "ASSUMPTIONS", "CHECKS"):
-        for line in _section_of(node.get("body") or "", heading).splitlines():
+        for line in authored_section(node.get("body") or "", heading).splitlines():
             if line.startswith("- ") and PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
                 found.append(line.strip())
     # CARD's `goal:` — a KEYED line, not a `- ` bullet, which is why the loop above could
@@ -4905,6 +6940,13 @@ def _canon(text: str) -> str:
     return "\n".join(line.rstrip() for line in text.splitlines() if line.strip())
 
 
+def exit_digest(node: dict) -> str:
+    """The authored EXIT direction, excluding completion ticks and formatting."""
+    payload = _canon(_section_of(node.get("body") or "", "EXIT"))
+    payload = re.sub(r"(?m)^([ \t]*-[ \t]*)\[[ xX]\]", r"\1[ ]", payload)
+    return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
 def direction_digest(node: dict) -> str:
     """The seal over what a freeze approved: RULES · CHECKS · `gives:`.
 
@@ -4921,8 +6963,8 @@ def direction_digest(node: dict) -> str:
     """
     body = node.get("body") or ""
     gives = (node.get("fm") or {}).get("gives") or []
-    payload = "\n".join((_canon(_section_of(body, "RULES")),
-                         _canon(_section_of(body, "CHECKS")),
+    payload = "\n".join((_canon(authored_section(body, "RULES")),
+                         _canon(authored_section(body, "CHECKS")),
                          _canon("\n".join(str(g) for g in gives))))
     return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
 
@@ -4942,16 +6984,97 @@ def binding_digest(node: dict) -> str:
     authors refreeze reflexively is a rubber stamp.
     """
     body = node.get("body") or ""
-    edges = [m.group(1) for line in _section_of(body, "EDGES").splitlines()
+    edges = [m.group(1) for line in authored_section(body, "EDGES").splitlines()
              for m in [RULE_ID.match(line)]
              if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line))]
-    probed = [m.group(1) for line in _section_of(body, "ASSUMPTIONS").splitlines()
+    probed = [m.group(1) for line in authored_section(body, "ASSUMPTIONS").splitlines()
               for m in [RE_PROBED_ASSUMPTION.match(line.strip())] if m]
     payload = "\n".join(sorted(edges) + sorted(probed))
     return "sha256:" + hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
 INTERVIEW_VERDICTS = ("confirm", "correct", "defer")
+
+
+# `- M<n> <the rule> (from: <where you were told> · fails-on: <the plausible wrong reading>)`.
+# Either half may stand alone; both are FREE TEXT and neither is resolved — the engine records a
+# source as handed, exactly as it records `by:` (R:SOURCEJUDGED). The tail is Must TEXT, so the
+# direction digest seals it and every existing reader sees one line as it always did.
+MUST_SOURCE = re.compile(r"\((?:from:\s*(?P<src>[^·)]*?))?\s*(?:·\s*)?"
+                         r"(?:fails-on:\s*(?P<fails>[^)]*?))?\s*\)\s*$")
+
+
+def must_source(line: str) -> dict:
+    """`{"from": …, "fails_on": …}` for a Must line carrying the tail, else None.
+
+    None is "no tail", and a tail carrying only `fails-on:` answers `{"from": None, …}` — the two
+    are different questions, and collapsing them would ask a Must that named its falsifier for a
+    source it may already have given in the sentence itself.
+    """
+    m = MUST_SOURCE.search(str(line or "").rstrip())
+    if not m or (m.group("src") is None and m.group("fails") is None):
+        return None
+    src, fails = m.group("src"), m.group("fails")
+    return {"from": (src or "").strip() or None, "fails_on": (fails or "").strip() or None}
+
+
+def _rules_view(body) -> list:
+    """The body's lines with everything outside the authored `## RULES` section blanked — one line
+    out per line in, so an index into this view is an index into the body.
+
+    The ONE view of "where a Must may live". `_authored_rules` keeps all seven authored sections,
+    so a `- M2 …` line pasted under `## EDGES` read as a Must to the question and the notice while
+    `rules_of`, `single_mode_musts`, `uncovered_obligations` and the `covers:` grammar all said it
+    was not a rule — two readers of what a Must IS, and the route a duplicate travelled (E12).
+    """
+    lines = _authored_rules(str(body or "")).splitlines()
+    start = heading_index(lines, "rules")
+    if start < 0:
+        return [""] * len(lines)
+    end = next((j for j, (_, level, _) in enumerate(_headings(lines))
+                if j > start and level == 2), len(lines))
+    return [str(ln) if start < i < end else "" for i, ln in enumerate(lines)]
+
+
+def must_lines(body) -> dict:
+    r"""`{line index in the body: Must id}` for every AUTHORED Must — the ONE reader of which LINE
+    is a Must, indexed so a writer can find it again.
+
+    A view of WHERE (`_rules_view`) and a pattern for WHAT (`RULE_ID`), in one place, because
+    splitting them is how this task was refuted five times running. `RULE_ID` is the grammar
+    FORMAT §6.1 publishes and `rules_of`, `single_mode_musts`, `uncovered_obligations` and the
+    `covers:` grammar all read; the question, the freeze notice and the interview's WRITER now read
+    it too. The writer had kept its own third pattern — looser on the left (an indent, a dash with
+    no space) and stricter on the right (`\s+` where the grammar has `\b`) — so `- M2:` was a Must
+    to the gate and to the question and INVISIBLE to the writer: `interview --answer M2=confirm`
+    exited 0, wrote nothing, and the node then carried an `act: interview` stamp attesting the
+    answer beside a freeze notice saying the Must had no source, forever (twenty-ninth T2 refute).
+    """
+    out = {}
+    for i, line in enumerate(_rules_view(body)):
+        m = RULE_ID.match(str(line))
+        if m and m.group(1).startswith("M"):
+            out[i] = m.group(1)
+    return out
+
+
+def _musts_without_source(node: dict) -> list:
+    """`[(id, the whole line)]` for every authored Must that names no source — the ONE reader both
+    the interview and the freeze notice ask, so the question and the notice can never disagree."""
+    out = []
+    lines = _rules_view(node.get("body") or "")
+    for i, mid in must_lines(node.get("body") or "").items():
+        line = str(lines[i])
+        text = line[RULE_ID.match(line).end(1):].strip()
+        # A SCAFFOLD line is one the author never wrote over — `- M1 <the rule that must hold>` —
+        # not any rule that happens to name a `<placeholder>` in its own sentence. Skipping the
+        # latter made a real Must invisible to the question, to the notice and to `confirm`, while
+        # M2 and M3 quantify over EVERY Must with no `from:` (E11).
+        if not re.fullmatch(r"<[^>]*>", re.sub(r"`[^`]*`", "", text).strip()):
+            tail = must_source(text)
+            if not (tail and tail["from"]):
+                out.append((mid, line.strip()))
+    return out
 
 
 def _open_decisions(node: dict) -> list:
@@ -4974,7 +7097,7 @@ def _open_decisions(node: dict) -> list:
             out.append({"id": f"C{n}", "of": "criterion", "dim": "criterion",
                         "reading": text.strip(), "cost": "", "text": text.strip()})
         return out
-    for line in _section_of(body, "ASSUMPTIONS").splitlines():
+    for line in authored_section(body, "ASSUMPTIONS").splitlines():
         m = re.match(r"\s*-\s*(A\d+)\s*\[([a-z]+)\]\s*(.*)", line)
         if not m or re.search(r"·\s*n/a\b", m.group(3)):
             continue
@@ -4990,17 +7113,31 @@ def _open_decisions(node: dict) -> list:
     # The readable example: a FILLED `E<n>` is a claim the human never made in those words — the
     # AI wrote the Given/When/Then — so it is put to them like an assumption. The scaffold line is
     # not (same placeholder rule `edges_of` uses); backticked spans are code, not placeholders.
-    for line in _section_of(body, "EDGES").splitlines():
+    for line in authored_section(body, "EDGES").splitlines():
         m = re.match(r"\s*-\s*(E\d+)\s+(.*)", line)
         if m and not PLACEHOLDER.search(re.sub(r"`[^`]*`", "", line)):
             out.append({"id": m.group(1), "of": "edge", "dim": "edge",
                         "reading": m.group(2).strip(), "cost": "", "text": line.strip()})
-    for line in _section_of(body, "RULES").splitlines():
+    for line in authored_section(body, "RULES").splitlines():
         m = re.match(r"\s*-\s*(R:[A-Z0-9_]+)\s+(.*)", line)
         if m:
             out.append({"id": m.group(1), "of": "reject", "dim": "reject",
                         "reading": m.group(2).split("->")[0].strip(), "cost": "",
                         "text": line.strip()})
+    # A Must came FROM the human — so it is never re-asked as a RULE. What is asked is the one
+    # thing RULES never recorded: WHO said so. Last, and in Must order, so an interview a human
+    # already knows keeps its shape and the new questions come after the old ones (A5).
+    for mid, line in _musts_without_source(node):
+        out.append({"id": mid, "of": "must", "dim": "source",
+                    "reading": re.sub(r"\s*-\s*M\d+\s+", "", line, count=1).strip(),
+                    "cost": "", "text": line})
+    # A human-floor transfer is a NEW approval of the exact responsibility edge. Including the
+    # edge in the ordinary interview digest makes a later carry edit reopen that decision.
+    carries, _ = _carry_entries(node.get("fm") or {})
+    for n, (source, destination) in enumerate(sorted(carries), start=1):
+        edge = f"{source} -> {destination}"
+        out.append({"id": f"TC{n}", "of": "carry", "dim": "responsibility",
+                    "reading": edge, "cost": "", "text": edge})
     return out
 
 
@@ -5019,7 +7156,7 @@ def _interview_stamps(fm: dict) -> list:
             if isinstance(s, dict) and s.get("act") == "interview"]
 
 
-def interview_gap(node: dict, fm: dict) -> list:
+def interview_gap(node: dict, fm: dict, *, require_human_signer: bool = False) -> list:
     """Ids still owed an answer for the node AS IT NOW READS, or `[]` when the interview holds.
 
     Reads the stamp whose digest MATCHES the current text — not the latest. Recency is not
@@ -5035,7 +7172,7 @@ def interview_gap(node: dict, fm: dict) -> list:
     want = interview_digest(node)
     answered = {}
     for s in _interview_stamps(fm):
-        if str(s.get("interview") or "") == want:
+        if str(s.get("interview") or "") == want and (not require_human_signer or _human_signer(s.get("by"))):
             answered.update(_answer_map(str(s.get("answers") or "")))
     # `correct` is never an answer that completes — it is cleared by EDITING the item, which moves
     # the digest and re-opens the pass.
@@ -5086,6 +7223,13 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
         lines.append(f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"<name>\"")
         return decisions, "\n".join(lines)
 
+    if (_carry_entries(entry.get("fm") or {})[0] or _has_carry_history(entry.get("fm") or {})) \
+            and authority_for(graph, cid) == "human" \
+            and not _human_signer(by):
+        return None, (f"cannot interview `{slug}` — R:LOWERED_CARRY_AUTHORITY "
+                      f"a human-floor carry needs this destination's named human signer"
+                      f"\nnext: add interview {slug} --answer <id>=<verdict> --by \"human:<name>\"")
+
     ids = {d["id"] for d in decisions}
     bad_id = [k for k in answers if k not in ids]
     if bad_id:
@@ -5104,6 +7248,15 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
     side_dir.mkdir(parents=True, exist_ok=True)
     n = len(list(side_dir.glob("*.md"))) + 1
     digest = interview_digest(node)
+    # What THIS text had already been answered, before the write below may change it. An answer
+    # survives an edit the interview itself made: confirming a Must's source rewrites its line,
+    # which moves the digest, and reading only the new one would erase every answer given in an
+    # earlier sitting — a human who answers the source question last would be asked everything
+    # again (must-carries-source, E2).
+    prior = {}
+    for st in _interview_stamps(entry.get("fm") or {}):
+        if str(st.get("interview") or "") == digest:
+            prior.update(_answer_map(str(st.get("answers") or "")))
     # Frontmatter, like a run receipt. Without it `doctor` reported `error missing_frontmatter`
     # against a file the engine had just written correctly — the `orphan_receipt` shape one verb
     # over, a notary manufacturing its own conformance error.
@@ -5122,6 +7275,62 @@ def interview(root, cid: str, answers: dict = None, by: str = None) -> tuple:
     # would make each pass clobber the one before it when `interview_gap` folds them, so a second
     # sitting would erase the first instead of completing it. The sidecar still lists every
     # decision — that is the human-readable record; this is the machine-readable delta.
+    # The one write the interview makes to the node's TEXT, and only on `confirm`: the human just
+    # said "I told you this", and `interview` is the one source the engine WITNESSED. `defer` and
+    # `correct` write nothing — a deferred question is unanswered and a correction is cleared by
+    # editing the item, which moves the digest and re-opens the pass.
+    confirmed = [d for d in decisions if d["of"] == "must" and answers.get(d["id"]) == "confirm"]
+    if confirmed:
+        # `keepends`, like the other thirteen body writers: re-joining with `"\n".join` converted
+        # every line boundary Python knows but `\n` does not preserve — U+2028, U+2029, U+0085, VT,
+        # FF — anywhere in the body, by a verb that touched ONE line (E45, E46's class, E10).
+        lines, changed = node["body"].splitlines(keepends=True), False
+        # The reader's OWN view, not a looser one: `_musts_without_source` reads `_authored_rules`,
+        # which blanks fences AND every line outside the authored sections. Reading `live_lines`
+        # here — fence-blind only — let an unfenced copy in `## CARD`, the section before `## RULES`
+        # in every live node, take the tail while the authored Must stayed bare (E9). One fact, one
+        # reader: the writer asks the reader where the line is.
+        live = _rules_view(node["body"])
+        # The reader's OWN candidate set, by index — not a third pattern spelled out here. See
+        # `must_lines`: the writer asking a looser question than the gate is what made a confirmed
+        # answer write nothing at all.
+        authored = set(must_lines(node["body"]))
+        for d in confirmed:
+            for i in sorted(authored):
+                if str(live[i]).strip() != d["text"]:
+                    continue
+                tail = must_source(d["text"])
+                if tail and tail["fails_on"]:
+                    # The tail is JOINED, never replaced: a Must that named its falsifier keeps it,
+                    # and `from:` reads first because that is the order of the sentence (A10). The
+                    # replacement is a FUNCTION, not a template: `re.sub` reads `\d`, `\1` and
+                    # `\g<0>` in a template string as grammar, so the human's own words were
+                    # resolved rather than recorded — `\d` raised out of the verb, `\n` split the
+                    # frozen Must in two — which is exactly what R:SOURCEJUDGED forbids (E7).
+                    repl = f"(from: interview · fails-on: {tail['fails_on']})"
+                    fixed = MUST_SOURCE.sub(lambda _m, r=repl: r, str(lines[i]).rstrip(), count=1)
+                else:
+                    fixed = str(lines[i]).rstrip() + " (from: interview)"
+                raw = str(lines[i])
+                lines[i], changed = fixed + raw[len(raw.rstrip("\r\n\x0b\x0c\x1c\x1d\x1e\u0085\u2028\u2029")):], True
+                # A line is written ONCE. `live` is the pre-write snapshot, so two Musts sharing an
+                # id and a text both matched the first index: the line took two tails and the
+                # second Must stayed bare, sealed that way by the freeze (E12).
+                authored.discard(i)
+                break
+        body = "".join(lines)
+        if changed:
+            write(entry["path"], f"---\n{node['raw']}\n---\n{body}")
+            node = read(entry["path"], "T2")
+            # The stamp seals the text the interview PRODUCED, and carries forward what this same
+            # conversation had already settled — ids that no longer open a decision simply drop.
+            digest = interview_digest(node)
+            still = {d["id"] for d in _open_decisions(node)}
+            answers = {**{k: v for k, v in prior.items() if k in still}, **answers}
+            decisions = _open_decisions(node) + [d for d in decisions if d["id"] not in still]
+    # Built AFTER the rewrite above, so the stamp packs what the conversation now holds against the
+    # digest the same block just recomputed — built before it, the pack named one answer and the
+    # digest named the other text, and every earlier sitting was erased.
     packed = "|".join(f"{d['id']}={answers[d['id']]}" for d in decisions if d["id"] in answers)
     node_w, err = _transition(root, cid, appends=[
         ("verified", f'{{ by: "{_oneline(by or "unrecorded")}", at: {_today()}, act: interview, '
@@ -5161,9 +7370,15 @@ def sealed_binding(fm: dict) -> str:
 
 
 def rules_of(node: dict) -> list:
-    """Every Must and Reject id declared in the node's RULES section."""
-    body = read(node["path"], "T2")["body"]
-    return [m.group(1) for m in (RULE_ID.match(l) for l in _section_of(body, "RULES").splitlines()) if m]
+    """Every Must and Reject id AUTHORED in the node's RULES section.
+
+    Through `_authored_rules`, the same reader `fold`'s prevention rung uses: an id quoted inside a
+    fence or under a heading a blockquote opened is an example, and the gate demanding coverage of
+    an example while `fold` called the same id unauthored was two readers of one fact — the defect
+    class this milestone keeps finding (sixteenth T2 refute, E30).
+    """
+    section = authored_section(read(node["path"], "T2")["body"], "RULES")
+    return [m.group(1) for m in (RULE_ID.match(l) for l in section.splitlines()) if m]
 
 
 def edges_of(node: dict) -> list:
@@ -5172,8 +7387,9 @@ def edges_of(node: dict) -> list:
     An edge is a first-class `covers:` referent (C7): the gate binds it exactly as a Must. A line
     still carrying the scaffold `<placeholder>` is NOT a real edge — a task that never enumerated
     an edge, or left the scaffold untouched, owes no edge coverage (backward compatible). Backticked
-    spans are code, not placeholders (same exclusion `placeholders_in` makes)."""
-    body = read(node["path"], "T2")["body"]
+    spans are code, not placeholders (same exclusion `placeholders_in` makes). Read through
+    `_authored_rules`, the ONE reader of "is this id authored" the fold rung uses too (E30)."""
+    body = _authored_rules(read(node["path"], "T2")["body"])
     out = []
     for line in _section_of(body, "EDGES").splitlines():
         m = RULE_ID.match(line)
@@ -5663,6 +7879,12 @@ def brief(root, cid: str, phase: str = None, for_subagent: bool = False,
         out.append(f'  <subject id="{ident}">')
         out.append(body.rstrip("\n"))
         out.append("  </subject>")
+        obs = observes({"body": body})
+        if obs:
+            out.append("  <observes>")
+            out += [f'    <o id="{o["id"]}" covers="{",".join(o["covers"])}" action="{o["action"]}">'
+                    f'{o["signal"]} · {o["window"]} · {o["threshold"]}</o>' for o in obs]
+            out.append("  </observes>")
         out.append(f"  <constraints>{constraints}</constraints>")
         out.append(f'  <evidence require="{PHASE_EVIDENCE[phase]}"/>')
         for origin, text in quoted:
@@ -5728,6 +7950,9 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
         return None, f"no such node: {cid}\nnext: add status"
     fm = node.get("fm") or {}
     slug = cid.rsplit("/", 1)[-1][:-3]
+    if _old_seal(fm):
+        return None, (f"R:OLDSEAL `{slug}` returned to Direction; the prior freeze cannot enter "
+                      f"Build\nnext: revise the direction, then add freeze {slug}")
     if fm.get("type") != "Task" or not _is_frozen(node):
         return None, (f"brief compiled, not recorded — only a frozen Task records its build "
                       f"entry, and `{slug}` is not one yet"
@@ -5741,6 +7966,9 @@ def brief_stamp(root, cid: str, by: str = "cli") -> tuple:
 
 
 REFUTE_TIERS = ("T1", "T2", "T3")
+# The tiers that can SIGN the refute rung — `REFUTE_TIERS` minus the builder's own read.
+# Derived, not restated: a literal here would not follow if the ladder ever moved.
+SIGNING_TIERS = tuple(t for t in REFUTE_TIERS if t != "T1")
 # The tiers a SESSION can sign for. T0 is nobody — no stamp exists to carry it; T4 is a protected
 # holdout the builder cannot read, which a prompt cannot provide and so a stamp must not claim
 # (verify.md's ladder: "a CI recipe, not shipped"). The engine records the tier as a CLAIM, exactly
@@ -6040,16 +8268,33 @@ def orphans(root, graph: dict = None) -> list:
                   if (node["fm"] or {}).get("type") == "Run" and cid.lstrip("/") not in cited)
 
 
-def latest_receipt(root, cid: str) -> tuple:
-    """`(receipt_dict, cid)` for the newest receipt of a task, or `(None, None)`."""
+def _latest_receipt_where(root, cid: str, floor: bool) -> tuple:
+    """Newest receipt of a task that IS (floor=True) or IS NOT a regression-floor receipt."""
     root = Path(root)
     slug = cid.rsplit("/", 1)[-1][:-3]
     runs = sorted((root / f"tasks/{slug}.d/runs").glob("*.md"),
                   key=lambda p: int(p.stem) if p.stem.isdigit() else 0)
-    if not runs:
-        return None, None
-    fm = read(runs[-1], "T0")["fm"] or {}
-    return fm.get("receipt"), "/" + str(runs[-1].relative_to(root))
+    for p in reversed(runs):
+        fm = read(p, "T0")["fm"] or {}
+        receipt = fm.get("receipt") or {}
+        if bool(receipt.get("floor")) == floor:
+            return fm.get("receipt"), "/" + str(p.relative_to(root))
+    return None, None
+
+
+def latest_receipt(root, cid: str) -> tuple:
+    """`(receipt_dict, cid)` for the newest NARROW receipt of a task, or `(None, None)`.
+
+    A regression-floor receipt (`floor: regression`, regression-floor) is never the gated one:
+    the full suite passed off as the bound narrow run would lose the narrow run's binding behind
+    it (R:FLOORASGATE). `latest_floor_receipt` answers for the floor.
+    """
+    return _latest_receipt_where(root, cid, floor=False)
+
+
+def latest_floor_receipt(root, cid: str) -> tuple:
+    """`(receipt_dict, cid)` for the newest regression-floor receipt, or `(None, None)`."""
+    return _latest_receipt_where(root, cid, floor=True)
 
 
 INTEGRITY_REFUSALS = (
@@ -6071,6 +8316,11 @@ EVIDENCE_REFUSALS = (
     # the refute rung: same class, same argument — signing for an unrefuted green is what
     # RISK-ACCEPTED is for, and HARD-STOP must never get harder to write down.
     "unrefuted",
+    # the floor rung (regression-floor): same class — a host suite never run is what a signed
+    # RISK-ACCEPTED exists to record, and HARD-STOP must never get harder to write down.
+    "floor_unrun",
+    # consumers-go-stale: same class — a consumer of a moved contract can sign for it knowingly.
+    "stale_needs",
 )
 
 
@@ -6124,6 +8374,11 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     graph = scan(root)
     if cid not in graph:
         return refuse(f"no such node: {cid}", "add status")
+    if verdict in CLOSING_VERDICTS and _old_seal((graph[cid].get("fm") or {})):
+        return refuse(f'R:OLDSEAL `{slug}` returned to Direction; the prior freeze cannot '
+                      f'authorize PASS', f"revise the direction, then add freeze {slug}")
+    if verdict in CLOSING_VERDICTS and (carry_error := _carry_problem(graph, cid, accepted=True)):
+        return refuse(carry_error, f"repair and refreeze {slug}'s `carries:` mapping")
     if verdict != "PASS" and not reason:
         return refuse(f"a {verdict} with no reason is a PASS in disguise",
                       f'add gate {slug} {verdict} --reason "<why>"')
@@ -6136,6 +8391,10 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     sfm = graph[cid]["fm"] or {}
     security_floored = authority_for(graph, cid) == "human"
     closes = verdict == "PASS"      # the ONE place the verdict is compared; refusals go via _binds
+    if (_carry_entries(sfm)[0] or _has_carry_history(sfm)) and security_floored and closes \
+            and not _human_signer(by):
+        return refuse("R:LOWERED_CARRY_AUTHORITY this destination needs its own human gate signer",
+                      f'add gate {slug} PASS --by "human:<name>"')
 
     # R:SECURITYFOLD — a security risk is a HARD-STOP, never a signed acceptance. The floor already
     # puts authority at `human`; this makes the other half structural rather than prose: the finding
@@ -6159,6 +8418,17 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
 
     node_body = lambda n: read(n["path"], "T2")["body"]
     receipt, receipt_cid = latest_receipt(root, cid)
+    if verdict in CLOSING_VERDICTS and sfm.get("type") == "Task" \
+            and sfm.get("kind") != "explore" and _direction_return_index(sfm) >= 0:
+        stamps = [s for s in (sfm.get("verified") or []) if isinstance(s, dict)]
+        active_at = max((i for i, s in enumerate(stamps)
+                         if s.get("act") in ("freeze", "refreeze")), default=-1)
+        current_run = _latest_run_cid(stamps[active_at + 1:])
+        if not receipt_cid or receipt_cid != current_run \
+                or not _brief_entered(stamps, receipt_cid):
+            return refuse("R:OLDSEAL a Direction return requires a new brief and run after "
+                          "the active refreeze before a closing gate",
+                          f"add brief {slug}, then add run {slug} -- <cmd>")
 
     # The sources path (task sources-receipt) — a findings-only explore gates on its cited
     # `## FINDINGS`, not on a run receipt. A recorded receipt keeps the normal path in charge
@@ -6187,7 +8457,10 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
             return refuse("the node still carries template placeholders: " + " · ".join(stubs),
                           f"author {slug}'s RULES and CHECKS, then add gate {slug} PASS")
         body = node["body"]
-        musts = re.findall(r"^-\s*(M\d+)\b", _section_of(body, "RULES"), re.M)
+        # Through the ONE reader of "is this id authored": `rules_of` and `edges_of` already read
+        # here, and this raw findall made the gate demand a finding for an `M9` spelled only inside
+        # a fence while the fold rung called the same id unauthored (E30, twenty-sixth refute E40).
+        musts = re.findall(r"^-\s*(M\d+)\b", _section_of(_authored_rules(body), "RULES"), re.M)
         findings = _section_of(body, "FINDINGS")
         # A finding closes a question only with a REAL ref — `(evidence: )`, the template's
         # `(evidence: <ref>)`, and prose that merely contains the word all stay open.
@@ -6365,13 +8638,14 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           f"add brief {slug} to record the entry, then re-run "
                           f"(add run {slug} -- <cmd>) and add gate {slug} PASS")
 
+    tier_notice = ""                               # refute-tier-floor: set only at a plan floor
     # The refute rung (evidence-over-tests) — a green nobody tried to break is REPORTED, not
     # earned. At a plan-or-higher floor the gate demands a refute stamp citing THIS receipt
     # (R:UNREFUTED) whose outcome is not `refuted` (R:REFUTED). Evidence-class, like `unbriefed`:
     # RISK-ACCEPTED is precisely for signing an unrefuted green knowingly. Quick depth, the
     # process floor and the explore lane are exempt — the rung is aimed at payments, not renames.
     if sealed and _binds("unrefuted", verdict) and _rung_bound(graph, cid, sfm):
-        outcome = _refute_of(sfm.get("verified") or [], receipt_cid)
+        outcome, tier = _refute_of(sfm.get("verified") or [], receipt_cid)
         if outcome is None:
             return refuse("no refute cites this receipt — the green was never read against its "
                           'frozen intent, so it is reported, not earned -> "R:UNREFUTED"',
@@ -6382,6 +8656,78 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
                           '-> "R:REFUTED"',
                           f"fix the build (or refreeze with the edge it exposed), add run {slug} "
                           f"-- <cmd>, then add refute {slug} again")
+        # refute-tier-floor: a green the BUILDER read is a prelude, never the rung's answer
+        # (verify.md's ladder, which the gate had never read). At a human floor a T1 or tier-less
+        # claim is refused; at plan the same state is a notice on the success line, promoted or
+        # dropped on the count (R:NOTICEASREFUSAL). The claim is recorded as handed (R:TIERJUDGED),
+        # and both earlier gaps — no read at all, a read that broke it — answer first (M4).
+        # An ALLOWLIST, not a denylist — `REFUTE_TIERS` minus `T1`, derived from the frozen
+        # constant rather than invented. A denylist sent every value it had not enumerated to the
+        # permissive branch, so `tier: "T1 "` (one trailing space, inside quotes) rendered in the
+        # engine's OWN `## EVIDENCE` view as `tier T1`, drew nothing from `doctor`, and recorded a
+        # human-floor PASS: a ledger attesting `T1` beside a control that read the same field and
+        # said yes. That is not an unverified claim recorded honestly, it is a well-formed stamp
+        # attesting nothing. The sibling law twelve hundred lines up (`sensitivity_floor`,
+        # R:SILENT_FLOOR) already says an unreadable declaration is one the engine cannot honour,
+        # so it floors UP; a control reads the same way. M1's refuse-clause (T1 or no key) and its
+        # pass-clause (T2 or T3) are both satisfied exactly; this only resolves the silence between
+        # them, and it resolves it closed (security lens, gate-security-reviewer).
+        if tier not in SIGNING_TIERS:
+            claim = tier or "no tier"
+            # The reason has to be TRUE of the value it read. `T1` is a prelude; `T4` or `t2` is a
+            # claim the ladder cannot read at all, and telling that author they read their own
+            # green would send them looking for a problem they do not have (A6: the reader is the
+            # builder at 2am, and hard for them is a refusal that names the wrong thing).
+            # The reason states what is true of the value READ, and the FLOOR is named once, by
+            # the site that acts on it. A refusal that says "you read your own green" to someone
+            # who typed `T4` sends them looking for a problem they do not have (A6), and
+            # R:SILENT_FLOOR is floor-independent — the floor scopes the refusal, never the
+            # unreadability. No second dash either: it reads as closing an appositive.
+            why = ("a green read by its own builder is a prelude, never the rung's answer"
+                   if tier in (None, "", "T1") else
+                   "no tier the ladder recognises (T2 is a fresh session, T3 a human), and an "
+                   "unreadable claim is one the engine cannot honour")
+            if authority_for(graph, cid) == "human":
+                return refuse(f"the latest refute of this receipt claims `{claim}` — {why}, and "
+                              f'this floor is human -> "R:SELFREFUTE"',
+                              f'add refute {slug} --by "<name>" --tier T2 --held|--found "<input>" '
+                              f"(a FRESH session, briefed from the frozen node before it reads the "
+                              f"diff), then add gate {slug} PASS")
+            # M2 quotes this notice VERBATIM, so the T1/no-tier branch is the frozen literal and
+            # nothing else: the refusal is free to say more because M1 never quotes it, but a Must
+            # that states a string IS that string. The illegible branch carries the new clause
+            # because M2 does not cover it — the contract is silent there, not contradicted.
+            tier_notice = (f"\nnotice: the refute of this receipt claims `{claim}` — "
+                           + ("a green read by its own builder" if tier in (None, "", "T1") else why)
+                           + "; a human floor refuses this (R:SELFREFUTE)")
+
+    # The floor rung (regression-floor) — a declared host suite that never ran, ran stale or ran
+    # red is not evidence the change left the host standing. Evidence-class like the refute rung
+    # and armed with it; the fix is the PLAN's own command, replayed, never guessed.
+    if sealed and _binds("floor_unrun", verdict) and _rung_bound(graph, cid, sfm):
+        floor = regression_floor(read(graph[cid]["path"], "T2"))
+        if floor and floor["mode"] in ("full", "affected"):
+            fr, fcid = latest_floor_receipt(root, cid)
+            fix = f"add run {slug} --floor -- {floor['cmd']}, then add gate {slug} PASS"
+            if fr is None:
+                return refuse(f"`## PLAN` declares `regression: {floor['mode']}` and the floor was "
+                              'never run -> "R:FLOORUNRUN"', fix)
+            if str(fr.get("exit")) != "0":
+                return refuse(f"the floor run {fcid} FAILED (exit {fr.get('exit')}) — the host did "
+                              'not stand -> "R:FLOORUNRUN"', fix)
+            ok, why = fresh(fr, root.parent)
+            if not ok:
+                return refuse(f"the floor receipt {fcid} is stale — {why} -> \"R:FLOORUNRUN\"", fix)
+
+    # The stale-needs rung (consumers-go-stale, FORMAT §3.5) — a consumer verified against a
+    # contract that has since moved is evidence about the old shape. Evidence-class, armed with
+    # the refute rung; the provider is never touched by what its consumers pinned.
+    if sealed and _binds("stale_needs", verdict) and _rung_bound(graph, cid, sfm):
+        if (stale := stale_needs(graph, cid)):
+            named = ", ".join(f"{t}#gives ({p} → {c})" for t, p, c in stale)
+            return refuse(f"a `#gives` this task froze on has moved — {named} -> \"R:STALENEEDS\"",
+                          f"read the new fragment, add freeze {slug}, add brief {slug}, rebuild, add run {slug} "
+                          f"-- <cmd>, refute, then add gate {slug} PASS")
 
     # Refusal 2 (M2) — a Must proven by nothing is a label (A15). e12's M3, landing.
     reported = {i: "pass" for i in (receipt.get("passed") or [])}
@@ -6420,6 +8766,7 @@ def gate(root, cid: str, verdict: str, by: str, authority: str = None,
     else:
         tail = f"{verdict} recorded; {slug} stays in `{(graph[cid]['fm'] or {}).get('status')}`"
     note = (f"gate {verdict} recorded at authority `{authority}`"
+            + tier_notice
             + f"\n  {freshness}"
             + (f"\n  unbound (reported, not blocking): {', '.join(gaps)}" if gaps else "")
             + f"\n  brief {digest} · receipt {receipt_cid}\n{tail}\nnext: add status")
@@ -6642,11 +8989,16 @@ def doctor(root, graph: dict = None, paths=None) -> list:
     # bundle the verb is already walking: 534KB over 207 nodes here, largest body 21KB.
     _bodies = {}
 
-    def body_of(path) -> str:
+    def node_of(path) -> dict:
         key = str(path)
         if key not in _bodies:                 # `not in`, never `.get() or` — an empty body
-            _bodies[key] = read(path, "T2")["body"]   # is a cached value, not a cache miss (A4)
+            _bodies[key] = read(path, "T2")    # is a cached value, not a cache miss (A4)
         return _bodies[key]
+
+    def body_of(path) -> str:
+        # The memo holds the whole READ, not the body alone: `unreadable_spec` asks about the
+        # frontmatter too, and a second reader of the same file would be a second scan (E44).
+        return node_of(path)["body"]
 
     for rel in strays:
         if rel not in NOT_A_NODE:
@@ -6679,6 +9031,17 @@ def doctor(root, graph: dict = None, paths=None) -> list:
         find("info", "okf_conformance",
              f"declared OKF v{okf_declared} — {len(described)}/{len(specs)} Spec nodes carry "
              f"`description:`", "/index.md")
+
+    # consumers-go-stale (FORMAT §3.5): a consumer that froze on a `#gives` whose digest has since
+    # moved. `warn`, one per (consumer, provider), sorted by consumer so two runs are byte-identical;
+    # a stamp with no pin (pre-3.7) reports nothing.
+    for cid, node in sorted(graph.items()):
+        if (node.get("fm") or {}).get("type") != "Task":
+            continue
+        for provider, pinned, current in stale_needs(graph, cid):
+            find("warn", "needs_stale",
+                 f"{cid} froze on {provider}#gives {pinned}, now {current} — re-read the fragment, "
+                 f"then add freeze {cid.rsplit('/', 1)[-1][:-3]}", cid)
 
     def _target_findings(src, ref, target):
         """Containment first, then §3.3 — the ONE target reader both edge families share.
@@ -6765,6 +9128,16 @@ def doctor(root, graph: dict = None, paths=None) -> list:
     # `warn`, not `error`: a fresh scaffold is unwritten, not broken, and an error would make
     # `init` produce a red bundle. LIFECYCLE_TYPES only — a Persona has no RULES to author, so a
     # finding against one names nothing its author could clear.
+    # The slot's other half: a line the reader SKIPPED is named here, or the slot fails silently
+    # and the author never learns the monitor they wrote is not one. `info` — a malformed observe
+    # breaks nothing; no gate reads an observe at all (R:OBSERVEASGATE).
+    for cid, node in sorted(graph.items()):
+        if (node["fm"] or {}).get("type") != "Task":
+            continue
+        for oid, line in malformed_observes({"body": body_of(node["path"])}):
+            find("info", "observe_malformed",
+                 f"{cid.lstrip('/')}: {oid} is not an observe — the form is `- O<n> covers: <M ids> "
+                 f"· signal <t> · window <t> · threshold <t> · action alert|rollback`: {line[:60]}", cid)
     for cid, node in sorted(graph.items()):
         if (node["fm"] or {}).get("type") not in LIFECYCLE_TYPES:
             continue
@@ -6804,12 +9177,27 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             find("warn", "unauthored_root",
                  f"{cid.lstrip('/')}: still scaffold — {' · '.join(slots[:3])}", cid)
 
+    # Every R:UNREADABLE refusal says "add doctor names it", and doctor named the COUNTER instead
+    # — a way out the engine points at and does not provide (thirtieth T2 refute, E44). Read from
+    # the DIRECTORY, not the graph: a spec whose frontmatter no reader can find is not in the
+    # graph as a Spec at all, which is exactly the state that needs naming.
+    blind_specs = {}
+    for sp in sorted((root / "specs").glob("*.md")):
+        if (blind := unreadable_spec(node_of(sp))):
+            blind_specs[sp.resolve()] = blind
+            find("warn", "unreadable_spec",
+                 f"specs/{sp.stem}: no writer can land a line here — {blind}", f"/specs/{sp.name}")
+
     # The counter is engine-maintained (A1), so a disagreement with the body is a repairable
     # fact, never a human's mistake: `info`, and `--sync` fixes it. An ABSENT key over an EMPTY
-    # body is not drift — it is a bundle that has simply never learned anything (E1).
+    # body is not drift — it is a bundle that has simply never learned anything (E1). A spec no
+    # reader can see is skipped: the drift there is a CONSEQUENCE, and reporting it invited the
+    # repair that erased an escape `fold` had refused (E44).
     for cid, node in sorted(graph.items()):
         if (node["fm"] or {}).get("type") != "Spec":
             continue
+        if Path(node["path"]).resolve() in blind_specs:
+            continue     # its counter cannot be honestly counted; the CAUSE is already reported
         actual = open_delta_count(body_of(node["path"]))
         declared = declared_open_deltas(node["fm"])
         if declared == actual or (declared is None and actual == 0):
@@ -6866,10 +9254,8 @@ def doctor(root, graph: dict = None, paths=None) -> list:
                      f"personas-index/use-when.md routes {entries} personas; "
                      f"personas-teacher/ holds {corpus} — the corpus moved without the index "
                      f"(scripts/build_persona_index.py, then doctor --sync)")
-    # A Persona whose routing key falls outside its closed vocabulary routes NOTHING, and the
-    # roster then takes the generic fallback silently — no refusal, no warning, and nothing in
-    # the receipt recording that an expert was never loaded. Info severity: `doctor` reports,
-    # it never gates (M4). Sorted so the report is diffable run to run (A3).
+    # A term outside its closed vocabulary cannot contribute to fit; another valid term may
+    # still fit. Info severity: `doctor` reports, never gates (M4). Sorted for stable reports.
     routing = []
     for cid in sorted(graph):
         fm = graph[cid]["fm"] or {}
@@ -6880,19 +9266,18 @@ def doctor(root, graph: dict = None, paths=None) -> list:
             raw = fm.get(key)
             if not raw:
                 continue                 # declaring neither key is legitimate (A2)
-            raw = str(raw)
-            if PLACEHOLDER.search(raw):
+            if PLACEHOLDER.search(str(raw)):
                 continue                 # an UNTOUCHED scaffold slot: nobody authored a value
                                          # yet, and a guard must never fire on a missing thing.
                                          # (Per-token `<`-prefix checking missed this: splitting
                                          # `<from the closed taxonomy, comma-separated>` on commas
                                          # leaves interior words carrying no bracket at all.)
-            values = [v.strip() for v in raw.replace(",", " ").split() if v.strip()]
+            values = _lens_terms(raw)  # same scalar/list normalizer as the candidate selector
             bad = [v for v in values if v not in allowed]
             if bad:
                 routing.append(
-                    f"{slug}: `{key}: {', '.join(bad)}` is outside the closed taxonomy — a value "
-                    f"outside it routes nothing, silently. Allowed: {' · '.join(allowed)}")
+                    f"{slug}: `{key}: {', '.join(bad)}` is outside the closed taxonomy — that term "
+                    f"cannot contribute to fit. Allowed: {' · '.join(allowed)}")
     for message in sorted(routing):
         find("info", "persona_routing_key", message)
     for cid, section in evidence_scaffold(root, graph=graph, body_of=body_of):
@@ -6987,8 +9372,16 @@ def doctor_sync(root) -> tuple:
             changed.append(f"{cid.lstrip('/')} CARD `{key}`")
     # A DERIVED count, so recomputing it is exactly what this verb is for — and never
     # R:SYNCAUTHORED: no authored byte moves, only a number whose oracle is the body beneath it.
+    skipped_specs = []
     for path in sorted((root / "specs").glob("*.md")):
         n = read(path, "T2")
+        # The counter's oracle is the body, and a body no reader can see is no oracle: recomputing
+        # from it wrote `open_deltas: 0` over a spec still holding an escape `fold` had refused —
+        # this verb is where the refusals send the author, so it is the one that must not launder
+        # the leak (thirtieth T2 refute, E44). Reported, never repaired, and never a traceback.
+        if (blind := unreadable_spec(n)):
+            skipped_specs.append(f"specs/{path.stem} ({blind})")
+            continue
         actual = open_delta_count(n["body"])
         declared = declared_open_deltas(n["fm"])
         if declared == actual or (declared is None and actual == 0):
@@ -7020,8 +9413,12 @@ def doctor_sync(root) -> tuple:
             n = read(idx, "T2")
             write(idx, f"---\n{set_key(n['raw'], 'tooling_engine', ENGINE)}\n---\n{n['body']}")
         changed.append("tooling engine (re-vendored)")
+    # A spec no writer can land in is SAID, never silently stepped over: this verb is where every
+    # R:UNREADABLE refusal sends the author, so it must say what it did not repair and why (E44).
+    left = ("\n  not repaired (no reader can see the body): " + " · ".join(skipped_specs)
+            if skipped_specs else "")
     if not changed:
-        return None, ("every compiled artifact already matches the nodes\n"
-                       "next: add doctor  (to see what is reported but not repairable)")
-    return True, ("recomputed " + " · ".join(changed) +
+        return None, ("every compiled artifact already matches the nodes" + left +
+                       "\nnext: add doctor  (to see what is reported but not repairable)")
+    return True, ("recomputed " + " · ".join(changed) + left +
                   "\nnext: add doctor  (orphaned receipts and gated claims are never repaired)")

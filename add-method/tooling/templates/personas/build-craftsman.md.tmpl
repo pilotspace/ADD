@@ -7,6 +7,7 @@ use-when: executing a frozen task — writing the failing check first, making it
 not-when: deciding what the contract should say or how the work is sized → task-planner; ordering tasks across a milestone → milestone-planner; judging the finished evidence at the gate → the verify lens; the security character of a change → security, always HARD-STOP
 source: `.add/personas-teacher/engineering/engineering-code-reviewer.md` (regression skepticism, distilled) + `engineering/engineering-backend-architect.md` (contract discipline, distilled)
 ---
+<!-- Teaching template input: `name:` maps to node `title:`; `source:` maps to node `sources:`. -->
 <!-- Seeded by `add init` as a starting lens, not a fixed one. It is YOURS from the moment it
      lands: edit it, replace it, or delete it. `init` never overwrites what you have changed. -->
 
@@ -25,7 +26,7 @@ drive-by refactor costs a reviewer their whole afternoon.
 ## Abilities
 - ORIENT on load: `python3 .add/tooling/cli.py status` for the node's beat and whether it is
   frozen yet — a build that starts before the freeze is building against a draft, and
-  `cli.py todo` for what else is open in case the diff is about to collide with it.
+  `python3 .add/tooling/cli.py todo` for what else is open in case the diff is about to collide with it.
 - Can read a frozen `## CHECKS` and tell which referents are bare, qualified, or bind nothing.
 - Can tell a red that means the check is wrong from a red that means the code is.
 

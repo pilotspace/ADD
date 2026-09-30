@@ -26,7 +26,7 @@ ONCE (`## GROUND`); tasks **project** from it. Take the **lens** with it: the `.
 ## The five sections (all in the node body)
 
 - **`## RULES`** — `Must` (`M<n>`, what it must do) · `Reject` (`R:<CODE>`, what it must refuse).
-  What you were **told**, and only that.
+  What you were **told**: end a Must `(from: <who told you> · fails-on: <the plausible wrong reading a check must fail on>)`, either half alone — `interview` asks for a missing `from:`, `confirm` writes `from: interview`, and `freeze` notices the ids still carrying none.
 - **`## ASSUMPTIONS`** — `A<n> [<dim>] covers: <S ids> · <what the spec does NOT say — and the
   reading you took> -> <cost if wrong>`. **Sweep every `gives:` surface on every dimension** —
   `who · which · when · absent · order · experience` — or retire one with `[<dim>] n/a · <why>`. `freeze`
@@ -69,8 +69,10 @@ ONCE (`## GROUND`); tasks **project** from it. Take the **lens** with it: the `.
   it becomes bindable by `covers:` like any other referent — that is opt-in, never automatic.
 - **`## PLAN`** — the **contract shape** (this becomes the frozen `gives:` — the interface neighbors
   depend on) · the build **strategy** · the `scope:` tokens (the paths this node may touch; also the
-  freshness set) · the regression floor · optionally `port: <the seam acceptance checks exercise>` —
-  unbound, unswept; it exists so an acceptance check is fast by construction, not a browser test.
+  freshness set) · the regression floor — `regression: full | affected · <cmd> · <why>` or `regression:
+  none · <why>`, the host suite beside the bound checks; `freeze` refuses a rung-bound task without it
+  (R:NOFLOOR) · optionally `port: <the seam acceptance checks exercise>`, and the observes lines
+  `- O<n> covers: <M ids> · signal <metric> · window <w> · threshold <t> · action alert|rollback` — the runtime signal that would show that Must broken, rendered in the brief and read by no gate.
 - **`## EDGES`** — `E<n>` — the readable **example**: `E<n> Given <state> · When <action> · Then
   <observable result>`, so a non-technical owner can read it and say *that is what we mean* (RULES are
   the rules, filled EDGES the examples, ASSUMPTIONS the questions — Example Mapping's three columns;
@@ -91,10 +93,9 @@ ONCE (`## GROUND`); tasks **project** from it. Take the **lens** with it: the `.
   `·` with a mode word — `acceptance · property · contract · static · unit · e2e · manual` — the gate
   never reads it; `freeze` names the plan-floor Musts still on one mode (a notice, never a refusal); the router (§ PLAN) says which modes a change kind earns.
 
-`covers:` grammar (FORMAT §6.1): at `quick` depth a referent is `goal` or `G<n>` (nth `gives:`); at
-`standard|deep` it is `M<n>` (a Must), `R:<CODE>` (a Reject), `E<n>` (a filled edge) or `A<n>` (an
-assumption you declared `· probe:`-able). Those six forms are the whole vocabulary the gate
-resolves; a `covers:` naming anything else binds nothing.
+`covers:` grammar (FORMAT §6.1): at `quick` depth a referent is `goal` or `G<n>` (nth `gives:`); at `standard|deep`
+it is `M<n>` (a Must), `R:<CODE>` (a Reject), `E<n>` (a filled edge) or `A<n>` (an assumption you declared
+`· probe:`-able). Those six forms are the whole vocabulary the gate resolves; anything else binds nothing.
 
 ## The evidence router — modes by change kind × computed floor
 
@@ -113,19 +114,17 @@ Preferred, not enforced — the floor still computes from sensitivity; record a 
 
 ## Run red — for the right reason
 
-Author the checks and run them: they MUST fail, and fail because the behavior is absent, not because a
-name is misspelled or an import is missing. A green check before any build is a check that proves
-nothing. (At `quick` depth one call cannot produce a prior-red receipt; it records `red_first: unproven`
-rather than claiming evidence it lacks.) Red proves the runner and fixture detect an ABSENT behavior; it
-never proves the reading of the rule is right — when one session wrote rule, check and code, all three
-can share a misunderstanding. The oracle is proven at `add interview` and the freeze, or at Verify by a
-session that did not build.
+Author the checks and run them: they MUST fail, and fail because the behavior is absent, not because a name
+is misspelled or an import is missing. A green check before any build is a check that proves nothing. (At
+`quick` depth one call cannot produce a prior-red receipt; it records `red_first: unproven` rather than
+claiming evidence it lacks.) Red proves the runner and fixture detect an ABSENT behavior; it never proves the
+reading of the rule is right — when one session wrote rule, check and code, all three can share a
+misunderstanding. The oracle is proven at `add interview` and the freeze, or at Verify by a session that did not build.
 
 ## Get the working prompt from the graph
 
-`add brief <slug>` compiles the beat's XML prompt — the node's body, T1 cards of its `depends_on`, the
-frozen `#gives` fragments it `needs:`, the five specs' *Decisions that bind*. Refs resolve **at brief
-time**, so a spec edit re-scopes every future prompt. Never copy spec prose into a node.
+`add brief <slug>` compiles the beat's XML prompt — the node's body, T1 cards of its `depends_on`, the frozen
+`#gives` fragments it `needs:`, the five specs' *Decisions that bind*. Refs resolve **at brief time**, so a spec edit re-scopes every future prompt. Never copy spec prose into a node.
 
 ## Author the contract edges yourself
 
@@ -168,5 +167,5 @@ Reword an interviewed assumption or edge and the interview goes stale; edit a Mu
 
 ## When Direction reveals a gap
 
-If drafting the checks exposes a missing rule, that is the method working — fold it into RULES and re-derive
-forward. Backward correction is always allowed; forward-skipping (building before red) is forbidden. → `phases/build.md`.
+If drafting the checks exposes a missing rule, that is the method working — fold it into RULES and re-derive forward.
+Backward correction is always allowed; forward-skipping (building before red) is forbidden. → `phases/build.md`.

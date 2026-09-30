@@ -56,7 +56,7 @@ green. Full walkthrough: the [10-minute Quickstart](./GETTING-STARTED.md).
 - ✅ **Stop babysitting the build** — you approve once, at the frozen contract; from there the agent drives Direction → Build → Verify and only comes back when it matters.
 - 🔬 **Know it's correct without reading every line** — trust comes from your pre-declared checks passing on a fresh receipt *and* a session that did not build it trying to break the green; at a plan-or-human floor the gate refuses a PASS nobody tried to refute. Never a diff that merely *looks* right; the contract you approved cannot be edited under a build without the change appearing in the record.
 - 🎯 **Evidence, not test count** — every binding rule is named by a check written to fail on the most plausible wrong implementation; acceptance checks through a port are the default for code, and property, contract and mutation checkers ride the same receipt. The freeze names any rule still resting on one kind of evidence.
-- 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 28-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
+- 💸 **Pay ceremony only where it buys something** — most changes take the direct lane and never create a node at all; when one does, a thin 30-verb kernel and a 3-call walk carry it. What you get for the ceremony is concrete: a frozen contract the agent cannot edit, a run receipt bound to the checks it names, and a gate that refuses rather than waves through.
 - 🔒 **Never ship a security hole on autopilot** — any security finding is a hard stop with you in the loop, in every mode.
 - 🧠 **The method adapts to *your* codebase** — a project-owned persona proposes each task's approach, the freeze ratifies it, outcomes are recorded, and lessons land on the spec they belong to.
 - 🙋 **"Who has to live with this?" is a question it cannot skip** — every surface is swept for who *receives* the output and what would make it hard for them, alongside the five correctness dimensions; `freeze` refuses until it is answered or explicitly retired.
@@ -179,7 +179,7 @@ This installs:
 |------|------|
 | `.claude/skills/add/` | the `add` skill Claude loads — the loop itself, plus its on-demand references and the `phases/` set |
 | `.claude/agents/` | the advisor and worker subagents the skill dispatches |
-| `.add/tooling/cli.py` | the notary engine's CLI — 28 verbs (Python, stdlib only) |
+| `.add/tooling/cli.py` | the notary engine's CLI — 30 verbs (Python, stdlib only) |
 | `.add/tooling/add.py` | the engine module the CLI dispatches into (a library, not a command) |
 | `.add/personas-teacher/` | the vendored teacher corpus personas are distilled from (off-build reading, never runtime) |
 | `.add/personas-index/` | the generated routing index — which persona to reach for, and when |

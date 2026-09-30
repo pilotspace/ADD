@@ -10,9 +10,9 @@ Exit codes: 0 success · 1 an engine refusal (the notary declined to manufacture
 record) · 2 a usage error (argparse). The dispatch judges nothing; the engine does.
 
 Every verb the skill refers to is wired to a real engine function:
-    init · status · new · brief · freeze · run · gate · done · learn · milestone-done ·
+    init · status · new · brief · freeze · repair · run · gate · done · learn · milestone-done ·
     deltas · fold · reopen · milestone-archive · doctor · wave · join · advise · locate · todo ·
-    search · show · refute
+    search · show · refute · release
 (The anti-seam test in tests/engine/test_cli.py enforces advertised == wired — no phantom verbs.)
 """
 import argparse
@@ -81,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--milestone")
     s.add_argument("--scope", action="append",
                    help="paths — repeat the flag and/or comma-separate; occurrences append")
+    s.add_argument("--supersedes", metavar="REF", help="the closed node this one succeeds — a slug or a cid (R:PHANTOMPREDECESSOR)")
 
     s = sub.add_parser("brief", help="the composed XML prompt for the active beat")
     s.add_argument("ref")
@@ -107,12 +108,20 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--note", default="")
     s.add_argument("--by", default="builder")
 
+    s = sub.add_parser("repair", help="route a Build failure under unchanged or reopened direction")
+    s.add_argument("ref")
+    s.add_argument("--kind", required=True, choices=("implementation", "change", "unknown"))
+    s.add_argument("--cause", required=True)
+    s.add_argument("--by", default="builder")
+
     s = sub.add_parser("run", help="execute → a fresh, bound receipt (cmd after --)")
     s.add_argument("ref")
     s.add_argument("--junitxml")
     s.add_argument("--cwd")
     s.add_argument("--timeout", type=int, help="ceiling in seconds for the wrapped command "
                    "(default 900 — a build-heavy receipt command needs more)")
+    s.add_argument("--floor", action="store_true",
+                   help="a regression-floor receipt — the host suite the PLAN declares, beside the bound checks")
 
     s = sub.add_parser("gate", help="the verdict: PASS · RISK-ACCEPTED · HARD-STOP")
     s.add_argument("ref")
@@ -131,6 +140,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("lens", help="ddd | sdd | udd | tdd | add (the spec it sharpens)")
     s.add_argument("lesson")
     s.add_argument("--evidence", help="the receipt or decision that caused it")
+    s.add_argument("--escape", action="store_true", help="a production escape — demands --why-missed and --prevention (R:UNCAUSED)")
+    s.add_argument("--why-missed", metavar="TEXT", help="why the bound checks did not catch it")
+    s.add_argument("--prevention", metavar="KIND → REF", help="check|monitor|method|rule → a node address or a repo file; fold refuses an escape whose ref resolves to nothing (R:UNPREVENTED)")
 
     s = sub.add_parser("check", help="mark/unmark a checklist box — records who did it")
     s.add_argument("ref")
@@ -198,6 +210,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--tier", choices=["T1", "T2", "T3"], help="who read the green — T1 the building session · T2 a fresh session · T3 a human (a claim the record can count; absent when not given)")
     s.add_argument("--changed", metavar="WHAT", help="what the probes changed in the build or the spec while the outcome still held — the bench trigger reads this")
 
+    s = sub.add_parser("release", help="bind a tag's tree to the receipts that verified it — appends act: release to a done milestone after read-only git proves the tree holds every gated scope blob (R:UNANCHORED otherwise); the engine never tags, publishes or deploys")
+    s.add_argument("tag", help="the tag (any git tree-ish) the human already cut")
+    s.add_argument("--milestone", action="append", required=True, metavar="M", help="a done milestone to stamp (repeatable)")
+    s.add_argument("--by", required=True, help="who records the release")
+    s.add_argument("--artifact", metavar="NAME@DIGEST", help="recorded verbatim, never verified")
+    s.add_argument("--build", metavar="REF", help="the build/pipeline run that produced the artifact — recorded verbatim, never verified")
+
     s = sub.add_parser("locate", help="reverse lookup — which node's scope owns a path (read-only)")
     s.add_argument("path", help="the file or directory path to locate")
     s.add_argument("--all", action="store_true", help="list the done owners too, not just a count")
@@ -252,7 +271,8 @@ def dispatch(args, run_cmd) -> int:
         return 0
 
     if args.verb == "new":
-        fields = {k: getattr(args, k) for k in ("title", "goal", "depth", "sensitivity", "kind", "milestone")
+        fields = {k: getattr(args, k)
+                  for k in ("title", "goal", "depth", "sensitivity", "kind", "milestone", "supersedes")
                   if getattr(args, k) is not None}
         if args.scope is not None:
             # `action="append"` makes each occurrence a list entry; commas expand in place,
@@ -304,11 +324,17 @@ def dispatch(args, run_cmd) -> int:
         print(note)
         return 0 if node else 1
 
+    if args.verb == "repair":
+        node, note = add.repair(root, _resolve(root, args.ref), kind=args.kind,
+                                cause=args.cause, by=args.by)
+        print(note)
+        return 0 if node else 1
+
     if args.verb == "run":
         cwd = args.cwd or (root.parent if root.name == ".add" else root)
         result = add.run(root, _resolve(root, args.ref), run_cmd,
                          cwd=Path(cwd), timeout=args.timeout or add.RUN_TIMEOUT,
-                         junit=Path(args.junitxml) if args.junitxml else None)
+                         junit=Path(args.junitxml) if args.junitxml else None, floor=args.floor)
         print(result["note"])
         return 0 if result["receipt"]["exit"] == 0 else 1
 
@@ -337,7 +363,8 @@ def dispatch(args, run_cmd) -> int:
 
     if args.verb == "learn":
         lens = DD_LENS.get(args.lens.lower(), args.lens)  # 5-DD vocab → spec filename
-        ok, note = add.learn(root, lens, args.lesson, evidence=args.evidence)
+        ok, note = add.learn(root, lens, args.lesson, evidence=args.evidence, escape=args.escape,
+                             why_missed=args.why_missed, prevention=args.prevention)
         print(note)
         return 0 if ok else 1
 
@@ -423,6 +450,12 @@ def dispatch(args, run_cmd) -> int:
                                  tier=args.tier, changed=args.changed)
         print(note)
         return 0 if stamp else 1
+
+    if args.verb == "release":
+        stamps, note = add.release(root, args.tag, args.milestone, by=args.by,
+                                   artifact=args.artifact, build=args.build)
+        print(note)
+        return 0 if stamps else 1
 
     if args.verb == "locate":
         _hits, note = add.locate(root, args.path, all=args.all)

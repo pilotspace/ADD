@@ -5,8 +5,17 @@ dogfood-and-measure F2/F4: both refutes on evidence-over-tests were T1 with the 
 `--by`, and the one probe that changed the build was stamped `held` because no frozen rule forbade
 it — so the memo's `--found` trigger read 0 where the honest count was 1 of 6. `--tier` and
 `--changed` make both countable from `verified[]` alone. The engine records the CLAIM (a builder
-may still write T2); the gate reads neither key (notary law 3).
+may still write T2); the engine never JUDGES it (notary law 3).
+
+RE-AIMED at `refute-tier-floor` (milestone `loop-that-closes`, human-authority freeze): R:JUDGED's
+check pinned the string `tier` OUT of `_refute_of`, a structural proxy for "the engine does not
+judge the claim". The successor contract makes the gate READ `tier:` — a human floor refuses a `T1`
+or tier-less refute (R:SELFREFUTE) — and reading a key the author wrote is not judging it. The
+proxy could no longer tell the two apart, so the check now binds the property itself: `_refute_of`
+reads `outcome:` and `tier:` and NOTHING else — never `by:`, never `probes:`, never `changed:`,
+never the note. `changed:` stays wholly unread by the gate, which is M2's half of R:JUDGED intact.
 """
+import ast
 import re
 import subprocess
 import sys
@@ -38,6 +47,10 @@ beat: build · next: add run
 - A4 [absent] covers: S1 · n/a · fixture
 - A5 [order] covers: S1 · n/a · fixture
 - A6 [experience] covers: S1 · n/a · fixture
+
+## PLAN
+contract: fixture
+regression: none · fixture
 
 ## CHECKS
 - test_one · covers: M1 · acceptance · the rule
@@ -192,10 +205,18 @@ def test_gate_rung_indifferent_to_tier_and_changed(repo):
                changed="argparse now refuses a negative count")
     ok, note = add.gate(tmp / ".add", cid, "PASS", "plan:t2")
     assert ok, note
+    # Which stamp keys the rung consults, from the PARSER — a string scan cannot tell a key that is
+    # read from one that is merely named in a comment, and this function is now full of both.
     src = Path(add.__file__).read_text(encoding="utf-8")
-    m = re.search(r"def _refute_of\(.*?\n(?=\n\ndef |\n\n# )", src, re.S)
-    assert m, "_refute_of not found"
-    assert "tier" not in m.group(0) and "changed" not in m.group(0), m.group(0)
+    fn = next(n for n in ast.walk(ast.parse(src))
+              if isinstance(n, ast.FunctionDef) and n.name == "_refute_of")
+    read = {c.args[0].value for c in ast.walk(fn) if isinstance(c, ast.Call)
+            and isinstance(c.func, ast.Attribute) and c.func.attr == "get" and c.args
+            and isinstance(c.args[0], ast.Constant) and isinstance(c.args[0].value, str)}
+    read |= {sub.slice.value for sub in ast.walk(fn) if isinstance(sub, ast.Subscript)
+             and isinstance(sub.slice, ast.Constant) and isinstance(sub.slice.value, str)}
+    assert read == {"act", "receipt", "outcome", "tier"}, \
+        f"the rung reads a key beyond the outcome and the tier claim: {sorted(read)}"
 
 
 # --- M4: the prose ------------------------------------------------------------------------------
@@ -205,7 +226,10 @@ def test_format_docs_and_cookbook_name_both_flags():
     fmt = (REPO / "FORMAT.md").read_text(encoding="utf-8")
     sec = fmt.split("### §8.4", 1)[1].split("\n### ", 1)[0]
     assert "tier:" in sec and "changed:" in sec, sec
-    assert re.search(r"reads neither|never reads", sec), sec
+    # Re-aimed with the check above: what §8.4 must still say is that the engine never WEIGHS the
+    # claim, and that `changed:` is nothing the gate reads.
+    assert re.search(r"never weighed|reads neither|never reads", sec), sec
+    assert re.search(r"recorded as handed|records the claim", sec), sec
     d13 = (REPO / "docs" / "13-command-reference.md").read_text(encoding="utf-8")
     row = next(l for l in d13.splitlines() if l.startswith("| `refute`"))
     assert "--tier" in row and "--changed" in row, row
