@@ -77,10 +77,12 @@ def test_run_all_cli_accepts_model(monkeypatch):
     assert got.get("model") == SONNET55
 
 
-def test_lean_and_advisor_arms_load():
-    assert {"add-4-lean", "add-4-advisor"} <= set(ARM_NAMES) and len(ARM_NAMES) == 10
-    lean, adv, base = (load_arm(ARMS_DIR / f"{n}.toml") for n in ("add-4-lean", "add-4-advisor", "add-4"))
-    for arm in (lean, adv):
+def test_lean_arm_loads_and_advisor_arm_retired():
+    # .add/tasks/bench-sonnet-only.md M1: the Haiku-main advisor arm retires after round 6
+    assert "add-4-lean" in ARM_NAMES and "add-4-advisor" not in ARM_NAMES and len(ARM_NAMES) == 9
+    assert not (ARMS_DIR / "add-4-advisor.toml").exists()
+    lean, base = (load_arm(ARMS_DIR / f"{n}.toml") for n in ("add-4-lean", "add-4"))
+    for arm in (lean,):
         assert [s for s in arm.setup_steps if s in base.setup_steps] == base.setup_steps, \
             f"{arm.name} must run every add-4 step, in order"
         cp = [i for i, s in enumerate(arm.setup_steps)
@@ -91,20 +93,29 @@ def test_lean_and_advisor_arms_load():
         assert installed < cp[0] < baseline, \
             f"{arm.name} must overwrite the skill after install and before the workspace's baseline commit"
     assert lean.model == "" and lean.advisor == "", "the lean arm must take the run's --model"
-    assert (adv.model, adv.advisor) == (HAIKU, SONNET55)
 
 
-def test_lean_variant_changes_exactly_three_things():
+def test_lean_variant_changes_exactly_two_things():
+    # .add/tasks/bench-sonnet-only.md M2: Build stays in the main Sonnet session
     shipped, variant = SHIPPED.read_text().splitlines(), VARIANT.read_text().splitlines()
     hunks = [g for g in difflib.SequenceMatcher(None, shipped, variant).get_opcodes() if g[0] != "equal"]
-    assert len(hunks) == 3, f"the variant differs in {len(hunks)} places, not 3"
+    assert len(hunks) == 2, f"the variant differs in {len(hunks)} places, not 2"
     flat = " ".join(" ".join(variant).split())
-    for phrase in ("stub only what the checks import", "grep -H '^covers-risks' .add/personas/*.md",
-                   "model: haiku"):
+    for phrase in ("stub only what the checks import", "grep -H '^covers-risks' .add/personas/*.md"):
         assert phrase in flat, f"the variant does not state {phrase!r}"
         assert phrase not in " ".join(" ".join(shipped).split()), f"{phrase!r} already ships"
+    assert "haiku" not in flat.lower(), "the variant still names a Haiku model"
     for kept in ("freeze(", "falsifier", "at least one per Must and Reject", "the way a real caller sends them"):
         assert kept in flat, f"the variant dropped {kept!r}"
+
+
+def test_every_pinned_arm_model_is_sonnet():
+    # .add/tasks/bench-sonnet-only.md M3: an arm that pins a model pins a Sonnet one
+    arms = [load_arm(ARMS_DIR / f"{n}.toml") for n in ARM_NAMES]
+    assert len(arms) == len(ARM_NAMES) > 0
+    pinned = {a.name: a.model for a in arms if a.model}
+    assert all(m.startswith("claude-sonnet-") for m in pinned.values()), f"non-Sonnet arm models: {pinned}"
+    assert all(not a.advisor for a in arms), "an arm still sets an advisor"
 
 
 def test_no_test_can_launch_the_real_claude():
