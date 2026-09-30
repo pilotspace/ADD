@@ -1,7 +1,7 @@
 ---
 type: Task
 title: close the gaps round 3 found — rule coverage, checked guesses, subagent cost, input robustness
-status: build
+status: done
 kind: docs
 risks: [method-drift, turn-cost, teaching-to-the-meter]
 scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_skill_only.py, add-method/CHANGELOG.md]
@@ -37,4 +37,21 @@ regression: cd add-method && python3 -m pytest -q
 - 2026-09-30 refreeze at refute: probe P1 (`grep -rn -i "subagent\|spawn" SKILL.md references/`) found references/explore.md:19 "give parallel subagents disjoint questions" — contradicts SKILL.md:46 "at most one per beat, in the foreground". R:CONSISTENT named only evidence.md and personas.md, so C2 could not see it. R:CONSISTENT widened to every reference; C2 now walks REFERENCES and flags "parallel subagents". Strengthened, not weakened.
 
 ## EVIDENCE
-<written once, at verify>
+verdict: RISK-ACCEPTED — every sealed check holds; M4 is stated but did not change behaviour (below)
+freeze: 533ca1c4 · refreeze: 84a0563f · head: 1db784d7
+seal: `git diff 84a0563f HEAD -- .add/tasks/close-benchmark-gaps.md add-method/tests/test_skill_only.py` → empty
+check: `cd add-method && python3 -m pytest -q tests/test_skill_only.py` → exit 0, 15 passed (clean tree)
+regression: `cd add-method && python3 -m pytest -q` → exit 0, 136 passed; three skill trees identical; SKILL.md 200 lines
+consumers: S1 is the installed skill tree; the benchmark `add-4` arm installed it at 0ec8b2d5 for six same-day runs, all oracle-green but one (a defect in the generated app, not the skill)
+behaviour (benchmark/PILOT-4v3-2026-09-30.md, n = 3 per workload):
+- M1 every rule covered: 5 of 6 contracts fully covered (round 3: 4 of 6)
+- M2 `found:` 1–3 per task, mean 1.7 (round 3: 0–1)
+- M3 0 subagents in 6 of 6 runs (round 3 amb1: 1 · 0 · 3); add-4 amb1 cost $2.51 → $1.61, partly environment
+- M4 written in 6 of 6 contracts but at field level; a null / number / non-object body still 5xx'd in 4 of 6 add-4 runs (vanilla 3 of 6) — did not transfer
+residue: docs-only change; no security, concurrency or architecture surface. A1 held — the edge suite moved +0.7, so no taught gain to discount
+probes:
+- P1 `grep -rn -i "subagent\|spawn" SKILL.md references/` → references/explore.md:19 "give parallel subagents" contradicted the budget → refreeze 84a0563f, fixed in e19be2b7
+- P2 same grep after the fix → every hit names the budget or a single foreground subagent
+- P3 the six round-4 contracts read against M4 → the rule lands on fields, never on the body itself
+risk accepted: M4's wording does not reach body-level garbage, and naive-vs-aware timestamps escaped one run the same way. Reason: the fix is a new "shape" sweep, which is a contract change, not a patch to this one. Owner: Tin Dang, at review; the proposal is in the pilot report's "What to optimize" §3
+lens: own cold reread (docs work, not security) — caught the explore.md contradiction the sealed check could not see
