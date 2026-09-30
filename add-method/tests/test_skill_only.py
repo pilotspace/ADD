@@ -99,6 +99,38 @@ def test_subagents_are_security_only_one_per_beat_foreground():
         assert not hits, f"{name} still sends work to subagents beyond the budget: {hits}"
 
 
+def _flat(name: str = "SKILL.md") -> str:
+    return " ".join((SKILL / name).read_text(encoding="utf-8").split())
+
+
+def test_direction_is_a_batched_plan():
+    """Round 4: Direction took ~20 messages against "two turns"; 6 of 17 in a traced run probed the
+    environment one command at a time. The skill names the batch the model can actually follow."""
+    turns = " ".join((SKILL / "SKILL.md").read_text(encoding="utf-8").split("## Turns", 1)[1]
+                     .split("\n## ", 1)[0].split())
+    for phrase in ("finds how the tests run", "installing what is missing in that same command",
+                   "as parallel writes in one message"):
+        assert phrase in turns, f"the Turns section does not state {phrase!r}"
+
+
+def test_checks_send_inputs_as_a_real_caller_would():
+    """Round 4: the malformed-input rule landed on fields only — a null or number body still 5xx'd
+    in 4 of 6 runs — and one DELETE crashed on the offset-aware timestamps its tests never sent."""
+    flat = _flat()
+    for phrase in ("the way a real caller sends them", "the body itself", "with and without an offset"):
+        assert phrase in flat, f"CHECKS do not state {phrase!r}"
+
+
+def test_silent_authority_fails_safe_and_leads_the_report():
+    """Round 4: every run in both arms let any caller cancel any booking; ADD wrote that guess down
+    once and never led with it."""
+    flat = _flat()
+    assert "least-privilege reading" in flat, "a silence about who may act takes no side"
+    report = " ".join((SKILL / "SKILL.md").read_text(encoding="utf-8").split("## Report", 1)[1]
+                      .split("\n## ", 1)[0].split())
+    assert "costliest if wrong first" in report, "the report does not lead with the riskiest guess"
+
+
 PERSONA_DIRS = (PKG / "personas", REPO / ".add" / "personas")
 
 
