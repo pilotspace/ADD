@@ -78,6 +78,27 @@ def test_task_template_carries_risks_and_falsifier():
     assert "falsifier:" in block, "the CHECKS line has no falsifier slot"
 
 
+def test_round3_gaps_are_stated():
+    """benchmark/PILOT-4v3-2026-09-29.md + the task-contract audit: two contracts left a Must with
+    no check, `found:` was almost never used, and 5 of 9 apps crashed on a null or number body."""
+    text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    for phrase in ("every RULES id", "check the cheap ones now", "malformed or wrong-typed input"):
+        assert phrase in text, f"SKILL.md does not state {phrase!r}"
+
+
+def test_subagents_are_security_only_one_per_beat_foreground():
+    """One amb1 run spawned three subagents and one wm1 run slept on a wakeup waiting for one; the
+    second reader's measured gain came from security work. SKILL.md and both references agree."""
+    flat = " ".join((SKILL / "SKILL.md").read_text(encoding="utf-8").split())
+    assert "one per beat" in flat and "foreground" in flat, "SKILL.md sets no subagent budget"
+    stale = ("subagent for security · data · architecture", "security · data · architecture: a fresh subagent",
+             "Security · data · architecture: a fresh subagent")
+    for name in ("SKILL.md", "references/evidence.md", "references/personas.md"):
+        body = " ".join((SKILL / name).read_text(encoding="utf-8").split())
+        hits = [s for s in stale if s in body]
+        assert not hits, f"{name} still sends data/architecture work to a subagent: {hits}"
+
+
 PERSONA_DIRS = (PKG / "personas", REPO / ".add" / "personas")
 
 
