@@ -175,7 +175,7 @@ jobs:
           python3 scripts/candidate_artifact_smoke.py --manifest release-candidate/manifest.json --report release-candidate/report.json
           sha256sum release-candidate/python/* release-candidate/npm/* > release-candidate/SHA256SUMS
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()     # a refused smoke still attaches report.json for diagnosis
         with:
           name: add-release-candidate
