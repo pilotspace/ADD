@@ -52,8 +52,8 @@ other decisions. ▶ **[Watch both play on one clock](https://pilotspace.github.
 | 46 s | tests pass, smoke run OK: **done, $0.28** | … |
 | 56–94 s | | **Direction:** writes `.add/tasks/booking-waitlist.md` with 17 rules, 8 ASSUMPTIONS and 19 checks, plus the tests |
 | 97 s | | runs the 19 checks red and seals them: `freeze(booking-waitlist)` |
-| 110–154 s | | **Build:** code until all 19 pass, sealed files untouched; live probe with `curl` |
-| 186 s | | **Verify:** the seal diff is empty, a fresh run gives 19 OK, and the verdict is committed as `verify(booking-waitlist): PASS` |
+| 110–138 s | | **Build:** code until all 19 pass, sealed files untouched, then a build commit |
+| 154–186 s | | **Verify:** a live probe with `curl`, a fresh run (19 OK) and an empty seal diff, then `verify(booking-waitlist): PASS` |
 | 195 s | | **done, $0.63** |
 | **the contradiction** | caught it and chose waitlist-by-default with a `"waitlist": false` opt-out, **in its chat reply** | caught it and made the same choice, **as ASSUMPTION A1 in the task file**, first in the report as the costliest guess |
 | **who may cancel a booking?** | anyone | the owner only (rule `R:OWNER`, sealed check C11) |
