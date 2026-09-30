@@ -87,8 +87,8 @@ A high-risk rule backed by one mode only is allowed — but say so as an ASSUMPT
 
 "Don't look at the hidden tests" is not a boundary. What works without infrastructure:
 
-- **Probes written after the build.** At refute, the counter-lens (a fresh subagent for security ·
-  data · architecture work) reads the task file first, then the diff, and writes 1–3 probes into
+- **Probes written after the build.** At refute, the counter-lens (a fresh subagent for security work;
+  your own cold reread otherwise) reads the task file first, then the diff, and writes 1–3 probes into
   `.add/tasks/<slug>.probes/` (or a scratch test file). The builder wrote the code before the
   probes existed, so it could not overfit them. Run them once; record each command and result under
   `probes:` in EVIDENCE. A probe that fails is a defect.

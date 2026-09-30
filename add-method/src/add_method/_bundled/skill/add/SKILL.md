@@ -34,8 +34,7 @@ No `.add/` yet → create `PROJECT.md` and empty `specs/ milestones/ tasks/` (`r
 
 ## Turns — the real cost
 
-Every turn re-reads the whole context, so cost grows with turns, not with what you write. Keep every
-step; cut the round-trips:
+Every turn re-reads the whole context: cost grows with turns, not words. Keep every step; cut round-trips:
 - **Direction = two turns.** Write the task file, its test files, and stubs of the new code that
   raise `NotImplementedError` (so the first run fails on behavior, not on imports). Then one command
   runs the checks and seals: `<check> ; git add .add/tasks/<slug>.md <tests> && git commit -qm
@@ -44,6 +43,7 @@ step; cut the round-trips:
 - **Build:** write several files per turn; run the checks once per batch, not per file.
 - **Verify = two turns.** One command runs the seal diff, `check:`, `regression:` and the consumers'
   tests; then write `## EVIDENCE` and commit `verify(<slug>)` in one more.
+- **Subagents:** at most one per beat, in the foreground — never pause the session to wait for one.
 
 ## Size the work — you route and go
 
@@ -99,22 +99,22 @@ strategy: <how> · check: <this task's tests> · regression: <the full suite | a
   inferred is `derived:` — a guess in a rule's clothes; the human reads it with the ASSUMPTIONS.
 - **ASSUMPTIONS** — every silence you had to fill, one per line. Sweep each public surface on six
   dims: *who* may (authorization) · *which* cases are in · *when* (boundaries inclusive?) · *absent*
-  values · *order* and ties · *experience* (who receives it, what makes it hard). A guess you can
-  check cheaply, check now: `· found: <answer> (evidence: <file:line | command>)`.
-- **CHECKS** — at least one per Must and Reject. Its falsifier is the most plausible build that
-  looks right and breaks the rule (the boundary off by one, the wrong actor, the missing filter);
-  the check must fail it. Acceptance checks through the public seam first, in their own files. A
-  rule on a `risks:` item also gets a second, independent kind of evidence — a property, a contract,
-  a probe written after the build (`references/evidence.md` picks it). A Must you cannot encode as
-  a check is not understood yet. Non-code work: a check is anything that can fail (`references/format.md`).
+  values · *order* and ties · *experience* (who receives it, what makes it hard). Of your guesses,
+  check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
+- **CHECKS** — at least one per Must and Reject: every RULES id appears on some `covers:` line. Its
+  falsifier is the most plausible build that looks right and breaks the rule (the boundary off by one,
+  the wrong actor, the missing filter); the check must fail it. Acceptance checks through the public
+  seam first, in their own files; a surface that takes input also gets a check that
+  malformed or wrong-typed input is refused, never a crash. A `risks:` rule gets a second, independent kind of
+  evidence (`references/evidence.md`). Non-code work: anything that can fail is a check (`references/format.md`).
 
-Run the checks: **they must fail because the behavior is absent** — not on an import error or a
-typo. A check that is green before the build proves nothing; fix it.
+Run them: **they must fail because the behavior is absent**, not on an import error; a green before
+the build proves nothing.
 
 **Second reader — every floor task, however small.** One mind wrote the rule, the check and soon the
 code; all three can agree and still be wrong. Before sealing, the counter-lens (§ Personas) reads only
 the request and the task file and names the likeliest wrong readings of RULES and ASSUMPTIONS; fix
-what holds. Security · data · architecture: a fresh subagent does it. Otherwise a cold reread will do.
+what holds. Security work: one fresh subagent does it. Anything else: your own cold reread.
 
 **Seal:** set `status: build`; commit the task file and its check files as `freeze(<slug>): <goal>`.
 They are frozen now; `status:` changes again only in the verify commit.
@@ -141,8 +141,8 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
    keyboard and screen-reader reach, an agent's tool use and side effects (`references/evidence.md`).
 5. **Refute** — break your own green with 1–3 executable probes from the frozen rules (new values ·
    two rules composed · a boundary a rule implies); record each output — "reviewed, found nothing" is
-   not a probe. Floor work: the counter-lens writes them, task file before diff (a fresh subagent for
-   security · data · architecture). A probe that breaks it: back to Build, or refreeze the rule.
+   not a probe. Floor work: the counter-lens writes them, task file before diff (a fresh subagent only for
+   security work). A probe that breaks it: back to Build, or refreeze the rule.
 6. **Verdict** — exactly one, in `## EVIDENCE` with freeze sha, head sha, commands, exit codes,
    counts, consumers, residue, probes, and `lens:` (who looked, what they caught; or `none — why`):
    - `PASS` — seal intact, fresh green, consumers green, residue clean. PASS means every declared
