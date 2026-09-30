@@ -16,9 +16,10 @@ Commit `freeze(<slug>): <goal>`. The questions and budget are now sealed.
 
 ## 2 · Investigate
 
-Read code, run experiments, read docs and sources. Read-only research fans out: give parallel
-subagents disjoint questions. Spikes and prototypes are throwaway — a scratch branch or directory,
-labelled as such — never production code.
+Read code, run experiments, read docs and sources. Split the work into disjoint questions and
+answer them in turn; the subagent budget in SKILL.md holds here too — at most one, in the
+foreground, for a question whose reading would flood your context. Spikes and prototypes are
+throwaway — a scratch branch or directory, labelled as such — never production code.
 
 ## 3 · Findings — cited or not a finding
 
