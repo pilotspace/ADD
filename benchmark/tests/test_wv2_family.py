@@ -90,9 +90,10 @@ def test_snapshot_dirs_are_family_keyed(tmp_path):
 
 
 def test_execute_wm_stamps_model(tmp_path):
-    """artifacts.model = the pinned meter literal, stamped at execution time."""
+    """artifacts.model = the model the run resolved to (the pin unless an arm or --model moves it),
+    stamped at execution time."""
     src = (REPO_ROOT / "benchmark" / "runner" / "core.py").read_text()
-    assert '"model": PINNED_MODEL' in src, (
+    assert '"model": run_model' in src and "**model_fields" in src, (
         "execute_wm must stamp the resolved model into every record's artifacts"
     )
     from benchmark.runner.agent import PINNED_MODEL, default_agent_cmd

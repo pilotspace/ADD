@@ -4,7 +4,7 @@ title: the benchmark can run each arm on its own model and advisor, with two lea
 status: build
 kind: feature
 risks: [measurement-validity, compatibility]
-scope: [benchmark/arms/, benchmark/runner/agent.py, benchmark/runner/core.py, benchmark/pilot.py, benchmark/tests/test_arm_models.py, benchmark/tests/test_arms.py, benchmark/tests/conftest.py]
+scope: [benchmark/arms/, benchmark/runner/agent.py, benchmark/runner/core.py, benchmark/pilot.py, benchmark/tests/test_arm_models.py, benchmark/tests/test_arms.py, benchmark/tests/conftest.py, benchmark/tests/test_session_mode.py, benchmark/tests/test_wv2_family.py]
 gives: [S1 `run-all --model <id>` and the arm-toml keys `model` / `advisor`]
 ---
 ## CARD
@@ -48,6 +48,7 @@ regression: python3 -m pytest -q benchmark/tests
 ## LOG
 - 2026-09-30 refreeze in build: the autouse guard in benchmark/tests/conftest.py wraps `build_argv` with a two-argument signature and raises whenever no agent is injected, so C4 — which replaces `_invoke_once` and launches nothing — cannot run. The guard moves to the launch layer (refuse a process whose binary is `claude`), keeping its purpose; scope widens to conftest.py; R:NO_LIVE and C9 make the safety property a sealed check.
 - 2026-09-30 refreeze in build: C6 demanded the arm's first steps equal all four add-4 steps, which puts the variant copy after `workspace_git.py`'s baseline commit — the agent would then see a modified SKILL.md in its working tree, fouling Verify's clean-tree run. C6 now requires every add-4 step in order, with the copy between the install and the baseline commit; M5 says so.
+- 2026-09-30 refreeze in build: two older tests pin the old two-argument `build_argv` shape — test_session_mode's spy takes (prompt, agent_cmd), and test_wv2_family greps core.py for the literal `"model": PINNED_MODEL`. Their intent (every WM starts a fresh conversation; every record stamps the model it ran on) is unchanged: the spy passes new arguments through and the grep looks for the resolved model. Scope widens to both files.
 
 ## EVIDENCE
 <written once, at verify>
