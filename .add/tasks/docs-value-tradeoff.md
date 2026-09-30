@@ -1,7 +1,7 @@
 ---
 type: Task
 title: the READMEs sell ADD by what it gives a user's project against vanilla Claude — the same request as two flows, animated, with round 6's price beside every gain
-status: build
+status: done
 kind: docs
 risks: [overclaim, measurement-validity]
 scope: [README.md, add-method/README.md, add-method/docs/add-vs-vanilla.html, add-method/docs/add-value.html, add-method/docs/README.md, add-method/docs/20-whats-new-in-4.md, add-method/CHANGELOG.md, benchmark/results/2026-09-add-4.0-vs-vanilla.md, add-method/tests/test_docs_tradeoff.py]
@@ -44,4 +44,12 @@ regression: python3 -m pytest -q add-method/tests/test_docs_value.py
 ## LOG
 
 ## EVIDENCE
-<written once, at verify>
+verdict: PASS
+- seal: `git diff dcbd1e62 HEAD -- .add/tasks/docs-value-tradeoff.md add-method/tests/test_docs_tradeoff.py add-method/tests/test_docs_value.py` → empty before this record
+- red: at freeze, 6 of 6 checks failed, each for its falsifier's reason (no round-6 link, no value section, no Sonnet 5.5 quote, no page, ch 20 silent, no links)
+- check: `python3 -m pytest -q add-method/tests/test_docs_tradeoff.py` → 6 passed
+- regression: `python3 -m pytest -q add-method/tests` → 154 passed (includes docs-4-value's 9 and front-door-claim-truth's 9); `python3 -m pytest -q benchmark/tests/test_loop_census.py` → 27 passed
+- build: `mkdocs build --strict` → built, `add-vs-vanilla.html` in the site
+- render: headless Chrome at 1280 px (finished state, light), at 1280 px with `#t=100` (mid-run: vanilla idle at 46 s, ADD in Build), dark scheme at t = 0, and 520 px (no horizontal overflow)
+- residue: the front-door guards pinned a Highlights section the first draft removed; it returned as a skim layer that states the price (1.7–2.1× dollars, 4.0–5.1× minutes, n = 3, 4.0.0) instead of being refrozen away. A reread against the transcript moved the README's Build/Verify split to 138 s / 154 s. The scoreboard dropped an "evidence 0 of 6" row for vanilla: vanilla did state its test count, the scorer only parses ADD's format. The innerHTML-free script builds every node with textContent
+- honesty: the vanilla pane shows its real best (caught the contradiction, same default, choices listed); vanilla's lead on surfacing the contradiction (2 of 3 vs 1 of 3) and the ties on edges and mutation are on every surface that quotes round 6
