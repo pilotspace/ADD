@@ -16,7 +16,7 @@ why: Direction is 56% of ADD's wall time (4.1 of 7.3 min) and about 44% of its t
 - M2 `run-all --model <id>` (and `run_reps` / `run_pilot` `model=`) sets the model for every arm that does not set its own; the resolved model is `arm.model` or the `--model` value or `PINNED_MODEL` (from: request — "run benchmark use sonnet-5-5")
 - M3 the live argv carries `--model <resolved>` and `--effort medium`, plus `--advisor <advisor>` only when the arm sets one (from: research — `--advisor <model>` works headless, probed 2026-09-30)
 - M4 every record's artifacts carry the resolved model, and `advisor` when set, so a comparison can be checked for a model mix-up (from: benchmark/runner/agent.py — the model-pin rationale)
-- M5 two arms load: `add-4-lean` installs the ADD 4.0 skill, then overwrites its SKILL.md with `benchmark/arms/variants/add-4-lean/SKILL.md`; `add-4-advisor` does the same with `model = "claude-haiku-4-5-20251001"` and `advisor = "claude-sonnet-5-5"` (from: request) (derived: the two arms share one variant, so the model switch is the only difference between them)
+- M5 two arms load: `add-4-lean` runs every add-4 setup step and overwrites the installed SKILL.md with `benchmark/arms/variants/add-4-lean/SKILL.md` after the install and before the workspace's baseline commit; `add-4-advisor` does the same with `model = "claude-haiku-4-5-20251001"` and `advisor = "claude-sonnet-5-5"` (from: request) (derived: the two arms share one variant, so the model switch is the only difference between them)
 - M6 the lean variant differs from the shipped skill in exactly three places: stubs only what the checks import; the lead persona is picked by grepping `.add/personas/`, the 65 KB index only grepped when none fits; Build runs in one foreground subagent on `model: haiku`, and the main session verifies (from: PILOT r5 transcripts — 10.7 Direction writes per run, about half stubs; 5 of 6 runs opened the 65 KB index; Build is 53–54% of tokens)
 - R:DEFAULT with no `--model` and no arm model, argv and records are exactly as before — `claude-sonnet-5` (from: benchmark/tests — the model-pin tests)
 - R:NO_LIVE no test launches the real `claude` binary; the guard refuses at process launch, so a test that replaces the launcher itself may drive `execute_wm` without an injected agent (from: benchmark/tests/conftest.py — the 2026-09-28 live-spend incident)
@@ -47,6 +47,7 @@ regression: python3 -m pytest -q benchmark/tests
 
 ## LOG
 - 2026-09-30 refreeze in build: the autouse guard in benchmark/tests/conftest.py wraps `build_argv` with a two-argument signature and raises whenever no agent is injected, so C4 — which replaces `_invoke_once` and launches nothing — cannot run. The guard moves to the launch layer (refuse a process whose binary is `claude`), keeping its purpose; scope widens to conftest.py; R:NO_LIVE and C9 make the safety property a sealed check.
+- 2026-09-30 refreeze in build: C6 demanded the arm's first steps equal all four add-4 steps, which puts the variant copy after `workspace_git.py`'s baseline commit — the agent would then see a modified SKILL.md in its working tree, fouling Verify's clean-tree run. C6 now requires every add-4 step in order, with the copy between the install and the baseline commit; M5 says so.
 
 ## EVIDENCE
 <written once, at verify>

@@ -81,9 +81,15 @@ def test_lean_and_advisor_arms_load():
     assert {"add-4-lean", "add-4-advisor"} <= set(ARM_NAMES) and len(ARM_NAMES) == 10
     lean, adv, base = (load_arm(ARMS_DIR / f"{n}.toml") for n in ("add-4-lean", "add-4-advisor", "add-4"))
     for arm in (lean, adv):
-        assert arm.setup_steps[:len(base.setup_steps)] == base.setup_steps, f"{arm.name} must install ADD 4.0 first"
-        assert any("variants/add-4-lean/SKILL.md" in s and ".claude/skills/add/SKILL.md" in s
-                   for s in arm.setup_steps), f"{arm.name} does not install the lean variant"
+        assert [s for s in arm.setup_steps if s in base.setup_steps] == base.setup_steps, \
+            f"{arm.name} must run every add-4 step, in order"
+        cp = [i for i, s in enumerate(arm.setup_steps)
+              if "variants/add-4-lean/SKILL.md" in s and ".claude/skills/add/SKILL.md" in s]
+        assert cp, f"{arm.name} does not install the lean variant"
+        installed = arm.setup_steps.index(base.setup_steps[2])
+        baseline = arm.setup_steps.index(base.setup_steps[-1])
+        assert installed < cp[0] < baseline, \
+            f"{arm.name} must overwrite the skill after install and before the workspace's baseline commit"
     assert lean.model == "" and lean.advisor == "", "the lean arm must take the run's --model"
     assert (adv.model, adv.advisor) == (HAIKU, SONNET55)
 
