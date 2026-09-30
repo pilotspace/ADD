@@ -1,7 +1,7 @@
 ---
 type: Task
 title: spend where round 4 found value — a Direction that is actually short, checks that send real callers' inputs, guesses that fail safe
-status: build
+status: done
 kind: docs
 risks: [method-drift, turn-cost, teaching-to-the-meter]
 scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_skill_only.py, add-method/CHANGELOG.md, benchmark/PILOT-4v3-2026-09-30-r5.md]
@@ -39,4 +39,21 @@ regression: cd add-method && python3 -m pytest -q
 - C5 covers: R:MIRROR · regression · tests/test_skill_only.py::test_shipped_skill_trees_are_identical · falsifier: only skill/add is edited
 
 ## EVIDENCE
-<written once, at verify>
+verdict: RISK-ACCEPTED — every sealed check holds; M2 changed behaviour, M1 / M3 / M4 barely did (below)
+freeze: b4dbf6d1 · head: 82e4d0a0 (skill) · report: benchmark/PILOT-4v3-2026-09-30-r5.md
+seal: `git diff b4dbf6d1 HEAD -- .add/tasks/value-over-ceremony.md add-method/tests/test_skill_only.py` → empty
+check: `cd add-method && python3 -m pytest -q tests/test_skill_only.py` → exit 0, 18 passed
+regression: `cd add-method && python3 -m pytest -q` → exit 0, 139 passed; three skill trees identical; SKILL.md 200 lines
+consumers: S1 is the installed skill; the benchmark `add-4` arm installed it at 82e4d0a0 for six same-day runs — oracle 1.00 in 6 of 6
+behaviour (round 4 → round 5, add-4, n = 3 per workload):
+- M2 garbage-body 5xx runs 4 of 6 → 0 of 6; offset-aware timestamps in tests 2 of 6 → 4 of 6; the timezone crash did not recur; wm1 edges 19/19 in 3 of 3 — transferred (body half partly taught, A1)
+- M3 cancel owner-only 0 of 3 → 1 of 3; list scope 0 of 3 → 0 of 3 — weak; one run's `found:` cited the silence itself as licence for the permissive reading
+- M4 2 of 6 reports name a biggest / worth-a-look guess — weak
+- M1 Direction messages wm1 21 → 23, amb1 20 → 14 — did not transfer on wm1 (ten files written in ten messages)
+residue: docs-only change; no security, concurrency or architecture surface. A2 held — the ambiguity gain is 1 item in 1 run, the rule working as meant
+probes:
+- P1 trace of a round-5 wm1 Direction (`direction_trace.py`) → 23 messages: 5 environment probes one command at a time, 10 single-file writes → M1's prose does not reach tool batching
+- P2 `grep -n "\[who\]" .add/tasks/*.md` over the three amb1 contracts → one least-privilege reading with a 403 check; two permissive, one justified by `found: request text never mentions authorization`
+- P3 the halted vanilla amb1 run → 2 turns, "rule 1 and rule 2 contradict", no code; ADD halted in 0 of 13 amb1 runs on disk
+risk accepted: M1, M3 and M4 are stated but mostly not followed. Reason: prose that advises (how to guess, how to order, how to batch) moves behaviour less than an artifact the model must write; the fix is to turn M3 into a Reject rule with a wrong-actor check, which is a new contract. Owner: Tin Dang, at review
+lens: own cold reread (docs work, not security) — named the prose-vs-artifact pattern from P1 and P2
