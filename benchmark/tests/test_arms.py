@@ -16,8 +16,9 @@ def test_all_arms_validate_with_fairness_parity():
     # v2-wv1-longitudinal M5 (@v2): add-main joins as the main-branch control arm
     assert "add-main" in ARM_NAMES
     arms = [load_arm(ARMS_DIR / f"{name}.toml") for name in ARM_NAMES]
-    # add-3x / add-4: the ADD 3.7.0-vs-4.0 head-to-head pilot arms
-    assert len(arms) == 8
+    # add-3x / add-4: the ADD 3.7.0-vs-4.0 head-to-head pilot arms; add-4-lean: the two-edit
+    # Sonnet-only skill variant (.add/tasks/bench-sonnet-only.md)
+    assert len(arms) == 9
     fairness = {(a.same_model, a.token_ceiling, a.turn_ceiling) for a in arms}
     assert len(fairness) == 1, f"fairness fields diverge across arms: {fairness}"
     for a in arms:

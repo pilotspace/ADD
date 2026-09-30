@@ -17,7 +17,8 @@ from benchmark.schema.run_record import BenchError
 # add-4 / add-3x: the ADD 4.0 (this worktree, skill-only) vs ADD 3.7.0 (pinned engine)
 # head-to-head. `add` stays listed so its archived records still score and report, but
 # it is RETIRED (`retired =` in add.toml): run paths refuse it before any workspace.
-ARM_NAMES = ("add", "add-main", "add-3x", "add-4", "vanilla", "plan-mode", "gsd", "spec-kit")
+ARM_NAMES = ("add", "add-main", "add-3x", "add-4", "add-4-lean", "vanilla", "plan-mode",
+             "gsd", "spec-kit")
 PIN_REQUIRED_ARMS = frozenset({"gsd", "spec-kit"})
 REQUIRED_KEYS = ("name", "setup_steps", "prompt_wrapper", "pin")
 REQUIRED_FAIRNESS_KEYS = ("same_model", "token_ceiling", "turn_ceiling")
@@ -35,6 +36,10 @@ class Arm:
     # OPTIONAL. Non-empty = the arm may no longer be RUN (it still loads, scores and
     # reports); the text says why and which arm replaces it. See `refuse_retired`.
     retired: str = ""
+    # OPTIONAL. The main model this arm runs on, and the advisor it may consult (`--advisor`);
+    # empty `model` = the run's `--model`, else the pinned meter model (runner/agent.py).
+    model: str = ""
+    advisor: str = ""
 
 
 def refuse_retired(arm: Arm) -> None:
@@ -79,4 +84,6 @@ def load_arm(path: pathlib.Path) -> Arm:
         token_ceiling=int(data["token_ceiling"]),
         turn_ceiling=int(data["turn_ceiling"]),
         retired=str(data.get("retired", "")),
+        model=str(data.get("model", "")),
+        advisor=str(data.get("advisor", "")),
     )

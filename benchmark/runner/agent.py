@@ -13,7 +13,12 @@ from typing import Sequence
 PINNED_MODEL = "claude-sonnet-5"
 
 
-def default_agent_cmd(prompt: str) -> list[str]:
+def resolve_model(arm_model: str, run_model: str | None) -> str:
+    """The model one arm runs on: its own `model`, else the run's `--model`, else the pin."""
+    return arm_model or run_model or PINNED_MODEL
+
+
+def default_agent_cmd(prompt: str, model: str = PINNED_MODEL, advisor: str = "") -> list[str]:
     """The real `claude -p` invocation, pinned by the 2026-07-07 live spike:
     `--output-format stream-json` gives the per-event transcript this runner
     parses for tokens/cost/time_to_first_edit.
@@ -36,17 +41,23 @@ def default_agent_cmd(prompt: str) -> list[str]:
     operator's session defaults to at run time — live proof 2026-07-09 caught the
     same add WM1 running on opus-4-8 (single, $5.62) vs fable-5 (multi-rep,
     $8.71-11.02), same work at ~2x cost, invalidating every cross-run cost/turn
-    comparison. Sonnet+medium is the fixed, model-comparable meter for all arms."""
+    comparison. Sonnet+medium is the fixed, model-comparable meter for all arms.
+
+    A run may move every arm to another model (`run-all --model`), and an arm may pin its own
+    model and an advisor (`--advisor`, consulted by the main model at decision points); the
+    resolved model is stamped into every record, so a comparison can be checked for a mix-up."""
     return [
         "claude", "-p", prompt,
-        "--model", PINNED_MODEL, "--effort", "medium",
+        "--model", model, "--effort", "medium",
+        *(["--advisor", advisor] if advisor else []),
         "--output-format", "stream-json", "--verbose",
         "--disable-slash-commands", "--strict-mcp-config",
         "--dangerously-skip-permissions",
     ]
 
 
-def build_argv(prompt: str, agent_cmd: Sequence[str] | None) -> list[str]:
+def build_argv(prompt: str, agent_cmd: Sequence[str] | None, model: str = PINNED_MODEL,
+               advisor: str = "") -> list[str]:
     """Resolve the actual argv for one attempt: an injected fake-agent argv
     gets the prompt appended as its final positional arg; absent an
     injection, fall back to the real `claude -p` argv. EVERY milestone gets a
@@ -55,4 +66,4 @@ def build_argv(prompt: str, agent_cmd: Sequence[str] | None) -> list[str]:
     conversation, so the on-disk board is the only cross-milestone carrier."""
     if agent_cmd:
         return [*agent_cmd, prompt]
-    return default_agent_cmd(prompt)
+    return default_agent_cmd(prompt, model, advisor)

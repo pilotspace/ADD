@@ -68,8 +68,8 @@ class TestArgvNeverContinues:
         seen: list[list[str]] = []
         real = core.build_argv
 
-        def spy(prompt, agent_cmd):
-            argv = real(prompt, agent_cmd)
+        def spy(prompt, agent_cmd, *args, **kwargs):
+            argv = real(prompt, agent_cmd, *args, **kwargs)
             seen.append(argv)
             return argv
 

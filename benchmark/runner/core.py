@@ -22,7 +22,7 @@ from typing import Sequence
 from benchmark.arms.loader import Arm
 from benchmark.check_isolation import find_leaks
 from benchmark.check_isolation import main as check_isolation_main
-from benchmark.runner.agent import PINNED_MODEL, build_argv
+from benchmark.runner.agent import PINNED_MODEL, build_argv, resolve_model
 from benchmark.runner.pin import REPO_PATH_PINNED_ARMS, resolve_pin
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, write_record_atomic
 from benchmark.schema.run_record import RunRecord, validate
@@ -379,6 +379,7 @@ def execute_wm(
     family: str = "wm",
     session_mode: str = "fresh",
     interrupt: dict | None = None,
+    model: str | None = None,
 ) -> RunRecord:
     """Drive one arm x WM end-to-end and write exactly one RunRecord.
 
@@ -392,6 +393,8 @@ def execute_wm(
     to support. Per-WM records still land at
     runs/<arm>/<family><wm>/record.json."""
     root = pathlib.Path(runs_root) if runs_root is not None else DEFAULT_RUNS_ROOT
+    run_model = resolve_model(arm.model, model)
+    model_fields = {"model": run_model, **({"advisor": arm.advisor} if arm.advisor else {})}
     wm_dir = root / arm.name / f"{family}{wm}"
     continuing = session_mode == "continue"
     if continuing:
@@ -439,7 +442,7 @@ def execute_wm(
                     "transcript": str(transcript_path),
                     "oracle_report": "",
                     "attempts": "; ".join(attempts_log),
-                    "model": PINNED_MODEL,
+                    **model_fields,
                 },
             }
         )
@@ -459,7 +462,7 @@ def execute_wm(
         # conversation with no prior context, so the on-disk state is the only
         # carrier. Anything else would measure the agent's memory rather than
         # what the method left behind for it to pick up (R:context_carryover).
-        argv = build_argv(prompt_text, agent_cmd)
+        argv = build_argv(prompt_text, agent_cmd, run_model, arm.advisor)
         outcome, lines, interrupt_result = _invoke_interruptible(
             argv, cwd=workspace_dir, timeout_s=timeout_s,
             log_path=transcript_path, interrupt=interrupt)
@@ -470,7 +473,7 @@ def execute_wm(
             resume_text = _wrap_prompt(
                 interrupt.get("resume_prompt", RESUME_PROMPT), arm.prompt_wrapper)
             outcome, lines, first_edit_elapsed = _invoke_once(
-                build_argv(resume_text, agent_cmd), cwd=workspace_dir,
+                build_argv(resume_text, agent_cmd, run_model, arm.advisor), cwd=workspace_dir,
                 timeout_s=timeout_s, log_path=transcript_path)
             attempts_log.append(f"resume: {outcome}")
         else:
@@ -479,7 +482,7 @@ def execute_wm(
 
     for attempt_idx in range(max_attempts):
         attempt_count = attempt_idx + 1
-        argv = build_argv(prompt_text, agent_cmd)
+        argv = build_argv(prompt_text, agent_cmd, run_model, arm.advisor)
         outcome, lines, first_edit_elapsed = _invoke_once(
             argv, cwd=workspace_dir, timeout_s=timeout_s, log_path=transcript_path
         )
@@ -504,7 +507,7 @@ def execute_wm(
                     "transcript": str(transcript_path),
                     "oracle_report": "",
                     "attempts": "; ".join(attempts_log),
-                    "model": PINNED_MODEL,
+                    **model_fields,
                 },
             }
         )
@@ -524,7 +527,7 @@ def execute_wm(
                     "transcript": str(transcript_path),
                     "oracle_report": "",
                     "attempts": "; ".join(attempts_log),
-                    "model": PINNED_MODEL,
+                    **model_fields,
                 },
             }
         )
@@ -549,7 +552,7 @@ def execute_wm(
         "attempts": "; ".join(attempts_log),
         # the failed/timeout records always carried it; a DONE record is the one a same-model
         # comparison is actually read from, so it carries it too (None when a fake agent ran)
-        **({"model": PINNED_MODEL} if not agent_cmd else {}),
+        **(model_fields if not agent_cmd else {}),
     }
     if continuing:
         artifacts["session_mode"] = "continue"
