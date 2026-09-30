@@ -35,11 +35,11 @@ No `.add/` yet → create `PROJECT.md` and empty `specs/ milestones/ tasks/` (`r
 ## Turns — the real cost
 
 Every turn re-reads the whole context: cost grows with turns, not words. Keep every step; cut round-trips:
-- **Direction = two turns.** Write the task file, its test files, and stubs of the new code that
-  raise `NotImplementedError` (so the first run fails on behavior, not on imports). Then one command
-  runs the checks and seals: `<check> ; git add .add/tasks/<slug>.md <tests> && git commit -qm
-  "freeze(<slug>): <goal>"`. Green, or red on an import error, means the seal is wrong — fix the
-  checks and `refreeze` before any code.
+- **Direction = three turns.** (1) One command reads what the task touches and finds how the tests run,
+  installing what is missing in that same command. (2) The task file, its tests, and stubs that raise
+  `NotImplementedError` (the first run fails on behavior, not imports), all as parallel writes in one
+  message. (3) one command runs the checks and seals: `<check> ; git add .add/tasks/<slug>.md <tests>
+  && git commit -qm "freeze(<slug>): <goal>"`. Green, or red on an import error: fix it, `refreeze`.
 - **Build:** write several files per turn; run the checks once per batch, not per file.
 - **Verify = two turns.** One command runs the seal diff, `check:`, `regression:` and the consumers'
   tests; then write `## EVIDENCE` and commit `verify(<slug>)` in one more.
@@ -98,26 +98,26 @@ strategy: <how> · check: <this task's tests> · regression: <the full suite | a
 - **RULES** — what you were told or what code and specs require, with its source. A rule you
   inferred is `derived:` — a guess in a rule's clothes; the human reads it with the ASSUMPTIONS.
 - **ASSUMPTIONS** — every silence you had to fill, one per line. Sweep each public surface on six
-  dims: *who* may (authorization) · *which* cases are in · *when* (boundaries inclusive?) · *absent*
+  dims: *who* may act or see (silent → the least-privilege reading, only the owner: widening later is
+  safe, narrowing breaks callers) · *which* cases are in · *when* (boundaries inclusive?) · *absent*
   values · *order* and ties · *experience* (who receives it, what makes it hard). Of your guesses,
   check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
 - **CHECKS** — at least one per Must and Reject: every RULES id appears on some `covers:` line. Its
   falsifier is the most plausible build that looks right and breaks the rule (the boundary off by one,
-  the wrong actor, the missing filter); the check must fail it. Acceptance checks through the public
-  seam first, in their own files; a surface that takes input also gets a check that
-  malformed or wrong-typed input is refused, never a crash. A `risks:` rule gets a second, independent kind of
-  evidence (`references/evidence.md`). Non-code work: anything that can fail is a check (`references/format.md`).
-
-Run them: **they must fail because the behavior is absent**, not on an import error; a green before
-the build proves nothing.
+  the wrong actor, the missing filter); the check must fail it. Acceptance checks go through the public
+  seam first, in their own files, and send inputs the way a real caller sends them, not the way your code
+  expects: each value in every form the spec allows (a timestamp with and without an offset), and
+  malformed or wrong-typed input refused, never a crash — the body itself (not JSON, `null`, a number,
+  a list) as well as each field. A `risks:` rule gets a second, independent kind of evidence
+  (`references/evidence.md`). Non-code work: anything that can fail is a check (`references/format.md`).
 
 **Second reader — every floor task, however small.** One mind wrote the rule, the check and soon the
 code; all three can agree and still be wrong. Before sealing, the counter-lens (§ Personas) reads only
 the request and the task file and names the likeliest wrong readings of RULES and ASSUMPTIONS; fix
 what holds. Security work: one fresh subagent does it. Anything else: your own cold reread.
 
-**Seal:** set `status: build`; commit the task file and its check files as `freeze(<slug>): <goal>`.
-They are frozen now; `status:` changes again only in the verify commit.
+**Seal:** the checks **must fail because the behavior is absent** — a green proves nothing. Then set
+`status: build`, commit task file and checks as `freeze(<slug>): <goal>`; `status:` next changes at verify.
 
 ### 2 · Build — code to green, inside the lines
 
@@ -136,9 +136,8 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
 2. **Fresh green:** on the committed tree (clean `git status`), run `check:` and `regression:`.
 3. **Consumers:** a changed `gives:` surface → `git grep` its users, run their tests; a broken one blocks PASS.
 4. **Residue** — what passing tests cannot show. Read the diff for **security** (authz, injection,
-   secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens —
-   migration and rollback, resource ceilings, privacy in logs, retries and a failing dependency,
-   keyboard and screen-reader reach, an agent's tool use and side effects (`references/evidence.md`).
+   secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens (migration,
+   resource ceilings, privacy, retries, a11y, an agent's side effects: `references/evidence.md`).
 5. **Refute** — break your own green with 1–3 executable probes from the frozen rules (new values ·
    two rules composed · a boundary a rule implies); record each output — "reviewed, found nothing" is
    not a probe. Floor work: the counter-lens writes them, task file before diff (a fresh subagent only for
@@ -174,8 +173,9 @@ RISK-ACCEPTED. A `risks:` task that ships names in PLAN what to watch after:
 ## Report — the human's review
 
 End every session with a summary the human can act on: HARD-STOPs and open risks first, then per
-task — goal, verdict, freeze sha, evidence, and **every ASSUMPTION and `derived:` rule you took**
-(the decisions they did not make). Update PROJECT.md's CARD. Open a PR when the repo uses them.
+task — goal, verdict, freeze sha, evidence, and **every ASSUMPTION and `derived:` rule you took,
+costliest if wrong first** (the decisions they did not make). Update PROJECT.md's CARD. Open a PR
+when the repo uses them.
 
 ## Personas — lenses that pick what must be proven
 
