@@ -9,7 +9,7 @@
 Give each campaign its own, or the second one lands on top of the first.
 
 exit 0 on success; exit 2 with one of the frozen codes on rejection
-(unknown_arm | invalid_arm_recipe | invalid_wm | nothing_to_resume |
+(unknown_arm | invalid_arm_recipe | retired_arm | invalid_wm | nothing_to_resume |
 record_not_found | record_not_done | missing_prior_wm_record |
 unparseable_judge_output | regression_run_failed) — no workspace/record
 created or modified for any exit-2 path (bench-scoring TASK.md §3 CONTRACT).
@@ -20,7 +20,7 @@ import argparse
 import pathlib
 import sys
 
-from benchmark.arms.loader import ARM_NAMES, load_arm
+from benchmark.arms.loader import ARM_NAMES, load_arm, refuse_retired
 from benchmark.pilot import REPO_ROOT, resolve_setup_steps
 from benchmark.report import render_report
 from benchmark.runner.core import execute_wm
@@ -83,6 +83,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         try:
             arm = load_arm(ARMS_DIR / f"{args.arm}.toml")
+            refuse_retired(arm)
         except BenchError as exc:
             print(str(exc), file=sys.stderr)
             return 2
@@ -111,6 +112,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         try:
             arm = load_arm(ARMS_DIR / f"{args.arm}.toml")
+            refuse_retired(arm)
         except BenchError as exc:
             print(str(exc), file=sys.stderr)
             return 2

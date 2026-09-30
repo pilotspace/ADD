@@ -9,7 +9,7 @@ LAYOUT — five tall rounded cards in a single left-to-right row, evenly spaced 
 Card 1 (warm-sand tint #f5f0e8):
   "DDD"  /  "Domain-Driven"  /  "the language & boundaries"  /  "domain model · context map"
 Card 2 (morning-peach tint #faf3ee):
-  "SDD"  /  "Spec-Driven"  /  "the living document"  /  "SPEC.md · acceptance checklist"
+  "SDD"  /  "Spec-Driven"  /  "the living document"  /  "living spec · binding decisions"
 Card 3 (cream-lilac tint #f3f0f8):
   "UDD"  /  "UI/UX-Driven"  /  "users use the interface"  /  "user flows · UI states"
 Card 4 (soft-sage tint #eef5ee):

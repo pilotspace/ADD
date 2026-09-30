@@ -1,0 +1,24 @@
+name = "add-3x"
+# CONTROL ARM for the ADD 4.0 pilot: ADD 3.7.0, the last engine release, installed
+# from a git worktree of release/3.7.0 pinned at the SHA below — NOT from
+# {REPO_ROOT} (that is 4.0, the branch under test). `verify_pin.py` refuses to
+# install if the worktree's HEAD has moved off the pin, because an editable
+# install reads whatever the worktree holds at setup time.
+# Driven by the shared 3.x `add-loop` wrapper (walked against this engine
+# 2026-09-28: new → freeze → brief → run → gate PASS completes headless).
+# The workspace gets its own git repo exactly as add-4 does (3.7's gate refuses a
+# receipt it cannot digest outside a git working tree, and parity demands it).
+setup_steps = [
+  "uv venv .venv --clear",
+  "python3 {REPO_ROOT}/benchmark/arms/verify_pin.py /Users/tindang/workspaces/tind-repo/AIDD-Book/.claude/worktrees/release-3-7 d0af5bb3793e6033394127f0eb7ecd81aca4fd5f",
+  "uv pip install -e /Users/tindang/workspaces/tind-repo/AIDD-Book/.claude/worktrees/release-3-7/add-method --python .venv/bin/python",
+  ".venv/bin/pilotspace-add init --yes --non-interactive --force",
+  "python3 {REPO_ROOT}/benchmark/arms/workspace_git.py",
+]
+prompt_wrapper = "add-loop"
+pin = "d0af5bb3 (release/3.7.0 git worktree @ .claude/worktrees/release-3-7) — ADD 3.7.0"
+
+# Fairness floor (identical across all arms) — MILESTONE.md "Shared decisions".
+same_model = true
+token_ceiling = 200000
+turn_ceiling = 60

@@ -2,19 +2,20 @@
 
 ADD (AI-Driven Development) ships as [`@pilotspace/add`](https://www.npmjs.com/package/@pilotspace/add)
 on npm and [`pilotspace-add`](https://pypi.org/project/pilotspace-add/) on PyPI. This policy
-covers both distributions and the engine/tooling in this repository.
+covers both distributions, their installers, and the skill in this repository.
 
 ## Supported Versions
 
 Security fixes land on the latest minor release line. Older lines are not
-back-patched — upgrade to the latest `1.7.x` to receive fixes.
+back-patched — upgrade to the latest `4.0.x` to receive fixes. 3.7.0 was the last release
+that shipped the Python engine; it receives no further fixes.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.7.x   | :white_check_mark: |
-| < 1.7   | :x:                |
+| 4.0.x   | :white_check_mark: |
+| < 4.0   | :x:                |
 
-To check your installed version: `python3 .add/tooling/add.py status` (project),
+To check your installed version: the `version:` in `.claude/skills/add/SKILL.md` (project),
 `pip show pilotspace-add`, or `npm ls @pilotspace/add`.
 
 ## Reporting a Vulnerability

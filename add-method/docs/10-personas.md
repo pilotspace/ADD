@@ -1,71 +1,66 @@
-# 10 · Personas — the team as lenses
+# 10 · Personas — expert lenses
 
-[← 09 Governance](./09-governance.md) · [Contents](./README.md) · Next: [11 Adoption →](./11-adoption.md)
+[← 09 Governance — verdicts, floors, review after](./09-governance.md) · [Contents](./README.md) · Next: [11 Adoption →](./11-adoption.md)
 
 ---
 
 ## The team is a set of lenses, not a set of chairs
 
-Older methods model a team as a fixed org chart — a product owner here, an architect there, a fixed title accountable for each column. ADD keeps the *judgment* those titles carried and drops the chart. The unit is a **persona**: a project-fit requirements lens the agent adopts so its work matches *this* codebase's standards, not a generic default. A persona is not a job title and not a chat costume — it is a small, versioned file the design, build, and verify surfaces load as **advice**.
+Older methods model a team as an org chart: a product owner here, an architect there. ADD keeps the *judgment* those titles carried and drops the chart. The unit is a **persona** — a small file of distilled expertise the agent loads before a beat, so its work meets *this* project's standards instead of a generic default.
 
-Why lenses instead of roles: an AI agent does not sit in a chair, and the same agent can build behind a payments engineer's caution on one task and a UI designer's contrast rules on the next. What you want to preserve is not *who* attends the meeting but *what judgment gets applied* — the rules a domain refuses to wave through, the smells it suspects, the done-bar it measures against. A persona carries exactly that, and nothing else: tone and the deliverable's shape live in the agent's return contract, so a persona duplicating voice or layout is dead weight.
+An agent does not sit in a chair. The same agent can work behind a payments engineer's caution on one task and a UI designer's contrast rules on the next. What a persona preserves is *what judgment gets applied*: the rules a domain refuses to wave through, the smells it suspects, the done-bar it measures against. Tone and the shape of the deliverable are the agent's own; a persona that duplicates them is dead weight.
 
-The persona loop has three moves — **seed → grow → apply** — and it is opt-in and additive: a project with no personas behaves exactly as before.
+Personas are optional. A project with none runs the loop exactly the same.
 
-## Seed — a corpus, offered at setup
+## What a persona file holds
 
-ADD does not invent personas from nothing; it learns them from a **teacher** — a corpus of worked agent definitions. `add init` vendors this corpus into `.add/personas-teacher/` so a standalone bundle carries its own teacher, read off-build by the AI while drafting and never a runtime dependency. Setup proposes a starter persona or two that fit the domain (from the living domain and system specs); a human confirms. Seeding writes a persona node and nothing else — no behavior changes until a task applies one.
+`.add/personas/<name>.md`, markdown with frontmatter:
 
-A seeded persona is a typed node in the bundle, created like any other:
-
-```
-add new Persona payments-engineer
-```
-
-Don't start blank: distil the nearest teacher entry down to its load-bearing parts — the stance with earned scars (*a payments engineer who treats money as exact*), the non-negotiable rules each with its *why*, the one default requirement, the measurable success metrics — then own it.
-
-## Grow — lenses sharpen over time
-
-Personas are living documents; they improve through the same delta loop the specs use. In a task's observe beat the AI emits a **persona delta** — a one-line, tagged proposal to add or sharpen a rule, a metric, or an anti-pattern, filed `open` with evidence:
-
-```
-- [UDD · open · persona:ui-designer · success-metric] 4.5:1 contrast (evidence: audit)
-```
-
-At close, a **human** folds confirmed deltas into the persona file — the hinted section only, never clobbering what is there. The engine never edits a persona and the AI never self-folds, so a persona gets *more* accurate every milestone instead of drifting. Two habits keep growth honest: run one task with the persona and compare it to the un-lensed result, and prune any rule that fired zero times this milestone.
-
-## Apply — record a lens, on sequential work and parallel
-
-A persona has no effect until a task adopts it. There are two ways in, matching the two ways ADD runs work.
-
-**On a sequential beat**, record the lens with `advise`:
-
-```
-add advise <task> --persona payments-engineer
+```markdown
+---
+type: Persona
+title: Security Reviewer
+flow: verify, advisor                  # the beats it serves
+task-kinds: security, test, infra
+use-when: any change to who may do what and on what evidence
+not-when: work with no authorization surface → build-craftsman
+---
+## Identity
+## Critical Rules
+## Default Requirement
+## Success Metrics
 ```
 
-This stamps the task with `advised_by:` and nothing more. It is a NO-EXEC record: the engine writes down *which lens the agent chose*; it never runs, spawns, or judges the persona. The named persona must be a real seeded node — advising an unseeded name is refused (`R:BADPERSONA`) — and re-advising re-routes the lens rather than stacking a second one.
+- **Identity** — the stance, with earned scars (*a reviewer who has watched a control fail because it read the wrong field*).
+- **Critical Rules** — the non-negotiables, each with its *why*.
+- **Default Requirement** — the one thing it adds to every deliverable.
+- **Success Metrics** — the measurable done-bar.
 
-**On parallel streams**, personas ride the wave surface. `add wave <milestone>` plans a parallel wave from the task DAG and records the streams; each stream runs behind its own frozen contract in a git worktree, under its own lens. `add join` folds the finished stream bundles back — PASS-only, unioning their deltas. The same sensitivity floor that governs a sequential task carries into the wave: a stream whose task touches data, architecture, or security is held to its floor regardless of which lens advised it.
+## Where personas come from
 
-## Who owns the residue — recast as lenses plus the floor
+- **Starter personas.** The installer seeds nine into `.add/personas/` — `task-planner`, `milestone-planner`, `release-planner`, `build-craftsman`, `security-reviewer`, `data-steward`, `interface-designer`, `docs-writer`, `explore-investigator`. They are yours from the moment they land: edit, replace or delete them. A re-install never overwrites one.
+- **The teacher corpus.** `.add/personas-teacher/` holds a vendored library of worked agent definitions across many domains, routed by `.add/personas-index/use-when.md`. It is source material, read while authoring — never loaded at run time.
+- **The `persona-author` skill.** To write a new lens or sharpen one, use the `persona-author` sub-skill that ships with `add`. It distills the nearest teacher entry into the four parts above rather than starting from a blank page.
 
-The old org chart's real value was answering *who owns the dangerous surfaces* — security, architecture, testing. ADD keeps the answer and changes its form: the residue is owned by a **lens plus the sensitivity floor**, not a fixed title.
+## Apply — load the one that fits
 
-- **Security.** The lens that assumes the AI will hardcode a secret and invent a package name — and gates against both from setup. But the ownership is not the lens's to grant: a `security` task's floor is `human`, and a security finding is always `HARD-STOP`. Recording a security lens is, in fact, required — the gate refuses a `PASS` on a security-sensitive node with no lens on record (`R:NOCOVERAGE`). The lens does the seeing; the floor does the stopping.
-- **Architecture.** The lens that treats the frozen contract as a one-way door and reads every change against the project's layering. Its floor is `plan` — a real task node with a human at the freeze — so a change to a load-bearing surface can never be quietly derived.
-- **Testing.** The lens that makes "done" machine-checkable and never lets a check be weakened to pass. It is enforced by the gate's bound-receipt rule, not by a person's vigilance: every rule must trace to a passing check.
+Before Direction or Verify, the agent reads the `use-when:` and `not-when:` lines and loads the persona that fits the task; none fits, it proceeds without one. The lens shapes *how carefully* the beat is done: which surfaces the assumption sweep presses on, which residue it reads hardest, which refute probes it tries.
 
-A sequential task that touches one of these surfaces but carries no lens is surfaced by `add doctor` as `unadvised_sensitive` — a nudge for the data and architecture floors, a `warn` for security — so an unseen sensitive task stays visible.
+▶ For the transfer task, `security-reviewer` fits at Verify: the ownership check on the source account is an authorization boundary, so the residue read starts there.
 
-## The non-negotiable — a persona never lowers a gate
+## Grow — lenses sharpen with use
 
-A persona changes *how carefully* the work is done; it never changes *what passes*.
+Personas improve the way the specs do. When a task teaches something about a domain's judgment — a rule that caught a real defect, one that never fired — the agent records a delta with evidence in `.add/specs/method.md`, and the persona file is edited to match. Two habits keep growth honest: run a representative task with and without the lens and compare, and prune any rule that never fired in a milestone.
 
-- **Security stays `HARD-STOP`**, always, whatever lens advised. A stronger persona is expertise, not permission, and never buys back a security finding.
-- **A high-risk scope still escalates** to the human at its sensitivity floor. The lens advises the freeze; it does not replace it.
-- **The engine stays a NO-EXEC notary.** It records that a lens is present; it never runs the method, spawns an agent, or lets a persona freeze or gate. Selecting, loading, and applying the lens is the orchestrating agent's judgment. Direction, the freeze, the evidence, and the gate stay exactly as strict as before.
+## The non-negotiable — a persona never lowers a rule
+
+A persona is expertise, not permission.
+
+- A **security** finding is a `HARD-STOP` whatever lens was loaded.
+- The floor still holds: security, data and architecture work is at least a Task, whoever is looking.
+- A persona never edits a sealed check, never moves a `gives:` surface, never writes a verdict the evidence does not support.
 
 ---
 
-> **Do:** grow a small corpus of lenses that carry your project's hard-won judgment, and record which lens advised each sensitive beat. **Don't:** treat a persona as a title with authority, or expect a lens to soften a gate — the floor and the gate are unmoved by whoever is looking.
+> **Do:** keep a small set of lenses that carry your project's hard-won judgment, and load them where they fit.
+> **Don't:** treat a persona as a title with authority. The loop is exactly as strict with a lens as without one.

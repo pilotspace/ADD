@@ -27,30 +27,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # The npm installer twin now carries a runtime dep (@clack/prompts) on the
-      # interactive path. The tooling suite spawns `node cli.js` with the
-      # force-interactive seam, so @clack/prompts must be importable for the
-      # clack-cancel branch (test_installer_prompts: the "1" seam) to be exercised
-      # — without it the run degrades to the plain-text fallback (exit 0 != 130).
+      # The installer parity tests spawn the npm twin (`node bin/cli.js`); it has no
+      # runtime dependencies, so node alone is enough.
       - uses: actions/setup-node@v7
         with:
           node-version: '20'
 
-      - name: Install npm deps (clack interactive path)
-        working-directory: add-method
-        run: npm ci
-
       - name: Install pytest
         run: python3 -m pip install --upgrade pytest
 
-      # The repo's own ADD 3.0 bundle tracks its authored nodes and specs, but its vendored
-      # parts (.add/tooling/, .add/personas-teacher/, .add/personas-index/) are gitignored and
-      # regenerable — so a fresh checkout materializes them the way a consumer does.
-      # `init` never overwrites an existing file, so this is idempotent.
-      - name: Materialize the vendored bundle (as `add init` does for consumers)
-        run: python3 add-method/tooling/cli.py init
-
-      # The WHOLE suite — engine, skill, book, packaging and parity. This used to be
+      # The WHOLE suite — skill, installers, book, packaging and parity. This used to be
       # `unittest discover -s tooling`, which collected 8 tests out of 400+: the gate called
       # itself always-green while never running the engine or book suites at all. pytest
       # collects the unittest.TestCase files too, so this is a superset of what ran before.

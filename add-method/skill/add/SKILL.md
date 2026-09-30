@@ -1,175 +1,200 @@
 ---
 name: add
 description: >-
-  ADD (AI-Driven Development) — a lean, state-tracked workflow where the AI writes the code and
-  the human owns direction and verification. Drives every change through one atomic task node:
-  Direction (specify · plan · red tests) → Build → Verify, red/green TDD built in, trusted on a
-  recorded receipt not a plausible diff. Research rides the same rails: "investigate this bug",
-  "evaluate this library", "research X" route to the Explore lane. Use whenever a repo has a
-  `.add/` bundle, or the user says "add", "/add", "start a task", "next phase", "specify this",
-  "ADD method", "AI-driven development", or wants spec/tests-first discipline over vague-prompt
-  coding. Resumes across sessions from the bundle alone — run `add status`, never re-read the repo.
+  Use this skill when the user wants AI work they can trust without watching every step: the AI
+  fixes direction first (rules, assumptions, failing checks sealed in git), builds to green, then
+  proves the result with evidence for the human to review. Trigger when a repo has `.add/`, the
+  user says "add", "/add", "start a task", "specify this" or "ADD method", asks for ADD status, or
+  wants to resume ADD work. Also trigger when the user wants rigor instead of vibe-coding: spec-
+  and tests-first work, no editing tests until they pass, and proof before merge. It also covers
+  evidence-first investigations, where cited findings and what they mean are the deliverable
+  before any code changes. Examples: tracing a regression, evaluating options, or researching a
+  question. It fits features, migrations, security- or data-sensitive changes and multi-task
+  milestones. Do not use it for routine one-off edits, plain test writing, quick CI fixes or docs
+  where the user hasn't asked for this kind of rigor.
 user-invocable: true
 category: workflows
-keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, receipt, gate, task, resume, explore, research]
-argument-hint: "status | <describe the change or goal>"
+keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, evidence, task, explore, persona]
+argument-hint: "<describe the change or goal> | status"
 license: MIT
-metadata: { author: add, version: "3.7.0", format: ABF-1 }
+metadata: { author: add, version: "4.0.0", format: ABF-1 }
 ---
 
-# ADD — direction · evidence · a durable bundle (the agent is the hands)
+# ADD — direction · evidence · a durable bundle
 
-You turn intent into the right-sized task, then drive it. ADD keeps the AI fast *and* safe by
-**fixing direction before the build** (rules, contract, red tests) and **trusting the result on
-passing evidence**, not on a diff that reads plausible. The bundle survives; the code is disposable.
+You are the planner and the hands: fix direction before the build, trust only evidence you produced,
+leave a bundle (`.add/`) the next session and the reviewer can read. Your tools: files, git, tests.
 
-**Engine.** `add` below = `python3 .add/tooling/cli.py` (the ABF-1 CLI) — the vendored copy the
-installer drops in, which stamps `tooling_engine:`; `status --check` warns if it drifts.
-**First run in a fresh project** (no `.add/tooling/` yet): materialize it once with the package
-installer — `pilotspace-add init "<name>"` (pip), `add init "<name>"` / `npx @pilotspace/add init
-"<name>"` (npm), or `node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" init "<name>" --no-skill` as the Claude
-Code plugin — then drive `.add/tooling/cli.py`. State lives in `.add/` — files are the
-database, `graph.json` a rebuildable cache. The engine records; it never runs the method or
-spawns an agent. The full loop surface (`fold · reopen · drop · deltas · search · show · check ·
-milestone-archive`) is wired.
+## Orient — every session, first, in one command
 
-## Always start here (orient — do not skip)
+`cat .add/PROJECT.md; grep -lE '^status: (direction|build|active)' .add/tasks/*.md .add/milestones/*.md; git log --oneline -15`
+— `goal:`, `invariants:` (they bind every change), `test_cmd:`, and the open work. Resume an open
+task at its `status:`; otherwise size the request. Read what the task touches, never the whole repo.
+No `.add/` yet → create `PROJECT.md` and empty `specs/ milestones/ tasks/` (`references/format.md`).
 
-Run **`add status`** first, every session — it is your resume point, read from the bundle, not the
-repo. Then branch:
+## Turns — the real cost
 
-- **No `.add/` yet** → `add init --profile <code|doc> "<name>"` — those two ship, and `init`
-  refuses any other name rather than guess. Non-code domain? Take `doc`, then re-author its lenses
-  (`domains.md`). Offer to seed starter personas (`seed.md`, opt-in), then size it (Intake).
-- **A task is active** (`status` not `done`) → `add show <slug>` — the node whole, its edges — and
-  work the beat `add status` names next. The beat is **derived from the node's stamps**, not the
-  `status` field — which stays `direction` until close: unfrozen → author + freeze; frozen with no
-  green receipt → build; a fresh green receipt → verify (loop below).
-- **No active task** → size the request first (Intake), then create scope.
+Every turn re-reads the whole context: cost grows with turns, not words. Keep every step; cut round-trips:
+- **Direction = three turns.** (1) One command reads what the task touches and finds how the tests run,
+  installing what is missing in that same command. (2) The task file, its tests, and stubs that raise
+  `NotImplementedError` (the first run fails on behavior, not imports), all as parallel writes in one
+  message. (3) one command runs the checks and seals: `<check> ; git add .add/tasks/<slug>.md <tests>
+  && git commit -qm "freeze(<slug>): <goal>"`. Green, or red on an import error: fix it, `refreeze`.
+- **Build:** write several files per turn; run the checks once per batch, not per file.
+- **Verify = two turns.** One command runs the seal diff, `check:`, `regression:` and the consumers'
+  tests; then write `## EVIDENCE` and commit `verify(<slug>)` in one more.
+- **Subagents:** at most one per beat, in the foreground — never pause the session to wait for one.
 
-## Intake — size before you create scope (`intake.md`)
+## Size the work — you route and go
 
-Read the request into a task shape, then pick the **lane** (you route; the human vetoes):
+| the request | lane | what persists |
+|---|---|---|
+| mechanical, or a small behavior: ≤3 adjacent files, one sitting, no unknowns | **Quick** | a red→green test + one commit |
+| one behavior worth a written contract | **Task** | `.add/tasks/<slug>.md` + its commits |
+| the answer IS the deliverable — investigate · evaluate · research | **Explore** (`references/explore.md`) | the task's `## FINDINGS` |
+| a theme, or more than one task | **Milestone** | `.add/milestones/<slug>.md` + its tasks |
 
-- **Quick** — floor first (security · data · architecture, a consumed `gives:`, frozen scope → a Task);
-  else ≤3 adjacent files, one-sitting diff, zero unknowns — small new behavior fits. Route and go, no
-  node: inline card → red→green → `invariants:` → commit + exactly one `add learn` line. Medium → Task
-  `--depth quick`; large → `standard|deep` or a Milestone. Ceremony falls with size; review never does.
-- **Task** — one node in the active milestone; `add deltas` then `add show`. The 3-beat loop below.
-- **Explore** — the answer IS the deliverable (research · investigate · high unknowns) — explore-first:
-  questions + a hard budget freeze, and the gate reads the cited `## FINDINGS` brief directly —
-  **no run receipt** for a findings-only explore (`phases/explore.md`). One contract-shaping
-  unknown already argues this lane; freezing a contract on a guess ships the wrong thing with
-  perfect receipts.
-- **Project / milestone** — a theme, or a slice too big for one task. `add deltas` + `add search`, then
-  load the persona whose `flow:` includes **advisor** BEFORE drafting (skip silently if none is seeded), draft the
-  milestone (goal · scope · exit criteria · breadth-first task list), confirm it, create it and its
-  tasks, and record the lens: `add advise <milestone> --persona <p>`.
+**Floor:** anything touching security · data · architecture, or a surface other code consumes, is at
+least a Task — never Quick. When in doubt, size up. Nobody approves the route; the human reviews after.
 
-**The floor is closed:** anything touching **security · data · architecture** always becomes a real
-task — never Quick, whatever its size. **Security is always a HARD-STOP.** When in doubt, size up.
+**Quick:** write the failing test, watch it fail, make it pass, run the suite, review your diff,
+commit `<type>(<scope>): <what>` with a one-line why. If the change turns out to touch the floor, or
+needs a check weakened, it is a Task now: stop and write the task file first. A security issue you
+only pass by (already there, outside the ask) stays out of your diff but leads the report as a HARD-STOP.
 
-## The 3-beat loop (this file IS the loop; refs load on demand)
+## The task loop — Direction → Build → Verify
 
-One task = one atomic node. Three beats, one human decision:
+### 1 · Direction — write the contract, watch it fail, seal it
 
-1. **DIRECTION** (`phases/direction.md`) — compose the whole bundle in ONE draft, then take the ONE
-   approval. The draft, section by section:
-   - `## RULES` — Must · Reject: what you were told. `## EDGES` — `E<n>` boundary cases; a line you
-     FILL is gate-bound like a Must, an untouched placeholder owes nothing.
-   - `## ASSUMPTIONS` — sweep EVERY `gives:` surface on EVERY dimension (`who · which · when ·
-     absent · order · experience`): `A<n> [<dim>] covers: <S ids> · <what the spec does NOT say —
-     and the reading you took> -> <cost if wrong>`, or retire a pair with `[<dim>] n/a · <why>`. A
-     cheaply-checkable guess is better discharged than priced: run the two-minute probe and record
-     `found: <what>` + its evidence on the line.
-   - `## PLAN` — contract shape (authored into `gives:`/`needs:` frontmatter) · strategy ·
-     `--kind explore`'s required `budget:`. `scope:` is FRONTMATTER (`--scope a,b`), never here.
-   - `## CHECKS` — at least one check per referent you name (Musts, Rejects, probed assumptions,
-     edges), `covers:`-bound, built to fail on the plausible wrong implementation. Run them **red**.
-   - `freeze` REFUSES a template slot, an unauthored `gives:`, an unswept `(dim, surface)` pair, a
-     FILLED edge or PROBED assumption no `covers:` names (**R:UNCOVERED** — bind it, never delete it),
-     or — at a human floor, and on any Milestone stamped `--authority human` — a decision no human
-     answered (**`add interview <slug>`**, R:UNINTERVIEWED). `add todo` counts them down as you author.
-   - The ONE approval stamps direction closed: **`add freeze <slug> --by "<name>" --authority
-     human`**. Get the composed prompt with `add brief <slug>` — refs resolve from the graph, so a
-     spec edit re-scopes it with no edit here.
-2. **BUILD** (`phases/build.md`) — code until every red check is green. Change **no** check and **no**
-   frozen `gives:`; stay inside `scope:`. A discovered constraint or a strategy turn is *steering* —
-   record it, seal untouched: `add replan <slug> --note "<what changed>"`. Anything that would move
-   a frozen surface is a change-request back to Direction, never a silent edit.
-3. **VERIFY** (`phases/verify.md`) — gather evidence, check the 3 residue lenses (security · concurrency
-   · architecture — **security HARD-STOP**), then `add run <slug> -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"`
-   for a fresh, bound receipt — `run` reads the report path your command names. Wrap the **narrowest
-   command that reports every bound check**; the full suite rides CI (run it before any engine receipt).
-   **No runner? Write one** — `run` parses any JUnit XML (`domains.md`). At floor ≥ plan SPAWN
-   `add-advisor` in refute mode (T2), record its line, then **`add gate <slug> PASS --by "<name>"`** —
-   a **PASS auto-closes** the task. `add done` is only for closing after a signed `RISK-ACCEPTED`.
+Ground first: read the code the task touches and the relevant `## Decisions that bind` in
+`.add/specs/`. Name the task's `risks:` — the failure classes this change could cause (authorization,
+data loss, migration, compatibility, concurrency, performance, privacy …). They pick the persona,
+the evidence and the residue lenses. Then write `.add/tasks/<slug>.md`:
 
-Emit **lessons** as you learn them, tagged by the spec they sharpen (`ddd · sdd · udd · tdd · add`);
-the close DRAINS the ones it filed (`loop.md`, `deltas.md`). Present every human decision — intake ·
-freeze · gate · close — as a guided choice with the goal→done→plan arc (`gate.md`). A project-fit
-persona loads by FIT at every beat — the ROSTER is what is opt-in (`personas.md`) — and never lowers
-a gate; delegate to one when a beat wants an expert (`streams.md`): it advises, never freezes or
-gates, security stays HARD-STOP. Read-only research fans out; one write serializes the stream.
-
-## Non-negotiable rules (from the method)
-
-<constraints>
-1. **Direction before speed.** Never start Build until RULES · PLAN · CHECKS exist and checks are red.
-2. **Trust evidence, not inspection.** A change is trusted because its checks pass and the residue
-   (security · concurrency · architecture) was examined — not because the code reads fine.
-   **A green gate proves the checks you declared ran, passed and are bound — never that they were
-   enough.** A check that asserts nothing still binds and still passes. Writing the check that would
-   have caught the bug is your job; the engine can only prove you ran the ones you wrote
-   (`FORMAT.md` §10).
-3. **Never weaken a check or edit a frozen `gives:` to make the build pass.** That inverts the method;
-   a real change is a change-request back to Direction.
-4. **No silent skips.** Every Verify ends in exactly one recorded outcome — `PASS`, `RISK-ACCEPTED`
-   (signed, non-security), or `HARD-STOP`. A security finding is always `HARD-STOP`.
-5. **A refusal is the method working.** Every engine refusal names its fix in the same breath
-   (`next: <verb>`) — do that fix. Never route around the engine, never hand-edit state files or
-   stamps to get past a refusal it just gave you.
-</constraints>
-
-## Command cookbook — copy a line
-
-```bash
-add status                                   # resume · --all full · --check conformance
-add init --profile code "<name>"             # create a .add/ bundle — code | doc ONLY (see domains.md)
-add upgrade                                  # 2.x bundle? archive it whole, init 3.0 — MIGRATION.md guides
-add new Task <slug> --title "..." --depth quick|standard|deep [--sensitivity security|data|architecture] [--kind explore] [--milestone m] [--scope a,b]
-add brief <slug>                             # the composed XML prompt for the active beat
-add todo [--milestone m]                     # the open worklist by beat, each with its next verb
-add locate <path>                            # whose scope owns a path
-add show <ref> [--expand N]                  # one node WHOLE + its relations, N levels (max 5)
-add search ["<term>"] [--type/--status/--milestone V] [--as-of <d>]  # by text, or by field
-add advise <slug> --persona <p>              # record the lens that reviewed a sequential beat
-add refute <slug> --by "<name>" --held|--found "<input>" [--probes N] [--tier T2] [--changed "<what>"]   # the refute-read, recorded
-add doctor [--sync]                          # findings, never gates; --sync recompiles graph.json + re-vendors the engine
-add interview <slug> [--answer <id>=confirm|correct|defer]  # the open decisions, put to a human
-add freeze <slug> --by "<name>" --authority human    # the ONE approval → Build
-add replan <slug> --note "<what changed>"    # a steering turn on a frozen task — seal intact
-add run <slug> [--timeout <s>] -- <test cmd> --junitxml="${TMPDIR:-/tmp}/add-run.xml"  # receipt · a report path before the -- wins
-add gate <slug> PASS --by "<name>"           # verdict — PASS auto-closes · RISK-ACCEPTED (signed) · HARD-STOP
-add learn <ddd|sdd|udd|tdd|add> "<lesson>" --evidence <ref>   # file a lesson into a spec
-add fold <lens> "<match>" [--reject | --bind "<decision>"]    # the human's verdict on one lesson
-add drop <slug> --reason "<why>"             # withdraw a task — the reason stays on the node
-add milestone-done <slug>                    # close — refuses an unchecked box, an open delta, or an unauthored task
+```markdown
+---
+type: Task
+title: <title>
+status: direction        # → build in the freeze commit · → done in the verify commit
+risks: [<failure classes this change could cause>]   # [] when none
+scope: [<paths you may touch>]
+gives: [S1 <a surface other code will depend on>]
+---
+## CARD
+goal: <one line> · why: <one line>
+## RULES
+- M1 <what it must do> (from: request | <file> | <spec> | derived: <why>)
+- R:<CODE> <what it must refuse> (from: …)
+## ASSUMPTIONS
+- A1 [<dim>] <what is not said> → <reading taken> → <cost if wrong>
+## PLAN
+strategy: <how> · check: <this task's tests> · regression: <the full suite | affected: <cmd> — why>
+## CHECKS
+- C1 covers: M1 · acceptance · <test id> · falsifier: <the plausible wrong build it fails>
+## EVIDENCE
+<written once, at verify>
 ```
 
-## Depth dial — steps never change, ceremony does
+- **RULES** — what you were told or what code and specs require, with its source. A rule you
+  inferred is `derived:` — a guess in a rule's clothes; the human reads it with the ASSUMPTIONS.
+- **ASSUMPTIONS** — every silence you had to fill, one per line. Sweep each public surface on six
+  dims: *who* may act or see (silent → the least-privilege reading, only the owner: widening later is
+  safe, narrowing breaks callers) · *which* cases are in · *when* (boundaries inclusive?) · *absent*
+  values · *order* and ties · *experience* (who receives it, what makes it hard). Of your guesses,
+  check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
+- **CHECKS** — at least one per Must and Reject: every RULES id appears on some `covers:` line. Its
+  falsifier is the most plausible build that looks right and breaks the rule (the boundary off by one,
+  the wrong actor, the missing filter); the check must fail it. Acceptance checks go through the public
+  seam first, in their own files, and send inputs the way a real caller sends them, not the way your code
+  expects: each value in every form the spec allows (a timestamp with and without an offset), and
+  malformed or wrong-typed input refused, never a crash — the body itself (not JSON, `null`, a number,
+  a list) as well as each field. A `risks:` rule gets a second, independent kind of evidence
+  (`references/evidence.md`). Non-code work: anything that can fail is a check (`references/format.md`).
 
-Depth tunes **ceremony**, not the authority floor. The floor is computed by the engine from
-`sensitivity:` (and `index.md`'s `sensitive_paths:`) — `security → human`, `data|architecture → plan`,
-else `process` — never from depth.
+**Second reader — every floor task, however small.** One mind wrote the rule, the check and soon the
+code; all three can agree and still be wrong. Before sealing, the counter-lens (§ Personas) reads only
+the request and the task file and names the likeliest wrong readings of RULES and ASSUMPTIONS; fix
+what holds. Security work: one fresh subagent does it. Anything else: your own cold reread.
 
-- **quick** — CARD · CHECKS · EVIDENCE; at a green, `covers`-bound receipt the AI may record the PASS
-  itself at `process` authority — an explicit pass you run — unless the sensitivity floor is higher.
-- **standard** — the full node; evidence-gated, at whatever authority the floor computes.
-- **deep** — full node + milestone strategy, lowest-confidence-first; a human owns freeze whenever the
-  floor (or your judgment) calls for it.
+**Seal:** the checks **must fail because the behavior is absent** — a green proves nothing. Then set
+`status: build`, commit task file and checks as `freeze(<slug>): <goal>`; `status:` next changes at verify.
 
-A coined term you cannot decode is in `terms.md` — load it once. The method's **why** lives in
-`FORMAT.md` (the ABF-1 bundle format, in the ADD source repo) — **referenced, never inlined** (load the
-State; reference the Story); read it only when genuinely unclear. The AIDD book is deeper,
-**external** background (not shipped with the skill) — optional; never block waiting to open a file the skill does not ship.
+### 2 · Build — code to green, inside the lines
+
+Write code until every check passes, never crossing these three lines:
+1. **Never edit a sealed check or the contract to get green.** A hard check is telling you about the code.
+2. **Never move a `gives:` surface silently.** Internals are free.
+3. **Stay inside `scope:`.** Needing another path means the plan was wrong.
+
+Contract wrong (a rule, a mis-aimed check, scope must grow, a new risk)? Edit the task file and
+checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests are yours to change.
+
+### 3 · Verify — trust evidence, not the diff
+
+1. **Seal intact:** `F=$(git log -1 --format=%H --grep='freeze(<slug>)')`, then
+   `git diff $F HEAD -- .add/tasks/<slug>.md <check files>` must print nothing.
+2. **Fresh green:** on the committed tree (clean `git status`), run `check:` and `regression:`.
+3. **Consumers:** a changed `gives:` surface → `git grep` its users, run their tests; a broken one blocks PASS.
+4. **Residue** — what passing tests cannot show. Read the diff for **security** (authz, injection,
+   secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens (migration,
+   resource ceilings, privacy, retries, a11y, an agent's side effects: `references/evidence.md`).
+5. **Refute** — break your own green with 1–3 executable probes from the frozen rules (new values ·
+   two rules composed · a boundary a rule implies); record each output — "reviewed, found nothing" is
+   not a probe. Floor work: the counter-lens writes them, task file before diff (a fresh subagent only for
+   security work). A probe that breaks it: back to Build, or refreeze the rule.
+6. **Verdict** — exactly one, in `## EVIDENCE` with freeze sha, head sha, commands, exit codes,
+   counts, consumers, residue, probes, and `lens:` (who looked, what they caught; or `none — why`):
+   - `PASS` — seal intact, fresh green, consumers green, residue clean. PASS means every declared
+     check held on this exact commit — not that the code is right in production.
+   - `RISK-ACCEPTED` — a known non-security risk, with reason and owner.
+   - `HARD-STOP` — a security finding, or a green you cannot honestly trust. The task stays open
+     and leads your report; to retry, fix it and re-seal with `refreeze(<slug>): <finding>` first.
+
+   Set `status: done` only on PASS or RISK-ACCEPTED. Commit `verify(<slug>): <verdict>`.
+
+### 4 · Learn — close the loop
+
+A lesson (a surprise, a wrong assumption) goes to `.add/specs/<lens>.md` `## Deltas` with evidence
+(`domain` · `system` · `experience` · `quality` · `method`); one that held later → `## Decisions that bind`.
+**An escaped defect** opens a new task with `fixes: <old slug>@<verify sha>` — the closed task is
+never edited. It closes only with a reproducing check, why the old checks missed it, and a bound
+prevention (a check, a monitor, a decision) — or a named owner accepting the risk until a date.
+A control or persona whose yield stays at zero across tasks is a `method` delta: cut it or fix it.
+
+## Milestones and release
+
+A theme becomes `.add/milestones/<slug>.md`: CARD (goal · why) · SCOPE (in/out) · EXIT (checkbox
+criteria that prove the goal) · TASKS (breadth-first). Done when every EXIT box is checked with
+evidence — not when its tasks are. Parallel tasks each get their own worktree and disjoint `scope:`.
+Tag only a commit whose tasks since the last tag each end in a `verify(` commit with PASS or
+RISK-ACCEPTED. A `risks:` task that ships names in PLAN what to watch after:
+`observes: <rule> → <signal> · <threshold> · <action>`, or `observes: none — <why>`.
+
+## Report — the human's review
+
+End every session with a summary the human can act on: HARD-STOPs and open risks first, then per
+task — goal, verdict, freeze sha, evidence, and **every ASSUMPTION and `derived:` rule you took,
+costliest if wrong first** (the decisions they did not make). Update PROJECT.md's CARD. Open a PR
+when the repo uses them.
+
+## Personas — lenses that pick what must be proven
+
+`.add/personas/<name>.md` holds expert lenses: `flow:` (beats) · `covers-risks:` · `evidence:` (what
+it must see proven) · `counter-lens:` (its orthogonal reader). Lead = best fit on beat and `risks:`;
+one more only for a risk the lead leaves bare. None in the project → `personas-index/use-when.md`;
+none fits → proceed. The second reader and the refuter load the lead's `counter-lens:`. A persona
+advises, never lowers a rule. Routing, `lens:` traces and upkeep: `references/personas.md`.
+
+## Non-negotiable rules
+
+<constraints>
+1. **Direction before build.** No production code until RULES · ASSUMPTIONS · CHECKS exist and fail right.
+2. **Evidence, not inspection.** Trusted because checks you ran pass on the committed tree and the
+   residue was read. A green proves the checks you wrote ran — never that they were enough.
+3. **Never weaken a sealed check or edit the contract to pass.** Changed intent is a visible `refreeze`.
+4. **No silent outcomes.** Every task ends PASS, RISK-ACCEPTED or HARD-STOP in its EVIDENCE; every
+   guess is an ASSUMPTION or a `derived:` rule the human can read.
+5. **The bundle tells the truth.** Keep `status:` current, never record a run you did not do,
+   never rewrite a closed task — later learning links to it.
+6. **`invariants:` bind every change**, Quick included.
+</constraints>

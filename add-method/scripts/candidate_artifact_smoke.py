@@ -2,17 +2,18 @@
 """Offline candidate-byte gate for ADD's wheel, sdist and npm tarball.
 
 Fixture mode checks small archives and the same refusal controls without a
-registry. Real mode installs the supplied package files and runs their launchers;
-the caller must first cache the npm tarballs' declared runtime dependencies.
+registry. Real mode installs the supplied package files and runs their launchers:
+a fresh install with each twin (identical trees, idempotent re-run) and an upgrade
+over a project the previous (3.x) package installed. The candidate itself has no
+runtime dependencies; the caller must cache the PREVIOUS npm tarball's (3.x shipped
+@clack/prompts) so the offline install of it succeeds.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import os
 import re
-import shutil
 import subprocess
 import sys
 import tarfile
@@ -20,12 +21,16 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-MANAGED = (".add/tooling", ".claude/skills/add", ".claude/agents",
-           ".add/personas-index", ".add/personas-teacher")
-SHARED_ARCHIVE_ROOTS = ("tooling/", "skill/add/", "agents/",
-                        "personas-index/", "personas-teacher/")
-REQUIRED = ("tooling/cli.py", "tooling/add.py", "skill/add/SKILL.md",
+# What a 4.0 install lays down — compared byte-for-byte between the pip and npm twins.
+MANAGED = (".claude/skills/add", ".add/personas-teacher", ".add/personas-index",
+           ".add/personas", ".add/PROJECT.md", ".add/.gitignore", "CLAUDE.md", "AGENTS.md")
+SHARED_ARCHIVE_ROOTS = ("skill/add/", "personas/", "personas-index/", "personas-teacher/")
+REQUIRED = ("skill/add/SKILL.md", "skill/add/references/format.md",
             "personas-index/use-when.md")
+REQUIRED_TREES = ("personas/", "personas-teacher/")
+PREVIOUS_REQUIRED = ("skill/add/SKILL.md",)
+RETIRED_ROOTS = ("tooling/", "agents/")     # 4.0 ships no engine and no agent roster
+RETIRED_AGENTS = (".claude/agents/add-worker.md", ".claude/agents/add-advisor.md")
 
 
 def tool_versions() -> dict[str, str]:
@@ -72,7 +77,7 @@ def entries(path: Path, kind: str) -> dict[str, bytes]:
             candidates = [n.split("src/add_method/_bundled/", 1)[0]
                           for n in raw if "src/add_method/_bundled/" in n]
             if not candidates:
-                raise Refusal("HEADLESS", "archive", str(path), "sdist has no bundled payload")
+                raise Refusal("MISSING_PAYLOAD", "archive", str(path), "sdist has no bundled payload")
             prefix = candidates[0] + "src/add_method/_bundled/"
     return {n[len(prefix):]: data for n, data in raw.items() if n.startswith(prefix)}
 
@@ -86,16 +91,16 @@ def package_version(path: Path, kind: str) -> str:
         with tarfile.open(path, "r:*") as archive:
             member = archive.extractfile("package/package.json")
             if member is None:
-                raise Refusal("HEADLESS", "archive", "package/package.json")
+                raise Refusal("MISSING_PAYLOAD", "archive", "package/package.json")
             return str(json.loads(member.read())["version"])
     with zipfile.ZipFile(path) as archive:
         names = [name for name in archive.namelist() if name.endswith(".dist-info/METADATA")]
         if len(names) != 1:
-            raise Refusal("HEADLESS", "archive", str(path), "wheel has no unique metadata")
+            raise Refusal("MISSING_PAYLOAD", "archive", str(path), "wheel has no unique metadata")
         metadata = archive.read(names[0]).decode("utf-8")
     match = re.search(r"(?m)^Version: (\S+)$", metadata)
     if not match:
-        raise Refusal("HEADLESS", "archive", names[0], "wheel has no version")
+        raise Refusal("MISSING_PAYLOAD", "archive", names[0], "wheel has no version")
     return match.group(1)
 
 
@@ -104,42 +109,33 @@ def verify_archives(files: dict, fixture: bool) -> dict:
                for kind in ("wheel", "sdist", "npm")}
     previous_payload = {kind: entries(Path(files["previous"][kind]["path"]), kind)
                         for kind in ("wheel", "npm")}
-    for kind in ("wheel", "npm"):
+    for kind in ("wheel", "sdist", "npm"):
         for name in REQUIRED:
             if name not in payload[kind]:
-                raise Refusal("HEADLESS", "archive", name, f"{kind} lacks {name}")
-    for name in REQUIRED:
-        if name not in payload["sdist"]:
-            raise Refusal("HEADLESS", "archive", name, f"sdist lacks {name}")
-    for kind in ("wheel", "sdist", "npm"):
-        if not any(name.startswith("personas-teacher/") for name in payload[kind]):
-            raise Refusal("HEADLESS", "archive", "personas-teacher/",
-                          f"{kind} lacks the representative teacher corpus")
+                raise Refusal("MISSING_PAYLOAD", "archive", name, f"{kind} lacks {name}")
+        for root in REQUIRED_TREES:
+            if not any(name.startswith(root) for name in payload[kind]):
+                raise Refusal("MISSING_PAYLOAD", "archive", root, f"{kind} lacks {root}")
+        for name in sorted(payload[kind]):
+            if name.startswith(RETIRED_ROOTS):
+                raise Refusal("ENGINE_SHIPPED", "archive", name, f"{kind} still ships {name}")
     for kind in ("wheel", "npm"):
-        for name in REQUIRED:
+        for name in PREVIOUS_REQUIRED:
             if name not in previous_payload[kind]:
-                raise Refusal("HEADLESS", "archive", name,
+                raise Refusal("MISSING_PAYLOAD", "archive", name,
                               f"previous {kind} has no upgradeable {name}")
-        if not any(name.startswith("personas-teacher/") for name in previous_payload[kind]):
-            raise Refusal("HEADLESS", "archive", "personas-teacher/",
-                          f"previous {kind} lacks an upgradeable teacher corpus")
     # An archive must never claim ownership of user-state paths during upgrade.
     for kind in ("wheel", "npm"):
         for name in payload[kind]:
             if name.startswith(".add/") or name.startswith("../"):
                 raise Refusal("STATELOSS", "upgrade", name, "candidate includes user-owned state")
-    common = {name for name in set(payload["wheel"]) | set(payload["npm"])
-              if name.startswith(SHARED_ARCHIVE_ROOTS)}
-    for name in sorted(common):
-        if name not in payload["wheel"] or name not in payload["npm"] or payload["wheel"][name] != payload["npm"][name]:
-            raise Refusal("PACKAGE_DIVERGENCE", "archive", name,
-                          "wheel and npm shared managed bytes differ")
-    source_common = {name for name in set(payload["wheel"]) | set(payload["sdist"])
-                     if name.startswith(SHARED_ARCHIVE_ROOTS)}
-    for name in sorted(source_common):
-        if payload["wheel"].get(name) != payload["sdist"].get(name):
-            raise Refusal("PACKAGE_DIVERGENCE", "archive", name,
-                          "sdist and wheel shared managed bytes differ")
+    for other in ("npm", "sdist"):
+        common = {name for name in set(payload["wheel"]) | set(payload[other])
+                  if name.startswith(SHARED_ARCHIVE_ROOTS)}
+        for name in sorted(common):
+            if payload["wheel"].get(name) != payload[other].get(name):
+                raise Refusal("PACKAGE_DIVERGENCE", "archive", name,
+                              f"wheel and {other} shared payload bytes differ")
     return payload
 
 
@@ -159,46 +155,34 @@ def snapshot(project: Path) -> dict[str, str]:
     result = {}
     for root in MANAGED:
         base = project / root
-        if not base.is_dir():
-            continue
-        for file in base.rglob("*"):
-            # Importing the dropped Python engine may generate interpreter-local
-            # bytecode. It is runtime cache, not managed package payload.
-            if file.is_file() and "__pycache__" not in file.parts and file.suffix not in (".pyc", ".pyo"):
-                result[str(file.relative_to(project))] = digest(file)
+        files = [base] if base.is_file() else sorted(base.rglob("*")) if base.is_dir() else []
+        for file in files:
+            if file.is_file():
+                result[file.relative_to(project).as_posix()] = digest(file)
     return result
 
 
-def compare_installed(pip_project: Path, npm_project: Path) -> None:
+def compare_installed(pip_project: Path, npm_project: Path, stage: str) -> None:
     pip, npm = snapshot(pip_project), snapshot(npm_project)
     for name in sorted(set(pip) | set(npm)):
         if pip.get(name) != npm.get(name):
-            raise Refusal("PACKAGE_DIVERGENCE", "fresh_install", name,
-                          "installed npm and pip managed files differ")
+            raise Refusal("PACKAGE_DIVERGENCE", stage, name,
+                          "installed npm and pip files differ")
 
 
-def stamp(project: Path) -> dict:
-    file = project / ".add" / ".add-version"
-    try:
-        value = json.loads(file.read_text(encoding="utf-8"))
-        if isinstance(value, dict) and "version" in value:
-            return value
-    except (OSError, ValueError):
-        pass
-    raise Refusal("SMOKE_FAILED", "fresh_install", str(project / ".add"),
-                  "installed project has no version stamp")
-
-
-def status(project: Path, python: Path, report: dict, stage: str,
-           initialize: bool = True) -> None:
-    cli = project / ".add" / "tooling" / "cli.py"
-    if not cli.is_file():
-        raise Refusal("HEADLESS", stage, ".add/tooling/cli.py")
-    if initialize:
-        run([str(python), str(cli), "init"], cwd=project, stage=stage,
-            path=str(cli), report=report)
-    run([str(python), str(cli), "status"], cwd=project, stage=stage,
-        path=str(cli), report=report)
+def check_skill(project: Path, payload: dict, stage: str) -> None:
+    """The installed skill is exactly the candidate's skill, and a project card exists."""
+    base = project / ".claude" / "skills" / "add"
+    installed = ({f.relative_to(base).as_posix(): f.read_bytes()
+                  for f in base.rglob("*") if f.is_file()} if base.is_dir() else {})
+    shipped = {n[len("skill/add/"):]: data for n, data in payload.items()
+               if n.startswith("skill/add/")}
+    for name in sorted(set(installed) | set(shipped)):
+        if installed.get(name) != shipped.get(name):
+            raise Refusal("SMOKE_FAILED", stage, ".claude/skills/add/" + name,
+                          "installed skill differs from the candidate payload")
+    if not (project / ".add" / "PROJECT.md").is_file():
+        raise Refusal("SMOKE_FAILED", stage, ".add/PROJECT.md", "no project card")
 
 
 def installed_npm(root: Path, tarball: Path, report: dict, stage: str) -> Path:
@@ -209,11 +193,11 @@ def installed_npm(root: Path, tarball: Path, report: dict, stage: str) -> Path:
         path=str(tarball), report=report)
     launcher = root / "node_modules" / "@pilotspace" / "add" / "bin" / "cli.js"
     if not launcher.is_file():
-        raise Refusal("HEADLESS", stage, str(launcher), "npm install omitted launcher")
+        raise Refusal("MISSING_PAYLOAD", stage, str(launcher), "npm install omitted launcher")
     return launcher
 
 
-def installed_pip(root: Path, wheel: Path, report: dict, stage: str) -> tuple[Path, Path]:
+def installed_pip(root: Path, wheel: Path, report: dict, stage: str) -> Path:
     run([sys.executable, "-m", "venv", str(root)], stage=stage,
         path=str(wheel), report=report)
     python = root / "bin" / "python"
@@ -221,105 +205,108 @@ def installed_pip(root: Path, wheel: Path, report: dict, stage: str) -> tuple[Pa
     run([str(python), "-m", "pip", "install", "--no-index", "--no-deps", str(wheel)],
         stage=stage, path=str(wheel), report=report)
     if not launcher.is_file():
-        raise Refusal("HEADLESS", stage, str(launcher), "wheel omitted console launcher")
-    return launcher, python
+        raise Refusal("MISSING_PAYLOAD", stage, str(launcher), "wheel omitted console launcher")
+    return launcher
+
+
+def user_state(project: Path) -> dict[str, str]:
+    """Every file under .add/ the installer does not own — it must survive byte-for-byte."""
+    owned = ("tooling", "personas-teacher", "personas-index", ".gitignore")
+    base = project / ".add"
+    return {f.relative_to(project).as_posix(): digest(f) for f in sorted(base.rglob("*"))
+            if f.is_file() and f.relative_to(base).parts[0] not in owned}
 
 
 def preserve(project: Path, manifest: dict) -> dict[str, bytes]:
+    """Write the manifest's user-owned text; `file#outside-managed-block` appends to that file."""
     expected = {}
     for name, text in manifest.get("preserve", {}).items():
-        if "#" in name:
-            name = name.split("#", 1)[0]
-        path = project / name
+        path = project / name.split("#", 1)[0]
         path.parent.mkdir(parents=True, exist_ok=True)
+        data = text.encode()
         if path.exists():
-            original = path.read_bytes()
-            path.write_bytes(original + b"\n" + text.encode())
-            expected[name] = original + b"\n" + text.encode()
+            path.write_bytes(path.read_bytes() + b"\n" + data + b"\n")
         else:
-            path.write_text(text, encoding="utf-8")
-            expected[name] = text.encode()
+            path.write_bytes(data)
+        expected[name] = data if "#" in name else path.read_bytes()
     return expected
 
 
 def ensure_preserved(project: Path, expected: dict[str, bytes]) -> None:
     for name, data in expected.items():
-        path = project / name
-        if not path.is_file() or path.read_bytes() != data:
+        path = project / name.split("#", 1)[0]
+        if not path.is_file():
+            raise Refusal("STATELOSS", "upgrade", name, "user-owned file removed")
+        current = path.read_bytes()
+        if "#" in name:                     # text the user wrote OUTSIDE the managed block
+            text = current.decode("utf-8")
+            begin, end = text.rfind("<!-- ADD:BEGIN"), text.rfind("<!-- ADD:END -->")
+            outside = text[:begin] + text[end:] if -1 < begin < end else text
+            if data.decode() not in outside:
+                raise Refusal("STATELOSS", "upgrade", name, "user text outside the block lost")
+        elif current != data:
             raise Refusal("STATELOSS", "upgrade", name, "user-owned bytes changed")
 
 
-def real_smoke(manifest: dict, report: dict, tmp: Path) -> None:
-    candidate = manifest["candidate"]
-    previous = manifest["previous"]
-    candidate_versions = {
-        "pip": package_version(Path(candidate["wheel"]["path"]), "wheel"),
-        "npm": package_version(Path(candidate["npm"]["path"]), "npm")}
-    if candidate_versions["pip"] != candidate_versions["npm"]:
+def real_smoke(manifest: dict, report: dict, tmp: Path, payload: dict) -> None:
+    candidate, previous = manifest["candidate"], manifest["previous"]
+    versions = {"pip": package_version(Path(candidate["wheel"]["path"]), "wheel"),
+                "npm": package_version(Path(candidate["npm"]["path"]), "npm")}
+    if versions["pip"] != versions["npm"]:
         raise Refusal("PACKAGE_DIVERGENCE", "archive", "version",
                       "wheel and npm tarball declare different versions")
-    new_pip, python = installed_pip(tmp / "candidate-venv",
-                                    Path(candidate["wheel"]["path"]), report, "fresh_install")
-    new_npm = installed_npm(tmp / "candidate-npm", Path(candidate["npm"]["path"]),
-                            report, "fresh_install")
+    shipped = {"pip": payload["wheel"], "npm": payload["npm"]}
+    new = {"pip": [str(installed_pip(tmp / "candidate-venv", Path(candidate["wheel"]["path"]),
+                                     report, "fresh_install"))],
+           "npm": ["node", str(installed_npm(tmp / "candidate-npm", Path(candidate["npm"]["path"]),
+                                             report, "fresh_install"))]}
     fresh = {}
-    for channel, launcher in (("pip", new_pip), ("npm", new_npm)):
-        project = tmp / f"fresh-{channel}"
-        project.mkdir()
-        command = ([str(launcher)] if channel == "pip" else ["node", str(launcher)])
-        run(command + ["init", str(project), "--yes"], stage="fresh_install",
-            path=str(launcher), report=report)
-        # Installer init drops files only; the version stamp is written by
-        # update, so stamp the freshly materialized managed layer explicitly.
-        run(command + ["update", str(project)], stage="fresh_install",
-            path=str(launcher), report=report)
-        status(project, python, report, "fresh_install")
-        version = stamp(project)["version"]
-        if version != candidate_versions[channel]:
-            raise Refusal("SMOKE_FAILED", "fresh_install", ".add/.add-version",
-                          "project stamp differs from installed artifact metadata")
-        fresh[channel] = {"dropped_cli": "PASS", "version": version}
-    compare_installed(tmp / "fresh-pip", tmp / "fresh-npm")
+    for channel, command in new.items():
+        project = tmp / "fresh" / channel / "project"   # same folder name: same PROJECT.md title
+        project.mkdir(parents=True)
+        said = run(command + ["--version"], stage="fresh_install", path=command[-1], report=report)
+        if said.strip() != versions[channel]:
+            raise Refusal("SMOKE_FAILED", "fresh_install", command[-1],
+                          "the launcher reports a different version than its metadata")
+        run(command + ["init", str(project)], stage="fresh_install", path=command[-1], report=report)
+        check_skill(project, shipped[channel], "fresh_install")
+        before = snapshot(project)
+        run(command + ["update", str(project)], stage="fresh_install", path=command[-1], report=report)
+        if snapshot(project) != before:
+            raise Refusal("SMOKE_FAILED", "fresh_install", str(project), "a re-run changed the install")
+        fresh[channel] = {"installed": "PASS", "idempotent": "PASS", "version": versions[channel]}
+    compare_installed(tmp / "fresh" / "pip" / "project", tmp / "fresh" / "npm" / "project", "fresh_install")
     report["fresh_install"] = fresh
 
-    old_pip, _old_python = installed_pip(tmp / "previous-venv",
-                                         Path(previous["wheel"]["path"]), report, "upgrade")
-    old_npm = installed_npm(tmp / "previous-npm", Path(previous["npm"]["path"]),
-                            report, "upgrade")
+    old = {"pip": [str(installed_pip(tmp / "previous-venv", Path(previous["wheel"]["path"]),
+                                     report, "upgrade"))],
+           "npm": ["node", str(installed_npm(tmp / "previous-npm", Path(previous["npm"]["path"]),
+                                             report, "upgrade"))]}
     upgrades = {}
-    for channel, old, new in (("pip", old_pip, new_pip), ("npm", old_npm, new_npm)):
-        project = tmp / f"upgrade-{channel}"
-        project.mkdir()
-        old_cmd = [str(old)] if channel == "pip" else ["node", str(old)]
-        new_cmd = [str(new)] if channel == "pip" else ["node", str(new)]
-        run(old_cmd + ["init", str(project), "--yes"], stage="upgrade",
-            path=str(old), report=report)
-        run(old_cmd + ["update", str(project)], stage="upgrade",
-            path=str(old), report=report)
-        status(project, python, report, "upgrade")
-        old_stamp = stamp(project)["version"]
-        before = snapshot(project)
+    for channel in ("pip", "npm"):
+        project = tmp / "upgrade" / channel / "project"
+        project.mkdir(parents=True)
+        run(old[channel] + ["init", str(project), "--yes"], stage="upgrade",
+            path=old[channel][-1], report=report)
+        engine = project / ".add" / "tooling" / "cli.py"
+        if engine.is_file():                # a 3.x package: let its engine lay down real 3.x state
+            run([sys.executable, str(engine), "init"], cwd=project, stage="upgrade",
+                path=str(engine), report=report)
+        state = user_state(project)
         owned = preserve(project, manifest)
-        drift = run(new_cmd + ["update", str(project), "--check"], stage="upgrade",
-                    path=str(new), report=report)
-        if "update available" not in drift and "unstamped" not in drift:
-            raise Refusal("SMOKE_FAILED", "upgrade", str(project), "candidate did not report drift")
-        run(new_cmd + ["update", str(project)], stage="upgrade",
-            path=str(new), report=report)
-        current = run(new_cmd + ["update", str(project), "--check"], stage="upgrade",
-                      path=str(new), report=report)
-        if "is current" not in current:
-            raise Refusal("SMOKE_FAILED", "upgrade", str(project), "candidate did not report current")
+        run(new[channel] + ["update", str(project)], stage="upgrade",
+            path=new[channel][-1], report=report)
         ensure_preserved(project, owned)
-        status(project, python, report, "upgrade", initialize=False)
-        new_stamp = stamp(project)["version"]
-        after = snapshot(project)
-        if new_stamp == old_stamp or before.get(".add/tooling/add.py") == after.get(".add/tooling/add.py"):
-            raise Refusal("SMOKE_FAILED", "upgrade", ".add/tooling/add.py",
-                          "candidate version or engine did not advance")
-        upgrades[channel] = {"state_preserved": "PASS", "previous_version": old_stamp,
-                             "candidate_version": new_stamp}
-    compare_installed(tmp / "upgrade-pip", tmp / "upgrade-npm")
+        for name, sha in state.items():
+            if not (project / name).is_file() or digest(project / name) != sha:
+                raise Refusal("STATELOSS", "upgrade", name, "3.x project state changed")
+        for leftover in (".add/tooling",) + RETIRED_AGENTS:
+            if (project / leftover).exists():
+                raise Refusal("SMOKE_FAILED", "upgrade", leftover, "a 3.x leftover survived")
+        check_skill(project, shipped[channel], "upgrade")
+        upgrades[channel] = {"state_preserved": "PASS", "engine_removed": "PASS",
+                             "candidate_version": versions[channel]}
+    compare_installed(tmp / "upgrade" / "pip" / "project", tmp / "upgrade" / "npm" / "project", "upgrade")
     report["upgrade"] = upgrades
 
 
@@ -327,10 +314,10 @@ def fixture_smoke(manifest: dict, report: dict, payload: dict) -> None:
     # Fixture archives are intentionally synthetic: verify package content and
     # upgrade boundaries, then label actual install/update observations NOT_RUN.
     report["archive_controls"] = {
-        "required_payload": "PASS", "shared_payload": "PASS",
+        "required_payload": "PASS", "shared_payload": "PASS", "no_engine": "PASS",
         "previous_payload": "PASS", "candidate_user_state_guard": "PASS"}
     report["fresh_install"] = {
-        kind: {"dropped_cli": "NOT_RUN", "mode": "fixture archive"}
+        kind: {"installed": "NOT_RUN", "mode": "fixture archive"}
         for kind in ("pip", "npm")}
     report["upgrade"] = {
         kind: {"state_preserved": "NOT_RUN", "mode": "fixture archive"}
@@ -363,7 +350,7 @@ def process(manifest: dict, fixture: bool, report: dict) -> None:
         fixture_smoke(manifest, report, payload)
     else:
         with tempfile.TemporaryDirectory(prefix="add-candidate-") as directory:
-            real_smoke(manifest, report, Path(directory))
+            real_smoke(manifest, report, Path(directory), payload)
         # Rehash after installing to detect modified or swapped inputs.
         for group, kinds in (("candidate", ("wheel", "sdist", "npm")),
                              ("previous", ("wheel", "npm"))):

@@ -2,24 +2,25 @@
 """prepare_bundle.py — regenerate src/add_method/_bundled/ from the canonical trees.
 
 This script is the single source of truth for what ships in the Python package.
-Run it whenever skill/, tooling/add.py, or tooling/templates/ change:
+Run it whenever skill/, personas/, personas-teacher/ or personas-index/ change:
 
     python3 scripts/prepare_bundle.py
 
 The output directory (src/add_method/_bundled/) is COMMITTED to the repo so that
 `python -m build` needs no network or special tooling — it just zips what is there.
-The parity guard (tooling/test_tree_parity.py) ensures it never drifts.
+The parity guard (tests/test_npm_pip_parity.py::test_the_pip_bundle_mirrors_the_npm_payload)
+ensures it never drifts from what npm ships.
 
 What is copied:
-  skill/add/              -> _bundled/skill/add/
-  tooling/add.py          -> _bundled/tooling/add.py
-  tooling/templates/      -> _bundled/tooling/templates/
+  skill/add/              -> _bundled/skill/add/        (the method, incl. persona-author)
+  personas/               -> _bundled/personas/         (starter personas, seeded never-overwrite)
   personas-teacher/       -> _bundled/personas-teacher/   (vendored teacher snapshot)
   personas-index/         -> _bundled/personas-index/     (its generated routing sidecar)
   ../THIRD_PARTY_NOTICES.md -> ./THIRD_PARTY_NOTICES.md + _bundled/THIRD_PARTY_NOTICES.md
 
-What is explicitly EXCLUDED (mirrors cli.js post-copy scrub):
-  tooling/test_*.py       (dev-only; never ship to end users)
+ADD 4.0 ships no engine: a leftover _bundled/tooling/ or _bundled/agents/ is removed.
+
+What is explicitly EXCLUDED:
   **/__pycache__/, *.pyc  (bytecode; never ship)
   **/.DS_Store            (OS noise)
 """
@@ -33,7 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent       # add-method/ (the pack
 BUNDLE_ROOT = REPO_ROOT / "src" / "add_method" / "_bundled"
 
 SKILL_SRC = REPO_ROOT / "skill" / "add"
-TOOLING_SRC = REPO_ROOT / "tooling"
+PERSONAS_SRC = REPO_ROOT / "personas"                    # starter personas (ours)
 TEACHER_SRC = REPO_ROOT / "personas-teacher"             # vendored teacher snapshot (verbatim)
 INDEX_SRC = REPO_ROOT / "personas-index"                 # its routing sidecar tree (generated, ours)
 # THIRD_PARTY_NOTICES.md is a repo-LEVEL legal doc; its canonical lives one level up,
@@ -51,8 +52,8 @@ def _rm(p: Path) -> None:
             p.unlink()
 
 
-def _copy_tree(src: Path, dest: Path, *, exclude_test_py: bool = False) -> None:
-    """Copy src -> dest, excluding OS junk, bytecode, and optionally test sources."""
+def _copy_tree(src: Path, dest: Path) -> None:
+    """Copy src -> dest, excluding OS junk and bytecode."""
     if not src.exists():
         print(f"error: source does not exist: {src}", file=sys.stderr)
         sys.exit(1)
@@ -63,8 +64,6 @@ def _copy_tree(src: Path, dest: Path, *, exclude_test_py: bool = False) -> None:
             if name in ("__pycache__", ".DS_Store"):
                 excluded.add(name)
             elif name.endswith((".pyc", ".pyo")):
-                excluded.add(name)
-            elif exclude_test_py and name.startswith("test_") and name.endswith(".py"):
                 excluded.add(name)
         return excluded
 
@@ -80,20 +79,14 @@ def main() -> None:
     _copy_tree(SKILL_SRC, skill_dest)
     print(f"  copied skill/add  ({len(list(skill_dest.rglob('*')))} items)")
 
-    # 2. tooling/add.py + tooling/cli.py + tooling/templates/  (runtime only — no tests)
-    #    ABF-1 (3.0): the engine is a flat two-file pair — add.py (the library) + cli.py (the
-    #    dispatch entry the skill invokes as `.add/tooling/cli.py`). No add_engine/ package.
-    tooling_dest = BUNDLE_ROOT / "tooling"
-    _rm(tooling_dest)
-    tooling_dest.mkdir(parents=True, exist_ok=True)
-    for name in ("add.py", "cli.py"):
-        src = TOOLING_SRC / name
-        if not src.exists():
-            print(f"error: {src} does not exist", file=sys.stderr)
-            sys.exit(1)
-        shutil.copy2(str(src), str(tooling_dest / name))
-    _copy_tree(TOOLING_SRC / "templates", tooling_dest / "templates")
-    print("  copied tooling/add.py + cli.py + templates/")
+    # 2. personas/ — the starter personas the installer seeds into .add/personas/
+    personas_dest = BUNDLE_ROOT / "personas"
+    _copy_tree(PERSONAS_SRC, personas_dest)
+    print(f"  copied personas/  ({len(list(personas_dest.rglob('*')))} items)")
+
+    # 2b. 4.0 ships no engine and no agent roster — drop any 3.x leftovers from the bundle.
+    for retired in ("tooling", "agents"):
+        _rm(BUNDLE_ROOT / retired)
 
     # 3. personas-teacher/  (vendored teacher snapshot — verbatim, no test/junk strip needed
     #    since it carries none; ship it whole so the persona phase reads it off-build)
@@ -103,7 +96,7 @@ def main() -> None:
 
     # 3b. personas-index/ — the routing sidecar. It lives BESIDE the snapshot, never inside it:
     #     update_teacher.py replaces personas-teacher/ wholesale, so an in-tree index would be
-    #     erased on the next refresh. `init` vendors it into a bundle from here.
+    #     erased on the next refresh. The installer copies it into .add/personas-index/.
     if not INDEX_SRC.is_dir():
         print(f"error: missing {INDEX_SRC} — run scripts/build_persona_index.py", file=sys.stderr)
         sys.exit(1)
@@ -120,7 +113,7 @@ def main() -> None:
     shutil.copy2(str(NOTICES_CANON), str(BUNDLE_ROOT / "THIRD_PARTY_NOTICES.md"))
     print("  propagated THIRD_PARTY_NOTICES.md -> package root + bundle")
 
-    print("Bundle ready. Run `python3 -m unittest tooling.test_tree_parity -v` to verify.")
+    print("Bundle ready. Run `python3 -m pytest -q tests/test_npm_pip_parity.py` to verify.")
 
 
 if __name__ == "__main__":

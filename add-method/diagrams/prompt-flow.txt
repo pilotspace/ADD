@@ -1,39 +1,39 @@
 Create a calm, light, hand-drawn infographic on a pure white (#FAFAFA) background. The style is a thoughtful architect's morning sketch: thin soft-charcoal ink lines (#3d3d3a), generous whitespace, gentle hand-written annotations. Hand-lettered style throughout — no computer fonts. CRITICAL: spell every label EXACTLY as given; do not invent, duplicate, or abbreviate words.
 
-TITLE at top center, clean hand-lettering: "The ADD Flow"
-Subtitle below in lighter gray (#8a8a85) handwriting: "A forward spine you never skip, and backward correction you always may"
+TITLE at top center, clean hand-lettering: "The ADD Loop"
+Subtitle below in lighter gray (#8a8a85) handwriting: "A forward path you never skip, and backward correction you always may"
 
-LAYOUT — a left-to-right process flow of six rounded cards connected by thin SOLID arrows with small open arrowheads (the forward spine), then a curving dashed return arrow underneath looping back to the start. Cards 4 (Tests) and 5 (Build) sit close together, joined by a small two-way dashed loop between just those two cards (the per-feature engine). Above the row, two thin DASHED backward arcs reach from later cards to earlier ones (see BACKWARD CORRECTION below). Keep it sparse — the forward row reads first; the dashed arcs are quieter.
+LAYOUT — a left-to-right process flow of three large rounded cards connected by thin SOLID arrows with small open arrowheads, then a fourth smaller card to the right. A curving dashed return arrow runs underneath from the fourth card back to the first. Keep it sparse — the forward row reads first; the dashed arcs are quieter.
 
-The six cards, in this exact order, each card showing a big number, a bold word, and a small phrase under it:
-  1  "Specify"   —  under it: "the rules"
-  2  "Scenarios" —  under it: "pass / fail cases"
-  3  "Plan"      —  under it: "ground the code, freeze the contract"
-  4  "Tests"     —  under it: "safety net (red)"
-  5  "Build"     —  under it: "AI writes code"
-  6  "Verify"    —  under it: "evidence + checks"
+The three cards, in this exact order, each showing a big number, a bold word, and a small phrase under it:
+  1  "Direction"  —  under it: "rules · assumptions · failing checks"
+  2  "Build"      —  under it: "red to green, inside scope"
+  3  "Verify"     —  under it: "seal intact · fresh run · verdict"
 
-After card 6, one more rounded card to the right, slightly larger (the hero element):
-  "Observe"  —  under it: "in production"
+After card 3, one smaller rounded card:
+  "Learn"  —  under it: "lessons into the specs"
 
-A long thin DASHED return arrow curves from "Observe" back under the row to "Specify", labelled in handwriting along it: "what you learn becomes the next Specify".
+On the solid arrow between "Direction" and "Build", a small handwritten label: "freeze commit".
+On the solid arrow between "Build" and "Verify", no label.
 
-BACKWARD CORRECTION — two thin DASHED arcs above the row, quiet and gentle (never heavy), each with a small handwritten label:
-  - from "Verify" back to "Build", labelled: "evidence fails - back to Build"
-  - from "Build" back to "Specify", labelled: "a missing rule - back to Specify"
-Between cards "Tests" and "Build", a small two-way dashed loop labelled: "red / green".
-A small handwritten note in warm gray, tucked under the backward arcs: "any phase may return to an earlier one".
+A long thin DASHED return arrow curves from "Learn" back under the row to "Direction", labelled in handwriting along it: "what you learn shapes the next direction".
 
-Soft whisper tints (15-20% opacity, watercolor-light) behind the cards to show who leads:
-  - cards 1 and 2: morning-peach tint (#faf3ee)  — small handwritten band label above them: "human-led"
-  - cards 3 and 4: soft-sage tint (#eef5ee)       — small band label above them: "the frozen seam"
-  - cards 5 and 6: cloud-blue tint (#eef3f9)       — small band label above them: "AI-led, then human verify"
-  - the "Observe" card: warm-sand tint (#f5f0e8)
+BACKWARD CORRECTION — two thin DASHED arcs above the row, quiet and gentle, each with a small handwritten label:
+  - from "Verify" back to "Build", labelled: "a probe breaks it - back to Build"
+  - from "Build" back to "Direction", labelled: "a rule was wrong - refreeze"
+A small two-way dashed loop on the "Build" card, labelled: "red / green".
 
-One muted-coral (#c47a6a) accent dot only on the dashed loop label.
+Soft whisper tints (15-20% opacity, watercolor-light) behind the cards:
+  - "Direction": morning-peach tint (#faf3ee)
+  - "Build": soft-sage tint (#eef5ee)
+  - "Verify": cloud-blue tint (#eef3f9)
+  - "Learn": warm-sand tint (#f5f0e8)
 
-Bottom-left corner, small handwritten margin note in warm gray: "the artifacts survive — the code is disposable".
+One muted-coral (#c47a6a) accent dot only on the "freeze commit" label.
 
-CONNECTIONS: solid thin arrows between the six cards (forward spine, never skipping a card); one long dashed thin arrow for the Observe return loop; two short dashed backward arcs (Verify->Build, Build->Specify); one small two-way dashed loop between Tests and Build. Solid = forward, dashed = correction. All arrows gentle, never heavy; the dashed ones lighter than the solid spine so the forward path reads first.
+Bottom-left corner, small handwritten margin note in warm gray: "the decisions survive — the code is disposable".
+Bottom-right corner, small handwritten margin note in warm gray: "the human reviews the report".
 
-WHAT TO AVOID: no solid fills or heavy color blocks (whisper tints only); no bold/thick strokes; no drop shadows, gradients, or glow; no computer-perfect ruler-straight lines; no grid background; no dark backgrounds; no emoji or clipart; no extra words beyond those listed in this prompt (the only text is: the title, subtitle, the seven card labels and their phrases, the band labels, the four dashed-arrow labels, the "any phase may return to an earlier one" note, and the margin note). Keep it sparse and breathing — accuracy of the listed labels matters more than decoration.
+CONNECTIONS: solid thin arrows between the cards (forward path, never skipping a card); one long dashed thin arrow for the Learn return loop; two short dashed backward arcs; one small dashed loop on Build. Solid = forward, dashed = correction. All arrows gentle, never heavy.
+
+WHAT TO AVOID: no solid fills or heavy color blocks (whisper tints only); no bold/thick strokes; no drop shadows, gradients, or glow; no computer-perfect ruler-straight lines; no grid background; no dark backgrounds; no emoji or clipart; no extra words beyond those listed in this prompt. Keep it sparse and breathing — accuracy of the listed labels matters more than decoration.

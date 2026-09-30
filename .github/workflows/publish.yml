@@ -62,31 +62,18 @@ jobs:
         with:
           python-version: '3.12'
 
-      # The npm installer twin carries a runtime dep (@clack/prompts) on the
-      # interactive path; the suite spawns `node cli.js` with the force-interactive
-      # seam, so @clack/prompts must be importable for the clack-cancel branch to be
-      # exercised — without it the run degrades to the plain-text fallback (exit 0
-      # != 130) and the gate fails closed. Mirrors the same step in ci.yml.
+      # The suite runs both installer twins (`node bin/cli.js` and the pip package) against the
+      # same projects and compares the trees, so node must be on PATH. The npm twin has no
+      # dependencies, so there is nothing to `npm ci`.
       - uses: actions/setup-node@v7
         with:
           node-version: '20'
 
-      - name: Install npm deps (clack interactive path)
-        working-directory: add-method
-        run: npm ci
-
       - name: Install pytest
         run: python3 -m pip install --upgrade pytest
 
-      # Materialize the bundle's vendored, gitignored parts the way a consumer's install does.
-      # `init` never overwrites an existing file, so this is idempotent. (This step used to copy
-      # `tooling/add_engine` — the OKF tree 3.0 retired — which would have failed the guard
-      # closed and published nothing on the first 3.0 tag.) Mirrors the same step in ci.yml.
-      - name: Materialize the vendored bundle (as `add init` does for consumers)
-        run: python3 add-method/tooling/cli.py init
-
-      # The WHOLE suite, not `unittest discover -s tooling` (8 of 400+ tests). A release gate
-      # that runs a twentieth of the suite is not a gate. Mirrors ci.yml.
+      # The WHOLE suite, not a hand-picked subset. A release gate that runs part of the suite
+      # is not a gate. Mirrors ci.yml.
       - name: Run the test suite (red/green gate)
         working-directory: add-method
         run: python3 -m pytest -q
@@ -131,7 +118,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m pip install --upgrade build packaging
-          npm ci
           mkdir -p release-candidate/python release-candidate/npm release-candidate/previous
           python3 -m build --outdir release-candidate/python
           npm pack --pack-destination release-candidate/npm
@@ -182,10 +168,9 @@ jobs:
           }
           (root / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
           PYEOF
-          # Prime only the npm runtime-dependency cache from the already hashed
-          # local tarballs. The candidate gate below then installs both tarballs
-          # by path with --offline; cache priming itself is not a PASS receipt.
-          npm install --ignore-scripts --no-audit --no-fund --no-save release-candidate/npm/*.tgz --prefix "${RUNNER_TEMP}/add-npm-cache-prime-candidate"
+          # The candidate has no runtime dependencies. The PREVIOUS (3.x) tarball declared one, so
+          # prime the npm cache from that already hashed local tarball; the gate below then
+          # installs both tarballs by path with --offline. Priming itself is not a PASS receipt.
           npm install --ignore-scripts --no-audit --no-fund --no-save release-candidate/previous/*.tgz --prefix "${RUNNER_TEMP}/add-npm-cache-prime-previous"
           python3 scripts/candidate_artifact_smoke.py --manifest release-candidate/manifest.json --report release-candidate/report.json
           sha256sum release-candidate/python/* release-candidate/npm/* > release-candidate/SHA256SUMS

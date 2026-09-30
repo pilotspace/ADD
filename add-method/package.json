@@ -1,31 +1,26 @@
 {
   "name": "@pilotspace/add",
-  "version": "3.7.0",
-  "description": "ADD (AI-Driven Development). The agent is the hands; ADD is the memory, judgment, and conscience — a lean, state-tracked skill that drives every change through one atomic task node: Direction → Build → Verify, red/green TDD built in, trusted on a recorded receipt rather than a plausible diff. State lives on disk, so context rot never survives a new session.",
+  "version": "4.0.0",
+  "description": "ADD (AI-Driven Development). One skill, no engine: the agent sizes each change, then drives Direction → Build → Verify — rules, assumptions and failing checks sealed by a git commit, a build to green inside the seal, a verdict trusted on fresh evidence rather than a plausible diff. State lives in plain markdown under .add/, so no context is lost between sessions.",
   "bin": {
     "add": "bin/cli.js"
   },
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@clack/prompts": "^1.5.1"
-  },
   "scripts": {
-    "test": "python3 -m unittest discover -s tooling -p 'test_*.py'",
-    "prepublishOnly": "python3 -m unittest discover -s tooling -p 'test_tree_parity.py'"
+    "test": "python3 -m pytest -q",
+    "prepublishOnly": "python3 -m pytest -q tests/test_npm_pip_parity.py tests/test_skill_only.py"
   },
   "files": [
     "bin/",
     "skill/",
-    "agents/",
-    "tooling/add.py",
-    "tooling/cli.py",
-    "!**/*.pyc",
-    "!**/__pycache__",
-    "tooling/templates/",
+    "personas/",
     "personas-teacher/",
     "personas-index/",
+    "!**/*.pyc",
+    "!**/__pycache__",
+    "!**/.DS_Store",
     "THIRD_PARTY_NOTICES.md",
     "README.md",
     "GETTING-STARTED.md",

@@ -11,10 +11,10 @@ line saying exactly how it relates to the method.
 
 **The frame — "closing the loop."** Anthropic's recursive-self-improvement picture
 runs from autonomous agents delegating to workers *today* toward a future where
-Claude improves Claude. ADD is a deliberately **human-gated, evidence-trusted**
-instance of that loop: the AI drives spec→build→verify→observe, but a human owns the
-frozen contract and the verify gate, and trust comes from passing tests and
-re-resolved evidence — never from a plausible-looking diff. The sources here are
+Claude improves Claude. ADD is a deliberately **evidence-trusted, human-directed**
+instance of that loop: the AI drives direction→build→verify→learn, a human owns the
+direction and reviews every assumption taken, and trust comes from checks sealed before
+the build and run fresh after it — never from a plausible-looking diff. The sources here are
 the shoulders that posture stands on.
 
 The four sections below are the four currents. The comparison table places ADD next
@@ -51,26 +51,26 @@ context-rot-fighting niche of **GSD**. The phase models line up closely:
 | foundation · the five living specs | `/speckit.constitution` → `constitution.md` | (project setup / `CLAUDE.md`-level) |
 | **Direction** — goal and rules (`## CARD`, `## RULES`) | `/speckit.specify` → `spec.md` | **discuss** — capture decisions before planning |
 | **Direction** — contract and scope (`## PLAN`), then frozen | `/speckit.plan` → `plan.md`, `contracts/` | **plan** — research, decompose, fit fresh context |
-| milestone tasks · `add wave` | `/speckit.tasks` → `tasks.md` | (phases → parallel waves) |
+| milestone tasks · parallel worktrees | `/speckit.tasks` → `tasks.md` | (phases → parallel waves) |
 | **Build** | `/speckit.implement` | **execute** — parallel waves, fresh 200k-token context each |
-| **Verify** — receipt, then `add gate` | `/speckit.analyze` + `/speckit.checklist` | **verify** — walk what was built, fix before declaring done |
+| **Verify** — seal check, fresh run, verdict in `## EVIDENCE` | `/speckit.analyze` + `/speckit.checklist` | **verify** — walk what was built, fix before declaring done |
 
 **Where ADD diverges.** spec-kit stops at `implement`; GSD ends at verify (GSD Core
 adds a fifth *ship* phase). ADD closes the loop past both by adding three things
-neither has as a first-class refusal: **red-first checks bound to the rules they
-prove** — the direction freezes with `## CHECKS`, and a rule no check `covers:`
-blocks the gate; an **observe→`add learn`→`add fold`** step, where a lesson needs
-evidence and confirmed ones consolidate into the living specs; and an
-engine-tracked **goal-loop** that holds a milestone open, and lets `add reopen`
-return a closed task to the loop, until the exit criteria are met. ADD also
-deliberately targets **less doc-time than GSD** — a lean foundation and one human
-approval per task, rather than a document per phase. The shared lineage is real;
-the covers-bound red suite, the `fold`, and the goal-loop are ADD's contribution.
+neither has as a first-class step: **red-first checks bound to the rules they
+prove and sealed in git** — every Must and Reject is `covers:`-named by a check, and
+the checks are committed with the contract in a `freeze` commit, so weakening one
+shows in `git diff`; **assumptions on the record** — every silence the agent filled,
+with its cost, reviewed by the human after the run; and a **learning loop with a
+goal-held milestone** — lessons with evidence are promoted into decisions that bind
+later tasks, and a milestone stays open until each exit criterion carries its
+evidence. ADD also targets **less doc-time than GSD** — one task file per change
+and no approval step, rather than a document per phase.
 
 ## 1. Recursive self-improvement
 
-- **When AI builds itself** (Favaro & Clark 2026) — https://www.anthropic.com/institute/recursive-self-improvement — essay. The RSI thesis: by 2026 >80% of code merged at Anthropic was Claude-authored and the 50%-task time-horizon keeps doubling; recursive self-improvement would shift humans from builders to validators. ↔ ADD: the seed source — ADD is the human-gated, evidence-trusted way to run a spec→build→verify→observe loop while the human stays the validator.
-- **Automated Alignment Researchers** (Anthropic 2026a) — https://www.anthropic.com/research/automated-alignment-researchers — research. Nine parallel Claude agents recovered ~97% of the human-expert gap on an alignment task in 5 days versus 7 for the human team. ↔ ADD: the strongest evidence the recursive loop is not speculative — parallel agents under review are exactly ADD's wave-plus-verify shape.
+- **When AI builds itself** (Favaro & Clark 2026) — https://www.anthropic.com/institute/recursive-self-improvement — essay. The RSI thesis: by 2026 >80% of code merged at Anthropic was Claude-authored and the 50%-task time-horizon keeps doubling; recursive self-improvement would shift humans from builders to validators. ↔ ADD: the seed source — ADD is the human-directed, evidence-trusted way to run a spec→build→verify→observe loop while the human stays the validator.
+- **Automated Alignment Researchers** (Anthropic 2026a) — https://www.anthropic.com/research/automated-alignment-researchers — research. Nine parallel Claude agents recovered ~97% of the human-expert gap on an alignment task in 5 days versus 7 for the human team. ↔ ADD: the strongest evidence the recursive loop is not speculative — parallel agents under review are exactly ADD's parallel-plus-verify shape.
 - **Machines of Loving Grace** (Amodei 2024) — https://www.darioamodei.com/essay/machines-of-loving-grace — essay. A "country of geniuses in a datacenter," argued with a measured, bounded position on recursive self-improvement. ↔ ADD: the intent framing behind milestoning — bound the loop with human direction rather than let it run open.
 - **Gödel Machines: Self-Referential Universal Problem Solvers** (Schmidhuber 2003) — https://arxiv.org/abs/cs/0309048 — paper. A provably-optimal self-modifying agent that rewrites itself only when it can prove the rewrite helps. ↔ ADD: the mathematical anchor of the lineage — and a precedent for "only change on proof," which ADD enforces socially via the never-weaken-a-test rule.
 - **STOP: Self-Taught Optimizer** (Zelikman et al. 2023) — https://arxiv.org/abs/2310.02304 — paper. A scaffolding program recursively improves the code that improves code. ↔ ADD: the algorithmic kin of the `fold` step — consolidate confirmed learnings back into the method that produced them.
@@ -82,13 +82,13 @@ the covers-bound red suite, the `fold`, and the goal-loop are ADD's contribution
 
 ## 2. Autonomous & agentic workflows
 
-- **Building Effective Agents** (Schluntz & Zhang 2024) — https://www.anthropic.com/research/building-effective-agents — blog. The canonical taxonomy: prompt-chaining, routing, orchestrator-workers, and the evaluator-optimizer loop. ↔ ADD: the architecture cite — evaluator-optimizer is build→verify→refine; orchestrator-workers is ADD's wave parallelism.
-- **Enabling Claude Code to work more autonomously** (Anthropic 2025a) — https://www.anthropic.com/news/enabling-claude-code-to-work-more-autonomously — news. Checkpoints, subagents, hooks, background tasks, and `/rewind` rollback. ↔ ADD: checkpoint/rewind is the rollback strategy behind phase gates; hooks are where the engine enforces them.
-- **How we built our multi-agent research system** (Anthropic 2025b) — https://www.anthropic.com/engineering/multi-agent-research-system — blog. An Opus lead orchestrating Sonnet subagents, with an LLM acting as judge, lifting task performance ~90%. ↔ ADD: the lead-plus-subagents-plus-judge pattern is exactly ADD's wave execution under a verify gate.
+- **Building Effective Agents** (Schluntz & Zhang 2024) — https://www.anthropic.com/research/building-effective-agents — blog. The canonical taxonomy: prompt-chaining, routing, orchestrator-workers, and the evaluator-optimizer loop. ↔ ADD: the architecture cite — evaluator-optimizer is build→verify→refine; orchestrator-workers is ADD's parallel worktrees.
+- **Enabling Claude Code to work more autonomously** (Anthropic 2025a) — https://www.anthropic.com/news/enabling-claude-code-to-work-more-autonomously — news. Checkpoints, subagents, hooks, background tasks, and `/rewind` rollback. ↔ ADD: checkpoint/rewind is the rollback strategy behind a sealed task; git commits are where ADD records it.
+- **How we built our multi-agent research system** (Anthropic 2025b) — https://www.anthropic.com/engineering/multi-agent-research-system — blog. An Opus lead orchestrating Sonnet subagents, with an LLM acting as judge, lifting task performance ~90%. ↔ ADD: the lead-plus-subagents-plus-judge pattern is exactly ADD's parallel execution under verify.
 - **ReAct: Synergizing Reasoning and Acting in Language Models** (Yao et al. 2022) — https://arxiv.org/abs/2210.03629 — paper. Interleaving think→act→observe turns a model into an agent. ↔ ADD: the base loop every ADD phase runs on.
 - **Toolformer: Language Models Can Teach Themselves to Use Tools** (Schick et al. 2023) — https://arxiv.org/abs/2302.04761 — paper. Self-supervised learning of when and how to call external tools. ↔ ADD: the capability that lets an agent run its own tests, linters, and builds — the evidence ADD trusts.
-- **SWE-agent: Agent–Computer Interfaces Enable Automated Software Engineering** (Yang et al. 2024) — https://arxiv.org/abs/2405.15793 — paper. A designed agent–computer interface materially improves autonomous issue resolution. ↔ ADD: the structured agent↔environment contract — the `add` engine is that interface for the method.
-- **The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery** (Lu et al. 2024) — https://arxiv.org/abs/2408.06292 — paper. A full idea→experiment→write→review research loop at ~$15 per paper. ↔ ADD: the research analog of ADD's loop — and a reminder that an automated reviewer is the weak link a human gate protects.
+- **SWE-agent: Agent–Computer Interfaces Enable Automated Software Engineering** (Yang et al. 2024) — https://arxiv.org/abs/2405.15793 — paper. A designed agent–computer interface materially improves autonomous issue resolution. ↔ ADD: the structured agent↔environment contract — the task file and its commit conventions are that interface for the method.
+- **The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery** (Lu et al. 2024) — https://arxiv.org/abs/2408.06292 — paper. A full idea→experiment→write→review research loop at ~$15 per paper. ↔ ADD: the research analog of ADD's loop — and a reminder that an automated reviewer is the weak link human review protects.
 
 ## 3. Spec-driven development & spec-kit
 
@@ -103,5 +103,5 @@ the covers-bound red suite, the `fold`, and the goal-loop are ADD's contribution
 
 - **Test-Driven Development for Code Generation** (Mathews & Nagappan 2024) — https://arxiv.org/abs/2402.13521 — paper. Supplying tests alongside the prompt measurably lifts pass rates on MBPP and HumanEval. ↔ ADD: the empirical backbone of the failing-tests-first gate — tests as the constraint that makes generation verifiable.
 - **SWE-bench: Can Language Models Resolve Real-World GitHub Issues?** (Jimenez et al. 2023) — https://arxiv.org/abs/2310.06770 — paper. 2,294 real issues judged by whether the project's own tests pass; <2% solved at release. ↔ ADD: the yardstick that proves the point — "done" means the tests pass, which is exactly how ADD gates a feature.
-- **Our framework for developing safe and trustworthy agents** (Anthropic 2025c) — https://www.anthropic.com/news/our-framework-for-developing-safe-and-trustworthy-agents — news. Five principles: human control, transparency, alignment, privacy, and security. ↔ ADD: the frozen-contract gate and never-weaken-a-test rule are human control and transparency made concrete; the security HARD-STOP is the security principle.
-- **Responsible Scaling Policy v3.0** (Anthropic 2026b) — https://www.anthropic.com/news/responsible-scaling-policy-v3 — policy. The AI Safety Level framework; ASL-3 governs autonomous R&D capability. ↔ ADD: the governance ceiling that makes ADD's discipline necessary — as the loop gets more capable, the gates and the human-owned verify matter more, not less.
+- **Our framework for developing safe and trustworthy agents** (Anthropic 2025c) — https://www.anthropic.com/news/our-framework-for-developing-safe-and-trustworthy-agents — news. Five principles: human control, transparency, alignment, privacy, and security. ↔ ADD: the sealed contract and never-weaken-a-test rule are human control and transparency made concrete; the security HARD-STOP is the security principle.
+- **Responsible Scaling Policy v3.0** (Anthropic 2026b) — https://www.anthropic.com/news/responsible-scaling-policy-v3 — policy. The AI Safety Level framework; ASL-3 governs autonomous R&D capability. ↔ ADD: the governance ceiling that makes ADD's discipline necessary — as the loop gets more capable, the sealed checks and the human review matter more, not less.

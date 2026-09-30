@@ -1,123 +1,95 @@
-"""Console-script entry point: pilotspace-add.
+"""Console-script entry point `pilotspace-add` — the same flags and exit codes as bin/cli.js.
 
-Mirrors bin/cli.js command structure:
-    pilotspace-add init [targetDir] [--force] [--name NAME]
-    pilotspace-add help
+    pilotspace-add [init|update] [dir] [--name <name>]    install into a project
+    pilotspace-add --global                               install for this user
+
+Exit codes: 0 ok · 1 the install failed (the output says what landed) · 2 bad usage.
+The parser is hand-written, not argparse, so both twins accept and refuse exactly the same input.
 """
 from __future__ import annotations
 
-import argparse
 import sys
+
+PROG = "pilotspace-add"
+
+
+class Usage(Exception):
+    pass
+
+
+def usage() -> str:
+    return "\n".join((
+        f"usage: {PROG} [init|update] [dir] [--name <name>]",
+        f"       {PROG} --global",
+        "",
+        "Installs the ADD skill into a project (default: the current folder):",
+        "  .claude/skills/add/     the skill, refreshed on every run",
+        "  .add/                   PROJECT.md, specs/ milestones/ tasks/, personas - never overwritten",
+        "  CLAUDE.md, AGENTS.md    a short managed block that points your agent at the skill",
+        "Re-running is safe. Over a 3.x project it also removes the vendored engine",
+        "(.add/tooling/) and ADD's 3.x agents in .claude/agents/.",
+        "",
+        "options:",
+        "  --name <name>   project name for a new .add/PROJECT.md (default: the folder name)",
+        "  --global        install the skill for your user (~/.claude/skills/add), no project",
+        "  --version       print the version",
+        "  -h, --help      show this help",
+    ))
+
+
+def parse(argv: list[str]) -> dict:
+    a = {"positional": [], "name": None, "global": False, "help": False, "version": False}
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg in ("-h", "--help"):
+            a["help"] = True
+        elif arg == "--version":
+            a["version"] = True
+        elif arg == "--global":
+            a["global"] = True
+        elif arg in ("--yes", "-y", "--non-interactive"):
+            pass                                        # 3.x scripts: no prompts now
+        elif arg == "--name":
+            i += 1
+            if i >= len(argv) or argv[i].startswith("-"):
+                raise Usage("--name needs a value")
+            a["name"] = argv[i]
+        elif arg.startswith("-"):
+            raise Usage("unknown option " + arg)
+        else:
+            a["positional"].append(arg)
+        i += 1
+    pos = a["positional"]
+    if pos and pos[0] in ("init", "update", "help"):
+        if pos.pop(0) == "help":
+            a["help"] = True
+    if a["help"] or a["version"]:
+        return a
+    if pos and pos[0] == "prune-data":
+        raise Usage("prune-data was retired in ADD 4.0")
+    if len(pos) > 1:
+        raise Usage("too many arguments: " + " ".join(pos))
+    if a["global"] and pos:
+        raise Usage("--global installs for your user and takes no directory")
+    return a
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Entry point registered as the `pilotspace-add` console script."""
-    raw = argv if argv is not None else sys.argv[1:]
-
-    # Pull off the subcommand (default: init), matching cli.js behaviour.
-    if raw and not raw[0].startswith("-"):
-        cmd, rest = raw[0], raw[1:]
-    else:
-        cmd, rest = "init", raw
-
-    if cmd in ("help", "--help", "-h"):
-        print("usage: pilotspace-add <init|update> [targetDir] [--force] [--check] [--global]")
-        print("  init    install the ADD skill + tooling into a project")
-        print("          (--global ALSO installs to a shared home [ADD_HOME|XDG_DATA_HOME/add|"
-              "~/.add] + registers the project)")
-        print("  update  re-materialize skill/tooling/docs to this package version "
-              "(preserves your state)")
-        print("          (--global refreshes the shared home + propagates to every registered "
-              "project)")
+    try:
+        a = parse(list(sys.argv[1:] if argv is None else argv))
+    except Usage as exc:
+        print(f"error: {exc}\n" + "\n".join(usage().splitlines()[:2]), file=sys.stderr)
+        return 2
+    if a["help"]:
+        print(usage())
         return 0
-
-    if cmd == "update":
-        parser = argparse.ArgumentParser(prog="pilotspace-add update")
-        parser.add_argument("target", nargs="?", default=".",
-                            help="Target project directory (default: cwd)")
-        parser.add_argument("--force", action="store_true",
-                            help="re-materialize even when already current")
-        parser.add_argument("--check", action="store_true",
-                            help="report version drift without writing anything")
-        # accepted for CLI-surface parity with init / the npm twin; update is
-        # non-interactive by nature, so these are no-ops here.
-        parser.add_argument("--yes", "-y", action="store_true", help=argparse.SUPPRESS)
-        parser.add_argument("--non-interactive", dest="non_interactive",
-                            action="store_true", help=argparse.SUPPRESS)
-        parser.add_argument("--global", dest="as_global", action="store_true",
-                            help="refresh the shared global home + propagate to every "
-                                 "registered project")
-        parser.add_argument("--lock-timeout", dest="lock_timeout", type=float, default=None,
-                            help="(--global only) seconds to wait for a LIVE contended home "
-                                 "lock before failing 'update_in_progress' (default: fail "
-                                 "immediately, unchanged; a STALE lock always self-heals)")
-        args = parser.parse_args(rest)
-        from add_method._installer import update, update_check
-        if args.check:
-            return update_check(target=args.target)
-        return update(target=args.target, force=args.force, channel="pip",
-                      as_global=args.as_global, lock_timeout=args.lock_timeout)
-
-    if cmd == "prune-data":
-        parser = argparse.ArgumentParser(prog="pilotspace-add prune-data")
-        parser.add_argument("--force", action="store_true",
-                            help="actually remove the orphaned snapshots (default: dry-run lists only)")
-        args = parser.parse_args(rest)
-        from add_method._installer import prune_data
-        return prune_data(force=args.force)
-
-    if cmd != "init":
-        print(f"pilotspace-add: error: unknown command '{cmd}'. Try: pilotspace-add init",
-              file=sys.stderr)
-        return 1
-
-    parser = argparse.ArgumentParser(
-        prog="pilotspace-add",
-        description="Install the ADD method into a target project.",
-    )
-    parser.add_argument(
-        "target",
-        nargs="?",
-        default=".",
-        help="Target project directory (default: cwd)",
-    )
-    parser.add_argument("--force", action="store_true",
-                        help="Overwrite an existing skill tree (never touches project state)")
-    parser.add_argument("--name", default=None,
-                        help="Project name (default: target directory name)")
-    parser.add_argument("--yes", "-y", action="store_true",
-                        help="skip prompts and take defaults (forces the non-interactive path)")
-    parser.add_argument("--non-interactive", dest="non_interactive", action="store_true",
-                        help="never prompt; take defaults (same as --yes; what CI / pipes do)")
-    parser.add_argument("--global", dest="as_global", action="store_true",
-                        help="ALSO install the managed layer to a shared home "
-                             "(ADD_HOME|XDG_DATA_HOME/add|~/.add) + register this project")
-    parser.add_argument("--global-data", dest="as_global_data", action="store_true",
-                        help="(implies --global) ALSO persist this project's user-data "
-                             "under <home>/data/<key> keyed by path")
-    parser.add_argument("--from-global-data", dest="from_global_data", action="store_true",
-                        help="rehydrate this project's user-data FROM the shared home "
-                             "(<home>/data/<key>) on a fresh clone — fill-gaps; --force overwrites "
-                             "with a .bak")
-    parser.add_argument("--lock-timeout", dest="lock_timeout", type=float, default=None,
-                        help="(--global only) seconds to wait for a LIVE contended home "
-                             "lock before failing 'update_in_progress' (default: fail "
-                             "immediately, unchanged; a STALE lock always self-heals)")
-
-    args = parser.parse_args(rest)
-
+    if a["version"]:
+        from add_method import __version__
+        print(__version__)
+        return 0
     from add_method._installer import install
-    return install(
-        target=args.target,
-        force=args.force,
-        name=args.name,
-        yes=args.yes,
-        non_interactive=args.non_interactive,
-        as_global=args.as_global,
-        as_global_data=args.as_global_data,
-        as_global_data_restore=args.from_global_data,
-        lock_timeout=args.lock_timeout,
-    )
+    return install(a["positional"][0] if a["positional"] else ".", a["name"], as_global=a["global"])
 
 
 if __name__ == "__main__":

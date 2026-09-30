@@ -45,10 +45,13 @@ jobs:
         working-directory: add-method
         run: python3 scripts/prepare_bundle.py
 
-      # Sanity: the snapshot + parity guards must stay green on the refreshed tree.
+      # Sanity: the pip bundle must still mirror what npm ships, byte for byte, on the refreshed
+      # tree. (4.0 has no separate snapshot test; the 3.x ones lived in the deleted tooling/.)
       - name: Verify the refreshed snapshot
         working-directory: add-method
-        run: python3 -m unittest tooling.test_teacher_snapshot tooling.test_bundle_parity -v
+        run: |
+          python3 -m pip install --upgrade pytest
+          python3 -m pytest -q "tests/test_npm_pip_parity.py::test_the_pip_bundle_mirrors_the_npm_payload" "tests/test_npm_pip_parity.py::test_npm_ships_the_skill_payload_and_nothing_retired"
 
       # Open (or update) a single refresh PR with the diff — never a direct push to main.
       - name: Open the refresh pull request
@@ -63,7 +66,7 @@ jobs:
 
             - re-fetched upstream and re-pinned the commit (see `personas-teacher/VENDOR.md`)
             - regenerated `src/add_method/_bundled/`
-            - `test_teacher_snapshot` + `test_bundle_parity` are green
+            - the bundle-parity checks in `tests/test_npm_pip_parity.py` are green
 
             Review the third-party diff before merging. The release build is unaffected —
             it reads only the committed snapshot (zero-network).

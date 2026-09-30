@@ -1,433 +1,135 @@
 # Getting started with ADD — your first feature in ~10 minutes
 
-This is a runnable walkthrough. Follow it top to bottom and you'll take one real
-feature — *transfer money between a user's own accounts* (the book's worked
-example) — from nothing to a **verified** result: one whose green is backed by a
-recorded receipt, not by a diff that reads plausible.
+This walkthrough takes one real feature — *transfer money between a user's own accounts*, the
+book's worked example — from nothing to a **verified** result: one whose green is backed by
+test output recorded at a known commit, not by a diff that reads plausible.
 
-You'll learn the whole loop by doing it once. ADD has three beats:
+ADD has three beats:
 
 > **Direction → Build → Verify**
 
-ADD is **AI-first**: you talk to the agent and it drives the method. Reading this
-guide top to bottom, you will type exactly **one shell command — the install**.
-After that, everything happens in conversation (`/add` is how you start it, not
-a terminal command): the agent's hands are the CLI, and the same CLI is your
-escape hatch whenever you want to take the wheel (it's all in the appendix at
-the end).
+ADD is **AI-first**: you talk to the agent and it drives the method. You will type exactly **one
+shell command — the install**. After that it is conversation. There is no ADD command-line tool;
+the agent's tools are files, git, and your project's own test command, and they are yours too.
 
 ---
 
 ## 0 · Prerequisites
 
-- **Python 3.10+** — required; the tool itself is stdlib-only (no pip dependencies).
-- **One installer**, whichever you already have: **Node.js ≥ 18** (for `npx`) *or*
-  **pip** (Python). Both install the exact same `.add/` runtime.
-- A project folder. It can be empty or an existing repo.
-- **Ideally a git repository.** Not required to install, but `add gate` establishes
-  freshness from git blob hashes; outside a working tree it can only compare
-  timestamps and will refuse to record a `PASS`. `git init` is enough.
-
-> **Windows:** use `py` wherever this guide writes `python3` (the Python launcher on
-> Windows) — e.g. `py .add\tooling\cli.py status`. Both installers handle the install
-> step for you; only the by-hand commands in the appendix differ.
+- **One installer**, whichever you have: **Node.js ≥ 18** (for `npx`) *or* **Python 3.10+** (for pip).
+- **A git repository.** The seal is a git commit: `git init` is enough.
+- **A test command** your project already runs (`pytest`, `npm test`, `go test ./...`, …).
+- **A coding agent** — Claude Code natively; Cursor, Codex, Copilot and others through their context file.
 
 ---
 
 ## 1 · Install — the one command you type
 
-From your project root, pick **one** path — both produce the same install:
-
-**Option A — npm (Node.js ≥ 18):**
+From your project root, pick **one**:
 
 ```bash
-npx @pilotspace/add init
+npx @pilotspace/add init                              # npm
 ```
-
-**Option B — pip (Python 3.10+):**
-
 ```bash
-pip install pilotspace-add
-pilotspace-add init
+pip install pilotspace-add && pilotspace-add init     # pip
 ```
 
-No flags needed — the tool infers your project's name from the folder. (Prefer to
-choose up front? Both installers take `--name "My App"`.)
+The installer drops files only: the `add` skill into `.claude/skills/add/`, starter personas into
+`.add/personas/`, and — for agents other than Claude Code — a short managed ADD block in their
+context file. It does not create your project's bundle: that is the agent's first move, so nothing
+is decided without your request in front of it.
 
-Either one creates `.add/` (your runtime) and drops the `add` skill into
-`.claude/skills/add/`. The book itself is published at
-https://pilotspace.github.io/ADD/ and never installs into the project. It deliberately
-does **not** initialise the project — that's the agent's first move, so nothing
-gets decided without you in the loop.
+**When it finishes: open Claude Code and type `/add`.**
 
-**When the install finishes: open Claude Code and type `/add`.** That's the
-handoff — from here on it's conversation, not terminal commands.
-
-### Updating to a newer ADD — no re-install
-
-When a new ADD version ships, refresh a project in one step:
-
-```bash
-# npm — npx fetches latest, then re-materializes into this project:
-npx @pilotspace/add@latest update
-
-# pip — one shot via pipx (the npx analog):
-pipx run pilotspace-add update
-
-# …or plain pip, in two steps:
-pip install -U pilotspace-add && pilotspace-add update
-```
-
-`update` clean-replaces the managed layer (`skill` · `.add/tooling`) and **never
-touches your work** — `index.md`, `PROJECT.md`, milestones, tasks and archive are
-left exactly as they were. It is idempotent (same version twice is a no-op).
-Run `… update --check` to see whether a project is behind the installed package.
+To update later: `npx @pilotspace/add@latest update` or `pipx run pilotspace-add update`. Your
+`.add/` project files are left exactly as they were.
 
 ---
 
 ## 2 · Your first feature — talk to the agent
-
-In Claude Code, the whole onboarding is one move:
 
 ```
 in Claude Code:  /add
 you:             "I want to let users transfer money between their own accounts."
 ```
 
-From there the agent runs the **onboarding** for you:
+The agent then:
 
-1. **Orient** — it reads the bundle's resume point, never re-reading your whole
-   repo. On a fresh install it initialises the project itself and drafts the
-   foundation for your sign-off.
-2. **Intake** — it sizes your request against the **ceremony ladder** and routes it.
-   Most changes never create a node: a mechanical edit or a small behaviour change —
-   three adjacent files, one sitting, no unknowns — goes down the **direct lane**
-   (write the check, red → green, commit, `add learn`). One behaviour worth a frozen
-   contract becomes a **Task** (`--depth quick` or `standard`). An unanswered question
-   becomes an **explore** Task (`--kind explore`) that closes on cited `## FINDINGS`
-   rather than a test run. A theme spanning several tasks becomes a **milestone**
-   (goal · scope · tasks · exit criteria). *You confirm the shape, and "make it a
-   task" always wins.* Security, data and architecture are the floor: they get a
-   node however small, and a security finding is always a hard stop.
-3. **Direction** — for each task it drafts the RULES (Musts and Rejects), the PLAN
-   (contract and scope), and the CHECKS that will prove them, then writes the tests
-   **red first**. *You give one approval: the freeze.*
-4. **Build → Verify** — it builds to green, records a receipt from a real test run,
-   and gates on that evidence. A security finding always stops back to you.
+1. **Orients** — reads `.add/PROJECT.md` and any open task files. On a fresh project it creates
+   `PROJECT.md` — `goal:`, `invariants:`, `test_cmd:` — and empty `specs/`, `milestones/`, `tasks/`,
+   drafting from your code if there is any.
+2. **Sizes** the request. A mechanical edit or small behavior — ≤3 adjacent files, one sitting, no
+   unknowns — goes **Quick**: a failing test, the fix, a commit, no task file. One behavior worth a
+   contract becomes a **Task**. An open question becomes an **Explore** task that ends in cited
+   findings. A theme becomes a **Milestone**. Anything touching security, data or architecture is
+   at least a Task. *Moving money touches data, so this one is a Task.*
+3. **Direction** — writes `.add/tasks/transfer-own-accounts.md`: the rules (what it must do and
+   refuse), the assumptions (every gap in your request it had to fill, and what it would cost if
+   wrong), the plan, and the checks. It runs the checks and watches them **fail** because the
+   feature does not exist yet, then commits the task file and the checks together:
+   `freeze(transfer-own-accounts): …`. That commit is the seal.
+4. **Build** — writes code until the checks pass, without touching the sealed files.
+5. **Verify** — confirms the sealed files are unchanged since the freeze commit, runs the checks and
+   your full suite fresh, reads the diff for security, concurrency and architecture, tries to break
+   its own green, and writes one verdict — `PASS`, `RISK-ACCEPTED` or `HARD-STOP` — with the real
+   output into the task file's `## EVIDENCE`. Commit: `verify(transfer-own-accounts): PASS`.
+6. **Reports** — any `HARD-STOP` first, then the verdict, the evidence, and **every assumption it
+   took**.
 
-So a milestone-sized feature is: **describe it → confirm the milestone → approve each
-freeze → review the result.** Everything between is the agent.
-
-> New term: **bundle** — the `.add/` tree that holds your project's state as plain
-> markdown. See https://pilotspace.github.io/ADD/appendix-c-glossary/.
+Nothing stops for approval along the way. Your part is the review at the end.
 
 ---
 
-## 3 · What just happened (and your override)
+## 3 · Review what it did
 
-Behind the conversation, the agent drove the CLI: it read the resume point, sized
-the milestone, sealed the contract you approved, ran the tests red, built to green,
-recorded a receipt, and gated on it. **The state lives on disk, not in the chat
-window.**
+Read the report first — especially the assumptions. For the transfer, expect lines like:
 
-If you ever want to see that state yourself — or take over entirely — the same
-CLI is yours:
-
-```bash
-python3 .add/tooling/cli.py status
+```
+A4 [who] the destination's owner is not mentioned → both accounts must be the caller's
+   → if transfers to other users are wanted, R:FORBIDDEN is too strict
 ```
 
-`status` is the resume point: the node roster, each node's beat, and the exact next
-command. `brief <slug>` composes everything needed to work one task — its own body,
-the cards of what it depends on, and the specs' bind lines — without reading your
-whole repo. That is how **any agent** — Claude Code, Codex, OpenCode, Cursor,
-Windsurf, Trae, Gemini CLI, GitHub Copilot, Cline, Aider — follows ADD through the
-CLI alone. The installer detects which one you're in and drops the file it reads
-(`CLAUDE.md`, `AGENTS.md`, or `.clinerules`).
+If a reading is wrong, say so; the fix is a new request, and the agent takes it from there.
 
-> Tip: shorten typing with an alias — `alias add="python3 .add/tooling/cli.py"` —
-> then you can run `add status`, `add brief transfer`, etc. This guide uses the
-> `add …` short form from here on.
+Then check anything you like, with tools you already have:
+
+```bash
+git log --oneline --grep='(transfer-own-accounts)'       # freeze, any refreeze, verify
+cat .add/tasks/transfer-own-accounts.md                  # rules, assumptions, checks, evidence
+```
+
+```bash
+# was anything sealed changed after the seal?
+F=$(git log -1 --format=%H --grep='freeze(transfer-own-accounts)')
+git diff $F HEAD -- .add/tasks/transfer-own-accounts.md tests/     # the task's check files
+```
+
+The `## EVIDENCE` section names the exact commands and the commit they ran on — re-run them to see
+the same result.
 
 ---
 
-## Resume next session
+## 4 · Resume next session
 
-Close your laptop, come back tomorrow, type `/add` again — the agent reorients
-itself from disk and continues exactly where you left off. The bundle is the
-carrier; nothing depends on the conversation surviving.
-
-The same resume point is yours directly:
-
-```bash
-add status
-```
+State lives on disk, not in the chat. Close the laptop; tomorrow, type `/add` (or `/add status`)
+and the agent reads `PROJECT.md`, the open task files and recent commits, and picks up where it
+left off.
 
 ---
 
 ## Self-check
 
-Confirm your bundle is internally consistent at any time:
-
-```bash
-add doctor
-```
-
-`doctor` **reports and never writes** — a checker that silently repairs is one whose
-report you cannot trust, because you can't tell what it found from what it changed.
-When you *want* the repair, ask for it explicitly with `add doctor --sync`.
-
----
-
-## Under the hood — the three beats by hand (escape hatch)
-
-Everything above is what the agent drives for you. This appendix is the **escape
-hatch**: the same three beats run by hand, so you can see what each one produces and
-step in manually whenever you want to. You never *have* to type these — they are the
-agent's hands, and yours when you take the wheel.
-
-### Before the beats — initialise and scaffold
-
-Starting cold? Install first as in §1. Then initialise the bundle and scaffold the
-task yourself (the agent normally does both):
-
-Two preconditions for the walk: the git working tree from §0, and the `--scope` paths
-below must **exist** — the gate digests them to establish freshness, and refuses the
-PASS when it cannot.
-
-<!-- gs:scaffold -->
-```bash
-add init --profile code "Ledger"
-add new Task transfer --title "Transfer money between my accounts" --scope "src/,tests/"
-```
-
-This creates `.add/tasks/transfer.md` — **one file, eight sections** — and leaves it
-at beat `scaffold`: nothing is authored yet. Open it in your editor; you'll fill it
-top to bottom, and the beat becomes `direction` once you freeze.
-
-> **Already have a bundle above this directory?** `add init` refuses rather than leave
-> two bundles in one project (`R:RIVALBUNDLE`). Work from the existing one, or pass
-> `add init --nested` if a separate bundle here is deliberate — a monorepo with a
-> bundle per package, say.
-
-### Beat 1 — Direction (https://pilotspace.github.io/ADD/03-direction/)
-
-Write the rules in **`## RULES`**. State what must hold (`M<n>`) and what must never
-happen (`R:<NAME>`, each with a named error code):
-
-<!-- gs:rules -->
-```
-<must>
-- M1 an amount moves from one of my accounts to another of mine
-- M2 the debit and the credit happen in one atomic transaction
-</must>
-<reject>
-- R:AMOUNT_INVALID an amount <= 0 must never be accepted -> "amount_invalid"
-- R:SAME_ACCOUNT source and destination must never be the same -> "same_account"
-- R:OVERDRAW a balance must never go negative -> "insufficient_funds"
-</reject>
-```
-
-Now the section people skip, and the one that earns its place fastest. **`## ASSUMPTIONS`**
-is for what the request did **not** say:
-
-<!-- gs:assumptions -->
-```
-- A1 [who] covers: S1 · the request never says whether I may transfer from an account
-     I do not own; taking it as own-accounts-only -> if wrong, it moves other people's money
-- A2 [which] covers: S1 · it never says whether closed accounts are transferable;
-     excluding them -> if wrong, legitimate transfers are refused
-- A3 [when] covers: S1 · it never says whether a transfer can be backdated; taking it as
-     now-only -> if wrong, reconciliation breaks
-- A4 [absent] covers: S1 · it never says what currency the amount is in; assuming one
-     implicit currency -> if wrong, cross-currency transfers corrupt balances
-- A5 [order] n/a · a single transfer exposes no ordered collection
-- A6 [experience] covers: S1 · it never says who reads a refused transfer or what tells
-     them why; taking it as the payer, who needs the reason and the fix in the refusal
-     itself -> if wrong, a correct refusal reads as a fault and they retry until locked out
-```
-
-`A6` is the one dimension that is not about correctness. `A1` asks *whose* money it is;
-`A6` asks who has to live with the answer. Note that its cost line does not describe a
-bug — the refusal is right — and no other section has anywhere to record that.
-
-RULES records what you were **told**. EDGES records the boundaries of those rules. Neither
-has anywhere to put what nobody said — so without this section, an unstated requirement
-becomes a Must phrased exactly like a stated one, and a reader cannot tell *given* from
-*decided*.
-
-**Sweep, don't free-associate.** The axis is the `S<n>` surfaces you list in the node's
-`gives:` frontmatter (here `S1 POST /transfers`) — `new` scaffolds that slot and `freeze`
-refuses while it is still template. Take each surface and ask all six dimensions —
-`who · which · when · absent · order · experience` — tagging each line with the one it answers and the
-surfaces it covers. `freeze` refuses until every `(dimension, surface)` pair is covered or
-retired with `[<dim>] n/a · <why>`, and names the pairs it's waiting on:
-
-```
-cannot freeze `transfer` — these (dimension, surface) pairs are unswept: who:S1
-```
-
-`add todo` counts them down while you author, so freeze confirms work you've already done.
-
-The matrix exists because free-association follows the *request's* emphasis, not the risk:
-it's the dimension nobody wrote a sentence about that ships as a silent decision. (Working
-at `--depth quick`? The sweep is skipped — depth tunes ceremony.)
-
-An assumption is a declared unknown, not a rule: `A1` needs no check, and changing one
-does not break the freeze seal.
-
-Fix the external shape in **`## PLAN`**:
-
-<!-- gs:plan -->
-```
-contract: POST /transfers { fromAccountId, toAccountId, amount }
-          200 -> { transferId, fromBalance, toBalance }
-          400 -> { error: "amount_invalid" | "same_account" | "insufficient_funds" }
-```
-
-`scope:` is not here — it lives in the node's **frontmatter**, where every reader looks, and
-`--scope "src/,tests/"` above already put it there. (Before 3.4 the scaffold offered a `scope:`
-slot in this section that nothing read: fill it and the gate answered "the node declares no
-`scope:`".)
-
-Name any boundary case worth its own check in **`## EDGES`** (optional, but an edge you
-write here is a rule the gate will hold you to):
-
-<!-- gs:edges -->
-```
-- E1 a mid-transfer failure must leave both balances unchanged
-```
-
-Then bind every rule to the check that will prove it, in **`## CHECKS`**:
-
-<!-- gs:checks -->
-```
-- test_transfer_moves_funds · covers: M1 · balances move by exactly the amount
-- test_transfer_is_atomic · covers: M2, E1 · a mid-transfer failure leaves both balances unchanged
-- test_rejects_non_positive · covers: R:AMOUNT_INVALID · zero and negatives are refused
-- test_rejects_same_account · covers: R:SAME_ACCOUNT · source == destination is refused
-- test_rejects_overdraw · covers: R:OVERDRAW · a balance never goes negative
-```
-
-Two things the gate will enforce later, so get them right now:
-
-- **`covers:` takes a list.** One check can discharge several rules — `covers: M2, E1`
-  above. What it cannot do is leave a rule unbound: **every** `M<n>`, `R:<NAME>` and
-  `E<n>` needs some check naming it, or `gate PASS` refuses and tells you which.
-- **The name must be the id your runner reports.** The gate matches on the id in the
-  JUnit report, not on your intent. Parametrize `test_rejects_non_positive` in pytest and
-  the report says `test_rejects_non_positive[0]` — which binds to nothing, and the gate
-  refuses with `R:AMOUNT_INVALID` unbound. Keep one check per name, or declare the
-  generated ids.
-
-**Write those tests now, and confirm they FAIL.** There's no code yet; a test that
-passes here is testing nothing. This is red/green TDD — red before green.
-
-Now seal the direction:
-
-<!-- gs:freeze -->
-```bash
-add freeze transfer --by "your name" --authority human
-```
-
-Two things to know about `freeze`. It **refuses a node that still carries template
-placeholders** — you cannot approve a scaffold. And it stamps a `direction:` digest
-over RULES · CHECKS · `gives:`, so if any of them change afterwards, the gate will
-refuse the PASS and tell you to refreeze. A frozen contract changes by refreezing,
-never by a silent edit.
-
-`--authority human` is what records this as a human approval; without it the stamp reads
-`authority: process`, and a ledger of process stamps cannot be told apart from an agent
-approving its own work. What is **computed and not assertable** is the FLOOR: a node whose
-`sensitivity:` is `security` — or whose scope matches the bundle's `sensitive_paths:` —
-requires a human whatever you pass, and `freeze` will not let a lower claim past it.
-
-### Beat 2 — Build (https://pilotspace.github.io/ADD/04-build/)
-
-Enter the build without changing a test or the frozen contract:
-
-<!-- gs:brief -->
-```bash
-add brief transfer
-```
-
-`brief` is Build's FIRST verb, not a convenience. It records the build entry the gate
-later looks for; skip it and `gate PASS` refuses with `R:UNBRIEFED` — the build was
-never entered, so nothing says what this run was an attempt at. Then write code until
-**every test passes**, and record a receipt from a real run:
-
-<!-- gs:run -->
-```bash
-add run transfer --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- python3 -m pytest -q --junitxml="${TMPDIR:-/tmp}/add-run.xml"
-```
-
-Note the flag appears **twice**, and that is not a typo: `--junitxml "${TMPDIR:-/tmp}/add-run.xml"` tells ADD
-where to *read* the report, and `--junitxml="${TMPDIR:-/tmp}/add-run.xml"` after the `--` is part of the test
-command that *writes* it. Omit the second and the receipt records only an exit code —
-`ids: unknown` — and nothing binds to your rules.
-
-`run` records what happened. A failing command is a recorded result, not an error.
-
-### Beat 3 — Verify (https://pilotspace.github.io/ADD/05-verify/)
-
-Check what tests miss — the three residue lenses: security, concurrency,
-architecture. Then record exactly one outcome:
-
-<!-- gs:gate -->
-```bash
-add gate transfer PASS --by "your name"
-```
-
-`gate PASS` auto-closes the task. It **refuses** unless there is a fresh receipt, the
-receipt passed, the files in scope still digest to what was run, and every rule is
-bound to a **passing** test id — naming the unbound ones when it refuses. A refusal
-here is the method working, not a tooling error: it means the evidence does not yet
-cover what you promised. Fix the binding, `run` again, gate again. (Changing RULES or
-CHECKS to fix it breaks the direction seal, so refreeze first — that is deliberate,
-and it is one command: `add freeze transfer --by "your name" --authority human`.) Use `gate HARD-STOP`
-to send it back, or
-`gate RISK-ACCEPTED --reason "…"` for a signed, non-security waiver. A security
-finding is always `HARD-STOP` — that floor cannot be waived.
-
-**What a green gate does and does not mean.** It proves the checks you *declared*
-ran, passed, and are bound to your rules — never that those checks were *enough*. A
-check that asserts nothing still binds and still passes. Writing the check that would
-have caught the bug is your job; the engine can only prove you ran the ones you wrote.
-See `FORMAT.md` §10.
-
-### Closing the loop (https://pilotspace.github.io/ADD/06-the-loop/)
-
-Record what you learned, so the next task starts better than this one did:
-
-```bash
-add learn tdd "atomicity needs a mid-transaction failure test, not just a happy path" \
-    --evidence .add/tasks/transfer.md
-add deltas                 # what the traces say across lanes
-add todo                   # what is still open
-```
-
-The first argument is the **lens** — which of the five living specs this lesson
-sharpens (`ddd · sdd · udd · tdd · add`). It is a closed vocabulary, not free text:
-a lesson with nowhere to fold is a lesson nobody re-reads.
-
-When every task in a milestone is done, `add milestone-done <slug>` checks the exit
-criteria and refuses if the goal is unmet. The flow is a loop, not a finish line.
+- [ ] `.add/PROJECT.md` states the goal, the invariants and the test command.
+- [ ] The task file has rules, assumptions, checks and an `## EVIDENCE` block with a verdict.
+- [ ] `git log` shows a `freeze(...)` commit before the code and a `verify(...)` commit after.
+- [ ] You read every assumption, and agree — or you asked for a change.
 
 ---
 
 ## Where to read more
 
-You just ran the method; now read *why* it's shaped this way:
-
-- The shift & principles — https://pilotspace.github.io/ADD/00-introduction/, https://pilotspace.github.io/ADD/01-principles/
-- The flow end to end — https://pilotspace.github.io/ADD/02-the-flow/
-- Each beat in depth — https://pilotspace.github.io/ADD/03-direction/, https://pilotspace.github.io/ADD/04-build/, https://pilotspace.github.io/ADD/05-verify/
-- Setup and lanes — https://pilotspace.github.io/ADD/07-setup-and-lanes/
-- Working in parallel — https://pilotspace.github.io/ADD/08-parallel-work/
-- Operating it on a team — https://pilotspace.github.io/ADD/09-governance/, https://pilotspace.github.io/ADD/10-personas/
-- Every verb and flag — https://pilotspace.github.io/ADD/13-command-reference/
-- The bundle format — https://pilotspace.github.io/ADD/12-bundle-format/
-- A fully worked example — https://pilotspace.github.io/ADD/appendix-d-worked-example/
-
-The rule to remember: **build the right thing (direction), prove it's right
-(verification), and let the AI do the building in between.**
+- The worked example, every command and output: https://pilotspace.github.io/ADD/appendix-d-worked-example/
+- The loop, beat by beat: https://pilotspace.github.io/ADD/02-the-flow/
+- The file format: https://pilotspace.github.io/ADD/12-bundle-format/
+- Coming from 3.x: https://pilotspace.github.io/ADD/20-whats-new-in-4/
+- The same loop where the artifact is a ledger: [BEYOND-CODE.md](./BEYOND-CODE.md)

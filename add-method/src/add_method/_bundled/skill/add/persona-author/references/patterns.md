@@ -54,7 +54,7 @@ symbol, or line you have not opened. In an ADD persona it is an Anti-pattern:
 - ✓ "a claim resting on a file/symbol not opened → open it or cut the claim."
 It binds outputs too: every path or example the persona's own deliverable cites must exist at the
 named place — a placeholder that survives into the deliverable is the same defect. This mirrors
-the add-worker floor ("never invent a file you have not opened") as a domain instinct.
+the method's floor ("never invent a file you have not opened") as a domain instinct.
 
 ## 5. Failure-mode-aware Success Metrics
 A metric is only expertise if it names the way of being wrong it catches. State each as an
@@ -67,8 +67,8 @@ or a test it can run. An invented outcome statistic ("engagement +40%") sounds m
 was; it is the signature rot of weak persona corpora.
 
 ## 6. ORIENT-first Abilities
-Lead the ability list with the 1–3 commands the lens RUNS on load before acting — `python3 .add/tooling/cli.py status`,
-the domain's suite, the diff to judge. Acting on ground truth beats re-deriving it. State every
+Lead the ability list with the 1–3 reads and commands the lens RUNS on load before acting — the
+task file, the domain's suite, the diff to judge. Acting on ground truth beats re-deriving it. State every
 other ability as something doable *now*, anchored to a real file/tool/command — not an aspiration.
 - ✓ "can diff two response fixtures byte-for-byte to prove passthrough" (checkable)
 - ✗ "understands API design deeply" (unfalsifiable)
@@ -122,7 +122,7 @@ it for a lens that only advises.
 ## 12. Deliberate exclusions — what NOT to put in a persona
 A persona is a layer in a stack; keep the other layers' work OUT of it.
 - **No tone/voice** — that belongs to the agent's own voice, not the lens. A persona that prescribes phrasing is duplicating it.
-- **No self-score / confidence rubric** — the agent (add-worker) owns the six-dimension score.
+- **No self-score / confidence rubric** — the agent owns its own self-assessment.
 - **No output skeleton** — the deliverable's shape is the agent's Return contract, not the lens's.
 - **No stakes/CoT priming** ("take a deep breath", "$500 tip") — motivation is the agent's; the
   persona supplies judgment, not pep talk.

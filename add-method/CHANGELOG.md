@@ -6,6 +6,62 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [4.0.0] — 2026-09-28
+
+**One skill, no engine.** ADD is now a markdown skill the model follows with git and the project's
+own test command. The Python engine, its CLI and the agent roster are removed. On the project's own
+benchmark the 3.x engine cost 18.2M tokens (~$15) where spec-kit cost 3.8M ($2.53) at comparable
+fidelity (`benchmark/BENCHMARK.md`), and most of its growth guarded its own stamps rather than the
+work. 3.7.0 is the last engine release.
+
+### Changed
+- **The method is `skill/add/SKILL.md`** (200 lines) plus `references/format.md` (the `.add/` file
+  shapes), `references/explore.md` (the research lane), `references/evidence.md` (the closed loop
+  from intent to production) and `references/personas.md` (routing lenses). Lanes, the floor, Direction → Build →
+  Verify, red-first checks, residue review and the three verdicts carry over.
+- **Git is the seal.** Direction ends with a `freeze(<slug>)` commit of the task file and its check
+  files; a changed contract is a visible `refreeze(<slug>): <why>`; Verify diffs the sealed files
+  against the latest seal, re-runs the checks on the committed tree, and writes the verdict into
+  the task's `## EVIDENCE` in a `verify(<slug>): <verdict>` commit.
+- **No approval gate.** Nothing interrupts the run; the human reviews after, through a session
+  report that leads with HARD-STOPs and lists every assumption the model took. A security finding
+  is still a HARD-STOP verdict — the task stays open and the finding leads the report.
+- **The `.add/` bundle is maintained by hand**: `PROJECT.md`, `specs/`, `milestones/`, `tasks/`,
+  `personas/`. A 3.x bundle reads as-is; its compiled files are history.
+- **The closed loop is stated, not enforced.** Each rule names its source or is marked `derived:`;
+  each check names the plausible wrong build it fails (`falsifier:`); a task names its `risks:`,
+  which pick the persona, a second kind of evidence and the residue lenses. Floor work gets a
+  second reader before the seal and a counter-lens refute with executable probes after the build.
+  Verify runs the tests of every consumer of a changed `gives:` surface. Quick work that turns out
+  to touch the floor becomes a Task. A tag goes only on verified work; risky work names what to
+  watch after release (`observes:`); an escaped defect opens a successor (`fixes:`) that closes
+  only with a bound prevention.
+- **Personas are routed by risk.** A persona carries `covers-risks:`, `evidence:` and
+  `counter-lens:`; the lead lens is picked by the task's `risks:`, at most one more covers a bare
+  risk, and a `lens:` line in EVIDENCE records what each lens caught.
+- **Starter personas** ship as plain persona files in `personas/` and are seeded into
+  `.add/personas/`; the vendored teacher corpus and `persona-author` stay.
+
+### Removed
+- The `add` CLI and every verb (`status`, `new`, `freeze`, `run`, `gate`, `learn`, …), the engine
+  (`tooling/add.py`, `cli.py`, templates, pins), `graph.json`, the compiled `index.md`, run
+  receipts, stamps and digests, Interview nodes, and FORMAT.md.
+- The `add-worker` / `add-advisor` agent roster.
+- The engine and 3.x skill-prose test suites.
+
+### Migrating from 3.x
+Re-run the installer in the project (`npx @pilotspace/add@latest update` or
+`pipx run pilotspace-add update`). It refreshes the skill and the persona corpus, seeds missing
+starter personas, rewrites the managed ADD block in `CLAUDE.md` / `AGENTS.md` (and a stale 3.x
+block in `.clinerules` or similar, where one exists) keeping a `.bak` of each changed file, then
+removes the vendored `.add/tooling/` and ADD's own roster agents. Everything else in `.add/` is
+left untouched. Book chapter 20 maps each 3.x mechanism to its 4.0 equivalent.
+
+### Installer
+- Both twins are ~350 lines with no runtime dependencies (`@clack/prompts` is dropped). No
+  interactive prompts; `--help` prints help, and unknown or removed flags (`--force`,
+  `--no-skill`, `--stage`, `prune-data`) exit 2 without writing.
+
 ## [3.7.0] — 2026-09-28
 
 **The loop closes — and this is the last engine release.** The `loop-that-closes` milestone

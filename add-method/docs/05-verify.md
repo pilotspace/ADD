@@ -1,120 +1,113 @@
-# 05 · Verify — evidence, residue lenses, the gate
+# 05 · Verify — evidence, residue, refute, verdict
 
-[← 04 Build — red to green, inside scope](./04-build.md) · [Contents](./README.md) · Next: [06 The loop — observe, learn, close →](./06-the-loop.md)
+[← 04 Build — red to green, inside the lines](./04-build.md) · [Contents](./README.md) · Next: [06 Learn — lessons, milestones, the report →](./06-the-loop.md)
 
 ---
 
-## Where trust is actually established
+## Where trust is established
 
-The build produced passing checks. That is necessary but not sufficient. Verification is where trust is established — and the principle governing it is *trust through evidence, not inspection.*
+The build produced passing checks. That is necessary but not sufficient. Verification is where trust is established, and the rule governing it is *trust evidence, not the diff*.
 
-This needs care, because it is easy to misread. "Not by inspection" does not mean "do not look at the code." It means the *basis* of trust is the passing evidence plus a deliberate check of the specific things checks cannot easily catch — not a general impression that the code reads plausibly. Plausibility is exactly the trap: AI code is frequently plausible and wrong. So verification has two parts: confirm the evidence, then examine the residue automation cannot cover.
+"Not the diff" does not mean "don't look at the code". It means the *basis* of trust is evidence you produced — a sealed contract, a fresh run, a deliberate read of what tests cannot catch — rather than a general impression that the code reads plausibly. Plausibility is exactly the trap: AI code is often plausible and wrong.
 
-## Part one — gather the evidence: a fresh, bound receipt
+Verify has five steps. Each one leaves something in the task's `## EVIDENCE`.
 
-Trust rests on a run you can point to, not a claim. Execute the task's checks and record the result as a receipt:
+## 1 · Seal intact
 
+Find the latest freeze (or refreeze) commit and diff the sealed files against it:
+
+```bash
+F=$(git log -1 --format=%H --grep='freeze(transfer-own-accounts)')
+git diff $F HEAD -- .add/tasks/transfer-own-accounts.md tests/test_transfer_contract.py
 ```
-add run <slug> --junitxml "${TMPDIR:-/tmp}/add-run.xml" -- <the test command>
+
+It must print nothing. Any output means a sealed check or the contract changed after the seal without a `refreeze` — back to Build, or record the change honestly as a refreeze with its reason.
+
+## 2 · Fresh green, on the committed tree
+
+With a clean `git status`, run the task's `check:` command and the `regression:` command. Record the **real** exit codes and counts, from output you saw:
+
+```text
+$ python3 -m pytest -q tests/test_transfer_contract.py
+7 passed in 0.09s                                     → exit 0 · 7 passed
+$ python3 -m pytest -q
+8 passed in 0.09s                                     → exit 0 · 8 passed
 ```
 
-`add run` executes your command, parses the JUnit report, and writes a **Run receipt** into the task's bundle. Two properties the gate will demand of it:
+Never record a result you did not run. A green from before the last edit is not evidence for the code as it stands — which is why the run happens here, on the committed tree, not earlier.
 
-- **fresh** — the receipt records the git blob hash of every in-`scope:` file at the moment it ran; the gate recomputes those hashes and refuses on any difference. This kills the stale-green failure — a suite that passed *before* the last edit is not evidence for the code as it stands now.
-- **bound** — this is **covers-binding**. Every check in the node's `## CHECKS` cites the Must, Reject, or Edge it proves, via its `covers:` line. The gate refuses a PASS unless each of those checks appears in the receipt with a passing outcome. A rule with no passing check behind it cannot be waved green. An assumption marked `· probe:` in `## ASSUMPTIONS` binds the same way — its `A<n>` id must be cited by a passing check, or the gate holds the PASS.
-- **build-entered** — the receipt must postdate a recorded brief: an `act: brief` stamp between the latest (re)freeze and the receipt's run stamp. A `PASS` with no such entry is refused (`R:UNBRIEFED`) — the sealed direction was never compiled into the working prompt, so whatever the suite proves, it does not prove the build followed the direction. (`depth: quick` is exempt.)
+## 3 · Residue — what passing tests cannot show
 
-**The floor is a second receipt.** A PLAN that declares `regression: full` or `affected` owes the host suite its own run: `add run <slug> --floor -- <the PLAN's command>`. It is an ordinary receipt carrying `floor: regression` — same digest, same freshness rule — that the gate reads beside the narrow one and never mistakes for it. At a plan-or-human floor a PASS is refused while the declared floor was never run, ran stale, or ran red (`R:FLOORUNRUN`); a `RISK-ACCEPTED` is the signed way past it.
+Read the diff for three things every time:
 
-A stale, unbound, or unbriefed receipt is refused at the gate — so confirm the evidence is real before reading further: every check green, no check or frozen contract altered during the build, and every rule in `## RULES` traced to a passing check by its `covers:` line. If any of that is false, stop here and return to the build; there is nothing to verify yet.
+- **Security** — authorization, injection, secrets, unsafe input, dependencies with plausible-but-wrong names.
+- **Concurrency** — races, ordering, atomicity. Tests usually run serially and miss simultaneity.
+- **Architecture** — boundaries and dependencies the project already committed to.
 
-## Part two — the residue: three lenses tests cannot cover
+Then by kind: **data** — is the migration reversible? **infra and release** — what is the rollback path? **UI** — can a keyboard and a screen reader reach it? **integration** — retries and idempotency.
 
-Automated checks are excellent at behavior on defined inputs and poor at a few specific things. Examine, by hand, the narrow set they miss — every time:
+Also check **wiring**: new code that nothing calls passes its checks while the feature is, in practice, absent. For each new entry point, name the production caller.
 
-- **Security.** Are there exposed secrets, injection openings, or unexpected dependencies? AI-generated code is known to hardcode secrets and to pull in packages by plausible-but-wrong names. **A security finding is always a `HARD-STOP`** — it escalates to a human and is never waved through, whatever the evidence says.
-- **Concurrency and timing.** Is the operation correct when two of them happen at once? Checks usually run serially and miss races.
-  - ▶ *Example: the balance update must be one atomic transaction. Confirm that two simultaneous transfers from the same account cannot both pass the balance check and overdraw it.* This is the single most important check for this feature, and it is why the build prompt named atomicity explicitly.
-- **Architecture conformance.** Does the change respect the layering and dependency boundaries the project already committed to? Speed with no architectural check produces a fast-growing tangle that becomes unmaintainable within months.
+▶ *For the transfer: the one property the checks alone might not force is atomicity. Read the transaction boundary; confirm two simultaneous transfers from one account cannot both pass the balance check.*
 
-This residue stays at human speed. You may move as fast as your *automated* verification carries you, and no faster on the part only a human can check.
+## 4 · Refute — try to break your own green
 
-### The refute — who tries to break the green, and how
+A green nobody tried to break is reported, not earned. Run one to three probes derived **only** from the sealed rules:
 
-A green nobody has tried to break is *reported*, not *earned*. Before the gate, someone reads the receipt against the frozen intent and records the attempt with `add refute` (§8.4 of the bundle format). The probes they run are derived from the frozen node by a closed list — the same list the skill's `verify.md` and the advisor's `refute` mode carry:
-
-| derivation | example |
+| derive a probe by | ▶ transfer example |
 |---|---|
-| instantiate a frozen rule with values the bound checks do not use | the transfer example at 0, at the exact balance, at balance + 1 |
-| compose two frozen rules | reach `R:forbidden` through the successful-transfer path |
-| walk a boundary a rule or filled edge implies | the inclusive end of a date range the Must names |
-| vary a swept dimension the ASSUMPTIONS named | two same-second transfers in the other order; an absent amount |
+| new values for a rule | amount = balance, balance + 1 |
+| two rules composed | a foreign source *and* a zero amount — which error wins, and does it leak anything? |
+| a boundary a rule implies | 1 cent from a balance of 1 cent |
 
-Never invent a requirement: an expected answer that cannot be derived from frozen RULES, EDGES and interviewed ASSUMPTIONS is a spec silence — a change-request back to Direction, never a finding. A probe that finds a defect graduates into a filled edge at the refreeze; one that holds stays in the repository as an unbound regression test.
+Never invent a requirement: an expected answer that cannot be derived from the sealed rules and assumptions is a spec silence, and belongs in the report as a question — not a finding. A probe that breaks the green is a defect: back to Build, or a refreeze if the rule itself was wrong. A probe that holds can stay in the repository as an ordinary regression test.
 
-Who refutes depends on the floor:
+For **security, data or architecture** work, do not refute your own work alone: spawn a fresh subagent that reads the task file *before* the diff and tries to break it. A builder tends to share its own misunderstanding with its own checks; a fresh reader does not.
 
-| tier | who | default at | defends against |
-|---|---|---|---|
-| T0 | nobody — receipt and residue only | quick depth · process floor | a stale green, an unbound rule |
-| T1 | the building session, after its own green | a prelude — optional at a process floor, never the rung's answer | an input the author forgot |
-| T2 | a fresh session — `add-advisor` in `refute` mode or a new `add-worker` verify beat, briefed from the frozen node before it reads the diff, its line recorded with `--tier T2` | the default at floor ≥ plan — spawned, never optional; what the gate's `R:UNREFUTED` asks for | the same misunderstanding in check and code |
-| T3 | a person, at the interview and the gate | floor human | a wrong oracle |
-| T4 | a protected holdout the builder cannot read | not shipped — a CI recipe | overfitting to a visible suite |
+## 5 · Verdict — exactly one, written down
 
-T4 is a recipe on purpose: a CLI-only method cannot hide a file from an agent that reads the repository, and a prompt that says "do not read the hidden tests" is not isolation.
+Write the verdict into `## EVIDENCE` with everything a reviewer needs to check it:
 
-## The deep check — reviewer discipline, not an engine gate
-
-Two failures slip straight past green checks, and no engine can see them for you — this is diligence the reviewer owes, not a box the tool fills:
-
-- **Wiring.** New code that is never *wired in* — a function nothing calls, an endpoint no route reaches. Its checks pass in isolation while the feature is, in practice, absent. For every new hook, closure, or middleware, trace from the process entry point to the call site: symbol, file, line. A symbol reachable only through a test helper but not through the production entry point is not wired.
-- **Dead code.** The opposite — code left behind a path nothing exercises, quietly rotting. Scan that nothing new is orphaned.
-- **Semantic read.** For a change that produced prose rather than code, the equivalent failure is signing off on a claim you never actually read in full. Note what you read and what it confirmed.
-
-Plausibility hides all three, which is why this is *evidence*, not impression: a reference search showing where each new symbol is called, a scan confirming nothing new is orphaned, or — for prose — a note of exactly what was read. Skimming here is a shallow verify, not a pass.
-
-## The gate — one recorded outcome
-
-Every verification ends with exactly one recorded outcome, carrying an accountable owner — never a silent pass. At a plan-or-human floor the gate first demands that someone tried to refute the green: `add refute <slug> --by "<name>" --held|--found "<input>" --tier T2` records who read the receipt against the frozen intent and what they found — `--tier` makes the ladder rung a claim the record can count, and `--changed "<what>"` records what a probe moved in the build or the spec while the outcome still held (a `held` that changed something is yield, and `--found` alone undercounts it) — and a `PASS` is refused without it (`R:UNREFUTED`) or over a standing refutation (`R:REFUTED`). Quick depth, the process floor and the explore lane are exempt.
-
-```
-add gate <slug> PASS --by "<name>"
+```markdown
+## EVIDENCE
+freeze: 3a4b3a7 (refreeze of 1bfa9ee) · head: 3a4b3a7
+seal: git diff 3a4b3a7 3a4b3a7 -- .add/tasks/transfer-own-accounts.md tests/test_transfer_contract.py → empty
+check: `python3 -m pytest -q tests/test_transfer_contract.py` → exit 0 · 7 passed
+regression: `python3 -m pytest -q` → exit 0 · 8 passed
+residue: security — ownership is checked before amount or balance, so no error reveals whether an id exists; concurrency — check and debit run under one lock, and C6 now fails without it; architecture — src/transfers.py only, no new dependency
+refute: a->b 1 from a balance of 1 → allowed, leaves 0; foreign source + amount 0 → 403 forbidden; unknown source + overdraw → 403 forbidden · held
+verdict: PASS
 ```
 
-| Outcome | Meaning | Allowed when |
-|---------|---------|--------------|
-| `PASS` | complete, fresh, bound evidence and clean residue | the normal path |
-| `RISK-ACCEPTED` | proceed on a signed waiver: named owner, linked ticket, expiry | a **non-security** gap only |
-| `HARD-STOP` | cannot proceed | any failing check, or any security finding |
+These are the real values from the run in [Appendix D](./appendix-d-worked-example.md) — including why the seal is a refreeze: the first refute probe found that C6 could not fail, and the check was re-aimed in the open.
 
-A **`gate PASS` auto-closes** the task — there is no separate close step on the normal path. A `RISK-ACCEPTED` is a deliberate, documented decision to ship a known, non-security limitation; sign it with the reason the engine requires — owner, ticket, expiry — so the team can find and close it later:
+| Verdict | Meaning | When |
+|---|---|---|
+| `PASS` | seal intact, fresh green, residue clean | the normal path |
+| `RISK-ACCEPTED` | a known **non-security** risk, with its reason and an owner | a gap you can name and someone can close later |
+| `HARD-STOP` | a security finding, or a green you cannot honestly trust | the task stays open |
 
+Set `status: done` only on `PASS` or `RISK-ACCEPTED`, and commit:
+
+```bash
+git commit -m "verify(transfer-own-accounts): PASS"
 ```
-add gate <slug> RISK-ACCEPTED --by "<name>" --reason "<owner · ticket · expiry>"
-```
 
-A `HARD-STOP` does not close the task: it stays open, and the finding goes back to Direction as a change request — fix the build, or add the Must the gate exposed — then you re-verify. A **security** `HARD-STOP` always escalates to a human and is never folded into a `RISK-ACCEPTED`; this one is engine-enforced — the gate refuses a `RISK-ACCEPTED` on a security-sensitive node. Resolve it to `PASS`, or `HARD-STOP`.
-
-## The verification checklist
-
-- [ ] The receipt is **fresh** (every in-`scope:` file unchanged since the run) and **bound** (every check the rules `covers:` passed).
-- [ ] No check or frozen contract was altered during the build.
-- [ ] Concurrency/timing of the risky operation is safe.
-- [ ] No exposed secrets, injection openings, or unexpected dependencies.
-- [ ] Layering and dependency boundaries are respected.
-- [ ] Deep check: for code, every new symbol is referenced (wiring) and no new dead code was introduced; for prose, a semantic read is recorded.
-- [ ] Exactly one outcome is recorded — `PASS` / `RISK-ACCEPTED` / `HARD-STOP` — with an accountable owner.
+A `HARD-STOP` leaves `status: build`. Fix it through Direction if you can — and put it at the top of the report either way. A security finding is never a `RISK-ACCEPTED`.
 
 ## Common mistakes
 
-- **Shipping on plausibility.** Reading the diff, finding it reasonable, and approving — without the receipt and the residue review — is the precise failure the method exists to prevent.
-- **Treating a security gap as acceptable risk.** It is a `HARD-STOP`, not a waiver.
-- **Skipping the concurrency check** because the checks are green. Checks rarely exercise simultaneity; this is a manual review by design.
-- **Trusting a self-reported test count.** A build agent running a filtered suite (e.g. `-E 'test(theme)'`) only sees checks inside the filter. Collateral failures outside it are invisible; a full-suite run is load-bearing, never to be skipped on the grounds that a scoped run was green.
-- **User-observable-only failures escalated before probing.** When a symptom is only observable by a person (a permission dialog, a visual flicker), do not respond by running the suite again. Design two or three targeted probes that distinguish cause A from cause B in one interaction each.
-- **A hang misdiagnosed as a test failure.** A check that never exits is not a logic failure — it is a hang. Background the process, find it with `pgrep`, sample the stack with the platform profiler (`sample <pid>` on macOS, `perf` on Linux), then `lsof -p <pid>` to see open files.
+- **Shipping on plausibility.** Reading the diff, finding it reasonable, and writing PASS without the seal check, the fresh run and the residue read.
+- **A result you did not run.** Every exit code and count in EVIDENCE comes from output you saw, on the committed tree.
+- **Trusting a filtered run.** The `regression:` suite is load-bearing; a green on a subset hides collateral breakage.
+- **Treating a security gap as acceptable risk.** It is a `HARD-STOP`.
+- **Refuting against an invented requirement.** Derive every probe's expected answer from the sealed rules.
+- **Rewriting a closed task's EVIDENCE.** It records what was true when it was written; new findings go in a new task.
 
-## If the check fails
+## Exit check
 
-A failing check or a security finding returns the change to the [build](./04-build.md) beat. A non-security limitation may proceed only with a signed `RISK-ACCEPTED` record carrying an owner and an expiry — so the team can find and close it later. Nothing proceeds on an unrecorded decision.
+- [ ] The sealed files are unchanged since the latest freeze or refreeze commit.
+- [ ] `check:` and `regression:` ran fresh on the committed tree; real exit codes and counts are recorded.
+- [ ] Security, concurrency and architecture residue read, plus the kind-specific lens; new code is wired.
+- [ ] One to three refute probes ran (a fresh subagent for security, data or architecture work).
+- [ ] Exactly one verdict is in `## EVIDENCE`, and the verify commit is made.

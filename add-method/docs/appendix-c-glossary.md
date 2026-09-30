@@ -1,285 +1,123 @@
 # Appendix C · Glossary
 
-[← 18 Personas in practice](./18-personas.md) · [Contents](./README.md) · Next: [Appendix D Worked example →](./appendix-d-worked-example.md)
+[← 20 What changed in 4.0](./20-whats-new-in-4.md) · [Contents](./README.md) · Next: [Appendix D Worked example →](./appendix-d-worked-example.md)
 
-Every term the method uses, defined once. Where a term names something the **engine
-enforces**, the definition says so — and where it names discipline the engine cannot
-see, it says that too. The difference is the whole point of the method.
+Every term the method uses, defined once.
 
 ---
 
 ## The method
 
-**ADD (AI-Driven Development)** — a method of building software in which an AI agent
-writes most of the code and people own direction and verification. The engine records
-what was decided and what was proven; it never writes the code and never runs the
-method.
+**ADD (AI-Driven Development)** — a method in which an AI agent plans, writes and verifies the code and people own direction and review the result. In 4.0 it is one skill file run with files, git and the project's own test command.
 
-**NO-EXEC** — the engine's founding constraint: it never runs your suite, your build,
-or an agent. You run things; the engine records what happened. Every guarantee in ADD
-is therefore about *evidence on disk*, never about having watched the work.
-See [01 Core principles](./01-principles.md).
+**Skill** — the markdown file the agent follows: `SKILL.md`, with `references/format.md` and `references/explore.md`. Installed at `.claude/skills/add/`. See [07](./07-setup-and-lanes.md).
 
-**Notary** — what the engine is, as opposed to an orchestrator: it witnesses and
-stamps facts (a freeze, a receipt, a verdict) and refuses to stamp ones that do not
-hold up. It has no opinion about how you work.
+**Bundle** — the project's `.add/` directory: `PROJECT.md`, specs, milestones, tasks, personas. Plain markdown, maintained by hand. See [12](./12-bundle-format.md).
 
-**Disposable code** — the view that code is one regenerable implementation of the
-direction, not a durable asset to be preserved.
+**Disposable code** — code as one regenerable implementation of the direction, not the durable asset.
 
-**Living document** — a document expected to change as the loop learns. The five
-living specs are the standing example; a frozen contract is the deliberate exception.
+**Verification capacity** — the rate at which output can be confirmed correct. The real ceiling on safe speed.
 
-**Verification capacity** — the rate at which a team can confirm AI output is correct.
-It is the real ceiling on safe speed, and adding more AI does not raise it.
+## Sizing
+
+**Lane** — the route a request takes: **Quick** (a test and a commit, no task file), **Task**, **Explore**, or **Milestone**. See [07](./07-setup-and-lanes.md).
+
+**Floor** — the closed rule that anything touching security · data · architecture, or a surface other code consumes, is at least a Task.
 
 ## The loop
 
-**Beat** — one of the three phases of a task: **Direction**, **Build**, **Verify**. A
-node's current beat is *derived from its stamps*, not typed into a field: an explicit
-reopen wins, else a run stamp means verify, else a freeze stamp means build, else
-direction.
+**Beat** — one of **Direction**, **Build**, **Verify**. A task's current beat is its `status:` — `direction`, `build`, then `done` (or `dropped`).
 
-**Direction** — the first beat: authoring what must hold, what must never happen, the
-contract, the scope, and the red checks — then freezing it. The human's beat.
-See [03 Direction](./03-direction.md).
+**Direction** — grounding in the code, then writing the task file's rules, assumptions, plan and checks, running the checks red, and sealing. See [03](./03-direction.md).
 
-**Build** — the second beat, and the only one the AI leads: turn the red checks green
-without editing a check, the frozen contract, or anything outside `scope:`.
-See [04 Build](./04-build.md).
+**Build** — code until the checks pass, inside `scope:`, sealed files untouched. See [04](./04-build.md).
 
-**Verify** — the third beat: record a receipt, examine the residue tests cannot cover,
-and record exactly one verdict. See [05 Verify](./05-verify.md).
+**Verify** — seal check, fresh run, residue read, refute, verdict. See [05](./05-verify.md).
 
-**Freeze** — the single human decision of a task, which stamps the direction and opens
-Build (`add freeze <slug>`). Freezing *stamps*; it does not itself bind the checks —
-that binding is enforced at the gate.
+**Learn** — lessons with evidence into the living specs. See [06](./06-the-loop.md).
 
-**Gate** — the checkpoint that records a task's one verdict (`add gate <slug> …`). A
-`PASS` closes the node.
+**Grounding** — reading what the task touches (files, signatures, conventions, binding decisions) before writing its direction.
 
-**`PASS`** — the verdict meaning the work is proven by a fresh, bound receipt.
+## Inside a task file
 
-**`RISK-ACCEPTED`** — the verdict meaning the work proceeds with a written reason
-(`--reason`). Unavailable on a security-floored node.
+**CARD** — `goal:` and `why:`, one line each.
 
-**`HARD-STOP`** — the verdict meaning work cannot proceed. Where a security finding
-goes.
+**Must (`M<n>`)** — a behavior the change must perform.
 
-## The bundle
+**Reject (`R:<CODE>`)** — an input or situation the change must refuse, with a named error.
 
-**ABF-1** — the bundle format ADD 3.0 is built on: typed markdown nodes with YAML
-frontmatter, plus a compiled graph. See [12 The `.add/` bundle](./12-bundle-format.md).
+**Assumption (`A<n> [<dim>]`)** — a silence the agent filled: what was not said → the reading taken → the cost if wrong. Swept over six **dimensions**: `who`, `which`, `when`, `absent`, `order`, `experience`.
 
-**Bundle (`.add/`)** — everything the method keeps on disk for one repository: the
-nodes, the five living specs, the personas, the vendored engine under `.add/tooling/`,
-and the compiled `graph.json`. One repo, one bundle.
+**Found** — an assumption checked on the spot, with its evidence appended: `· found: <answer> (evidence: …)`.
 
-**Node** — one typed markdown file that is the unit of everything: a Task, a
-Milestone, a Spec, a Persona, a Run, or the Project. Its frontmatter carries the
-machine-readable facts; its sections carry the human-readable ones.
+**Edge (`E<n>`)** — an optional Given/When/Then example; a written edge needs a check.
 
-**Lifecycle node** — a node that moves through the beats and can be gated: a **Task**
-or a **Milestone**. Specs and Personas are living documents with no lifecycle.
+**`scope:`** — the paths the build may touch.
 
-**`graph.json`** — the compiled cache of every derivable fact, rebuilt from the node
-frontmatter at any time and gitignored. Because it is rendered rather than
-hand-maintained, it cannot go stale and has no concurrent writers — which is what
-lets a wave fan out across worktrees with no coordinator.
+**`gives:`** — surfaces other code depends on (`S<n>`). May not move silently.
 
-**The five living specs** — `domain`, `system`, `experience`, `quality`, and `method`
-in `.add/specs/`. The project-level foundation every task freezes against, and where
-confirmed lessons land. See [14 The foundation](./14-foundation.md).
+**`needs:`** — surfaces from other tasks this one builds on.
 
-## Inside a task node
+**Check (`C<n>`)** — `covers: <ids> · <mode> · <test id>`: a test aimed at the most plausible wrong implementation of the rules it covers. Modes include `acceptance`, `property`, `contract`, and for non-code work `script`, `validator`, `rubric`.
 
-**`## CARD`** — the goal, why the task exists, and the current beat with its next verb.
+**`check:` / `regression:`** — the PLAN's two commands: this task's checks, and the host suite.
 
-**`## RULES`** — what must hold and what must never happen: `<must>` entries (`M1`,
-`M2`, …) and `<reject>` entries (`R:NAME`), each an independently checkable claim.
+**Red for the right reason** — a check that fails because the behavior is absent, not because of an import error or typo.
 
-**`## PLAN`** — the contract this task publishes, its build strategy, its `scope:`,
-and its assumptions, ordered lowest-confidence first.
+## The seal and the evidence
 
-**`## EDGES`** — enumerated edge cases (`E1`, `E2`, …): boundary and failure conditions
-that must be covered like rules. Inert until authored, so a fresh task gates unchanged.
+**Seal** — the `freeze(<slug>)` commit of the task file and its check files. From then on they are frozen.
 
-**`## CHECKS`** — the red suite: every rule and filled edge named by at least one check
-that would fail without it, each naming what it `covers:`.
+**Refreeze** — a legitimate change of contract: edit, note why under `## LOG`, commit `refreeze(<slug>): <why>`.
 
-**`## EVIDENCE`** — the recorded receipt and the recorded verdict.
+**Seal check** — `git diff <freeze> HEAD -- <sealed files>`, which must print nothing.
 
-**`## LESSONS`** — what the task taught, on its way to `add learn`.
+**Fresh run** — `check:` and `regression:` run on the committed, clean tree during Verify, with the real exit codes and counts recorded.
 
-**Must / Reject** — the two rule kinds. A Must is behavior that has to hold (`M1`); a
-Reject is behavior that must never happen, carrying its own error name
-(`R:OVERDRAW … -> "insufficient_funds"`).
+**Residue** — what passing tests cannot show: security, concurrency, architecture, plus a lens by kind (migration reversibility, rollback path, accessibility, retries).
 
-**Edge case** — a boundary or failure condition written down as `E1`, `E2`, … Edge
-cases are first-class **covers referents**: an authored edge with no check bound to it
-blocks the gate exactly as an uncovered rule does.
+**Refute** — one to three probes derived only from the sealed rules, trying to break the green. A fresh subagent does it for security, data or architecture work.
 
-**`covers:`** — the binding between a check and the rule or edge it proves. It is the
-single grammar that makes "every rule is tested" mechanical rather than aspirational.
+**EVIDENCE** — the task section written once at Verify: freeze and head commits, seal result, commands with exit codes and counts, residue and refute notes, verdict.
 
-**Referent** — anything a check may `covers:` — a Must, a Reject, or an Edge.
+**Verdict** — exactly one of **`PASS`** (seal intact, fresh green, residue clean), **`RISK-ACCEPTED`** (a known non-security risk with reason and owner), **`HARD-STOP`** (a security finding, or a green that cannot be trusted; the task stays open).
 
-**`scope:`** — the files or directories a task may touch, declared on the node. It is
-also the **freshness set**: the paths the gate hashes a receipt against.
+**Verify commit** — `verify(<slug>): <verdict>`.
 
-**`gives:`** — the contract shape a task publishes. Hand-authored into frontmatter,
-and immutable once the task freezes.
+**Report** — the session summary the human reviews: HARD-STOPs first, then per task goal, verdict, freeze commit, evidence, and every assumption taken.
 
-**`needs:`** — a citation of another node's frozen `gives:`. It cannot resolve until
-the producer has frozen, which is how a consumer is held behind its producer.
+## Explore
 
-**`depends_on:`** — an edge to a node this one depends on, written in block-list form.
-The DAG `add wave` reads.
+**Explore task** — `kind: explore`: sealed `## QUESTIONS` and `## BUDGET`, answered in cited `## FINDINGS`. See [19](./19-dynamic-workflow.md).
 
-**Contract** — the fixed external shape a task publishes: interfaces, data structures,
-names, and error cases. In ABF-1 it is not a separate file type — it is the `gives:`,
-frozen at the freeze stamp.
+**Budget** — a hard ceiling on tool calls, sources or spikes.
 
-**Change request** — the path for altering already-frozen scope: return the affected
-node to Direction and refreeze, so dependents citing the old shape are flagged stale (`needs_stale` in `doctor` and `todo`; a rung-bound consumer's gate refuses `R:STALENEEDS` until it refreezes — FORMAT §3.5).
-Never fork the truth into a parallel node.
+**Finding** — an answer with its confidence and its citation. No citation, no finding.
 
-## Evidence
+## The foundation
 
-**Receipt** — the recorded result of a run (`add run <slug> -- <cmd>`): what command
-ran, its exit code, and which checks were observed. The engine records it; it does not
-produce it.
+**PROJECT.md** — `goal:`, `invariants:`, `test_cmd:`, `stage:`, and a CARD with `state:` and `next:`. Read first every session.
 
-**Fresh** — a receipt is fresh when every file in the task's `scope:` is byte-identical
-to what it was at the run. Edit a scoped file afterwards and the gate refuses.
+**Invariant** — a property no change may break, Quick included.
 
-**Bound** — a receipt is bound when every check the rules `covers:` appears in it as
-passed. Unbound evidence is not evidence of the thing you are signing for.
+**Living spec** — one file per lens under `.add/specs/`: **domain**, **system**, **experience**, **quality**, **method**. Each has `## Now`, `## Decisions that bind`, `## Deltas`. See [14](./14-foundation.md).
 
-**Red-first** — the rule that every check must fail before any implementation exists.
+**Delta** — a lesson with evidence, `open` until `folded` into a decision or `rejected`.
 
-**Lying red** — a check that fails for the wrong reason — an import error, a broken
-fixture, a `should_panic` that would pass on anything. It looks like a baseline and
-proves nothing.
+**Decision that binds** — a lesson that held, promoted so that every future task follows it.
 
-**Residue** — the three things automated checks cannot cover, examined by hand at
-every verify: **security**, **concurrency and timing**, and **architecture
-conformance**. See [05 Verify](./05-verify.md).
-
-**Deep check** — reviewer discipline no engine can perform for you: tracing that every
-new symbol is **wired** in from a production entry point, that no **dead code** was
-introduced, and — for prose — that a **semantic read** actually happened.
-
-## Authority and routing
-
-**`sensitivity:`** — what a task touches, and therefore the floor on who must sign:
-`mechanical → process`, `data → plan`, `architecture → plan`, `security → human`. It
-cannot be talked down.
-
-**Authority floor** — the computed lowest lane a task may run in: the higher of its
-declared `sensitivity:` and any match against `sensitive_paths:`. You may always run
-more ceremony than the floor demands, never less.
-
-**`sensitive_paths:`** — glob patterns in `.add/index.md` naming paths that floor to a
-human regardless of what a task declares about itself. A task scoped to a matching
-path is security-floored even with no `sensitivity:` line.
-
-**Security floor** — the two refusals that make "security is a HARD-STOP" structural
-rather than advisory: a security-floored node cannot record `RISK-ACCEPTED`
-(`R:SECURITYFOLD`), and its `PASS` requires a named lens (`R:NOCOVERAGE`).
-
-**Depth dial** — `quick · standard · deep`: how much ceremony a single task carries.
-Depth tunes **ceremony, never authority** — a `quick` depth can never lower a
-`security` floor.
-
-**Lane** — the cheapest route that fits a request, chosen before any node exists:
-**Quick** (below the scope floor — no node, just the diff and a lesson), **Task** (one
-atomic node), or **Project / milestone** (a theme or a slice). The AI proposes; the
-human vetoes. Anything touching security, data, or architecture always sizes up to at
-least a Task. See [07 Setup and the three lanes](./07-setup-and-lanes.md).
+**Milestone** — `.add/milestones/<slug>.md`: CARD, SCOPE, EXIT, TASKS. Done when every EXIT box is ticked with evidence.
 
 ## Personas
 
-**Persona** — a requirements lens the agent adopts, stored as a versioned node in
-`.add/personas/` and distilled to machine-readable parts: an **Identity** (the
-stance), **Critical Rules** (the non-negotiables), and **Success Metrics** (the
-done-bar), plus a `use-when:` line that says when to route to it. Advisory in
-judgment, but its *presence* is enforced: a security `PASS` needs one.
+**Persona** — `.add/personas/<name>.md`, an expert lens loaded before a beat when its `use-when:` fits. Advises; never lowers a rule. See [10](./10-personas.md).
 
-**Personas teacher** — the vendored corpus at `.add/personas-teacher/`, the library a
-project persona is distilled *from*. Read off-build; never a runtime dependency.
+**Teacher corpus** — `.add/personas-teacher/`, vendored source material personas are distilled from; never loaded at run time.
 
-**Lens** — a persona as applied to a piece of work. "A named lens" is the thing
-`R:NOCOVERAGE` requires: someone on record as having reviewed it.
-
-**`persona:`** — the lens stamped on a node by a wave, when a stream is assigned one.
-
-**`advised_by:`** — the lens recorded on a node routed sequentially with
-`add advise <slug> --persona <p>`, and the provenance `add join` carries back from a
-lensed stream onto the delivered node.
-
-**`use-when:`** — the routing line on a Persona node saying what kind of work it is
-for. Rendered into the personas index, so a lens is discoverable rather than
-folklore.
+**persona-author** — the sub-skill that writes or sharpens a persona.
 
 ## Parallel work
 
-**Wave** — a parallel execution plan derived from the task DAG (`add wave
-<milestone>`): topological levels, so producers land before their consumers. It
-refuses a cycle, an intra-level dependency, or overlapping scope rather than
-scheduling a conflict.
+**Worktree stream** — one independent task built in its own git worktree and branch, with `scope:` disjoint from every other stream. See [08](./08-parallel-work.md).
 
-**Stream** — one task within a wave, running in its own git worktree, behind its own
-frozen contract and under its own persona lens.
-
-**Join** — folding finished stream bundles back (`add join <bundles…>`): PASS-only,
-byte-for-byte on nodes, union-merging spec deltas, flagging divergence rather than
-silently keeping one side. Rollback is dropping a worktree.
-
-**Worktree** — the isolated checkout a stream runs in. Isolation is what makes
-parallel builds safe; `graph.json` being a rebuildable cache is what makes it cheap.
-
-## The loop closing
-
-**Lesson** — one thing a loop learned, filed with `add learn <lens> "<lesson>"
---evidence <ref>` against one of the five lenses (`ddd · sdd · udd · tdd · add`). A
-lesson without evidence is refused.
-
-**Delta** — a recorded, not-yet-consolidated change to a living spec. `add deltas`
-lists them.
-
-**Fold** — the consolidation step (`add fold`) where confirmed lessons are written
-into the living specs. The AI never self-approves a fold.
-
-**Reopen** — returning a closed task to the loop (`add reopen <slug>`) rather than
-opening a near-duplicate beside it.
-
-**Exit criteria** — the checkboxes on a Milestone's `## EXIT` that define what "done"
-means for it. `add milestone-done` refuses to close a milestone while any box is
-unchecked — the goal-loop that keeps a milestone open until it is actually met.
-
-**Milestone archive** — `add milestone-archive`, which moves a closed milestone and
-its tasks out of the working set without deleting the record.
-
-## Reading the bundle
-
-**`add status`** — the resume point: what exists, what beat each lifecycle node is on,
-and the single next verb. Never re-read the repo to find out where you are.
-
-**`add todo`** — the open worklist, grouped by beat, each task with its next verb.
-
-**`add locate <path>`** — the scope reverse lookup: which node's `scope:` owns this
-path.
-
-**`add brief <slug>`** — the assembled context for working a node: the binding
-decisions from the living specs plus the node itself.
-
-**`add doctor`** — the read-only health report. It reports and never writes; `add
-doctor --sync` is the separate verb that re-vendors a stale engine.
-
-**Finding** — one item `add doctor` reports, at `info` or `warn`. A finding is a
-nudge, not a refusal — the gate is where refusals live.
-
-**Refusal** — the engine declining to record something that would not hold up, named
-by a code (`R:GREENLIE`, `R:SECURITYFOLD`, `R:NOCOVERAGE`, `R:OVERLAP`, …). A refusal
-writes nothing and tells you the verb that would fix it.
+**Fan-out** — read-only research spread across subagents; facts merge, writes serialize.

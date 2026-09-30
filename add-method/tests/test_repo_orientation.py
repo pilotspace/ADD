@@ -1,37 +1,23 @@
-"""The repository's actual orientation must lead to observable ADD state."""
-import subprocess
-import sys
+"""The repository's own agent pointers lead to the 4.0 method, not to a CLI that no longer exists."""
 from pathlib import Path
 
-PKG = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PKG / "src"))
-sys.path.insert(0, str(PKG / "tooling"))
-import add
-from add_method import _installer
+ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_repo_orientation_uses_current_cli():
-    text = (PKG.parent / "AGENTS.md").read_text()
-    block = text[text.index("ADD:BEGIN"):text.index("ADD:END")]
-    assert "python3 .add/tooling/cli.py status" in block
-    assert "add.py status" not in block
-    assert "add.py guide" not in block
+def _add_block(name: str) -> str:
+    text = (ROOT / name).read_text(encoding="utf-8")
+    assert "ADD:BEGIN" in text and "ADD:END" in text, f"{name} has no managed ADD block"
+    return text[text.index("ADD:BEGIN"):text.index("ADD:END")]
 
 
-def test_orientation_status_produces_resume_output(tmp_path):
-    add.init(tmp_path / ".add", "code", "Orientation proof")
-    proc = subprocess.run(
-        [sys.executable, str(PKG / "tooling/cli.py"), "status"],
-        cwd=tmp_path, capture_output=True, text=True, timeout=30)
-    assert proc.returncode == 0, proc.stderr
-    assert "Orientation proof" in proc.stdout and "next:" in proc.stdout
+def test_pointers_orient_on_the_bundle():
+    for name in ("AGENTS.md", "CLAUDE.md"):
+        block = _add_block(name)
+        assert ".add/PROJECT.md" in block, f"{name}'s ADD block does not orient on PROJECT.md"
 
 
-def test_pointer_refresh_preserves_user_content(tmp_path):
-    profile = next(p for p in _installer.AGENT_PROFILES if p["id"] == "codex")
-    path = tmp_path / "AGENTS.md"
-    path.write_text("before\n" + _installer._GUIDE_BEGIN + "\nold\n"
-                    + _installer._GUIDE_END + "\nafter\n")
-    assert _installer._write_agent_pointer(tmp_path, profile) == "updated"
-    assert path.read_text().startswith("before\n")
-    assert path.read_text().endswith("\nafter\n")
+def test_pointers_name_no_engine():
+    for name in ("AGENTS.md", "CLAUDE.md"):
+        block = _add_block(name)
+        for stale in ("cli.py", "add.py", ".add/tooling", "add-worker", "add-advisor"):
+            assert stale not in block, f"{name}'s ADD block still names {stale}"

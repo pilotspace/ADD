@@ -472,9 +472,10 @@ def test_pilot_snapshots_after_done_wm(tmp_path, monkeypatch):
     monkeypatch.setattr(pilot_mod, "execute_wm", lambda *a, **k: record)
     monkeypatch.setattr(pilot_mod, "score_record", lambda *a, **k: record)
 
-    pilot_mod.run_pilot(arms=("add",), wms=(1,), resume=False, runs_root=runs_root)
+    # `add` is RETIRED (run paths refuse it); `add-4` is the arm that installs {REPO_ROOT} now
+    pilot_mod.run_pilot(arms=("add-4",), wms=(1,), resume=False, runs_root=runs_root)
 
-    snap = runs_root / "add" / "snapshots" / "wm1"
+    snap = runs_root / "add-4" / "snapshots" / "wm1"
     assert snap.is_dir()
     assert list(snap.rglob("test_suite.py"))
 
@@ -489,6 +490,6 @@ def test_pilot_no_snapshot_on_failed_wm(tmp_path, monkeypatch):
         pilot_mod, "score_record", lambda *a, **k: pytest.fail("failed WM must not score")
     )
 
-    pilot_mod.run_pilot(arms=("add",), wms=(1,), resume=False, runs_root=runs_root)
+    pilot_mod.run_pilot(arms=("add-4",), wms=(1,), resume=False, runs_root=runs_root)
 
-    assert not (runs_root / "add" / "snapshots").exists()
+    assert not (runs_root / "add-4" / "snapshots").exists()

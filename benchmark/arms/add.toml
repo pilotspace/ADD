@@ -6,6 +6,11 @@ setup_steps = [
 ]
 prompt_wrapper = "add-loop"
 pin = "add-method (this repo, path pin — see .add/tasks/bench-scaffold/TASK.md Ground SHA)"
+# RETIRED 2026-09-28 (ADD 4.0). This recipe paired the 3.x engine wrapper with
+# whatever {REPO_ROOT}/add-method holds; that is now 4.0, whose installer exits 2
+# on `--force` and ships no engine for `add-loop` to drive. Kept — unchanged —
+# so archived `add` records still score and report; every run path refuses it.
+retired = "installs {REPO_ROOT}/add-method (now ADD 4.0: `init --force` exits 2, no engine for add-loop) — run `add-4` (ADD 4.0) or `add-3x` (ADD 3.7.0 control) instead"
 
 # Fairness floor (identical across all 5 arms) — MILESTONE.md "Shared decisions".
 same_model = true

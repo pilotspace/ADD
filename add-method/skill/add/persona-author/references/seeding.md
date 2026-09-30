@@ -75,6 +75,6 @@ not survive the seed:
 
 Record provenance honestly: add optional `sources:` frontmatter naming the seed — the teacher slug
 or `agents/<file>`. Convert teaching `source:` to node `sources:` and `name:` to `title:`. Then run the **Workflow** in `SKILL.md` over the
-seeded draft — every section still faces its judgment bar — then `python3 .add/tooling/cli.py doctor` until it reports
-no findings, and sweep the `<…>` placeholders yourself (the engine does not lint them). A seed
+seeded draft — every section still faces its judgment bar — then run the final sweep in
+`references/contract.md` and sweep the `<…>` placeholders yourself (nothing lints them). A seed
 that never had the Success-Metrics and Anti-patterns columns filled is not done.

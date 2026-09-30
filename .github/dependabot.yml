@@ -16,7 +16,7 @@ updates:
       - "dependencies"
       - "github-actions"
 
-  # npm package: add-method/package.json + package-lock.json (@clack/prompts).
+  # npm package: add-method/package.json + package-lock.json (no runtime deps as of 4.0).
   # increase-if-necessary keeps the published library's declared range as wide as
   # possible (only widens when a release falls outside the existing caret).
   - package-ecosystem: "npm"

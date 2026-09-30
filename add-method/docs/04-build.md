@@ -1,89 +1,57 @@
-# 04 · Build — red to green, inside scope
+# 04 · Build — red to green, inside the lines
 
-[← 03 Direction — rules, plan, checks](./03-direction.md) · [Contents](./README.md) · Next: [05 Verify — evidence, residue lenses, the gate →](./05-verify.md)
+[← 03 Direction — rules, assumptions, checks, the seal](./03-direction.md) · [Contents](./README.md) · Next: [05 Verify — evidence, residue, refute, verdict →](./05-verify.md)
 
 ---
 
-## The only beat the AI leads
+## The beat the AI is best at
 
-This is the beat the AI is genuinely good at, and the only one where it should be doing the heavy lifting. It works precisely because Direction already removed the ambiguity: the AI is no longer guessing what to build. It has the task node's `## RULES` (what the code must do and must reject), its `## PLAN` (the frozen `gives:` contract and the `scope:` it may touch), and a suite of failing `## CHECKS` that define "done" exactly. Its task is narrow and checkable — turn the red checks green.
+Build works because Direction already removed the ambiguity. The agent is no longer guessing what to build: it has the task's RULES, its ASSUMPTIONS, its `scope:` and `gives:`, and a set of failing checks that define "done" exactly. Its job is narrow and checkable — turn the red checks green.
 
-This is the difference between ADD and vague-prompt coding. The same agent that produces confident nonsense from "build me a transfer feature" produces correct, bounded code from "make these specific failing checks pass without changing them." The agent did not change; the direction did.
+This is the difference between ADD and vague-prompt coding. The same agent that produces confident nonsense from "build me a transfer feature" produces correct, bounded code from "make these specific failing checks pass without changing them". The agent did not change; the direction did.
 
-## The entry is the brief — recorded, not assumed
+## Three lines you do not cross
 
-Build does not begin when the agent starts typing; it begins when the sealed direction is
-compiled into the working prompt. `add brief <slug>` does that compilation — and on a frozen
-task it also records an `act: brief` stamp carrying the compiled hash. That stamp is the
-*entry* into Build, and the gate holds it against the evidence: a `PASS` whose receipts
-predate the entry is refused (`R:UNBRIEFED`), because a brief compiled after the build is a
-decoration, not an instruction anything followed. Stamps are append-only, so the order is
-chronological fact — brief first, then build, then receipt. (`depth: quick` tasks are
-exempt: a one-file mechanical edit earns no XML prompt.)
+1. **Never edit a sealed check or the contract to get green.** A hard check is telling you about the code, not about the check. Weakening it inverts the method: the code would then be judging itself. Verify will catch it anyway — `git diff <freeze> HEAD` on the sealed files must print nothing.
+2. **Never move a `gives:` surface silently.** Internals are free; the shape other code depends on is not.
+3. **Stay inside `scope:`.** Needing another path means the plan was wrong — which is a refreeze, not a quiet edit.
 
-## The build prompt
+Every other test is yours. Write throwaway tests to debug, delete them when they stop paying, refactor freely. Only the checks named in CHECKS are sealed.
 
-The instruction is explicit about constraints, because the constraints are what keep the speed safe. `add brief` composes it from the sealed node — the text below is the shape it takes.
+## When the direction was wrong
 
-```
-Read the task node — its RULES, its PLAN (the frozen `gives:` contract and its `scope:`),
-and its CHECKS.
-Write code so that EVERY red check passes.
-Constraints:
-  - Do NOT change any check.
-  - Do NOT move the frozen `gives:` contract.
-  - Stay inside the paths listed in `scope:`.
-  - <feature-specific safety rule>.
-  - Stop and ask if any requirement is unclear — do not guess.
-Report which checks pass and exactly what you changed.
+Sometimes the build shows that a rule was wrong, a check was aimed at the wrong thing, or scope must grow. That is legitimate, and it has one honest path: edit the task file and the checks, write why under `## LOG`, and commit
+
+```bash
+git commit -m "refreeze(transfer-own-accounts): C6 used the wall clock; now uses the injected clock"
 ```
 
-For the running example, the feature-specific safety rule is *"make the balance update atomic — debit and credit occur in a single transaction."* This is the one correctness property the checks alone may not force, so it is named directly to the builder — it is the riskiest assumption Direction wrote into `## RULES`.
+Verify then diffs against the **latest** freeze or refreeze commit. The history shows what changed and why — which is the difference between a changed mind and a weakened test.
 
-## The three lines you may not cross
+## Work in small, reviewable steps
 
-The build runs fast because Direction fixed *what* correct means. It stays safe because three lines hold, and crossing any of them is not a shortcut — it is a signal that the work has left its lane:
-
-- **Change no bound check.** A test named in `## CHECKS` is frozen; a hard one is telling you something about the code, not about the check, and weakening or deleting it to reach green inverts the method: the code would then be judging itself. Every other test is yours — write it to debug, delete it when it stops paying. Red-green-refactor is a technique you may use; it is never what the gate asks for.
-- **Move no frozen `gives:` contract.** The build implements *against* the frozen interface. Its internals may change freely; its external shape may not. A genuine need to change the contract is a change request that returns to Direction, not a silent edit here.
-- **Stay inside `scope:`.** The paths in the node's `scope:` are the freshness set the gate will hash. Touching a path outside it means the node is mis-scoped — fix the scope in Direction, do not sneak the edit.
-
-The strategy the build follows was set in Direction, in the node's `## PLAN`. The builder may improve on it as reality pushes back, and reports the strategy it actually used at Verify — so the record reflects what happened, not what was planned.
-
-## Work in small batches
-
-Direct the AI one task at a time, and keep each task small enough that its result can be reviewed in full. This is a direct application of the principle *you cannot move faster than you can verify.* A single enormous change that turns the whole suite green at once is not a triumph — it is an unreviewable blob. Small batches keep the verification beat (next chapter) tractable and keep a human genuinely in the loop.
-
-Progress for a task in build is read straight from the working tree — `git status` intersected with the node's `scope:`. It is never stored and always current, so there is no separate status to keep in sync.
+Commit build progress normally. Keep each step small enough that its diff can be read in full: one enormous change that turns everything green at once is not a triumph, it is an unreviewable blob — and Verify's residue read (next chapter) depends on the diff being readable.
 
 ## The iteration loop
 
 ```
-AI writes code → run the checks → some still fail
-   → AI iterates → ... → all green → hand to Verify
+write code → run the task's check: command → some still fail
+   → adjust → … → all green → run the regression: command → hand to Verify
 ```
 
-The loop is tight and largely self-directed within a task: the AI runs the checks, sees what fails, and adjusts. Your attention is needed at the boundaries — defining the task going in, and reviewing the result coming out — not on each internal iteration. When every check is green and the residue is clean, the task advances to Verify.
-
-## The cardinal rule: never change a check to pass
-
-An AI under pressure to make a suite green has an available shortcut: weaken or delete the failing check. This must be forbidden explicitly and caught reliably. A check changed to fit the code inverts the entire method. If you find a check was altered during the build, reject the change outright and re-prompt with the constraint restated.
-
-The same applies to the contract: the build may not edit the frozen `gives:`. A genuine need to change either the checks or the contract is a change request that returns to Direction, re-freezes, and comes forward again — never a quiet patch.
+The loop is tight and self-directed. The agent runs the checks, reads what fails, and adjusts. Run the full `regression:` suite before calling the build done: a green on a filtered run says nothing about checks outside the filter.
 
 ## Common mistakes
 
-- **Batches too large to review.** Shrinks verification to approving without reading.
-- **Crossing a check outside the task's own suite.** A failure in a check the node does not own means the build crossed a boundary. Find the node that owns it before continuing; do not patch around it.
-- **Accepting "all checks pass" without reading the change.** Passing checks are necessary, not sufficient — the next beat exists for exactly this reason.
+- **Batches too large to read.** Shrinks the residue review to approving without reading.
+- **Patching around a failure in someone else's check.** A red test the task does not own means the build crossed a boundary. Find out why before continuing.
+- **Trusting a filtered run.** A scoped run was green; the full suite was never run. Run `regression:`.
+- **"All checks pass" as the finish line.** It is necessary, not sufficient — that is what Verify is for.
 
 ## Exit check
 
-- [ ] Every red check is now green.
-- [ ] No check and no frozen contract was modified by the AI.
-- [ ] Every edit stayed inside the node's `scope:`.
-- [ ] The change is small enough to review in full.
-
-## If the check fails
-
-If the AI weakened a check, reject and re-prompt with the constraint restated. If an edit strayed outside `scope:`, the node is mis-scoped — return to Direction and fix the scope rather than expanding the build. If the batch is too large to review, ask the AI to split the work and resubmit. Only once the exit check passes, with green checks and clean residue, does the change proceed to verification.
+- [ ] Every check in CHECKS passes.
+- [ ] No sealed file changed since the latest freeze or refreeze commit.
+- [ ] Every edit is inside `scope:`; no `gives:` surface moved.
+- [ ] The `regression:` suite is green.
+- [ ] The work is committed and the tree is clean.
