@@ -1,7 +1,7 @@
 ---
 type: Task
 title: the benchmark can run each arm on its own model and advisor, with two lean ADD arms that switch models by beat
-status: build
+status: done
 kind: feature
 risks: [measurement-validity, compatibility]
 scope: [benchmark/arms/, benchmark/runner/agent.py, benchmark/runner/core.py, benchmark/pilot.py, benchmark/tests/test_arm_models.py, benchmark/tests/test_arms.py, benchmark/tests/conftest.py, benchmark/tests/test_session_mode.py, benchmark/tests/test_wv2_family.py]
@@ -51,4 +51,10 @@ regression: python3 -m pytest -q benchmark/tests
 - 2026-09-30 refreeze in build: two older tests pin the old two-argument `build_argv` shape — test_session_mode's spy takes (prompt, agent_cmd), and test_wv2_family greps core.py for the literal `"model": PINNED_MODEL`. Their intent (every WM starts a fresh conversation; every record stamps the model it ran on) is unchanged: the spy passes new arguments through and the grep looks for the resolved model. Scope widens to both files.
 
 ## EVIDENCE
-<written once, at verify>
+verdict: PASS
+- seal: since the last refreeze (d41beda0) no sealed check file changed; `benchmark/tests/conftest.py` changed in the build commit exactly as refreeze b72e7ed2 set out (the guard wraps `subprocess.Popen` and refuses a `claude` binary), and C9 holds it
+- fresh: `python3 -m pytest -q benchmark/tests/test_arm_models.py benchmark/tests/test_arms.py` → 10 passed (C1–C9)
+- regression: `python3 -m pytest -q benchmark/tests` → 530 passed, 12 skipped
+- probe (M4, live): round-6 records stamp the model each run used — add-4-advisor wm1/amb1 `claude-haiku-4-5-20251001` + advisor `claude-sonnet-5-5`; add-4-lean `claude-sonnet-5-5`, no advisor
+- probe (M5, live): the add-4-advisor wm1 workspace's SKILL.md carries the variant (`model: haiku` ×1); in add-4-lean wm1 the SKILL.md's only commit is `chore(bench): workspace baseline` and `git status .claude` is clean — the variant landed before the baseline
+- residue: measurement results, not harness defects — the Haiku main session never consulted its advisor in the first two runs, although a forced consult does bill Sonnet 5.5 ($0.15), and the lean arm's Build did not hand off to a Haiku subagent; both go to the round-6 report
