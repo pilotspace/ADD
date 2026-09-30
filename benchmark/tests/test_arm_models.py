@@ -2,6 +2,9 @@
 import dataclasses
 import difflib
 import pathlib
+import subprocess
+
+import pytest
 
 from benchmark import pilot
 from benchmark.arms.loader import ARM_NAMES, Arm, load_arm
@@ -96,3 +99,10 @@ def test_lean_variant_changes_exactly_three_things():
         assert phrase not in " ".join(" ".join(shipped).split()), f"{phrase!r} already ships"
     for kept in ("freeze(", "falsifier", "at least one per Must and Reject", "the way a real caller sends them"):
         assert kept in flat, f"the variant dropped {kept!r}"
+
+
+def test_no_test_can_launch_the_real_claude():
+    with pytest.raises(RuntimeError, match="live"):
+        subprocess.Popen(["claude", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    with subprocess.Popen(["python3", "-c", "pass"]) as ok:
+        assert ok.wait() == 0, "the guard must not block other processes"

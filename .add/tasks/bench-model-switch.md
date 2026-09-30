@@ -4,7 +4,7 @@ title: the benchmark can run each arm on its own model and advisor, with two lea
 status: build
 kind: feature
 risks: [measurement-validity, compatibility]
-scope: [benchmark/arms/, benchmark/runner/agent.py, benchmark/runner/core.py, benchmark/pilot.py, benchmark/tests/test_arm_models.py, benchmark/tests/test_arms.py]
+scope: [benchmark/arms/, benchmark/runner/agent.py, benchmark/runner/core.py, benchmark/pilot.py, benchmark/tests/test_arm_models.py, benchmark/tests/test_arms.py, benchmark/tests/conftest.py]
 gives: [S1 `run-all --model <id>` and the arm-toml keys `model` / `advisor`]
 ---
 ## CARD
@@ -19,6 +19,7 @@ why: Direction is 56% of ADD's wall time (4.1 of 7.3 min) and about 44% of its t
 - M5 two arms load: `add-4-lean` installs the ADD 4.0 skill, then overwrites its SKILL.md with `benchmark/arms/variants/add-4-lean/SKILL.md`; `add-4-advisor` does the same with `model = "claude-haiku-4-5-20251001"` and `advisor = "claude-sonnet-5-5"` (from: request) (derived: the two arms share one variant, so the model switch is the only difference between them)
 - M6 the lean variant differs from the shipped skill in exactly three places: stubs only what the checks import; the lead persona is picked by grepping `.add/personas/`, the 65 KB index only grepped when none fits; Build runs in one foreground subagent on `model: haiku`, and the main session verifies (from: PILOT r5 transcripts — 10.7 Direction writes per run, about half stubs; 5 of 6 runs opened the 65 KB index; Build is 53–54% of tokens)
 - R:DEFAULT with no `--model` and no arm model, argv and records are exactly as before — `claude-sonnet-5` (from: benchmark/tests — the model-pin tests)
+- R:NO_LIVE no test launches the real `claude` binary; the guard refuses at process launch, so a test that replaces the launcher itself may drive `execute_wm` without an injected agent (from: benchmark/tests/conftest.py — the 2026-09-28 live-spend incident)
 - R:ARMCOUNT `ARM_NAMES` grows from 8 to 10; the fairness fields stay identical across all arms (from: benchmark/tests/test_arms.py::test_all_arms_validate_with_fairness_parity — its count changes with this contract)
 
 ## ASSUMPTIONS
@@ -41,7 +42,11 @@ regression: python3 -m pytest -q benchmark/tests
 - C5 covers: M2 · acceptance · benchmark/tests/test_arm_models.py::test_run_all_cli_accepts_model · falsifier: the flag parses but never reaches run_reps
 - C6 covers: M5 R:ARMCOUNT · acceptance · benchmark/tests/test_arm_models.py::test_lean_and_advisor_arms_load · falsifier: the advisor arm runs the shipped skill, or the lean arm pins a model
 - C7 covers: M6 · acceptance · benchmark/tests/test_arm_models.py::test_lean_variant_changes_exactly_three_things · falsifier: a variant that also drops a check rule or the seal
+- C9 covers: R:NO_LIVE · acceptance · benchmark/tests/test_arm_models.py::test_no_test_can_launch_the_real_claude · falsifier: a guard that only wraps build_argv, which a test calling the launcher directly walks past
 - C8 covers: R:ARMCOUNT · regression · benchmark/tests/test_arms.py::test_all_arms_validate_with_fairness_parity · falsifier: arms added with diverging fairness fields
+
+## LOG
+- 2026-09-30 refreeze in build: the autouse guard in benchmark/tests/conftest.py wraps `build_argv` with a two-argument signature and raises whenever no agent is injected, so C4 — which replaces `_invoke_once` and launches nothing — cannot run. The guard moves to the launch layer (refuse a process whose binary is `claude`), keeping its purpose; scope widens to conftest.py; R:NO_LIVE and C9 make the safety property a sealed check.
 
 ## EVIDENCE
 <written once, at verify>
