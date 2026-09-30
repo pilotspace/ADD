@@ -113,7 +113,7 @@ def test_value_page_is_self_contained_and_traceable():
                           (r"url\(\s*['\"]?(?:https?:)?//", "a remote url()"), (r"@import", "an @import")):
         assert not re.search(pattern, html, re.I), f"the page loads {what}"
     assert "prefers-reduced-motion" in html, "the page ignores reduced motion"
-    visible = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.S)
+    visible = re.sub(r"<(script|style)\b[^>]*>.*?</\1\s*>", " ", html, flags=re.S | re.I)
     hit = BRAG.search(visible)
     assert not hit, f"the page overclaims ({hit.group(0)})"
     m = re.search(r'<script type="application/json" id="add-data">(.*?)</script>', html, re.S)

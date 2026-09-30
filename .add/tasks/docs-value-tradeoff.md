@@ -42,6 +42,7 @@ regression: python3 -m pytest -q add-method/tests/test_docs_value.py
 - C7 covers: R:OVERCLAIM · regression · add-method/tests/test_docs_value.py · falsifier: the rewrite drops the add-value link or a README number leaves the results page
 
 ## LOG
+- 2026-09-30 refreeze after verify: CodeQL (py/bad-tag-filter) flagged the check's `<script>`/`<style>` stripper as case-sensitive. It now strips any-case tags, with attributes and a spaced closing tag, so script text can never pass as visible copy. Stricter, not weaker; intent unchanged.
 
 ## EVIDENCE
 verdict: PASS

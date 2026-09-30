@@ -65,7 +65,7 @@ def test_flow_page_plays_both_runs_and_traces():
     assert "<noscript" in html, "the flow page has no state without JavaScript"
     for pane in ('id="pane-vanilla"', 'id="pane-add"'):
         assert pane in html, f"the flow page has no {pane} pane"
-    visible = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.S)
+    visible = re.sub(r"<(script|style)\b[^>]*>.*?</\1\s*>", " ", html, flags=re.S | re.I)
     for run in ("vanilla-amb/rep1", "add-4-amb/rep1"):
         assert run in visible, f"the flow page does not name its source run {run}"
     vanilla = re.search(r'id="pane-vanilla".*?id="pane-add"', html, re.S)

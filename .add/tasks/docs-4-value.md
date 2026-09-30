@@ -46,6 +46,9 @@ regression: cd add-method && python3 -m pytest -q
 - C8 covers: M8 R:OVERCLAIM · acceptance · tests/test_docs_value.py::test_value_page_is_self_contained_and_traceable · falsifier: a page that pulls a CDN script or font, shows a figure that is not on the results page, ignores reduced motion, or claims "cheaper"
 - C9 covers: M8 · acceptance · tests/test_docs_value.py::test_value_page_is_linked · falsifier: the page ships but nothing links to it
 
+## LOG
+- 2026-09-30 refreeze after verify: CodeQL (py/bad-tag-filter) flagged C8's `<script>`/`<style>` stripper as case-sensitive. It now strips any-case tags, with attributes and a spaced closing tag, so script text can never pass as visible copy. Stricter, not weaker; intent unchanged.
+
 ## EVIDENCE
 verdict: PASS
 freeze: 2a40874b · head: 1499657e
