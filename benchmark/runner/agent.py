@@ -11,6 +11,9 @@ from typing import Sequence
 # the single source of truth for the pinned meter model — stamped into every
 # record's artifacts (wv2-family M7) and asserted by the model-pin tests
 PINNED_MODEL = "claude-sonnet-5"
+# the meter's effort unless an arm (`effort = ...`) or the run (`--effort`) names one
+DEFAULT_EFFORT = "medium"
+EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 
 
 def resolve_model(arm_model: str, run_model: str | None) -> str:
@@ -18,7 +21,13 @@ def resolve_model(arm_model: str, run_model: str | None) -> str:
     return arm_model or run_model or PINNED_MODEL
 
 
-def default_agent_cmd(prompt: str, model: str = PINNED_MODEL, advisor: str = "") -> list[str]:
+def resolve_effort(arm_effort: str, run_effort: str | None) -> str:
+    """The effort one arm runs at: its own `effort`, else the run's `--effort`, else medium."""
+    return arm_effort or run_effort or DEFAULT_EFFORT
+
+
+def default_agent_cmd(prompt: str, model: str = PINNED_MODEL, advisor: str = "",
+                      effort: str = DEFAULT_EFFORT) -> list[str]:
     """The real `claude -p` invocation, pinned by the 2026-07-07 live spike:
     `--output-format stream-json` gives the per-event transcript this runner
     parses for tokens/cost/time_to_first_edit.
@@ -45,10 +54,12 @@ def default_agent_cmd(prompt: str, model: str = PINNED_MODEL, advisor: str = "")
 
     A run may move every arm to another model (`run-all --model`), and an arm may pin its own
     model and an advisor (`--advisor`, consulted by the main model at decision points); the
-    resolved model is stamped into every record, so a comparison can be checked for a mix-up."""
+    resolved model is stamped into every record, so a comparison can be checked for a mix-up.
+    Effort resolves the same way (arm `effort`, else `--effort`, else medium) and is stamped too:
+    same model at different effort is how ADD-at-low is compared with raw Claude Code at medium."""
     return [
         "claude", "-p", prompt,
-        "--model", model, "--effort", "medium",
+        "--model", model, "--effort", effort,
         *(["--advisor", advisor] if advisor else []),
         "--output-format", "stream-json", "--verbose",
         "--disable-slash-commands", "--strict-mcp-config",
@@ -57,7 +68,7 @@ def default_agent_cmd(prompt: str, model: str = PINNED_MODEL, advisor: str = "")
 
 
 def build_argv(prompt: str, agent_cmd: Sequence[str] | None, model: str = PINNED_MODEL,
-               advisor: str = "") -> list[str]:
+               advisor: str = "", effort: str = DEFAULT_EFFORT) -> list[str]:
     """Resolve the actual argv for one attempt: an injected fake-agent argv
     gets the prompt appended as its final positional arg; absent an
     injection, fall back to the real `claude -p` argv. EVERY milestone gets a
@@ -66,4 +77,4 @@ def build_argv(prompt: str, agent_cmd: Sequence[str] | None, model: str = PINNED
     conversation, so the on-disk board is the only cross-milestone carrier."""
     if agent_cmd:
         return [*agent_cmd, prompt]
-    return default_agent_cmd(prompt, model, advisor)
+    return default_agent_cmd(prompt, model, advisor, effort)

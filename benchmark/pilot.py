@@ -21,6 +21,7 @@ import sys
 from typing import Sequence
 
 from benchmark.arms.loader import ARM_NAMES, Arm, load_arm, refuse_retired
+from benchmark.runner.agent import EFFORT_LEVELS
 from benchmark.runner.core import execute_wm
 from benchmark.runner.records import DEFAULT_RUNS_ROOT, find_resume_point, write_record_atomic
 from benchmark.schema.run_record import BenchError, RunRecord
@@ -65,6 +66,7 @@ def run_pilot(
     family: str = "wm",
     session_mode: str = "fresh",
     model: str | None = None,
+    effort: str | None = None,
 ) -> list[RunRecord]:
     """Sequences, PER ARM independently: resolve the arm (load_arm +
     resolve_setup_steps) -> determine the starting WM (find_resume_point
@@ -118,6 +120,7 @@ def run_pilot(
                 family=family,
                 session_mode=session_mode,
                 model=model,
+                effort=effort,
             )
             records.append(record)
             if record.status != "done":
@@ -198,6 +201,7 @@ def run_reps(
     family: str = "wm",
     session_mode: str = "fresh",
     model: str | None = None,
+    effort: str | None = None,
 ) -> list[RunRecord]:
     """Run the full arms×wms pilot `reps` times into DISTINCT `runs_root/rep{i}`
     roots (resume disabled per rep so each is an independent fresh sample), and
@@ -223,6 +227,7 @@ def run_reps(
             family=family,
             session_mode=session_mode,
             model=model,
+            effort=effort,
         )
         records.extend(rep_records)
     return records
@@ -251,6 +256,8 @@ def _build_parser() -> argparse.ArgumentParser:
     run_all_p.add_argument("--model", default=None,
                            help="the model every arm runs on unless its toml sets its own "
                                 "(default: the pinned meter model)")
+    run_all_p.add_argument("--effort", default=None, choices=EFFORT_LEVELS,
+                           help="the effort every arm runs at unless its toml sets its own (default: medium)")
     run_all_p.add_argument("--family", default="wm", choices=("wm", "hv", "amb"))
     run_all_p.add_argument("--session-mode", default="fresh", choices=("fresh", "continue"),
                            dest="session_mode",
@@ -283,6 +290,7 @@ def main(argv: list[str] | None = None) -> int:
                     family=args.family,
                     session_mode=args.session_mode,
                     model=args.model,
+                    effort=args.effort,
                 )
                 for (arm, wm), stats in sorted(aggregate_reps(records).items()):
                     print(
@@ -308,6 +316,7 @@ def main(argv: list[str] | None = None) -> int:
                 family=args.family,
                 session_mode=args.session_mode,
                 model=args.model,
+                effort=args.effort,
             )
         except BenchError as exc:
             print(str(exc), file=sys.stderr)
