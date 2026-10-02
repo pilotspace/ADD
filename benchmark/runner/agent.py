@@ -55,6 +55,11 @@ def default_agent_cmd(prompt: str, model: str = PINNED_MODEL, advisor: str = "",
     A run may move every arm to another model (`run-all --model`), and an arm may pin its own
     model and an advisor (`--advisor`, consulted by the main model at decision points); the
     resolved model is stamped into every record, so a comparison can be checked for a mix-up.
+
+    Operator isolation (round 8): `--setting-sources project,local` keeps the operator's user
+    settings out of the measured session. Without it a user plugin (security-guidance) ran an LLM
+    review on every `git commit` — only the arms that commit paid it — and the user CLAUDE.md's
+    instructions reached every arm. Organisation-managed plugins still load; they bind all arms.
     Effort resolves the same way (arm `effort`, else `--effort`, else medium) and is stamped too:
     same model at different effort is how ADD-at-low is compared with raw Claude Code at medium."""
     return [
@@ -63,6 +68,8 @@ def default_agent_cmd(prompt: str, model: str = PINNED_MODEL, advisor: str = "",
         *(["--advisor", advisor] if advisor else []),
         "--output-format", "stream-json", "--verbose",
         "--disable-slash-commands", "--strict-mcp-config",
+        # operator isolation: no user plugins, hooks or ~/.claude/CLAUDE.md in the measured session
+        "--setting-sources", "project,local",
         "--dangerously-skip-permissions",
     ]
 

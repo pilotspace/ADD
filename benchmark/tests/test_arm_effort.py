@@ -115,3 +115,12 @@ def test_probe_arm_is_the_audited_variant_plus_the_probe_rule_at_low_effort():
     flat = " ".join(" ".join(probe).split())
     for phrase in (".probes/", "not servers started by hand", "kill $P"):
         assert phrase in flat, f"the probe rule does not state {phrase!r}"
+
+
+def test_measured_session_ignores_the_operators_user_settings():
+    """Round 8: the operator's `security-guidance` plugin ran an Opus security review on every
+    `git commit` (100-185 s each, billed outside the run record) and the user CLAUDE.md told the
+    agent to interview the human. ADD commits and vanilla does not, so the operator's config was
+    measured as ADD's cost. `--setting-sources project,local` drops user plugins, hooks and CLAUDE.md."""
+    argv = agent.build_argv("p", None)
+    assert argv[argv.index("--setting-sources") + 1] == "project,local"
