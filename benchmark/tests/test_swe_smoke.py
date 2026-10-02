@@ -54,19 +54,18 @@ class PatchFilterTest(unittest.TestCase):
 
 
 class AgentArgvTest(unittest.TestCase):
-    def test_pinned_meter_argv(self):
-        argv = runner.agent_argv("do it", "claude-sonnet-5")
+    def test_argv_is_the_wm_meter_with_isolation(self):
+        """Same argv builder as the wm bench (benchmark.runner.agent): the operator's user
+        plugins/hooks/CLAUDE.md never reach the measured session (round-8 finding)."""
+        argv = runner.agent_argv("do it", "claude-sonnet-5-5", "low")
         self.assertEqual(argv[:3], ["claude", "-p", "do it"])
-        for flag in ("--model", "--effort", "--output-format", "--verbose",
-                     "--disable-slash-commands", "--strict-mcp-config",
-                     "--dangerously-skip-permissions"):
-            self.assertIn(flag, argv)
-        self.assertEqual(argv[argv.index("--model") + 1], "claude-sonnet-5")
+        self.assertEqual(argv[argv.index("--model") + 1], "claude-sonnet-5-5")
+        self.assertEqual(argv[argv.index("--effort") + 1], "low")
+        self.assertEqual(argv[argv.index("--setting-sources") + 1], "project,local")
         self.assertEqual(argv[argv.index("--output-format") + 1], "stream-json")
 
-    def test_model_is_a_free_dial(self):
-        argv = runner.agent_argv("x", "claude-haiku-4-5-20251001")
-        self.assertIn("claude-haiku-4-5-20251001", argv)
+    def test_each_arm_has_its_effort(self):
+        self.assertEqual(runner.ARM_EFFORT, {"vanilla": "medium", "add": "low"})
 
 
 class PromptTest(unittest.TestCase):
@@ -75,30 +74,53 @@ class PromptTest(unittest.TestCase):
             p = runner.wrap_prompt("THE-ISSUE-TEXT", arm)
             self.assertIn("<issue>\nTHE-ISSUE-TEXT\n</issue>", p)
 
-    def test_add_arm_names_the_loop(self):
+    def test_add_arm_drives_the_4_0_skill(self):
         p = runner.wrap_prompt("x", "add")
-        self.assertIn("add.py status", p)
-        self.assertIn("gate_mode: ", p)
-        self.assertIn("Regression floor", p)
-        self.assertIn("freeze --by agent --cross", p)
-        self.assertIn("Never weaken existing tests", p)
+        for phrase in (".claude/skills/add/SKILL.md", "freeze(", "reproduces the issue",
+                       "regression floor", "Never weaken existing tests", "no human"):
+            self.assertIn(phrase, p)
+        self.assertNotIn("add.py", p, "the 2.0 engine is gone in 4.0")
 
     def test_vanilla_arm_is_method_free(self):
         p = runner.wrap_prompt("x", "vanilla")
-        self.assertNotIn("add.py", p)
         self.assertNotIn(".add", p)
+        self.assertNotIn("SKILL", p)
 
 
-class WorkspaceIsolationTest(unittest.TestCase):
-    def test_install_seeds_workspace_state(self):
-        """harness-workspace-isolation for the SWE arm: install_add must end with the
-        ENGINE init that writes the workspace's own .add/state.json — without it an
-        agent that skips init leaks the whole loop into the HOST repo's .add via
-        ancestor root discovery (observed live on the haiku 863 run)."""
+class InstallTest(unittest.TestCase):
+    def test_install_runs_the_4_0_installer_only(self):
         import inspect
         src = inspect.getsource(runner.install_add)
-        self.assertIn('".add/tooling/add.py", "init"', src,
-                      "install_add must seed the workspace state.json via engine init")
+        self.assertIn("pilotspace-add", src)
+        for gone in (".add/tooling", "--force", "--stage"):
+            self.assertNotIn(gone, src, f"{gone} belongs to the retired engine/installer")
+
+
+class PatchCollectTest(unittest.TestCase):
+    def test_new_untracked_files_are_part_of_the_patch(self):
+        """`git diff <base>` alone misses a NEW file the fix adds and never commits."""
+        import pathlib, subprocess, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            w = pathlib.Path(td)
+            g = lambda *a: subprocess.run(["git", "-C", td, *a], check=True, capture_output=True, text=True)
+            g("init", "-q"); g("config", "user.email", "t@t"); g("config", "user.name", "t")
+            (w / "a.py").write_text("old\n"); g("add", "-A"); g("commit", "-qm", "base")
+            base = g("rev-parse", "HEAD").stdout.strip()
+            (w / "a.py").write_text("new\n"); (w / "b.py").write_text("added\n")
+            (w / ".add").mkdir(); (w / ".add" / "x.md").write_text("artifact\n")
+            patch = runner.collect_patch(w, base, w / "log")
+        self.assertIn("diff --git a/a.py b/a.py", patch)
+        self.assertIn("diff --git a/b.py b/b.py", patch)
+        self.assertNotIn(".add/", patch)
+
+
+class SampleTest(unittest.TestCase):
+    def test_sample_is_deterministic_and_sized(self):
+        ids = [f"repo__x-{i}" for i in range(300)]
+        a, b = runner.sample_ids(ids, 30, seed=7), runner.sample_ids(list(reversed(ids)), 30, seed=7)
+        self.assertEqual(a, b, "the slice must not depend on fetch order")
+        self.assertEqual(len(set(a)), 30)
+        self.assertNotEqual(a, runner.sample_ids(ids, 30, seed=8))
 
 
 class SmokeConfigTest(unittest.TestCase):
@@ -108,7 +130,7 @@ class SmokeConfigTest(unittest.TestCase):
             self.assertTrue(iid.startswith("psf__requests-"), iid)
 
     def test_default_model_pinned(self):
-        self.assertEqual(runner.PINNED_MODEL, "claude-sonnet-5")
+        self.assertEqual(runner.PINNED_MODEL, "claude-sonnet-5-5")
 
     def test_runs_root_is_gitignored_name(self):
         self.assertTrue(str(runner.DEFAULT_RUNS).endswith("benchmark/runs-swe"))
