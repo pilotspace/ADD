@@ -79,7 +79,7 @@ def test_run_all_cli_accepts_model(monkeypatch):
 
 def test_lean_arm_loads_and_advisor_arm_retired():
     # .add/tasks/bench-sonnet-only.md M1: the Haiku-main advisor arm retires after round 6
-    assert "add-4-lean" in ARM_NAMES and "add-4-advisor" not in ARM_NAMES and len(ARM_NAMES) == 11
+    assert "add-4-lean" in ARM_NAMES and "add-4-advisor" not in ARM_NAMES and len(ARM_NAMES) == 12
     assert not (ARMS_DIR / "add-4-advisor.toml").exists()
     lean, base = (load_arm(ARMS_DIR / f"{n}.toml") for n in ("add-4-lean", "add-4"))
     for arm in (lean,):

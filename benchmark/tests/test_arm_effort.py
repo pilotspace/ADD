@@ -98,3 +98,20 @@ def test_audited_variant_drops_turn_counts_and_keeps_the_method():
                  "the way a real caller sends them", "foreground",
                  "Never edit a sealed check", "HARD-STOP", "<constraints>"):
         assert kept in variant, f"the variant dropped {kept!r}"
+
+
+PROBE = ARMS_DIR / "variants" / "add-4-probe" / "SKILL.md"
+
+
+def test_probe_arm_is_the_audited_variant_plus_the_probe_rule_at_low_effort():
+    assert "add-4-probe-low" in ARM_NAMES
+    arm = load_arm(ARMS_DIR / "add-4-probe-low.toml")
+    assert (arm.effort, arm.model) == ("low", "")
+    assert any("variants/add-4-probe/SKILL.md" in s for s in arm.setup_steps)
+    import difflib
+    audited, probe = AUDITED.read_text().splitlines(), PROBE.read_text().splitlines()
+    hunks = [g for g in difflib.SequenceMatcher(None, audited, probe).get_opcodes() if g[0] != "equal"]
+    assert len(hunks) == 1, f"the probe variant differs from the audited one in {len(hunks)} places, not 1"
+    flat = " ".join(" ".join(probe).split())
+    for phrase in (".probes/", "not servers started by hand", "kill $P"):
+        assert phrase in flat, f"the probe rule does not state {phrase!r}"
