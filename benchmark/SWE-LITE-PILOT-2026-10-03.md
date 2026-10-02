@@ -1,0 +1,37 @@
+# SWE-bench Lite pilot — ADD at low effort against raw Claude Code at medium (2026-10-03)
+
+**Slice:** 30 instances drawn from the 300 Lite instances (`--sample 30 --seed 0`), across 10 repos:
+django 9 · sympy 8 · pytest 3 · sphinx 3 · matplotlib 2 · seaborn, requests, xarray, pylint and
+scikit-learn 1 each. **Model:** `claude-sonnet-5-5`, operator settings isolated
+(`--setting-sources project,local`). **Runner:** `benchmark/swe/runner.py` at `501c8d01`, 4 workers.
+**Scoring:** the official harness, `swebench==5.0.2`, run in local Docker with the x86 images
+under Rosetta. The gold patch for `psf__requests-2317` resolved first as a sanity check.
+**n = 30: directional, not a leaderboard number.**
+
+| arm | resolved | errors · empty | cost (30) | $ per resolved | mean wall / instance |
+|---|---|---|---|---|---|
+| vanilla · medium | **21/30 (70.0%)** | 0 · 0 | $2.81 | $0.13 | 24 s |
+| ADD 4.0 · low | **23/30 (76.7%)** | 0 · 0 | $7.56 (2.7×) | $0.33 | 86 s |
+
+- **ADD resolved a strict superset of vanilla's instances:** all 21 of vanilla's, plus
+  `scikit-learn__scikit-learn-14087` and `sympy__sympy-14817`. Vanilla resolved none that ADD missed.
+- **Significance:** 2 discordant pairs, both in ADD's favour. McNemar exact p = 0.5, so this is not
+  significant at n = 30. The full 300 would need roughly a 4–5 point gap that holds up to separate them.
+- **Projected full-Lite cost** from this slice: ADD about $76, vanilla about $28. Local scoring of
+  30 predictions took about 20 minutes per arm at 3 workers.
+
+## Why scoring is local, not on Modal
+
+- **`swebench` 5.0.0–5.0.2:** the Modal path still builds images from `setup_env_script`, which the
+  5.x `TestSpec` no longer has. The code itself carries a TODO for this. The Modal side installs
+  swebench from PyPI, so it cannot be patched locally.
+- **`swebench` 4.1.0:** it calls `Sandbox.open`, which modal ≥ 1.0 removed, and Modal's servers
+  refuse clients below 1.0.
+- **Local fix:** on Apple Silicon, Docker asks for an arm64 manifest, which these images do not
+  have. Pre-pulling each image with `--platform linux/amd64` (`pilot30-s0/eval.sh`) solves it.
+
+## For a leaderboard submission
+
+A submission needs all 300 instances, pass@1, and per-instance trajectories (`transcript.jsonl`
+is kept per instance). Predictions, logs and transcripts are under `benchmark/runs-swe/pilot30-s0/`,
+which is gitignored. Nothing has been submitted.
