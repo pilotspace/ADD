@@ -88,11 +88,15 @@ def fetch_instances(instance_ids: list[str],
     return rows
 
 
-def fetch_all_ids(cache: pathlib.Path | None = None) -> list[str]:
-    """Every instance_id in the Lite test split (300), paged from the datasets-server; cached."""
+def fetch_all_ids(cache: pathlib.Path | None = None,
+                  rows_cache: pathlib.Path | None = None) -> list[str]:
+    """Every instance_id in the Lite test split (300), paged from the datasets-server; cached.
+    The pages carry the full rows, so they also seed `rows_cache` (fetch_instances' cache): the
+    per-id /filter endpoint 500s under load and is then never needed."""
     if cache and cache.exists():
         return json.loads(cache.read_text())
     ids: list[str] = []
+    rows: dict[str, dict] = json.loads(rows_cache.read_text()) if rows_cache and rows_cache.exists() else {}
     offset = 0
     while True:
         url = (f"https://datasets-server.huggingface.co/rows?dataset={urllib.parse.quote(DATASET)}"
@@ -109,6 +113,7 @@ def fetch_all_ids(cache: pathlib.Path | None = None) -> list[str]:
         else:
             raise SystemExit(f"datasets-server unreachable at offset {offset}")
         page = [r["row"]["instance_id"] for r in payload.get("rows", [])]
+        rows.update({r["row"]["instance_id"]: r["row"] for r in payload.get("rows", [])})
         ids += page
         offset += len(page)
         if not page or offset >= payload.get("num_rows_total", 0):
@@ -116,6 +121,9 @@ def fetch_all_ids(cache: pathlib.Path | None = None) -> list[str]:
     if cache:
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(json.dumps(ids))
+    if rows_cache:
+        rows_cache.parent.mkdir(parents=True, exist_ok=True)
+        rows_cache.write_text(json.dumps(rows, indent=1))
     return ids
 
 
@@ -262,7 +270,8 @@ def main() -> None:
     args = ap.parse_args()
 
     runs_root = pathlib.Path(args.runs_root)
-    ids = (sample_ids(fetch_all_ids(cache=runs_root / "lite_ids.json"), args.sample, args.seed)
+    ids = (sample_ids(fetch_all_ids(cache=runs_root / "lite_ids.json",
+                                     rows_cache=runs_root / "instances.json"), args.sample, args.seed)
            if args.sample else args.instances)
     rows = fetch_instances(ids, cache=runs_root / "instances.json")
     print(f"[swe] {len(rows)} instances x {args.arms} on {args.model} "

@@ -163,3 +163,31 @@ class CostParseTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PagedFetchTest(unittest.TestCase):
+    def test_paged_fetch_seeds_the_row_cache(self):
+        """The per-id /filter endpoint 500s under load; the paged /rows fetch that lists the ids
+        already carries every row, so it fills the instance cache and /filter is never needed."""
+        import io, json as _json, pathlib, tempfile
+        from unittest import mock
+        row = {"instance_id": "a__b-1", "repo": "a/b", "base_commit": "c", "problem_statement": "p"}
+        page = _json.dumps({"rows": [{"row": row}], "num_rows_total": 1}).encode()
+        with tempfile.TemporaryDirectory() as td, \
+                mock.patch.object(runner.urllib.request, "urlopen", return_value=io.BytesIO(page)):
+            root = pathlib.Path(td)
+            ids = runner.fetch_all_ids(cache=root / "lite_ids.json", rows_cache=root / "instances.json")
+            self.assertEqual(ids, ["a__b-1"])
+            self.assertEqual(_json.loads((root / "instances.json").read_text()), {"a__b-1": row})
+
+    def test_rows_cache_is_readable_by_fetch_instances(self):
+        import io, json as _json, pathlib, tempfile
+        from unittest import mock
+        row = {"instance_id": "a__b-1", "repo": "a/b", "base_commit": "c", "problem_statement": "p"}
+        page = _json.dumps({"rows": [{"row": row}], "num_rows_total": 1}).encode()
+        with tempfile.TemporaryDirectory() as td:
+            root = pathlib.Path(td)
+            with mock.patch.object(runner.urllib.request, "urlopen", return_value=io.BytesIO(page)):
+                runner.fetch_all_ids(cache=root / "lite_ids.json", rows_cache=root / "instances.json")
+            with mock.patch.object(runner.urllib.request, "urlopen", side_effect=AssertionError("network")):
+                self.assertEqual(runner.fetch_instances(["a__b-1"], cache=root / "instances.json"), [row])
