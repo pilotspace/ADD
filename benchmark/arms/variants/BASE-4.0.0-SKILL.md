@@ -54,22 +54,22 @@ Every turn re-reads the whole context: cost grows with turns, not words. Keep ev
 | the answer IS the deliverable — investigate · evaluate · research | **Explore** (`references/explore.md`) | the task's `## FINDINGS` |
 | a theme, or more than one task | **Milestone** | `.add/milestones/<slug>.md` + its tasks |
 
-**Floor:** anything touching security · data · architecture, or that changes the shape of a surface
-other code consumes (signature, return, status, format), is at least a Task — never Quick. A fix that
-restores intended behavior without changing its shape is not. When in doubt, size up.
+**Floor:** anything touching security · data · architecture, or a surface other code consumes, is at
+least a Task — never Quick. When in doubt, size up. Nobody approves the route; the human reviews after.
 
-**Quick:** write the failing test, watch it fail, make it pass, run the suite, review your diff, commit
-`<type>(<scope>): <what>`, body `lane: quick — <why>` · `red→green: <test> · suite: <cmd> → <result>`.
-Touches the floor or needs a check weakened? It is a Task now: write the task file first. A security
-issue you only pass by (outside the ask) stays out of your diff but leads the report as a HARD-STOP.
+**Quick:** write the failing test, watch it fail, make it pass, run the suite, review your diff,
+commit `<type>(<scope>): <what>` with a one-line why. If the change turns out to touch the floor, or
+needs a check weakened, it is a Task now: stop and write the task file first. A security issue you
+only pass by (already there, outside the ask) stays out of your diff but leads the report as a HARD-STOP.
 
 ## The task loop — Direction → Build → Verify
 
 ### 1 · Direction — write the contract, watch it fail, seal it
 
-Ground first: read the code the task touches and the relevant `## Decisions that bind` in `.add/specs/`.
-Name the task's `risks:` — failure classes it could cause (authorization, data loss, migration, concurrency,
-compatibility, privacy …); they pick the persona, evidence and residue lenses. Write `.add/tasks/<slug>.md`:
+Ground first: read the code the task touches and the relevant `## Decisions that bind` in
+`.add/specs/`. Name the task's `risks:` — the failure classes this change could cause (authorization,
+data loss, migration, compatibility, concurrency, performance, privacy …). They pick the persona,
+the evidence and the residue lenses. Then write `.add/tasks/<slug>.md`:
 
 ```markdown
 ---
@@ -97,13 +97,11 @@ strategy: <how> · check: <this task's tests> · regression: <the full suite | a
 
 - **RULES** — what you were told or what code and specs require, with its source. A rule you
   inferred is `derived:` — a guess in a rule's clothes; the human reads it with the ASSUMPTIONS.
-- **ASSUMPTIONS** — every real silence you had to fill, one per line; a dimension the request settles
-  gets no line, and `- none — <why>` is valid. Requirements that cannot both hold: the reading that
-  leaves the caller in control (refuse, never silently convert) is the first ASSUMPTION. Sweep each
-  public surface on six dims: *who* may act or see (silent → the least-privilege reading, only the
-  owner: widening later is safe, narrowing breaks callers) · *which* cases are in · *when* (boundaries
-  inclusive?) · *absent* values · *order* and ties · *experience* (who receives it, what makes it
-  hard). Of your guesses, check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
+- **ASSUMPTIONS** — every silence you had to fill, one per line. Sweep each public surface on six
+  dims: *who* may act or see (silent → the least-privilege reading, only the owner: widening later is
+  safe, narrowing breaks callers) · *which* cases are in · *when* (boundaries inclusive?) · *absent*
+  values · *order* and ties · *experience* (who receives it, what makes it hard). Of your guesses,
+  check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
 - **CHECKS** — at least one per Must and Reject: every RULES id appears on some `covers:` line. Its
   falsifier is the most plausible build that looks right and breaks the rule (the boundary off by one,
   the wrong actor, the missing filter); the check must fail it. Acceptance checks go through the public
@@ -176,14 +174,16 @@ RISK-ACCEPTED. A `risks:` task that ships names in PLAN what to watch after:
 
 End every session with a summary the human can act on: HARD-STOPs and open risks first, then per
 task — goal, verdict, freeze sha, evidence, and **every ASSUMPTION and `derived:` rule you took,
-costliest if wrong first**. Update PROJECT.md's CARD; open a PR when the repo uses them.
+costliest if wrong first** (the decisions they did not make). Update PROJECT.md's CARD. Open a PR
+when the repo uses them.
 
 ## Personas — lenses that pick what must be proven
 
-`.add/personas/<name>.md` holds expert lenses: `flow:` · `covers-risks:` · `evidence:` · `counter-lens:`.
-Lead = best fit on beat and `risks:`; one more only for a risk the lead leaves bare. None in the project →
-`.add/personas-index/use-when.md`; none fits → proceed. The second reader and the refuter load the lead's
-`counter-lens:`. A persona advises, never lowers a rule. Routing, `lens:` traces and upkeep: `references/personas.md`.
+`.add/personas/<name>.md` holds expert lenses: `flow:` (beats) · `covers-risks:` · `evidence:` (what
+it must see proven) · `counter-lens:` (its orthogonal reader). Lead = best fit on beat and `risks:`;
+one more only for a risk the lead leaves bare. None in the project → `personas-index/use-when.md`;
+none fits → proceed. The second reader and the refuter load the lead's `counter-lens:`. A persona
+advises, never lowers a rule. Routing, `lens:` traces and upkeep: `references/personas.md`.
 
 ## Non-negotiable rules
 

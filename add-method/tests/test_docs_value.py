@@ -34,6 +34,13 @@ def _section(path: Path, heading: str) -> str:
     return " ".join(" ".join(out).split())
 
 
+def _cited_results(section: str) -> Path:
+    """The results page a measured section links: its numbers must trace to THAT page."""
+    m = re.search(r"benchmark/results/([\w.-]+\.md)", section)
+    assert m, "the measured section links no results page"
+    return ROOT / "benchmark" / "results" / m.group(1)
+
+
 def _values(text: str) -> set[float]:
     return {float(n) for n in NUM.findall(text)}
 
@@ -80,9 +87,9 @@ def test_results_page_carries_provenance():
 
 
 def test_readme_numbers_trace_to_the_results_page():
-    known = _values(_flat(RESULTS))
     for path in READMES:
         section = _section(path, "measured on 4.0")
+        known = _values(_flat(_cited_results(section)))
         stray = sorted(v for v in _values(section) if v not in known)
         assert not stray, f"{path}: numbers not on the results page: {stray}"
         assert re.search(r"\d(?:\.\d)?×", section), f"{path}: a gain is quoted with no cost multiple beside it"

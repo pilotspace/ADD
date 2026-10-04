@@ -174,13 +174,13 @@ def wrap_prompt(problem_statement: str, arm: str) -> str:
     return (
         "Fix the following GitHub issue in this repository by driving this repo's ADD loop "
         "(see CLAUDE.md): read `.claude/skills/add/SKILL.md` first (skills are off in this "
-        "session, so read the file) and follow it for ONE task. This is a headless run with no "
-        "human available: make the calls the skill leaves to the human yourself and never stop "
-        "to ask. Direction: a check that reproduces the issue and fails before the fix, sealed with "
-        "`git commit -m \"freeze(<slug>): <goal>\"`. This is a FOREIGN host repo: its existing "
-        "tests nearest the code you touch are your regression floor — run them and keep them "
-        "green. Never weaken existing tests. Modify only what the fix requires; do not create new "
-        "top-level files or docs. Verify, then commit `verify(<slug>): <verdict>`.\n\n"
+        "session, so read the file) and size the work as the skill says — its Quick lane or a "
+        "Task. This is a headless run with no human available: make the calls the skill leaves "
+        "to the human yourself and never stop to ask. Start from a test that reproduces the issue "
+        "and fails before the fix. This is a FOREIGN host repo: its existing tests nearest the "
+        "code you touch are your regression floor — run them and keep them green. Never weaken "
+        "existing tests. Modify only what the fix requires; do not create new top-level files or "
+        "docs.\n\n"
         f"<issue>\n{problem_statement}\n</issue>"
     )
 

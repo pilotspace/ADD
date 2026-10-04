@@ -73,7 +73,8 @@ def test_add_4_low_is_add_4_at_low_effort():
 
 
 AUDITED = ARMS_DIR / "variants" / "add-4-audited" / "SKILL.md"
-SHIPPED = ARMS_DIR.parents[1] / "add-method" / "skill" / "add" / "SKILL.md"
+# the shipped ADD 4.0.0 skill the variants were cut from — the live skill moves on
+SHIPPED = ARMS_DIR / "variants" / "BASE-4.0.0-SKILL.md"
 
 
 def test_audited_arm_installs_the_audited_variant_at_low_effort():

@@ -12,7 +12,8 @@ from benchmark.runner import agent, core
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 ARMS_DIR = ROOT / "arms"
-SHIPPED = ROOT.parent / "add-method" / "skill" / "add" / "SKILL.md"
+# the shipped ADD 4.0.0 skill the variants were cut from — the live skill moves on
+SHIPPED = ROOT / "arms" / "variants" / "BASE-4.0.0-SKILL.md"
 VARIANT = ARMS_DIR / "variants" / "add-4-lean" / "SKILL.md"
 SONNET55, HAIKU = "claude-sonnet-5-5", "claude-haiku-4-5-20251001"
 

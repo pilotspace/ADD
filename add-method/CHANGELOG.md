@@ -6,6 +6,22 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+### Changed
+- **The floor is a change of shape, not a touch.** A fix that restores a consumed surface's intended
+  behavior without changing its signature, return, status or format is no longer floor work by itself.
+  In the SWE-bench Lite pilot, 26 of 30 ADD fixes touched three files or fewer, yet every one paid for a
+  full Task (`benchmark/SWE-LITE-PILOT-2026-10-03.md`).
+- **A Quick commit carries its lane and evidence:** its body records `lane: quick — <why>` and
+  `red→green: <test> · suite: <cmd> → <result>`.
+- **ASSUMPTIONS hold only real silences.** A dimension the request settles gets no line, and
+  `- none — <why>` is valid. When two requirements cannot both hold, the reading that leaves the caller
+  in control is the first ASSUMPTION.
+- **The personas index path resolves:** `.add/personas-index/use-when.md`, where the installer puts it.
+- **The READMEs quote the isolated price:** at `--effort low`, ADD costs 1.3–1.9× the dollars and takes
+  1.8–2.4× the minutes of vanilla Claude Code at medium. The earlier 4.0–5.1× minutes were the
+  operator's `security-guidance` plugin reviewing every commit
+  (`benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md`).
+
 ## [4.0.0] — 2026-09-28
 
 **One skill, no engine.** ADD is now a markdown skill the model follows with git and the project's

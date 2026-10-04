@@ -21,7 +21,7 @@
 - 📜 **Every change leaves its reasoning in your repo** — the rules, the guesses and the checks live in one task file next to the code, so the next session or teammate reads the intent instead of guessing it.
 - 🛡️ **Safer guesses where your spec is silent** — ADD takes the least-privilege reading when nobody said *who* may act, and seals a check for it.
 - 🔒 **Trust rests on evidence, not a plausible diff** — checks are sealed in a `freeze` commit before the build, and every task ends in a verdict you can re-run. Security findings always lead the report.
-- ⚖️ **An honest price** — Measured on ADD 4.0.0 with Claude Sonnet 5.5, n = 3 per arm per workload: 1.7–2.1× the dollars and 4.0–5.1× the minutes of vanilla Claude Code. The code quality ties; ADD gets more of a spec's silences right ([results](./benchmark/results/2026-09-add-4.0-vs-vanilla.md)).
+- ⚖️ **An honest price** — Measured on ADD 4.0.0 with Claude Sonnet 5.5 at `--effort low` against vanilla Claude Code at medium, n = 3 per arm per workload: 1.3–1.9× the dollars and 1.8–2.4× the minutes. Correctness ties; ADD's own tests catch far more seeded bugs on an ambiguous spec (0.83 vs 0.19), and on 30 SWE-bench Lite issues it resolved 23 to vanilla's 21 ([results](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 - 💸 **Ceremony only where it buys trust** — most changes take the Quick lane: one red→green test, one commit, no task file.
 
 ## What ADD gives your project
@@ -65,28 +65,27 @@ guesses nobody asked about.
 ## Measured on 4.0 — what you get, what you pay
 
 The same Claude Code with and without the ADD skill, on `claude-sonnet-5-5` (Sonnet 5.5), n = 3 per
-arm per workload ([results](./benchmark/results/2026-09-add-4.0-vs-vanilla.md) ·
+arm per workload ([results](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md) ·
 [both flows, animated](https://pilotspace.github.io/ADD/add-vs-vanilla.html) ·
 [the earlier rounds, animated](https://pilotspace.github.io/ADD/add-value.html)).
 
-| on Sonnet 5.5 (wm1 · amb1) | vanilla Claude Code | + ADD 4.0 |
+| on Sonnet 5.5 (wm1 · amb1) | vanilla Claude Code · effort medium | + ADD 4.0 · effort low |
 |---|---|---|
-| **you pay:** dollars per run | $0.31 · $0.33 | $0.52 · $0.68, **1.7× · 2.1×** |
-| **you pay:** minutes per run | 0.8 · 0.85 min | 4.1 · 3.4 min, **5.1× · 4.0×** |
-| held-out edge cases passed | 19 of 19 · 14 of 14 | 19 of 19 · 14 of 14, a tie |
-| seeded bugs its own tests catch (mutation) | 0.83 · 0.76 | 0.75 · 0.79, within noise |
-| planted ambiguities handled right, of 7 (amb1) | 4.3 | **5.7** |
+| **you pay:** dollars per run | $0.21 · $0.17 | $0.28 · $0.32, **1.3× · 1.9×** |
+| **you pay:** minutes per run | 0.9 · 0.7 min | 1.6 · 1.7 min, **1.8× · 2.4×** |
+| requirement oracle | 1.00 · 1.00 | 1.00 · 1.00, a tie |
+| held-out edge cases passed (wm1) | 22 of 22 | 22 of 22, a tie |
+| seeded bugs its own tests catch (mutation) | 0.83 · 0.19 | 0.86 · **0.83** |
+| planted ambiguities handled right, of 7 (amb1) | 5.0 | 5.3 |
 | "who may cancel?" read as owner-only (amb1) | 0 of 3 | **3 of 3** |
-| surfaced the spec's contradiction (amb1) | **2 of 3** | 1 of 3 |
-| claimed test count = a fresh rerun | no claim made | **6 of 6** |
+| SWE-bench Lite, 30 issues resolved | 21 | **23** (all of vanilla's, plus 2) |
+| claimed test count = a fresh rerun | no claim made | **every parsed claim** |
 
 On the older Sonnet 5 (rounds 4–5), ADD's own tests caught more seeded bugs (0.68 vs 0.51 and 0.79
 vs 0.53) and vanilla shipped no tests in 2 of 5 runs, at 2.2–2.9× the dollars. Sonnet 5.5 closed
 those gaps on these workloads, and ADD's cost fell from $1.67 to $0.52 a run.
 
-<sub>**Fine print:** "vanilla" is Claude Code carrying the operator's own `~/.claude` config
-(which already asks for red/green TDD), not bare Claude Code. Both workloads are saturated at
-Sonnet 5.5, and n = 3 is direction, not proof.</sub>
+<sub>**Fine print:** both arms ran with the operator's `~/.claude` kept out of the session (`--setting-sources project,local`). Earlier rounds loaded it: its `security-guidance` plugin reviewed every `git commit`, so ADD's commits paid 100–185 s each, and that is where the old 4–5× minutes came from. Run ADD at `--effort low`; it costs about a fifth less than medium with no measured quality loss. Both small workloads saturate at Sonnet 5.5, and n = 3 is direction, not proof.</sub>
 
 ## When vanilla Claude is the right call
 
