@@ -98,12 +98,11 @@ strategy: <how> · check: <this task's tests> · regression: <the full suite | a
 - **RULES** — what you were told or what code and specs require, with its source. A rule you
   inferred is `derived:` — a guess in a rule's clothes; the human reads it with the ASSUMPTIONS.
 - **ASSUMPTIONS** — every real silence you had to fill, one per line; a dimension the request settles
-  gets no line, and `- none — <why>` is valid. Requirements that cannot both hold: the reading that
-  leaves the caller in control (refuse, never silently convert) is the first ASSUMPTION. Sweep each
-  public surface on six dims: *who* may act or see (silent → the least-privilege reading, only the
-  owner: widening later is safe, narrowing breaks callers) · *which* cases are in · *when* (boundaries
-  inclusive?) · *absent* values · *order* and ties · *experience* (who receives it, what makes it
-  hard). Of your guesses, check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
+  gets no line, and `- none — <why>` is valid. Sweep each public surface on six dims: *who* may act or
+  see (silent → the least-privilege reading, only the owner: widening later is safe, narrowing breaks
+  callers) · *which* cases are in · *when* (boundaries inclusive?) · *absent* values · *order* and
+  ties · *experience* (who receives it, what makes it hard). Of your guesses,
+  check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
 - **CHECKS** — at least one per Must and Reject: every RULES id appears on some `covers:` line. Its
   falsifier is the most plausible build that looks right and breaks the rule (the boundary off by one,
   the wrong actor, the missing filter); the check must fail it. Acceptance checks go through the public
