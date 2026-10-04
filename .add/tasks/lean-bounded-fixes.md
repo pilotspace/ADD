@@ -4,7 +4,7 @@ title: act on rounds 7–8 and the SWE-bench Lite pilot — bounded fixes take t
 status: build
 kind: docs
 risks: [method-drift, teaching-to-the-meter, front-door-claim-truth]
-scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_round8_lessons.py, add-method/tests/test_skill_only.py, README.md, add-method/README.md, benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md, benchmark/swe/runner.py, benchmark/tests/test_swe_smoke.py, add-method/CHANGELOG.md]
+scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_round8_lessons.py, add-method/tests/test_skill_only.py, README.md, add-method/README.md, benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md, benchmark/swe/runner.py, benchmark/tests/test_swe_smoke.py, add-method/CHANGELOG.md, add-method/tests/test_docs_value.py, add-method/tests/test_docs_tradeoff.py, benchmark/arms/variants/BASE-4.0.0-SKILL.md, benchmark/tests/test_arm_models.py, benchmark/tests/test_arm_effort.py]
 gives: [S1 the shipped skill tree skill/add]
 ---
 ## CARD
@@ -42,6 +42,10 @@ regression: cd add-method && python3 -m pytest -q ; python3 -m pytest -q benchma
 - C7 covers: M7 · acceptance · benchmark/tests/test_swe_smoke.py::PromptTest::test_add_arm_lets_the_skill_size_the_work · falsifier: the prompt still demands a freeze commit for every issue
 - C8 covers: R:BUDGET · regression · add-method/tests/test_skill_only.py::test_skill_md_stays_short · falsifier: the rules land by growing past 200 lines
 - C9 covers: R:MIRROR · regression · add-method/tests/test_skill_only.py::test_shipped_skill_trees_are_identical · falsifier: only skill/add is edited
+
+## LOG
+- refreeze: scope grows to the two README guard tests — they pin the measured section's numbers to the 2026-09 results page; M6 moves the section to the 2026-10 page, so the guard must read the page the section links (same strength: every number still traces to a cited results page)
+- refreeze: scope grows to the benchmark variant tests — they diffed the round-6/7 variants against the LIVE skill, which this task changes; they now diff against a snapshot of the 4.0.0 skill the variants were cut from (same assertion, stable base)
 
 ## EVIDENCE
 <written once, at verify>
