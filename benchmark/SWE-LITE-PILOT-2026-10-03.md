@@ -51,3 +51,22 @@ runner's prompt no longer forces a Task.
 - Resolved changed by −3 / +1 against the earlier ADD run (lost `scikit-learn-14087`, `sphinx-8801`,
   `sympy-19007`; gained `sympy-13915`). That is one sample at n = 30, so it does not separate from
   noise. The full 300 is the test.
+
+## The 2×2 effort sweep (2026-10-05, final `value-final` skill)
+
+The same 30 instances, both tools at both effort levels, scored locally by the official harness
+(swebench 5.0.2, run ids `sweep-*` and `value-add-low`).
+
+| cell | resolved | cost (30) | $ per resolved | mean wall | ran repo tests | patch ships a test |
+|---|---|---|---|---|---|---|
+| vanilla · low | 21/30 | $2.60 | $0.12 | 20 s | 5/30 | 1/30 |
+| vanilla · medium | 20/30 | $2.83 | $0.14 | 27 s | 11/30 | 1/30 |
+| ADD · low | **24/30** | $5.46 | $0.23 | 59 s | 30/30 | 30/30 |
+| ADD · medium | 22/30 | $7.10 | $0.32 | 80 s | 30/30 | 30/30 |
+
+- ADD · low resolves a superset of vanilla · medium: the same 20 issues plus django-11630,
+  django-13158, sympy-14817 and sympy-19007.
+- Medium effort bought neither tool anything here: vanilla went 21 → 20 and ADD 24 → 22, while
+  each cost more.
+- The pilot's vanilla · medium resolved 21 against this sweep's 20, which puts n = 30 noise at about
+  ±1. Still directional. The full 300 is the test.

@@ -7,6 +7,10 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 ## [Unreleased]
 
 ### Changed
+- **Measured at both effort levels (round 10, Sonnet 5.5).** On 30 SWE-bench Lite issues, ADD at
+  `--effort low` resolved 24, against 20–21 for vanilla Claude Code at either effort and 22 for ADD at
+  medium, at $0.23 per resolved issue against vanilla-medium's $0.14. `--effort low` stays the
+  recommended setting.
 - **A Quick test carries a falsifier:** it covers the request's own example plus one case the most
   plausible wrong fix would pass. The three SWE-bench issues the lean skill lost were wrong fixes, at
   1.3 assertions per fix.

@@ -21,7 +21,7 @@
 - 📜 **Every change leaves its reasoning in your repo** — the rules, the guesses and the checks live in one task file next to the code, so the next session or teammate reads the intent instead of guessing it.
 - 🛡️ **Safer guesses where your spec is silent** — ADD takes the least-privilege reading when nobody said *who* may act, and seals a check for it.
 - 🔒 **Trust rests on evidence, not a plausible diff** — checks are sealed in a `freeze` commit before the build, and every task ends in a verdict you can re-run. Security findings always lead the report.
-- ⚖️ **An honest price** — Measured on ADD 4.0.0 with Claude Sonnet 5.5 at `--effort low` against vanilla Claude Code at medium, n = 3 per arm per workload: 1.3–1.9× the dollars and 1.8–2.4× the minutes. Correctness ties; ADD's own tests catch more seeded bugs on an ambiguous spec (0.81 vs 0.43, rounds 8–9 pooled), and on 30 SWE-bench Lite issues it resolved 23 to vanilla's 21 ([results](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
+- ⚖️ **An honest price** — Measured on ADD 4.0.0 with Claude Sonnet 5.5 at `--effort low` against vanilla Claude Code at medium, n = 3 per arm per workload: 1.3–1.9× the dollars and 1.8–2.4× the minutes. Correctness ties; ADD's own tests catch more seeded bugs on an ambiguous spec (0.81 vs 0.43, rounds 8–9 pooled), and on 30 SWE-bench Lite issues the final skill at low resolved 24 to vanilla's 20 at medium; raising either tool to medium bought nothing ([results](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 - 💸 **Ceremony only where it buys trust** — most changes take the Quick lane: one red→green test, one commit, no task file.
 
 ## What ADD gives your project
@@ -79,7 +79,7 @@ arm per workload ([results](./benchmark/results/2026-10-add-4.0-low-effort-vs-va
 | seeded bugs its own tests catch (mutation, rounds 8–9 pooled) | 0.78 · 0.43 | 0.86 · **0.81** |
 | planted ambiguities handled right, of 7 (amb1) | 5.0 | 5.3 |
 | "who may cancel?" read as owner-only (amb1) | 0 of 3 | **3 of 3** |
-| SWE-bench Lite, 30 issues resolved | 21 | **23** (all of vanilla's, plus 2) |
+| SWE-bench Lite, 30 issues resolved (round 10) | 20 | **24** (all of vanilla's, plus 4) |
 | claimed test count = a fresh rerun | no claim made | **every parsed claim** |
 
 On the older Sonnet 5 (rounds 4–5), ADD's own tests caught more seeded bugs (0.68 vs 0.51 and 0.79
