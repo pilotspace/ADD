@@ -41,6 +41,15 @@ DATASET = "princeton-nlp/SWE-bench_Lite"
 PINNED_MODEL = "claude-sonnet-5-5"
 # ADD at low effort against raw Claude Code at medium — the round-7/8 question, on SWE-bench Lite
 ARM_EFFORT = {"vanilla": "medium", "add": "low"}
+
+
+def effort_for(arm: str, override: str | None) -> str:
+    """The effort an arm runs at: `--effort` for this invocation, else its ARM_EFFORT default."""
+    from benchmark.runner.agent import EFFORT_LEVELS
+    effort = override or ARM_EFFORT[arm]
+    if effort not in EFFORT_LEVELS:
+        raise SystemExit(f"unknown effort {effort!r}; one of {list(EFFORT_LEVELS)}")
+    return effort
 SMOKE_INSTANCES = ("psf__requests-2317", "psf__requests-1963", "psf__requests-863")
 
 # paths that are harness/method machinery, never part of the fix
@@ -215,8 +224,8 @@ def collect_patch(workspace: pathlib.Path, base_commit: str, log: pathlib.Path) 
 
 
 def run_instance(row: dict, arm: str, runs_root: pathlib.Path, model: str,
-                 timeout_s: float) -> dict:
-    effort = ARM_EFFORT[arm]
+                 timeout_s: float, effort: str | None = None) -> dict:
+    effort = effort_for(arm, effort)
     iid = row["instance_id"]
     inst_dir = runs_root / arm / iid
     workspace = inst_dir / "workspace"
@@ -267,6 +276,7 @@ def main() -> None:
     ap.add_argument("--runs-root", default=str(DEFAULT_RUNS))
     ap.add_argument("--timeout-s", type=float, default=1500.0)
     ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--effort", default=None, help="override every arm's effort for this run (default: ARM_EFFORT)")
     args = ap.parse_args()
 
     runs_root = pathlib.Path(args.runs_root)
@@ -275,7 +285,7 @@ def main() -> None:
            if args.sample else args.instances)
     rows = fetch_instances(ids, cache=runs_root / "instances.json")
     print(f"[swe] {len(rows)} instances x {args.arms} on {args.model} "
-          f"({ {a: ARM_EFFORT[a] for a in args.arms} })", flush=True)
+          f"({ {a: effort_for(a, args.effort) for a in args.arms} })", flush=True)
 
     for arm in args.arms:
         preds_path = runs_root / f"predictions_{arm}.jsonl"
@@ -288,7 +298,7 @@ def main() -> None:
         def one(row: dict) -> None:
             print(f"[swe] run {arm}/{row['instance_id']} ...", flush=True)
             try:
-                pred = run_instance(row, arm, runs_root, args.model, args.timeout_s)
+                pred = run_instance(row, arm, runs_root, args.model, args.timeout_s, args.effort)
             except Exception as exc:  # one broken clone must not sink the slice
                 pred = {"instance_id": row["instance_id"], "model_patch": "",
                         "model_name_or_path": f"{args.model}+{arm}", "error": repr(exc)[:300]}

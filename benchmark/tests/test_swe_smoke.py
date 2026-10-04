@@ -199,3 +199,14 @@ class PagedFetchTest(unittest.TestCase):
                 runner.fetch_all_ids(cache=root / "lite_ids.json", rows_cache=root / "instances.json")
             with mock.patch.object(runner.urllib.request, "urlopen", side_effect=AssertionError("network")):
                 self.assertEqual(runner.fetch_instances(["a__b-1"], cache=root / "instances.json"), [row])
+
+
+class EffortOverrideTest(unittest.TestCase):
+    def test_effort_override_reaches_every_arm(self):
+        """The 2x2 sweep runs each arm at both efforts; the default pairing stays ADD-low / vanilla-medium."""
+        self.assertEqual(runner.effort_for("add", None), "low")
+        self.assertEqual(runner.effort_for("vanilla", None), "medium")
+        self.assertEqual(runner.effort_for("add", "medium"), "medium")
+        self.assertEqual(runner.effort_for("vanilla", "low"), "low")
+        with self.assertRaises(SystemExit):
+            runner.effort_for("add", "lo")

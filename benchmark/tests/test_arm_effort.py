@@ -125,3 +125,10 @@ def test_measured_session_ignores_the_operators_user_settings():
     measured as ADD's cost. `--setting-sources project,local` drops user plugins, hooks and CLAUDE.md."""
     argv = agent.build_argv("p", None)
     assert argv[argv.index("--setting-sources") + 1] == "project,local"
+
+
+def test_vanilla_low_is_vanilla_at_low_effort():
+    """The 2x2 sweep (arm x effort): vanilla must also run at low, unchanged otherwise."""
+    assert "vanilla-low" in ARM_NAMES
+    low, base = load_arm(ARMS_DIR / "vanilla-low.toml"), load_arm(ARMS_DIR / "vanilla.toml")
+    assert (low.setup_steps, low.prompt_wrapper, low.effort) == (base.setup_steps, base.prompt_wrapper, "low")
