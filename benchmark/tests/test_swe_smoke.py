@@ -76,10 +76,18 @@ class PromptTest(unittest.TestCase):
 
     def test_add_arm_drives_the_4_0_skill(self):
         p = runner.wrap_prompt("x", "add")
-        for phrase in (".claude/skills/add/SKILL.md", "freeze(", "reproduces the issue",
+        for phrase in (".claude/skills/add/SKILL.md", "reproduces the issue",
                        "regression floor", "Never weaken existing tests", "no human"):
             self.assertIn(phrase, p)
         self.assertNotIn("add.py", p, "the 2.0 engine is gone in 4.0")
+
+    def test_add_arm_lets_the_skill_size_the_work(self):
+        """SWE-LITE-PILOT-2026-10-03: the prompt demanded a freeze commit and ONE task for every
+        issue, so 26 bounded fixes paid for a Task. The skill's own sizing decides the lane."""
+        p = runner.wrap_prompt("x", "add")
+        self.assertIn("size the work as the skill says", p)
+        self.assertNotIn("ONE task", p)
+        self.assertNotIn("freeze(", p)
 
     def test_vanilla_arm_is_method_free(self):
         p = runner.wrap_prompt("x", "vanilla")
