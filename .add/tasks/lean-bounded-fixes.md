@@ -15,9 +15,8 @@ why: round 8 (isolated) — ADD at low ties vanilla at medium on correctness, wi
 - M1 a fix that restores a consumed surface's intended behaviour without changing its shape (signature, return shape, status code, format) is not floor work by itself; changing that shape is (from: benchmark/SWE-LITE-PILOT-2026-10-03.md — 26/30 patches ≤3 files, all routed to a Task by the "touching a surface" floor) (derived: the floor guards consumers against contract change; a bug fix that keeps the shape breaks no consumer)
 - M2 a Quick commit records its sizing and evidence as an artifact in the commit body: `lane: quick — <why it fits>` and `red→green: <test> · suite: <cmd> → <result>` (from: PILOT-4v3-2026-09-30-r5 — a rule transfers when it names an artifact the model writes, not when it advises)
 - M3 ASSUMPTIONS hold only real silences: a dimension the request settles gets no line, and `- none — <why>` is a valid section (from: PILOT-4v3-2026-10-02-r7 round 8 — with operator config isolated, vanilla handled 5.0 of 7 ambiguities against ADD's 5.3; the sweep's measured edge is small and it costs output)
-- M4 two requirements that cannot both hold → take the reading that leaves the caller in control (refuse over silently converting the request), record it as the first ASSUMPTION and lead the report with it (from: PILOT-4v3-2026-10-02-r7 round 8 — 9 of 9 ADD amb1 runs silently took the waitlist reading of §1 vs §2) (derived: a refused request can be retried; a silently converted one changes the call's contract)
 - M5 the skill and references/personas.md send the model to `.add/personas-index/use-when.md`, where the installer puts it (from: benchmark/PROMPT-AUDIT-2026-10-02.md findings 1–2)
-- M6 both READMEs state round 8's isolated price (1.3–1.9× the dollars, 1.8–2.4× the minutes), recommend `--effort low`, and name the operator-config contamination of the earlier minutes (from: PILOT-4v3-2026-10-02-r7 — the 4.0–5.1× minutes were the operator's security-guidance plugin reviewing every commit)
+- M6 both READMEs state round 8's isolated price (1.3–1.9× the dollars, 1.8–2.4× the minutes), recommend `--effort low`, name the operator-config contamination of the earlier minutes, and quote the amb1 mutation gap pooled over rounds 8–9 (0.81 vs 0.43), not round 8's 0.83 vs 0.19 (from: PILOT-4v3-2026-10-02-r7 — the 4.0–5.1× minutes were the operator's security-guidance plugin reviewing every commit)
 - M7 the SWE-bench runner's ADD prompt lets the skill size the work instead of forcing one Task (from: SWE-LITE-PILOT — the prompt demanded a freeze commit)
 - R:BUDGET SKILL.md stays ≤ 200 lines (from: add-method/tests/test_skill_only.py)
 - R:MIRROR the three shipped skill trees stay identical (from: PROJECT.md invariants)
@@ -36,7 +35,6 @@ regression: cd add-method && python3 -m pytest -q ; python3 -m pytest -q benchma
 - C1 covers: M1 · acceptance · add-method/tests/test_round8_lessons.py::test_floor_is_shape_change_not_touch · falsifier: the floor still says "a surface other code consumes" with no shape qualifier
 - C2 covers: M2 · acceptance · add-method/tests/test_round8_lessons.py::test_quick_commit_carries_its_lane_and_evidence · falsifier: Quick still ends at "a one-line why"
 - C3 covers: M3 · acceptance · add-method/tests/test_round8_lessons.py::test_assumptions_hold_only_real_silences · falsifier: the six-dim sweep still asks for a line per dimension
-- C4 covers: M4, A1 · acceptance · add-method/tests/test_round8_lessons.py::test_contradiction_resolves_in_the_callers_favour · falsifier: contradictions left to the model's guess
 - C5 covers: M5 · acceptance · add-method/tests/test_round8_lessons.py::test_persona_index_path_resolves · falsifier: either file still says the bare `personas-index/use-when.md`
 - C6 covers: M6 · acceptance · add-method/tests/test_round8_lessons.py::test_readmes_state_the_isolated_price · falsifier: "4.0–5.1× the minutes" survives in either README
 - C7 covers: M7 · acceptance · benchmark/tests/test_swe_smoke.py::PromptTest::test_add_arm_lets_the_skill_size_the_work · falsifier: the prompt still demands a freeze commit for every issue
@@ -46,6 +44,9 @@ regression: cd add-method && python3 -m pytest -q ; python3 -m pytest -q benchma
 ## LOG
 - refreeze: scope grows to the two README guard tests — they pin the measured section's numbers to the 2026-09 results page; M6 moves the section to the 2026-10 page, so the guard must read the page the section links (same strength: every number still traces to a cited results page)
 - refreeze: scope grows to the benchmark variant tests — they diffed the round-6/7 variants against the LIVE skill, which this task changes; they now diff against a snapshot of the 4.0.0 skill the variants were cut from (same assertion, stable base)
+
+- refreeze: M4 (contradictions → the caller-in-control reading) is dropped — round 9 (benchmark/runs-r9-lean): all 3 amb1 runs took "reject", which left the spec's waitlist requirements 4–6 without anything to act on; ambiguities handled fell 5.3 → 4.0 and one run's oracle fell to 0.88. A1 predicted the meter risk; the cost was in requirements, not only the meter. C4 goes with it.
+- refreeze: M6 restates the mutation gap pooled over rounds 8–9 — round 9 vanilla scored 0.67 on amb1 against round 8's 0.19, so 0.83 vs 0.19 overstated the gap
 
 ## EVIDENCE
 <written once, at verify>

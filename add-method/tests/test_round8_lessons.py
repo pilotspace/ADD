@@ -33,12 +33,6 @@ def test_assumptions_hold_only_real_silences():
     assert "`- none — <why>`" in flat
 
 
-def test_contradiction_resolves_in_the_callers_favour():
-    flat = _flat(SKILL / "SKILL.md")
-    assert "cannot both hold" in flat and "leaves the caller in control" in flat
-    assert "first ASSUMPTION" in flat
-
-
 def test_persona_index_path_resolves():
     for name in ("SKILL.md", "references/personas.md"):
         text = (SKILL / name).read_text(encoding="utf-8")
@@ -53,3 +47,5 @@ def test_readmes_state_the_isolated_price():
         assert "1.3–1.9× the dollars" in flat and "1.8–2.4× the minutes" in flat, path
         assert "--effort low" in flat, f"{path}: no effort recommendation"
         assert "security-guidance" in flat, f"{path}: the contamination is not named"
+        assert "0.83 vs 0.19" not in flat, f"{path}: round 8's single-round mutation gap overstates it"
+        assert "0.81 vs 0.43" in flat, f"{path}: the pooled rounds 8–9 mutation gap is missing"
