@@ -58,7 +58,8 @@ Every turn re-reads the whole context: cost grows with turns, not words. Keep ev
 other code consumes (signature, return, status, format), is at least a Task — never Quick. A fix that
 restores intended behavior without changing its shape is not. When in doubt, size up.
 
-**Quick:** write the failing test, watch it fail, make it pass, run the suite, review your diff, commit
+**Quick:** write a failing test for the request's own example and one case the most plausible wrong fix
+would pass (its falsifier), watch it fail, make it pass, run the suite, review your diff, commit
 `<type>(<scope>): <what>`, body `lane: quick — <why>` · `red→green: <test> · suite: <cmd> → <result>`.
 Touches the floor or needs a check weakened? It is a Task now: write the task file first. A security
 issue you only pass by (outside the ask) stays out of your diff but leads the report as a HARD-STOP.
@@ -101,8 +102,7 @@ strategy: <how> · check: <this task's tests> · regression: <the full suite | a
   gets no line, and `- none — <why>` is valid. Sweep each public surface on six dims: *who* may act or
   see (silent → the least-privilege reading, only the owner: widening later is safe, narrowing breaks
   callers) · *which* cases are in · *when* (boundaries inclusive?) · *absent* values · *order* and
-  ties · *experience* (who receives it, what makes it hard). Of your guesses,
-  check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
+  ties · *experience* (who receives it, what makes it hard).
 - **CHECKS** — at least one per Must and Reject: every RULES id appears on some `covers:` line. Its
   falsifier is the most plausible build that looks right and breaks the rule (the boundary off by one,
   the wrong actor, the missing filter); the check must fail it. Acceptance checks go through the public
@@ -139,10 +139,10 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
 4. **Residue** — what passing tests cannot show. Read the diff for **security** (authz, injection,
    secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens (migration,
    resource ceilings, privacy, retries, a11y, an agent's side effects: `references/evidence.md`).
-5. **Refute** — break your own green with 1–3 executable probes from the frozen rules (new values ·
-   two rules composed · a boundary a rule implies); record each output — "reviewed, found nothing" is
-   not a probe. Floor work: the counter-lens writes them, task file before diff (a fresh subagent only for
-   security work). A probe that breaks it: back to Build, or refreeze the rule.
+5. **Refute** — Security work: the counter-lens (a fresh subagent) reads the task file before the diff
+   and breaks your green with 1–3 executable probes from the frozen rules (new values · two rules
+   composed · a boundary a rule implies); record each output. A probe that breaks it: back to Build, or
+   refreeze the rule. Other tasks: `probes: none — <why>`, or the probes you chose to run.
 6. **Verdict** — exactly one, in `## EVIDENCE` with freeze sha, head sha, commands, exit codes,
    counts, consumers, residue, probes, and `lens:` (who looked, what they caught; or `none — why`):
    - `PASS` — seal intact, fresh green, consumers green, residue clean. PASS means every declared

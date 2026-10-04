@@ -7,6 +7,14 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 ## [Unreleased]
 
 ### Changed
+- **A Quick test carries a falsifier:** it covers the request's own example plus one case the most
+  plausible wrong fix would pass. The three SWE-bench issues the lean skill lost were wrong fixes, at
+  1.3 assertions per fix.
+- **Two steps the model never performed are cut or narrowed.** The `found:` verification of cheap
+  guesses appeared in 0 of 24 task files in rounds 8–9. Refute probes appeared in 1 of 24 and are now
+  required for security work only; other tasks record `probes: none — <why>`.
+- **The README value table carries the isolated test discipline:** on 30 SWE-bench Lite issues ADD ran
+  the repo's tests in 30 of 30 runs (vanilla 7 of 30) and shipped tests in 30 of 30 patches (vanilla 2).
 - **The floor is a change of shape, not a touch.** A fix that restores a consumed surface's intended
   behavior without changing its signature, return, status or format is no longer floor work by itself.
   In the SWE-bench Lite pilot, 26 of 30 ADD fixes touched three files or fewer, yet every one paid for a
