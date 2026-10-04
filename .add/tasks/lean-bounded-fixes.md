@@ -1,7 +1,7 @@
 ---
 type: Task
 title: act on rounds 7–8 and the SWE-bench Lite pilot — bounded fixes take the Quick lane, guesses only where the spec is silent, contradictions resolved in the caller's favour, honest price in the READMEs
-status: build
+status: done
 kind: docs
 risks: [method-drift, teaching-to-the-meter, front-door-claim-truth]
 scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_round8_lessons.py, add-method/tests/test_skill_only.py, README.md, add-method/README.md, benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md, benchmark/swe/runner.py, benchmark/tests/test_swe_smoke.py, add-method/CHANGELOG.md, add-method/tests/test_docs_value.py, add-method/tests/test_docs_tradeoff.py, benchmark/arms/variants/BASE-4.0.0-SKILL.md, benchmark/tests/test_arm_models.py, benchmark/tests/test_arm_effort.py]
@@ -49,4 +49,18 @@ regression: cd add-method && python3 -m pytest -q ; python3 -m pytest -q benchma
 - refreeze: M6 restates the mutation gap pooled over rounds 8–9 — round 9 vanilla scored 0.67 on amb1 against round 8's 0.19, so 0.83 vs 0.19 overstated the gap
 
 ## EVIDENCE
-<written once, at verify>
+freeze: 1f3a25d4 · refreeze: 0a7fa836 · head: 00a8384e
+seal: git diff 0a7fa836 00a8384e -- .add/tasks/lean-bounded-fixes.md add-method/tests/test_round8_lessons.py benchmark/tests/test_swe_smoke.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_round8_lessons.py` → exit 0 · 5 passed; `python3 -m pytest -q benchmark/tests/test_swe_smoke.py` → exit 0 · 22 passed
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 159 passed; `python3 -m pytest -q benchmark/tests` → exit 0 · 547 passed, 12 skipped
+consumers: S1 skill tree → the bundled + .claude copies are byte-identical (test_shipped_skill_trees_are_identical green); the installer ships it (probe 1)
+residue: security — text-only change, no new commands; architecture — A2 (M1 narrows the floor) stands, guarded by "is a Task now"; concurrency — n/a
+probes: (1) fresh `pilotspace-add init` in a temp dir: the path the installed SKILL.md names, `.add/personas-index/use-when.md`, exists → pass · (2) the installed skill carries the shape-change floor → pass · (3) the reverted contradiction rule is absent from the installed skill → pass
+behaviour (rounds 9 + SWE rerun, isolated, n = 3 / n = 30):
+- M1 transferred: SWE Lite slice 30/30 ADD runs took the Quick lane (0 task files, was 14); cost $7.56 → $4.94 (−35%, 2.7× → 1.8× vanilla), 86 s → 49 s per instance; tests in 30/30 patches
+- resolved 21/30 (was 23/30; vanilla 21/30): lost scikit-learn-14087, sphinx-8801, sympy-19007; gained sympy-13915 — one sample at n = 30, not separable from noise
+- M2 did not transfer: 7 of 30 runs committed in the foreign repo, 1 of those 7 wrote `lane: quick` — kept, logged as not yet effective
+- M4 measured harmful in round 9 and was reverted (refreeze 0a7fa836)
+- wm1/amb1: ADD-low ties vanilla on oracle and edges; mutation pooled r8–9 0.86 vs 0.78 (wm1), 0.81 vs 0.43 (amb1); cost unchanged ($0.28–0.30 a run)
+lens: build=self · refute=self cold reread (no security risk) · found: 1 confirmed (M4 harmful, round 9), 0 rejected
+verdict: RISK-ACCEPTED — every check held on this commit; the open risk is that the Quick lane trades some SWE resolve rate for −35% cost (23 → 21 of 30, within noise). Owner: Tin Dang, to settle with the full 300-instance run before the next release.

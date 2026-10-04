@@ -35,3 +35,19 @@ under Rosetta. The gold patch for `psf__requests-2317` resolved first as a sanit
 A submission needs all 300 instances, pass@1, and per-instance trajectories (`transcript.jsonl`
 is kept per instance). Predictions, logs and transcripts are under `benchmark/runs-swe/pilot30-s0/`,
 which is gitignored. Nothing has been submitted.
+
+## Rerun with the lean skill (2026-10-04, task `lean-bounded-fixes`)
+
+The same 30 instances, ADD arm only. The skill's floor is now a change of shape, not a touch, and the
+runner's prompt no longer forces a Task.
+
+| arm | resolved | cost (30) | $ per resolved | mean wall |
+|---|---|---|---|---|
+| vanilla · medium | 21/30 | $2.81 | $0.13 | 24 s |
+| ADD · low, 4.0.0 skill (forced Task) | 23/30 | $7.56 | $0.33 | 86 s |
+| ADD · low, lean skill (Quick lane) | 21/30 | **$4.94** | **$0.24** | **49 s** |
+
+- All 30 runs took the Quick lane: 0 task files, down from 14. Every patch still carries tests.
+- Resolved changed by −3 / +1 against the earlier ADD run (lost `scikit-learn-14087`, `sphinx-8801`,
+  `sympy-19007`; gained `sympy-13915`). That is one sample at n = 30, so it does not separate from
+  noise. The full 300 is the test.
