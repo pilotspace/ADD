@@ -290,3 +290,12 @@ class TestEnvTest(unittest.TestCase):
                 os.chdir(here)
         self.assertTrue(pathlib.Path(env["PATH"].split(os.pathsep)[0]).is_absolute())
         self.assertTrue(pathlib.Path(env["ZDOTDIR"]).is_absolute())
+
+    def test_container_name_is_unique_per_runs_root(self):
+        """Two cells running the same arm on the same instance at once (an effort sweep) must not
+        collide on one container name: the second `docker run` fails and the run is lost."""
+        import pathlib
+        a = runner.container_name("add", "django__django-1", pathlib.Path("/r/low"))
+        b = runner.container_name("add", "django__django-1", pathlib.Path("/r/medium"))
+        self.assertNotEqual(a, b)
+        self.assertEqual(a, runner.container_name("add", "django__django-1", pathlib.Path("/r/low")))

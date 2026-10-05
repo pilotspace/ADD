@@ -203,6 +203,13 @@ def write_shims(shim_dir: pathlib.Path, container: str, workspace: pathlib.Path)
     return shim_dir
 
 
+def container_name(arm: str, instance_id: str, runs_root: pathlib.Path) -> str:
+    """Unique per runs root: two cells of the same arm may run one instance at the same time."""
+    import hashlib
+    tag = hashlib.sha1(str(runs_root.resolve()).encode()).hexdigest()[:6]
+    return f"swe-{arm}-{instance_id}-{tag}".replace("__", "-")
+
+
 def testenv_env(shims: pathlib.Path, base: dict | None = None) -> dict:
     """The agent's env: shims first, and a ZDOTDIR whose rc keeps them first (the Bash tool
     sources the operator's zsh profile otherwise, which rebuilds PATH without them)."""
@@ -312,7 +319,7 @@ def run_instance(row: dict, arm: str, runs_root: pathlib.Path, model: str,
         else:
             baseline = _run(["git", "rev-parse", "HEAD"], cwd=workspace, timeout=60, log=log).stdout.strip()
         workspace = workspace.resolve()
-        container = f"swe-{arm}-{iid}".replace("__", "-")
+        container = container_name(arm, iid, runs_root)
         _run(["docker", "rm", "-f", container], timeout=120, log=log)
         if _run(testenv_run_argv(container, str(workspace), image_for(iid)), timeout=600,
                 log=log).returncode != 0:
