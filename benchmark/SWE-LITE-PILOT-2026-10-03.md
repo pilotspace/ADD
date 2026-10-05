@@ -70,3 +70,17 @@ The same 30 instances, both tools at both effort levels, scored locally by the o
   each cost more.
 - The pilot's vanilla · medium resolved 21 against this sweep's 20, which puts n = 30 noise at about
   ±1. Still directional. The full 300 is the test.
+
+## Round 11: the official eval environment (2026-10-05, `blind-spots` skill)
+
+`--testenv docker`: the agent edits a copy of the eval image's `/testbed`, and its python and pytest
+run in the image's env (run ids `r11-add-low`, `r11-vanilla-medium`).
+
+| cell | resolved | cost (30) | $ per resolved | mean wall | saw a green test run |
+|---|---|---|---|---|---|
+| vanilla · medium | 21/30 | $2.50 | $0.12 | 25 s | 7/30 |
+| ADD · low | **23/30** | $3.59 | $0.16 | 49 s | 27/30 |
+
+ADD only: scikit-learn-14087, sympy-13915, sympy-14817. Vanilla only: sympy-19007. Against round 10's
+ADD-low: gained scikit-learn-14087 and sympy-13915; lost django-11630, django-13158 and sympy-19007, each
+an F2P failure with 0 P2P broken. `sites:` showed up in 2 of 30 runs and did not flip django-13265.
