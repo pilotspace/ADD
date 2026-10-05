@@ -1,7 +1,7 @@
 ---
 type: Task
 title: publish the full SWE-bench Lite trade-off — ADD fixes fewer issues than vanilla, verifies and ships tests far more often, at 1.4× the cost — with what was not measured
-status: build
+status: done
 kind: docs
 risks: [front-door-claim-truth]
 scope: [README.md, add-method/README.md, benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md, add-method/tests/test_publish_300.py, add-method/tests/test_value_final.py, add-method/CHANGELOG.md, benchmark/SWE-LITE-PILOT-2026-10-03.md]
@@ -37,4 +37,12 @@ regression: cd add-method && python3 -m pytest -q
 - test_value_final.py's README facts change from the 30-issue pilot to the 300-issue run (M2): same rule, larger evidence.
 
 ## EVIDENCE
-<written once, at verify>
+freeze: b83577a2 · head: 753dcfb2
+seal: git diff b83577a2 753dcfb2 -- .add/tasks/publish-300.md add-method/tests/test_publish_300.py add-method/tests/test_value_final.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_publish_300.py tests/test_value_final.py` → exit 0 · 8 passed
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 177 passed; `python3 -m pytest -q benchmark/tests` → exit 0 · 557 passed, 12 skipped
+consumers: none — no `gives:` surface; README numbers trace to the cited results page (test_docs_value green)
+residue: front-door truth — the loss is stated in words beside its p-value; the recall hypothesis is labelled "a lead, not a finding"; human review time is named as not measured
+probes: none — docs only
+lens: build=self · refute=self cold reread for overclaim · found: the old "4–5× faster" and "a fifth less … no measured quality loss" claims were stale, both replaced
+verdict: PASS — every check held on this commit, and the page states the measured loss.
