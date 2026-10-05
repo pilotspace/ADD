@@ -51,7 +51,7 @@ of what it decided and on what evidence. Full walkthrough: the [Quickstart](./GE
 - 📜 **Every change leaves its reasoning in your repo** — the rules, the guesses and the checks live in one task file next to the code, so the next session or teammate reads the intent instead of guessing it.
 - 🛡️ **Safer guesses where your spec is silent** — ADD takes the least-privilege reading when nobody said *who* may act, and seals a check for it.
 - 🔒 **Trust rests on evidence, not a plausible diff** — checks are sealed in a `freeze` commit before the build, and every task ends in a verdict you can re-run. Security findings always lead the report.
-- ⚖️ **An honest price** — Measured on ADD 4.0.0 with Claude Sonnet 5.5 at `--effort low` against vanilla Claude Code at medium, n = 3 per arm per workload: 1.3–1.9× the dollars and 1.8–2.4× the minutes. Correctness ties; ADD's own tests catch more seeded bugs on an ambiguous spec (0.81 vs 0.43, rounds 8–9 pooled), and on 30 SWE-bench Lite issues, run in the official eval environment, ADD at low resolved 23 to vanilla's 21 at medium, at $0.16 against $0.12 per resolved issue; raising either tool to medium bought nothing ([results](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
+- ⚖️ **An honest price** — Measured on ADD 4.0.0 with Claude Sonnet 5.5 on all 300 SWE-bench Lite issues (n = 300, official eval environment): vanilla Claude Code at medium effort resolved 215; ADD at `--effort low` resolved 201, at 1.4× the dollars and 2.0× the seconds per issue. What ADD bought: a passing test run before shipping in 255 of 300 fixes (vanilla 42), and a test shipped with 298 of 300 (vanilla 14). On small apps it costs 1.3–1.9× the dollars and 1.8–2.4× the minutes; correctness ties, and ADD's own tests catch more seeded bugs on an ambiguous spec (0.81 vs 0.43) ([results](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 - 💸 **Ceremony only where it buys trust** — most changes take the Quick lane: one red→green test, one commit, no task file.
 
 ## What ADD gives your project
@@ -66,7 +66,7 @@ engine and no CLI, that makes every change leave the reasoning in your repositor
 | 🙋 **Every guess on the record** | each silence in your request becomes an ASSUMPTION: the reading taken and the cost if wrong, costliest first | you review a short list of decisions, not a diff; a wrong guess is one line to correct |
 | 🛡️ **Safer readings of silence** | when nobody said *who* may do something, ADD takes the least-privilege reading and seals a check for it | the booking benchmark never said who may cancel: vanilla let anyone in 8 of 8 runs; ADD chose owner-only in 3 of 3 on Sonnet 5.5 |
 | 🔒 **Checks sealed before the code** | the failing checks are committed as `freeze(<slug>)` before any build | a test weakened to get green shows up in `git diff`; a change of intent is a visible `refreeze` commit |
-| 🧪 **Tests that run, and stay** | ADD runs your repo's own tests and ships its new ones with the change | on 30 SWE-bench Lite issues ADD ran the repo's tests in 30 of 30 runs and shipped tests in 30 of 30 patches; vanilla ran them in 7 of 30 and shipped tests in 2 of 30. ADD's tests also catch more seeded bugs (0.81 vs 0.43, rounds 8–9 pooled) |
+| 🧪 **Tests that run, and stay** | ADD runs your repo's own tests and ships its new ones with the change | on all 300 SWE-bench Lite issues ADD saw a passing test run before shipping in 255 of 300 and shipped a test with 298 of 300; vanilla did in 42 of 300 and 14 of 300. ADD's tests also catch more seeded bugs (0.81 vs 0.43, rounds 8–9 pooled) |
 | 🔬 **Evidence you can re-run** | a verdict (`PASS`, `RISK-ACCEPTED` or `HARD-STOP`) with the exact commands and counts, committed as `verify(<slug>)` | the claimed test count matched a fresh rerun in 33 of 33 benchmark runs; security findings always lead the report |
 | 🧠 **Memory that outlives the chat** | state lives on disk, not in the conversation | over six evolving milestones, one long chat's requirement coverage fell .92 → .75, while fresh sessions resuming from disk held 1.0 ([report](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-07-add-2.0-remeasure.md)) |
 
@@ -95,8 +95,8 @@ guesses nobody asked about.
 
 ## Measured on 4.0 — what you get, what you pay
 
-The same Claude Code with and without the ADD skill, on `claude-sonnet-5-5` (Sonnet 5.5), n = 3 per
-arm per workload ([results](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md) ·
+The same Claude Code with and without the ADD skill, on `claude-sonnet-5-5` (Sonnet 5.5): two small
+apps at n = 3 per arm, and all 300 SWE-bench Lite issues once per arm ([results](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md) ·
 [both flows, animated](https://pilotspace.github.io/ADD/add-vs-vanilla.html) ·
 [the earlier rounds, animated](https://pilotspace.github.io/ADD/add-value.html)).
 
@@ -109,19 +109,27 @@ arm per workload ([results](https://github.com/pilotspace/ADD/blob/main/benchmar
 | seeded bugs its own tests catch (mutation, rounds 8–9 pooled) | 0.78 · 0.43 | 0.86 · **0.81** |
 | planted ambiguities handled right, of 7 (amb1) | 5.0 | 5.3 |
 | "who may cancel?" read as owner-only (amb1) | 0 of 3 | **3 of 3** |
-| SWE-bench Lite, 30 issues resolved (round 11, official eval env) | 21 | **23** (3 only ADD solved, 1 only vanilla) |
+| **SWE-bench Lite, all 300 issues resolved** | **215 of 300** | 201 of 300 — vanilla fixes more (p = 0.016) |
+| SWE: dollars · seconds per issue | $0.085 · 24 s | $0.117 · 48 s, **1.4× · 2.0×** |
+| SWE: a passing test run seen before shipping | 42 of 300 | **255 of 300** |
 | claimed test count = a fresh rerun | no claim made | **every parsed claim** |
+
+**Where vanilla wins:** on SWE-bench Lite it resolved 22 issues ADD missed, against 8 the other
+way, most of them in Django. Rerunning those 22, ADD recovers about half by chance alone, so the gap is
+smaller than it looks but real. ADD tends to fix what an issue literally asks and miss what the
+maintainers' hidden tests also check. Whether its tests and reports save a reviewer time is not
+measured yet ([diagnostic](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 
 On the older Sonnet 5 (rounds 4–5), ADD's own tests caught more seeded bugs (0.68 vs 0.51 and 0.79
 vs 0.53) and vanilla shipped no tests in 2 of 5 runs, at 2.2–2.9× the dollars. Sonnet 5.5 closed
 those gaps on these workloads, and ADD's cost fell from $1.67 to $0.52 a run.
 
-<sub>**Fine print:** both arms ran with the operator's `~/.claude` kept out of the session (`--setting-sources project,local`). Earlier rounds loaded it: its `security-guidance` plugin reviewed every `git commit`, so ADD's commits paid 100–185 s each, and that is where the old 4–5× minutes came from. Run ADD at `--effort low`; it costs about a fifth less than medium with no measured quality loss. Both small workloads saturate at Sonnet 5.5, and n = 3 is direction, not proof.</sub>
+<sub>**Fine print:** both arms ran with the operator's `~/.claude` kept out of the session (`--setting-sources project,local`). Earlier rounds loaded it: its `security-guidance` plugin reviewed every `git commit`, so ADD's commits paid 100–185 s each, and that is where the old 4–5× minutes came from. Run ADD at `--effort low`: medium cost 1.35× as much and recovered only 3 more of the 22 hard SWE issues. Both small workloads saturate at Sonnet 5.5, and n = 3 is direction, not proof.</sub>
 
 ## When vanilla Claude is the right call
 
-- **Throwaway work** (a script, a spike, a one-shot): use vanilla. It runs 4–5× faster at about
-  half the price, and on a strong model the code is as good.
+- **Throwaway work** (a script, a spike, a one-shot), or a quick fix in well-known open-source code:
+  use vanilla. It runs about 2× faster at about 0.7× the price, and on SWE-bench Lite it fixed more issues.
 - **A product you will still be changing next month** (several milestones, teammates, or anything
   where *who may do this?* matters): use ADD. The decisions outlive the chat, the guesses get
   reviewed, and the checks cannot quietly weaken.

@@ -7,6 +7,16 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 ## [Unreleased]
 
 ### Changed
+- **The full SWE-bench Lite result is on the front door, loss included.** On all 300 issues (Sonnet
+  5.5, official eval environment), vanilla Claude Code at medium effort resolved 215 and ADD at low
+  effort resolved 201 (McNemar p = 0.016), at 1.4× the dollars per issue. ADD saw a passing test run
+  before shipping in 255 of 300 (vanilla 42) and shipped a test with 298 (vanilla 14). The READMEs no
+  longer quote the 30-issue slice, where ADD led 23 to 21. Human review time is listed as not measured.
+- **Quick reads the maintainers' conventions first.** Before its test, Quick reads the nearest tests
+  and sibling code, and keeps their conventions: inputs not mutated, parallel paths consistent. It
+  treats the fix an issue literally suggests as a candidate wrong fix. Its record (`lane` · `intent`
+  · `sites` · `red→green`) now ends the reply. On the 22 issues only vanilla resolved, this recovered
+  13 against 11 for the plain skill, at +5% cost with no control lost: directional.
 - **Quick accounts for every site and survives a missing suite.** A Quick fix greps every other site that
   calls or emits what it changes and records each as `sites: <site → fixed | unaffected: why>`. When no
   suite runs, it runs the request's repro as written, or else imports every touched file and traces the

@@ -84,3 +84,11 @@ run in the image's env (run ids `r11-add-low`, `r11-vanilla-medium`).
 ADD only: scikit-learn-14087, sympy-13915, sympy-14817. Vanilla only: sympy-19007. Against round 10's
 ADD-low: gained scikit-learn-14087 and sympy-13915; lost django-11630, django-13158 and sympy-19007, each
 an F2P failure with 0 P2P broken. `sites:` showed up in 2 of 30 runs and did not flip django-13265.
+
+## All 300 (2026-10-05)
+
+The full Lite set reversed the 30-issue slice: vanilla · medium resolved 215 of 300 and ADD · low
+201 of 300 (22 against 8 resolved by one arm only; McNemar p = 0.016). See the results page
+section "SWE-bench Lite, all 300 issues" for the effort, review proxies and the diagnostic.
+Orchestration (gitignored, `benchmark/runs-swe/full300/orchestrate.py`) ran disk-bounded batches
+of 12. Two Docker daemon failures cost reruns; the orchestrator now checks the daemon before each batch.
