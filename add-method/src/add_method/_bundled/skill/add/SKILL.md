@@ -6,11 +6,10 @@ description: >-
   result with evidence for the human to review. Trigger when a repo has `.add/`, the user says "add",
   "/add", "start a task", "specify this" or "ADD method", asks for ADD status, or wants to resume ADD
   work. Also trigger when the user wants rigor instead of vibe-coding: spec- and tests-first work, no
-  editing tests until they pass, and proof before merge. It also covers evidence-first investigations,
-  where cited findings and what they mean are the deliverable before any code changes, such as tracing
-  a regression or weighing options. It fits features, migrations, security- or data-sensitive changes
-  and multi-task milestones. Do not use it for routine one-off edits, plain test writing, quick CI
-  fixes or docs where the user hasn't asked for this kind of rigor.
+  editing tests until they pass, and proof before merge. It also covers evidence-first investigations
+  (tracing a regression, weighing options), and fits features, migrations, security- or data-sensitive
+  changes and milestones. Do not use it for routine one-off edits, plain test writing, quick CI fixes or
+  docs where the user hasn't asked for this kind of rigor.
 user-invocable: true
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, evidence, task, explore, persona]
@@ -56,19 +55,22 @@ Every turn re-reads the whole context: cost grows with turns, not words. Keep ev
 other code consumes (signature, return, status, format), is at least a Task — never Quick. A fix that
 restores intended behavior without changing its shape is not. When in doubt, size up.
 
-**Quick:** grep every other site that calls or emits what you change. Test the request's own example and
-one case the most plausible wrong fix would pass (its falsifier): watch it fail, make it pass, run the
-suite, review your diff. No suite runs? Run the request's repro as written, else import every file you
-touched and trace its inputs through your edit. Commit `<type>(<scope>): <what>`; body, and your report:
-`lane: quick — <why>` · `sites: <each → fixed | unaffected: why>` · `red→green: <test> · suite: <cmd> →
-<result>` (or `suite: unavailable — <why> · ran: <what>`). Floor touched, or a check to weaken?
+**Quick:** read the nearest tests and sibling code of what you change, and grep every other site that
+calls or emits it: the fix keeps their conventions (inputs not mutated, parallel paths consistent, the
+neighbours' pattern), so the fix the request literally suggests may be the wrong one. Test the
+request's own example and one case the most plausible wrong fix would pass (its falsifier; non-code:
+the check that fits): watch it fail, make it pass, run the suite, review your diff. No suite runs? Run
+the request's repro as written, else import every file you touched and trace its inputs through your
+edit. The last lines of your reply (and any commit body): `lane: quick — <why>` · `intent: <convention
+→ how the fix keeps it>` · `sites: <each → fixed | unaffected: why>` · `red→green: <test> · suite:
+<cmd> → <result>` (or `suite: unavailable — <why> · ran: <what>`). Floor touched, or a check to weaken?
 It is a Task now. A security issue you pass by stays out of the diff and leads the report: HARD-STOP.
 
 ## The task loop — Direction → Build → Verify
 
 ### 1 · Direction — write the contract, watch it fail, seal it
 
-Ground first: read the code the task touches and the relevant `## Decisions that bind` in `.add/specs/`.
+Ground first: read the code the task touches, its nearest tests, and `## Decisions that bind` in `.add/specs/`.
 Name the task's `risks:` — failure classes it could cause (authorization, data loss, migration, concurrency,
 compatibility, privacy …); they pick the persona, evidence and residue lenses. Write `.add/tasks/<slug>.md`:
 
@@ -138,8 +140,7 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
    is not green: record the Quick fallback; the verdict is at best RISK-ACCEPTED.
 3. **Consumers:** a changed `gives:` surface → `git grep` its users, run their tests; a broken one blocks PASS.
 4. **Residue** — what passing tests cannot show. Read the diff for **security** (authz, injection,
-   secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens (migration,
-   resource ceilings, privacy, retries, a11y, an agent's side effects: `references/evidence.md`).
+   secrets, unsafe input) · **concurrency** · **architecture** · each `risks:` lens (`references/evidence.md`).
 5. **Refute** — Security work: the counter-lens (a fresh subagent) reads the task file before the diff
    and breaks your green with 1–3 executable probes from the frozen rules (new values · two rules
    composed · a boundary a rule implies); record each output. A probe that breaks it: back to Build, or
@@ -166,10 +167,9 @@ A control or persona whose yield stays at zero across tasks is a `method` delta:
 ## Milestones and release
 
 A theme becomes `.add/milestones/<slug>.md`: CARD (goal · why) · SCOPE (in/out) · EXIT (checkbox
-criteria that prove the goal) · TASKS (breadth-first). Done when every EXIT box is checked with
-evidence — not when its tasks are. Parallel tasks each get their own worktree and disjoint `scope:`.
-Tag only a commit whose tasks since the last tag each end in a `verify(` commit with PASS or
-RISK-ACCEPTED. A `risks:` task that ships names in PLAN what to watch after:
+criteria that prove the goal) · TASKS (breadth-first). Done when every EXIT box is checked with evidence
+— not when its tasks are. Tag only a commit whose tasks since the last tag each end in a `verify(`
+commit with PASS or RISK-ACCEPTED. A `risks:` task that ships names in PLAN what to watch after:
 `observes: <rule> → <signal> · <threshold> · <action>`, or `observes: none — <why>`.
 
 ## Report — the human's review
