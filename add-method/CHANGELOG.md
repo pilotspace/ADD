@@ -7,6 +7,12 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 ## [Unreleased]
 
 ### Changed
+- **Quick accounts for every site and survives a missing suite.** A Quick fix greps every other site that
+  calls or emits what it changes and records each as `sites: <site → fixed | unaffected: why>`. When no
+  suite runs, it runs the request's repro as written, or else imports every touched file and traces the
+  inputs, and records `suite: unavailable — <why> · ran: <what>`. A Task check that cannot run is never
+  PASS. Round 10's SWE losses included a second site left unfixed (django-13265) and fixes shipped
+  without running (sklearn-14087, and a SyntaxError in matplotlib-24265 at medium effort).
 - **Measured at both effort levels (round 10, Sonnet 5.5).** On 30 SWE-bench Lite issues, ADD at
   `--effort low` resolved 24, against 20–21 for vanilla Claude Code at either effort and 22 for ADD at
   medium, at $0.23 per resolved issue against vanilla-medium's $0.14. `--effort low` stays the

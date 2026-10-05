@@ -1,17 +1,16 @@
 ---
 name: add
 description: >-
-  Use this skill when the user wants AI work they can trust without watching every step: the AI
-  fixes direction first (rules, assumptions, failing checks sealed in git), builds to green, then
-  proves the result with evidence for the human to review. Trigger when a repo has `.add/`, the
-  user says "add", "/add", "start a task", "specify this" or "ADD method", asks for ADD status, or
-  wants to resume ADD work. Also trigger when the user wants rigor instead of vibe-coding: spec-
-  and tests-first work, no editing tests until they pass, and proof before merge. It also covers
-  evidence-first investigations, where cited findings and what they mean are the deliverable
-  before any code changes. Examples: tracing a regression, evaluating options, or researching a
-  question. It fits features, migrations, security- or data-sensitive changes and multi-task
-  milestones. Do not use it for routine one-off edits, plain test writing, quick CI fixes or docs
-  where the user hasn't asked for this kind of rigor.
+  Use this skill when the user wants AI work they can trust without watching every step: the AI fixes
+  direction first (rules, assumptions, failing checks sealed in git), builds to green, then proves the
+  result with evidence for the human to review. Trigger when a repo has `.add/`, the user says "add",
+  "/add", "start a task", "specify this" or "ADD method", asks for ADD status, or wants to resume ADD
+  work. Also trigger when the user wants rigor instead of vibe-coding: spec- and tests-first work, no
+  editing tests until they pass, and proof before merge. It also covers evidence-first investigations,
+  where cited findings and what they mean are the deliverable before any code changes, such as tracing
+  a regression or weighing options. It fits features, migrations, security- or data-sensitive changes
+  and multi-task milestones. Do not use it for routine one-off edits, plain test writing, quick CI
+  fixes or docs where the user hasn't asked for this kind of rigor.
 user-invocable: true
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, evidence, task, explore, persona]
@@ -22,8 +21,7 @@ metadata: { author: add, version: "4.0.0", format: ABF-1 }
 
 # ADD — direction · evidence · a durable bundle
 
-You are the planner and the hands: fix direction before the build, trust only evidence you produced,
-leave a bundle (`.add/`) the next session and the reviewer can read. Your tools: files, git, tests.
+You plan and build: fix direction first, trust only evidence you produced, leave a `.add/` bundle.
 
 ## Orient — every session, first, in one command
 
@@ -58,11 +56,13 @@ Every turn re-reads the whole context: cost grows with turns, not words. Keep ev
 other code consumes (signature, return, status, format), is at least a Task — never Quick. A fix that
 restores intended behavior without changing its shape is not. When in doubt, size up.
 
-**Quick:** write a failing test for the request's own example and one case the most plausible wrong fix
-would pass (its falsifier), watch it fail, make it pass, run the suite, review your diff, commit
-`<type>(<scope>): <what>`, body `lane: quick — <why>` · `red→green: <test> · suite: <cmd> → <result>`.
-Touches the floor or needs a check weakened? It is a Task now: write the task file first. A security
-issue you only pass by (outside the ask) stays out of your diff but leads the report as a HARD-STOP.
+**Quick:** grep every other site that calls or emits what you change. Test the request's own example and
+one case the most plausible wrong fix would pass (its falsifier): watch it fail, make it pass, run the
+suite, review your diff. No suite runs? Run the request's repro as written, else import every file you
+touched and trace its inputs through your edit. Commit `<type>(<scope>): <what>`; body, and your report:
+`lane: quick — <why>` · `sites: <each → fixed | unaffected: why>` · `red→green: <test> · suite: <cmd> →
+<result>` (or `suite: unavailable — <why> · ran: <what>`). Floor touched, or a check to weaken?
+It is a Task now. A security issue you pass by stays out of the diff and leads the report: HARD-STOP.
 
 ## The task loop — Direction → Build → Verify
 
@@ -134,7 +134,8 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
 
 1. **Seal intact:** `F=$(git log -1 --format=%H --grep='freeze(<slug>)')`, then
    `git diff $F HEAD -- .add/tasks/<slug>.md <check files>` must print nothing.
-2. **Fresh green:** on the committed tree (clean `git status`), run `check:` and `regression:`.
+2. **Fresh green:** on the clean committed tree, run `check:` and `regression:`. A check you cannot run
+   is not green: record the Quick fallback; the verdict is at best RISK-ACCEPTED.
 3. **Consumers:** a changed `gives:` surface → `git grep` its users, run their tests; a broken one blocks PASS.
 4. **Residue** — what passing tests cannot show. Read the diff for **security** (authz, injection,
    secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens (migration,
