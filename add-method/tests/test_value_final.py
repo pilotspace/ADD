@@ -33,5 +33,6 @@ def test_refute_is_required_for_security_work():
 def test_readmes_value_table_is_measured():
     for path in (ROOT / "README.md", PKG / "README.md"):
         section = _between(_flat(path), "## What ADD gives your project", "## Vanilla Claude vs")
-        for fact in ("30 of 30", "7 of 30", "2 of 30", "0.81 vs 0.43"):
+        # publish-300 supersedes the 30-issue pilot facts with the full-run ones
+        for fact in ("255 of 300", "42 of 300", "298 of 300", "14 of 300", "0.81 vs 0.43"):
             assert fact in section, f"{path}: the value table lacks {fact!r}"
