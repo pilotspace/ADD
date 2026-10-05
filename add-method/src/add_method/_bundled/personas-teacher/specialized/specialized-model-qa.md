@@ -109,26 +109,35 @@ import numpy as np
 import pandas as pd
 
 def compute_psi(expected: pd.Series, actual: pd.Series, bins: int = 10) -> float:
+    """Baseline-quantile PSI; include out-of-range observations in tail bins.
+
+    <0.10: little shift; 0.10–0.25: investigate; >=0.25: significant shift.
+    These are monitoring heuristics, not a model validity certificate.
     """
-    Compute Population Stability Index between two distributions.
-    
-    Interpretation:
-      < 0.10  → No significant shift (green)
-      0.10–0.25 → Moderate shift, investigation recommended (amber)
-      >= 0.25 → Significant shift, action required (red)
-    """
-    breakpoints = np.linspace(0, 100, bins + 1)
-    expected_pcts = np.percentile(expected.dropna(), breakpoints)
+    if not isinstance(bins, int) or isinstance(bins, bool) or bins < 2:
+        raise ValueError("bins must be an integer >= 2")
+    baseline = expected.dropna().to_numpy(dtype=float)
+    observed = actual.dropna().to_numpy(dtype=float)
+    if not len(baseline) or not len(observed):
+        raise ValueError("PSI requires nonempty baseline and observed samples")
+    if not np.isfinite(baseline).all() or not np.isfinite(observed).all():
+        raise ValueError("PSI samples must be finite")
 
-    expected_counts = np.histogram(expected, bins=expected_pcts)[0]
-    actual_counts = np.histogram(actual, bins=expected_pcts)[0]
-
-    # Laplace smoothing to avoid division by zero
-    exp_pct = (expected_counts + 1) / (expected_counts.sum() + bins)
-    act_pct = (actual_counts + 1) / (actual_counts.sum() + bins)
-
-    psi = np.sum((act_pct - exp_pct) * np.log(act_pct / exp_pct))
-    return round(psi, 6)
+    # Unique interior quantiles handle repeated/constant baseline values.
+    interior = np.unique(np.percentile(baseline, np.linspace(0, 100, bins + 1)[1:-1]))
+    if np.all(baseline == baseline[0]):
+        # A point-mass baseline needs its own equality bucket. Otherwise a
+        # move entirely ABOVE that value shares the same open-ended tail.
+        value = baseline[0]
+        interior = np.array([value, np.nextafter(value, np.inf)])
+    edges = np.unique(np.concatenate(([-np.inf], interior, [np.inf])))
+    expected_counts = np.histogram(baseline, bins=edges)[0]
+    actual_counts = np.histogram(observed, bins=edges)[0]
+    bucket_count = len(edges) - 1
+    # Normalize smoothing with the actual number of nonduplicate buckets.
+    exp_pct = (expected_counts + 1) / (len(baseline) + bucket_count)
+    act_pct = (actual_counts + 1) / (len(observed) + bucket_count)
+    return round(float(np.sum((act_pct - exp_pct) * np.log(act_pct / exp_pct))), 6)
 ```
 
 ### Discrimination Metrics (Gini & KS)
@@ -158,6 +167,8 @@ def discrimination_report(y_true: pd.Series, y_score: pd.Series) -> dict:
 ### Calibration Test (Hosmer-Lemeshow)
 
 ```python
+import numpy as np
+import pandas as pd
 from scipy.stats import chi2
 
 def hosmer_lemeshow_test(
@@ -166,8 +177,18 @@ def hosmer_lemeshow_test(
     """
     Hosmer-Lemeshow goodness-of-fit test for calibration.
     p-value < 0.05 suggests significant miscalibration.
+    A non-significant result is not proof of calibration. Undefined tests
+    raise ValueError rather than returning NaN and a misleading verdict.
     """
+    if not isinstance(groups, int) or isinstance(groups, bool) or groups < 3:
+        raise ValueError("HL requires an integer group count >= 3")
+    if y_true.empty or not y_true.index.equals(y_pred.index):
+        raise ValueError("HL requires nonempty, aligned observations")
     data = pd.DataFrame({"y": y_true, "p": y_pred})
+    if not np.isfinite(data.to_numpy(dtype=float)).all():
+        raise ValueError("HL observations and probabilities must be finite")
+    if not data["y"].isin([0, 1]).all() or not data["p"].between(0, 1).all():
+        raise ValueError("HL requires binary outcomes and probabilities in [0, 1]")
     data["bucket"] = pd.qcut(data["p"], groups, duplicates="drop")
 
     agg = data.groupby("bucket", observed=True).agg(
@@ -176,13 +197,15 @@ def hosmer_lemeshow_test(
         expected=("p", "sum"),
     )
 
-    hl_stat = (
-        ((agg["observed"] - agg["expected"]) ** 2)
-        / (agg["expected"] * (1 - agg["expected"] / agg["n"]))
-    ).sum()
+    # Ties can collapse qcut groups; zero/one probability groups have zero
+    # expected variance. Neither case permits an ordinary chi-square result.
+    variance = agg["expected"] * (1 - agg["expected"] / agg["n"])
+    if len(agg) < 3 or not (variance > 0).all():
+        raise ValueError("HL needs at least three groups with positive expected variance")
+    hl_stat = (((agg["observed"] - agg["expected"]) ** 2) / variance).sum()
 
     dof = len(agg) - 2
-    p_value = 1 - chi2.cdf(hl_stat, dof)
+    p_value = chi2.sf(hl_stat, dof)
 
     return {
         "HL_statistic": round(hl_stat, 4),

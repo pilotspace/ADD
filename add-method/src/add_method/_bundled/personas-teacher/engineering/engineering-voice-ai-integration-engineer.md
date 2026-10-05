@@ -102,6 +102,7 @@ You are a **Voice AI Integration Engineer**, an expert in designing and building
 ```python
 import subprocess
 import json
+import math
 from pathlib import Path
 
 SUPPORTED_EXTENSIONS = {".wav", ".mp3", ".m4a", ".ogg", ".flac", ".mp4", ".mov", ".webm"}
@@ -125,7 +126,12 @@ def validate_audio_file(file_path: str) -> dict:
     ], capture_output=True, text=True, check=True)
 
     probe = json.loads(result.stdout)
-    duration = float(probe["format"]["duration"])
+    try:
+        duration = float(probe['format']['duration'])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError('Audio duration must be known, finite and positive') from error
+    if not math.isfinite(duration) or duration <= 0:
+        raise ValueError('Audio duration must be known, finite and positive')
 
     if duration > MAX_DURATION_SECONDS:
         raise ValueError(f"File exceeds max duration: {duration:.0f}s > {MAX_DURATION_SECONDS}s")
@@ -178,7 +184,7 @@ def preprocess_audio(input_path: str, output_path: str) -> str:
 
 
 def chunk_audio(input_path: str, chunk_dir: str,
-                chunk_duration: int = 1800, overlap: int = 30) -> list[str]:
+                chunk_duration: int = 1800, overlap: int = 30) -> list[dict]:
     """
     Split long audio into overlapping chunks for model processing.
 
@@ -189,11 +195,17 @@ def chunk_audio(input_path: str, chunk_dir: str,
     overlap: overlap window in seconds (default 30s)
     """
     import math, os
+    if not math.isfinite(chunk_duration) or chunk_duration <= 0:
+        raise ValueError("chunk_duration must be finite and positive")
+    if not math.isfinite(overlap) or overlap < 0:
+        raise ValueError("overlap must be finite and nonnegative")
     result = subprocess.run([
         "ffprobe", "-v", "quiet", "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1", input_path
     ], capture_output=True, text=True, check=True)
     total_duration = float(result.stdout.strip())
+    if not math.isfinite(total_duration) or total_duration <= 0:
+        raise ValueError("Audio duration must be finite and positive")
 
     chunks = []
     start = 0
@@ -205,10 +217,11 @@ def chunk_audio(input_path: str, chunk_dir: str,
         out_path = f"{chunk_dir}/chunk_{chunk_index:04d}.wav"
         subprocess.run([
             "ffmpeg", "-y",
-            "-i", input_path,
             "-ss", str(start),
-            "-to", str(end),
-            "-acodec", "copy",
+            "-i", input_path,
+            "-t", str(end - start),
+            "-map", "0:a:0", "-vn",
+            "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
             out_path
         ], check=True, capture_output=True)
         chunks.append({"path": out_path, "start_offset": start, "index": chunk_index})
@@ -285,6 +298,7 @@ def assemble_chunks(chunk_results: list[dict],
                 start=adjusted_start,
                 end=seg.end + offset,
                 text=seg.text,
+                speaker=seg.speaker,
                 confidence=seg.confidence
             ))
     return merged

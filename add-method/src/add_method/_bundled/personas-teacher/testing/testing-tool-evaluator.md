@@ -195,14 +195,17 @@ class ToolEvaluator:
         
         # Response time testing
         response_times = []
+        failed_requests = 0
         for _ in range(10):
             start_time = time.time()
             try:
                 response = requests.get(api_endpoint, timeout=10)
+                response.raise_for_status()
                 end_time = time.time()
                 response_times.append(end_time - start_time)
             except requests.RequestException:
-                response_times.append(10.0)  # Timeout penalty
+                failed_requests += 1
+                response_times.append(10.0)  # Network/HTTP failure penalty
         
         avg_response_time = np.mean(response_times)
         p95_response_time = np.percentile(response_times, 95)
@@ -219,11 +222,18 @@ class ToolEvaluator:
         else:
             speed_score = 2
         
-        notes = f"Avg: {avg_response_time:.2f}s, P95: {p95_response_time:.2f}s"
+        notes = (f"Penalty-adjusted avg: {avg_response_time:.2f}s, P95: {p95_response_time:.2f}s; "
+                 f"failed requests: {failed_requests}/{len(response_times)}")
         return speed_score, notes
     
     def calculate_total_cost_ownership(self, tool_config: Dict, years: int = 3) -> Dict:
-        """Calculate comprehensive TCO analysis"""
+        """Calculate TCO only for a defined positive adoption horizon."""
+        users = tool_config.get("expected_users", 1)
+        if isinstance(years, bool) or not isinstance(years, int) or years <= 0:
+            raise ValueError("years must be a positive integer")
+        if (isinstance(users, bool) or not isinstance(users, (int, float))
+                or not np.isfinite(users) or users <= 0):
+            raise ValueError("expected_users must be a positive finite number")
         costs = {
             "licensing": tool_config.get("annual_license_cost", 0) * years,
             "implementation": tool_config.get("implementation_cost", 0),
@@ -237,7 +247,6 @@ class ToolEvaluator:
         total_cost = sum(costs.values())
         
         # Calculate cost per user per year
-        users = tool_config.get("expected_users", 1)
         cost_per_user_year = total_cost / (users * years)
         
         return {
@@ -259,8 +268,10 @@ class ToolEvaluator:
             for eval in tool_evaluations
         ])
         
-        # Rank tools
-        comparison_df["Rank"] = comparison_df["Weighted Score"].rank(ascending=False)
+        # Equal best scores share rank 1; average ranking would give 1.5
+        # and make the existing Rank == 1 lookup fail. Stable input order
+        # selects the convenience top_performer field among tied leaders.
+        comparison_df["Rank"] = comparison_df["Weighted Score"].rank(method="min", ascending=False)
         
         # Identify strengths and weaknesses
         analysis = {

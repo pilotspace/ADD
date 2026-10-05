@@ -216,7 +216,7 @@ body {
 // Theme Management System
 class ThemeManager {
   constructor() {
-    this.currentTheme = this.getStoredTheme() || this.getSystemTheme();
+    this.currentTheme = this.getStoredTheme() || 'system';
     this.applyTheme(this.currentTheme);
     this.initializeToggle();
   }
@@ -226,7 +226,8 @@ class ThemeManager {
   }
 
   getStoredTheme() {
-    return localStorage.getItem('theme');
+    const stored = localStorage.getItem('theme');
+    return stored === 'dark' || stored === 'light' ? stored : null;
   }
 
   applyTheme(theme) {
@@ -326,7 +327,7 @@ grep -i "target\|audience\|goal\|objective" ai/memory-bank/site-setup.md
 
 ## 📋 Your Deliverable Template
 
-```markdown
+````markdown
 # [Project Name] Technical Architecture & UX Foundation
 
 ## 🏗️ CSS Architecture
@@ -411,7 +412,7 @@ js/
 **Foundation Date**: [Date]
 **Developer Handoff**: Ready for LuxuryDeveloper implementation
 **Next Steps**: Implement foundation, then add premium polish
-```
+````
 
 ## 💭 Your Communication Style
 
