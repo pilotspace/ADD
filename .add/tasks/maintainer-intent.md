@@ -1,7 +1,7 @@
 ---
 type: Task
 title: fix what the maintainers meant, not only what the issue literally says — read the nearest tests' conventions first, and put the record in the reply that is always read
-status: build
+status: done
 kind: docs
 risks: [method-drift, teaching-to-the-meter, cost]
 scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_maintainer_intent.py, add-method/CHANGELOG.md]
@@ -39,4 +39,18 @@ regression: cd add-method && python3 -m pytest -q ; python3 -m pytest -q benchma
 - C6 covers: R:BUDGET, R:MIRROR, R:INVARIANTS, R:METER · regression · add-method/tests/test_maintainer_intent.py::test_skill_stays_within_budget + add-method/tests/test_skill_only.py + test_blind_spots.py + test_value_final.py + test_round8_lessons.py · falsifier: growth past 200, mirror drift, an earlier guard red; R:METER read at verify
 
 ## EVIDENCE
-<written once, at verify>
+freeze: 1f8c6240 · head: 1e2c622d
+seal: git diff 1f8c6240 1e2c622d -- .add/tasks/maintainer-intent.md add-method/tests/test_maintainer_intent.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_maintainer_intent.py` → exit 0 · 6 passed (inside the full run)
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 173 passed; `python3 -m pytest -q benchmark/tests` → exit 0 · 557 passed, 12 skipped
+consumers: S1 skill tree → three trees byte-identical (test_shipped_skill_trees_are_identical green)
+residue: security — text-only change; R:METER — the rule names conventions, never an instance, API, message or layout; concurrency — n/a
+probes: none — no security risk; behaviour measured instead
+behaviour (diagnostic 2026-10-05: the 22 full300 issues only vanilla-medium resolved + 10 controls both resolved; --testenv docker; official harness):
+- intent skill at low: 13/22 recovered, 10/10 controls, 0 tests broken, $0.129/run, 65 s
+- same-skill ADD-low rerun: 11/22, 10/10, $0.123, 64 s; ADD-medium: 14/22, 10/10, 1 P2P break, $0.166, 85 s; vanilla rerun: 18/22, 10/10, $0.078
+- intent vs plain at low: gained django-12915, django-15400, pytest-5495, sympy-19007; lost django-13768, pytest-5692 (+2 net, within noise at n = 22)
+- M3 `intent:` record in 7/32 transcripts
+- A1 held: vanilla re-resolves 18/22 of its own wins, so most of the remaining gap is not reachable by instruction
+lens: build=self · refute=self cold reread · found: 0 confirmed, 0 rejected
+verdict: RISK-ACCEPTED — every check held on this commit; the measured gain is +2 of 22 at +5% cost with no control lost, directional only. Owner: Tin Dang, to confirm on a full 300 rerun before claiming it.
