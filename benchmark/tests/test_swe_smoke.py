@@ -210,3 +210,83 @@ class EffortOverrideTest(unittest.TestCase):
         self.assertEqual(runner.effort_for("vanilla", "low"), "low")
         with self.assertRaises(SystemExit):
             runner.effort_for("add", "lo")
+
+
+class TestEnvTest(unittest.TestCase):
+    """--testenv docker: the agent edits a host copy of the instance image's /testbed, and its
+    python/pytest calls inside that copy run in the image's own conda env (the env the official
+    harness scores in). Both arms get the same env; the prompts do not change."""
+
+    def test_image_is_the_official_eval_image(self):
+        self.assertEqual(runner.image_for("django__django-11630"),
+                         "swebench/sweb.eval.x86_64.django_1776_django-11630:latest")
+
+    def test_container_mounts_the_workspace_at_testbed_and_at_its_own_path(self):
+        argv = runner.testenv_run_argv("ctr", "/w/space", "img:latest")
+        self.assertEqual(argv[:4], ["docker", "run", "-d", "--platform"])
+        self.assertIn("/w/space:/testbed", argv)
+        self.assertIn("/w/space:/w/space", argv)
+        self.assertEqual(argv[-1], "infinity")
+
+    def _shims(self, td):
+        import os, pathlib
+        root = pathlib.Path(td)
+        ws = root / "ws"; ws.mkdir()
+        fake = root / "fakebin"; fake.mkdir()
+        (fake / "docker").write_text('#!/bin/sh\necho "DOCKER $*"\n'); os.chmod(fake / "docker", 0o755)
+        shims = runner.write_shims(root / "shims", "ctr-1", ws)
+        env = dict(os.environ, PATH=f"{shims}:{fake}:{os.environ['PATH']}")
+        return ws, shims, env
+
+    def test_shim_routes_workspace_python_into_the_container(self):
+        import subprocess, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            ws, shims, env = self._shims(td)
+            (ws / "pkg").mkdir()
+            out = subprocess.run(["python3", "-m", "pytest", "-q"], cwd=ws / "pkg", env=env,
+                                 capture_output=True, text=True).stdout
+        self.assertIn("DOCKER exec -i -w", out)
+        self.assertIn(f"{ws.resolve()}/pkg ctr-1", out)
+        self.assertIn("activate testbed", out)
+        self.assertIn("python -m pytest -q", out.replace("python3", "python"))
+
+    def test_every_python_name_is_shimmed(self):
+        import os, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            _, shims, _ = self._shims(td)
+            names = set(os.listdir(shims))
+        for name in ("python", "python3", "python3.9", "pytest", "py.test", "pip"):
+            self.assertIn(name, names)
+
+    def test_shim_outside_the_workspace_runs_the_host_binary(self):
+        import subprocess, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            _, shims, env = self._shims(td)
+            out = subprocess.run(["python3", "-c", "print('host')"], cwd=td, env=env,
+                                 capture_output=True, text=True).stdout
+        self.assertEqual(out.strip(), "host")
+
+    def test_agent_shell_keeps_the_shims_first(self):
+        """The agent's Bash tool sources the operator's zsh profile, which rebuilds PATH: the
+        testenv points ZDOTDIR at an rc that puts the shims first and reads nothing else."""
+        import pathlib, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            env = runner.testenv_env(pathlib.Path(td) / "shims", {"PATH": "/usr/bin", "HOME": "/h"})
+            rc = (pathlib.Path(env["ZDOTDIR"]) / ".zshrc").read_text()
+        shims = (pathlib.Path(td) / "shims").resolve()
+        self.assertTrue(env["PATH"].startswith(str(shims)))
+        self.assertIn(f'export PATH="{shims}:', rc)
+
+    def test_shims_are_on_path_absolute(self):
+        """The runs root is often relative; the agent's cwd is the workspace, so a relative
+        shims entry on PATH resolves to nothing and every call falls back to the host."""
+        import os, pathlib, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            here = os.getcwd(); os.chdir(td)
+            try:
+                env = runner.testenv_env(runner.write_shims(pathlib.Path("rel/shims"), "c", pathlib.Path(td)),
+                                         {"PATH": "/usr/bin"})
+            finally:
+                os.chdir(here)
+        self.assertTrue(pathlib.Path(env["PATH"].split(os.pathsep)[0]).is_absolute())
+        self.assertTrue(pathlib.Path(env["ZDOTDIR"]).is_absolute())

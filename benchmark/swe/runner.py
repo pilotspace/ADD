@@ -16,6 +16,11 @@ Evaluate with the official harness on Modal (x86, no local docker; `modal token 
         --predictions_path benchmark/runs-swe/<run>/predictions_<arm>.jsonl \
         --modal true --run_id <run>-<arm>
 
+`--testenv docker` (round 11 on): the agent edits a host copy of the instance's official eval
+image `/testbed`, and its python/pytest/pip calls inside that copy run in the image's conda env, the
+env the harness scores in. A bare clone cannot build matplotlib or run most suites, so before this
+both arms often fixed blind. The patch is diffed against the image's HEAD.
+
 Smoke defaults: three psf/requests instances (small repo, fast clones). A pilot slice:
 `--sample 30 --seed 0` draws a fixed random slice of all 300 Lite instances.
 This is a SMOKE harness — n is tiny by design; it proves the pipeline and
@@ -28,7 +33,9 @@ import concurrent.futures
 import random
 import threading
 import json
+import os
 import pathlib
+import shutil
 import subprocess
 import time
 import urllib.error
@@ -54,6 +61,7 @@ SMOKE_INSTANCES = ("psf__requests-2317", "psf__requests-1963", "psf__requests-86
 
 # paths that are harness/method machinery, never part of the fix
 _ARTIFACT_PREFIXES = (".add/", ".add-venv/", ".claude/", ".venv/", ".specify/")
+_CACHE_PARTS = ("__pycache__/", ".pytest_cache/", ".egg-info/")  # test runs in the testenv leave these
 _ARTIFACT_FILES = ("CLAUDE.md", "AGENTS.md", "CLAUDE.md.bak", ".clinerules")
 
 
@@ -142,8 +150,8 @@ def sample_ids(ids: list[str], n: int, seed: int) -> list[str]:
 
 
 def _run(cmd: list[str], cwd: pathlib.Path | None = None, timeout: float = 600.0,
-         log: pathlib.Path | None = None) -> subprocess.CompletedProcess:
-    proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+         log: pathlib.Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
+    proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env)
     if log:
         with log.open("a") as fh:
             fh.write(f"$ {' '.join(cmd)} -> {proc.returncode}\n{proc.stdout[-4000:]}\n{proc.stderr[-4000:]}\n")
@@ -154,6 +162,70 @@ def clone_at(repo: str, base_commit: str, dest: pathlib.Path, log: pathlib.Path)
     dest.parent.mkdir(parents=True, exist_ok=True)
     _run(["git", "clone", f"https://github.com/{repo}.git", str(dest)], timeout=900, log=log)
     _run(["git", "checkout", "-q", base_commit], cwd=dest, timeout=120, log=log)
+
+
+# --testenv docker: the official eval image's /testbed, copied to the host for the agent to edit,
+# with python/pytest/pip inside it routed back into that image's conda env. A bare clone cannot
+# build matplotlib or run Django's suite, so the agent fixed blind; the harness scores in this env.
+_SHIM_NAMES = {"python": "python", "python3": "python", "pytest": "python -m pytest",
+               "py.test": "python -m pytest", "pip": "python -m pip", "pip3": "python -m pip",
+               **{f"python3.{m}": "python" for m in range(6, 13)}}
+
+
+def image_for(instance_id: str) -> str:
+    return f"swebench/sweb.eval.x86_64.{instance_id.replace('__', '_1776_')}:latest"
+
+
+def testenv_run_argv(container: str, workspace: str, image: str) -> list[str]:
+    """The workspace is mounted at /testbed (the editable installs point there) and at its own
+    host path (so the absolute paths the agent uses resolve the same inside)."""
+    return ["docker", "run", "-d", "--platform", "linux/amd64", "--name", container,
+            "-v", f"{workspace}:/testbed", "-v", f"{workspace}:{workspace}",
+            image, "sleep", "infinity"]
+
+
+def write_shims(shim_dir: pathlib.Path, container: str, workspace: pathlib.Path) -> pathlib.Path:
+    """One script per python name: inside the workspace it runs in the container, elsewhere on the host."""
+    shim_dir.mkdir(parents=True, exist_ok=True)
+    ws = workspace.resolve()
+    host_path = os.pathsep.join(p for p in os.environ.get("PATH", "").split(os.pathsep)
+                                if pathlib.Path(p).resolve() != shim_dir.resolve())
+    for name, inner in _SHIM_NAMES.items():
+        host = shutil.which(name, path=host_path) or shutil.which("python3", path=host_path) or "false"
+        (shim_dir / name).write_text(
+            "#!/bin/sh\n"
+            f"# swe testenv shim: `{name}` inside {ws} runs in container {container}\n"
+            'here="$(pwd -P)"\n'
+            f'case "$here/" in\n  {ws}/*) exec docker exec -i -w "$here" {container} /bin/bash -c '
+            f"'. /opt/miniconda3/bin/activate testbed && exec {inner} \"$@\"' {name} \"$@\" ;;\nesac\n"
+            f'exec {host} "$@"\n')
+        (shim_dir / name).chmod(0o755)
+    return shim_dir
+
+
+def testenv_env(shims: pathlib.Path, base: dict | None = None) -> dict:
+    """The agent's env: shims first, and a ZDOTDIR whose rc keeps them first (the Bash tool
+    sources the operator's zsh profile otherwise, which rebuilds PATH without them)."""
+    base = dict(os.environ if base is None else base)
+    shims = shims.resolve()
+    zdot = shims.parent / "zdotdir"
+    zdot.mkdir(parents=True, exist_ok=True)
+    (zdot / ".zshrc").write_text(f'export PATH="{shims}:$PATH"\n')
+    return dict(base, PATH=f"{shims}{os.pathsep}{base.get('PATH', '')}", ZDOTDIR=str(zdot))
+
+
+def testenv_workspace(instance_id: str, dest: pathlib.Path, log: pathlib.Path) -> str:
+    """Copy the image's /testbed out; return its HEAD — the image commits on top of base_commit,
+    so the patch is diffed against this, the tree the harness applies it to."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = f"swe-cp-{instance_id}-{os.getpid()}"
+    _run(["docker", "create", "--platform", "linux/amd64", "--name", tmp, image_for(instance_id)],
+         timeout=900, log=log)
+    try:
+        _run(["docker", "cp", f"{tmp}:/testbed", str(dest)], timeout=1800, log=log)
+    finally:
+        _run(["docker", "rm", "-f", tmp], timeout=120, log=log)
+    return _run(["git", "rev-parse", "HEAD"], cwd=dest, timeout=60, log=log).stdout.strip()
 
 
 def install_add(workspace: pathlib.Path, log: pathlib.Path) -> bool:
@@ -209,7 +281,8 @@ def filter_patch(patch: str) -> str:
     for block in patch.split("diff --git ")[1:]:
         header = block.split("\n", 1)[0]
         path = header.split(" b/")[-1].strip()
-        if path in _ARTIFACT_FILES or any(path.startswith(p) for p in _ARTIFACT_PREFIXES):
+        if (path in _ARTIFACT_FILES or any(path.startswith(p) for p in _ARTIFACT_PREFIXES)
+                or any(c in path for c in _CACHE_PARTS)):
             continue
         kept.append("diff --git " + block)
     return "".join(kept)
@@ -224,7 +297,7 @@ def collect_patch(workspace: pathlib.Path, base_commit: str, log: pathlib.Path) 
 
 
 def run_instance(row: dict, arm: str, runs_root: pathlib.Path, model: str,
-                 timeout_s: float, effort: str | None = None) -> dict:
+                 timeout_s: float, effort: str | None = None, testenv: str = "none") -> dict:
     effort = effort_for(arm, effort)
     iid = row["instance_id"]
     inst_dir = runs_root / arm / iid
@@ -232,7 +305,22 @@ def run_instance(row: dict, arm: str, runs_root: pathlib.Path, model: str,
     log = inst_dir / "run.log"
     inst_dir.mkdir(parents=True, exist_ok=True)
 
-    if not workspace.exists():
+    baseline, env, container = row["base_commit"], None, None
+    if testenv == "docker":
+        if not workspace.exists():
+            baseline = testenv_workspace(iid, workspace, log)
+        else:
+            baseline = _run(["git", "rev-parse", "HEAD"], cwd=workspace, timeout=60, log=log).stdout.strip()
+        workspace = workspace.resolve()
+        container = f"swe-{arm}-{iid}".replace("__", "-")
+        _run(["docker", "rm", "-f", container], timeout=120, log=log)
+        if _run(testenv_run_argv(container, str(workspace), image_for(iid)), timeout=600,
+                log=log).returncode != 0:
+            return {"instance_id": iid, "model_patch": "", "model_name_or_path": f"{model}+{arm}",
+                    "error": "testenv start failed"}
+        shims = write_shims(inst_dir / "shims", container, workspace)
+        env = testenv_env(shims)
+    elif not workspace.exists():
         clone_at(row["repo"], row["base_commit"], workspace, log)
     if arm == "add" and not install_add(workspace, log):
         return {"instance_id": iid, "model_patch": "", "model_name_or_path": f"{model}+{arm}",
@@ -241,14 +329,17 @@ def run_instance(row: dict, arm: str, runs_root: pathlib.Path, model: str,
     start = time.monotonic()
     try:
         proc = _run(agent_argv(wrap_prompt(row["problem_statement"], arm), model, effort),
-                    cwd=workspace, timeout=timeout_s, log=log)
+                    cwd=workspace, timeout=timeout_s, log=log, env=env)
         stdout = proc.stdout
     except subprocess.TimeoutExpired as exc:  # keep whatever the agent left in the tree
         stdout = (exc.stdout or b"").decode() if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+    finally:
+        if container:
+            _run(["docker", "rm", "-f", container], timeout=120, log=log)
     elapsed = time.monotonic() - start
     (inst_dir / "transcript.jsonl").write_text(stdout)  # the trajectory a submission needs
 
-    patch = collect_patch(workspace, row["base_commit"], log)
+    patch = collect_patch(workspace, baseline, log)
     (inst_dir / "model_patch.diff").write_text(patch)
     return {"instance_id": iid, "model_patch": patch,
             "model_name_or_path": f"{model}+{arm}", "effort": effort,
@@ -276,6 +367,8 @@ def main() -> None:
     ap.add_argument("--runs-root", default=str(DEFAULT_RUNS))
     ap.add_argument("--timeout-s", type=float, default=1500.0)
     ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--testenv", default="none", choices=["none", "docker"],
+                    help="docker: edit the eval image's /testbed and run python/pytest in its env")
     ap.add_argument("--effort", default=None, help="override every arm's effort for this run (default: ARM_EFFORT)")
     args = ap.parse_args()
 
@@ -298,7 +391,8 @@ def main() -> None:
         def one(row: dict) -> None:
             print(f"[swe] run {arm}/{row['instance_id']} ...", flush=True)
             try:
-                pred = run_instance(row, arm, runs_root, args.model, args.timeout_s, args.effort)
+                pred = run_instance(row, arm, runs_root, args.model, args.timeout_s, args.effort,
+                                    args.testenv)
             except Exception as exc:  # one broken clone must not sink the slice
                 pred = {"instance_id": row["instance_id"], "model_patch": "",
                         "model_name_or_path": f"{args.model}+{arm}", "error": repr(exc)[:300]}
