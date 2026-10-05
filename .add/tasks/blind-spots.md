@@ -1,7 +1,7 @@
 ---
 type: Task
 title: close the two SWE-bench blind spots — every site of a change accounted for, and a recorded fallback when the suite cannot run
-status: build
+status: done
 kind: docs
 risks: [method-drift, teaching-to-the-meter]
 scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_blind_spots.py, add-method/CHANGELOG.md]
@@ -35,4 +35,17 @@ regression: cd add-method && python3 -m pytest -q ; python3 -m pytest -q benchma
 - C4 covers: R:BUDGET, R:MIRROR, R:INVARIANTS, R:METER · regression · add-method/tests/test_blind_spots.py::test_skill_stays_within_budget + add-method/tests/test_skill_only.py · falsifier: the file grows past 200 or a mirror drifts; R:METER is read at verify (residue)
 
 ## EVIDENCE
-<written once, at verify>
+freeze: 68e0f39a · head: 007c2a52
+seal: git diff 68e0f39a 007c2a52 -- .add/tasks/blind-spots.md add-method/tests/test_blind_spots.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_blind_spots.py` → exit 0 · 4 passed
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 167 passed; `python3 -m pytest -q benchmark/tests` → exit 0 · 556 passed, 12 skipped
+consumers: S1 skill tree → three trees byte-identical (test_shipped_skill_trees_are_identical green)
+residue: security — text-only change; R:METER — no rule names an instance, API, message or layout (read the diff); concurrency — n/a
+probes: none — no security risk; behaviour measured instead
+behaviour (round 11, SWE Lite 30 instances seed 0, --testenv docker, official harness):
+- ADD-low 23/30 vs vanilla-medium 21/30; $0.16 vs $0.12 per resolved issue (round 10 ADD-low: $0.23); 27/30 ADD runs saw a green test run (round 10: 15)
+- M1 `sites:` appeared in 2/30 transcripts; django-13265 (its target) still missed the second site → low yield
+- M2 `suite: unavailable` appeared in 2/30 (suites now run in the eval env); sklearn-14087 flipped to resolved, most likely from the env, not the rule
+- 0 existing tests broken in any ADD patch; the 3 losses against round 10 are F2P re-readings
+lens: build=self · refute=self cold reread · found: M1 low-yield (confirmed), 0 rejected
+verdict: RISK-ACCEPTED — every check held on this commit; the open risk is that M1's `sites:` record barely transfers (2/30) and did not flip its target. Owner: Tin Dang. Cut or rework M1 if it is still ≤ 2/30 at the next measurement (C12 economics).
