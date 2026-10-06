@@ -251,7 +251,7 @@ def install_add(workspace: pathlib.Path, log: pathlib.Path) -> bool:
     return True
 
 
-def wrap_prompt(problem_statement: str, arm: str) -> str:
+def wrap_prompt(problem_statement: str, arm: str, injected: bool = False) -> str:
     if arm == "vanilla":
         return (
             "Fix the following GitHub issue in this repository. Modify only what the fix "
@@ -259,10 +259,13 @@ def wrap_prompt(problem_statement: str, arm: str) -> str:
             "change is present in the working tree (no need to commit).\n\n"
             f"<issue>\n{problem_statement}\n</issue>"
         )
+    how = ("the ADD skill is in your system prompt; follow it and size the work as it says"
+           if injected else
+           "read `.claude/skills/add/SKILL.md` first (skills are off in this session, so read "
+           "the file) and size the work as the skill says")
     return (
         "Fix the following GitHub issue in this repository by driving this repo's ADD loop "
-        "(see CLAUDE.md): read `.claude/skills/add/SKILL.md` first (skills are off in this "
-        "session, so read the file) and size the work as the skill says — its Quick lane or a "
+        f"(see CLAUDE.md): {how} — its Quick lane or a "
         "Task. This is a headless run with no human available: make the calls the skill leaves "
         "to the human yourself and never stop to ask. Start from a test that reproduces the issue "
         "and fails before the fix. This is a FOREIGN host repo: its existing tests nearest the "
@@ -273,10 +276,17 @@ def wrap_prompt(problem_statement: str, arm: str) -> str:
     )
 
 
-def agent_argv(prompt: str, model: str, effort: str) -> list[str]:
-    """The wm bench's own argv builder: same flags, same operator isolation."""
+def agent_argv(prompt: str, model: str, effort: str,
+               inject_skill_from: pathlib.Path | None = None) -> list[str]:
+    """The wm bench's own argv builder: same flags, same operator isolation. With
+    inject_skill_from, the installed SKILL.md rides in the system prompt (low effort skipped
+    reading it in half the full-300 runs)."""
     from benchmark.runner.agent import default_agent_cmd
-    return default_agent_cmd(prompt, model, effort=effort)
+    argv = default_agent_cmd(prompt, model, effort=effort)
+    if inject_skill_from is not None:
+        skill = (inject_skill_from / ".claude" / "skills" / "add" / "SKILL.md").read_text()
+        argv += ["--append-system-prompt", skill]
+    return argv
 
 
 def filter_patch(patch: str) -> str:
@@ -304,7 +314,8 @@ def collect_patch(workspace: pathlib.Path, base_commit: str, log: pathlib.Path) 
 
 
 def run_instance(row: dict, arm: str, runs_root: pathlib.Path, model: str,
-                 timeout_s: float, effort: str | None = None, testenv: str = "none") -> dict:
+                 timeout_s: float, effort: str | None = None, testenv: str = "none",
+                 inject_skill: bool = False) -> dict:
     effort = effort_for(arm, effort)
     iid = row["instance_id"]
     inst_dir = runs_root / arm / iid
@@ -335,7 +346,9 @@ def run_instance(row: dict, arm: str, runs_root: pathlib.Path, model: str,
 
     start = time.monotonic()
     try:
-        proc = _run(agent_argv(wrap_prompt(row["problem_statement"], arm), model, effort),
+        inject = inject_skill and arm == "add"
+        proc = _run(agent_argv(wrap_prompt(row["problem_statement"], arm, injected=inject), model, effort,
+                               inject_skill_from=workspace if inject else None),
                     cwd=workspace, timeout=timeout_s, log=log, env=env)
         stdout = proc.stdout
     except subprocess.TimeoutExpired as exc:  # keep whatever the agent left in the tree
@@ -376,6 +389,8 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--testenv", default="none", choices=["none", "docker"],
                     help="docker: edit the eval image's /testbed and run python/pytest in its env")
+    ap.add_argument("--inject-skill", action="store_true",
+                    help="add arm: put the installed SKILL.md in the system prompt instead of asking to read it")
     ap.add_argument("--effort", default=None, help="override every arm's effort for this run (default: ARM_EFFORT)")
     args = ap.parse_args()
 
@@ -399,7 +414,7 @@ def main() -> None:
             print(f"[swe] run {arm}/{row['instance_id']} ...", flush=True)
             try:
                 pred = run_instance(row, arm, runs_root, args.model, args.timeout_s, args.effort,
-                                    args.testenv)
+                                    args.testenv, args.inject_skill)
             except Exception as exc:  # one broken clone must not sink the slice
                 pred = {"instance_id": row["instance_id"], "model_patch": "",
                         "model_name_or_path": f"{args.model}+{arm}", "error": repr(exc)[:300]}

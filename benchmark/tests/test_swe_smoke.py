@@ -299,3 +299,28 @@ class TestEnvTest(unittest.TestCase):
         b = runner.container_name("add", "django__django-1", pathlib.Path("/r/medium"))
         self.assertNotEqual(a, b)
         self.assertEqual(a, runner.container_name("add", "django__django-1", pathlib.Path("/r/low")))
+
+
+class InjectSkillTest(unittest.TestCase):
+    """At --effort low the ADD arm read SKILL.md in only 134 of 270 full-300 runs: the method was
+    half-applied. --inject-skill puts the installed skill in the system prompt instead."""
+
+    def test_inject_appends_the_installed_skill_to_the_system_prompt(self):
+        import pathlib, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            ws = pathlib.Path(td)
+            (ws / ".claude/skills/add").mkdir(parents=True)
+            (ws / ".claude/skills/add/SKILL.md").write_text("# ADD\nthe skill body\n")
+            argv = runner.agent_argv("P", "m", "low", inject_skill_from=ws)
+        i = argv.index("--append-system-prompt")
+        self.assertIn("the skill body", argv[i + 1])
+
+    def test_injected_prompt_does_not_ask_to_read_the_file(self):
+        p = runner.wrap_prompt("the issue", "add", injected=True)
+        self.assertNotIn("read `.claude/skills/add/SKILL.md` first", p)
+        self.assertIn("system prompt", p)
+        self.assertIn("the issue", p)
+
+    def test_default_is_unchanged(self):
+        self.assertNotIn("--append-system-prompt", runner.agent_argv("P", "m", "low"))
+        self.assertIn("read `.claude/skills/add/SKILL.md` first", runner.wrap_prompt("x", "add"))
