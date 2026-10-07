@@ -15,8 +15,9 @@ def _between(flat: str, start: str, end: str) -> str:
 
 def test_quick_lists_every_site_of_the_change():
     """django-13265: the second emitter was in the agent's own grep output and went unfixed."""
+    # cut-sites-record: the `sites:` record transferred in 2 of 30 runs and was cut; the action stays
     quick = _between(_flat(SKILL), "**Quick:**", "## The task loop")
-    assert "`sites:" in quick and "unaffected" in quick
+    assert "grep every other site" in quick
 
 
 def test_quick_has_a_fallback_when_the_suite_cannot_run():
