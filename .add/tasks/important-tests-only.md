@@ -1,7 +1,7 @@
 ---
 type: Task
 title: Quick writes only the important tests; evidence proves the rest
-status: build
+status: done
 kind: method
 risks: [method-drift, skipped-verification]
 scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_important_tests_only.py, add-method/CHANGELOG.md, README.md, add-method/README.md, benchmark/results/]
@@ -40,3 +40,23 @@ observes: M1 → share of Quick changes with `test: none` in the next benchmark 
 - C6 covers: R:BUDGET, R:MIRROR, R:INVARIANTS · regression · add-method/tests/test_important_tests_only.py::test_budget_and_mirror + the full suite · falsifier: mirror drift or an earlier guard red
 
 ## EVIDENCE
+freeze: 73c7800c · head: ac2cb738
+seal: git diff 73c7800c ac2cb738 -- .add/tasks/important-tests-only.md add-method/tests/test_important_tests_only.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_important_tests_only.py` → exit 0 · 6 passed
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 202 passed; benchmark/tests/test_arm_effort.py + test_arm_models.py → 21 passed
+consumers: S1 skill tree → three trees byte-identical (C6); READMEs, CHANGELOG and the results page carry the measured-before note (C5)
+probe (A2): six requests on a toy repo, old skill (9853bf93) against new, Sonnet 5.5 at medium, one run each
+  | request | old: new tests | new: new tests | new record |
+  | typo in a message | 1 | 0 | test: none — nothing checks the text |
+  | rename a constant | 0 | 0 | test: none — the existing test imports it |
+  | config default | 1 | 0 | test: none — a test would restate the constant |
+  | failing CI test | 1 | 0 | red→green on the existing failing test |
+  | subtle bug (adjacent duplicates) | 2 | 1 | red→green on a new test |
+  | small feature (free shipping) | 3 | 3 | red→green on new tests |
+  totals: 8 new tests / 49 test lines → 4 / 24; 154 s → 106 s; every run ran the suite and left it green
+  not comparable: cost ($0.90 → $0.54) — the new arm ran second on a warm prompt cache
+residue: security — text-only; skipped-verification — every probe run still ran the suite and wrote the path it took
+probes: none beyond the above — no security risk
+lens: build=self · refute=self cold reread · found: 1 (an earlier guard pinned "The last lines of your reply"; the text was restored, not the test)
+open: the SWE harness prompt (benchmark/swe/runner.py wrap_prompt) still says "Start from a test that reproduces the issue", so a rerun would not exercise this change until that sentence is removed
+verdict: RISK-ACCEPTED — every check held on this commit, and the probe reads "important" as intended on six requests at n = 1. The effect on the SWE fix rate is not measured; owner: Tin Dang, who chose a small probe and to ship inside 4.1.0 (2026-10-07).
