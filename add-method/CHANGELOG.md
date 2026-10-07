@@ -7,6 +7,8 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 ## [Unreleased]
 
 ### Changed
+- **The Quick record drops `sites:`.** The model wrote that line in 2 of 30 runs, so it is cut. Quick
+  still greps every other site that calls or emits what it changes.
 - **Results anyone can read.** A new animated page, `docs/add-results.html`, tells the 300-bug result
   in plain words: bugs fixed, fixes checked by a passing test run, fixes shipped with a test, unclear
   requests, the price, and the effort setting. It also says what is not proven or not measured. Both

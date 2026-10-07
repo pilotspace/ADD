@@ -57,14 +57,14 @@ restores intended behavior without changing its shape is not. When in doubt, siz
 
 **Quick:** read the nearest tests and sibling code of what you change, and grep every other site that
 calls or emits it: the fix keeps their conventions (inputs not mutated, parallel paths consistent, the
-neighbours' pattern), so the fix the request literally suggests may be the wrong one. Test the
-request's own example and one case the most plausible wrong fix would pass (its falsifier; non-code:
-the check that fits): watch it fail, make it pass, run the suite, review your diff. No suite runs? Run
-the request's repro as written, else import every file you touched and trace its inputs through your
-edit. The last lines of your reply (and any commit body): `lane: quick — <why>` · `intent: <convention
-→ how the fix keeps it>` · `sites: <each → fixed | unaffected: why>` · `red→green: <test> · suite:
-<cmd> → <result>` (or `suite: unavailable — <why> · ran: <what>`). Floor touched, or a check to weaken?
-It is a Task now. A security issue you pass by stays out of the diff and leads the report: HARD-STOP.
+neighbours' pattern), so the fix the request literally suggests may be the wrong one. Test the request's
+own example and one case the most plausible wrong fix would pass (its falsifier; non-code: the check
+that fits): watch it fail, make it pass, run the suite, review your diff. No suite runs? Run the
+request's repro as written, else import every file you touched and trace its inputs through your edit.
+The last lines of your reply (and any commit body): `lane: quick — <why>` · `intent: <convention → how
+the fix keeps it>` · `red→green: <test> · suite: <cmd> → <result>` (or `suite: unavailable — <why> ·
+ran: <what>`). Floor touched, or a check to weaken? It is a Task now. A security issue you pass by stays
+out of the diff and leads the report: HARD-STOP.
 
 ## The task loop — Direction → Build → Verify
 
