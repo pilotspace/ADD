@@ -1,7 +1,7 @@
 ---
 type: Task
 title: cut the `sites:` record the model does not write; keep "grep every other site" as an action
-status: build
+status: done
 kind: docs
 risks: [method-drift]
 scope: [add-method/skill/add/, add-method/src/add_method/_bundled/skill/add/, .claude/skills/add/, add-method/tests/test_cut_sites_record.py, add-method/tests/test_blind_spots.py, add-method/CHANGELOG.md]
@@ -33,4 +33,12 @@ regression: cd add-method && python3 -m pytest -q
 - test_blind_spots.py::test_quick_lists_every_site_of_the_change now checks the action, not the `sites:` record (M2).
 
 ## EVIDENCE
-<written once, at verify>
+freeze: 02c1c6db · head: cb62805d
+seal: git diff 02c1c6db cb62805d -- .add/tasks/cut-sites-record.md add-method/tests/test_cut_sites_record.py add-method/tests/test_blind_spots.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_cut_sites_record.py tests/test_blind_spots.py` → exit 0 · 7 passed (inside the full run)
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 192 passed
+consumers: S1 skill tree → three trees byte-identical (test_shipped_skill_trees_are_identical green); no README or docs page mentions `sites:`
+residue: security — text-only; architecture — none
+probes: none — no security risk; one field removed from a record
+lens: build=self · refute=self cold reread · found: 0
+verdict: PASS — every check held on this commit. This closes the open risk blind-spots accepted.
