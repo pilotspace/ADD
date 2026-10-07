@@ -1,7 +1,7 @@
 ---
 type: Task
 title: Quick skips the test only when no behavior changes; every bug fix keeps its test
-status: build
+status: done
 kind: method
 fixes: important-tests-only@f79c0925
 risks: [method-drift, skipped-verification]
@@ -40,3 +40,13 @@ observes: M2 → share of `test: none` on bug-fix requests in the next benchmark
 - add-method/tests/test_important_tests_only.py is removed: its rule (M1 there) is superseded by this task's M1 and M4. The closed task file is left as it was.
 
 ## EVIDENCE
+freeze: b663245b · head: 763e127b
+seal: git diff b663245b 763e127b -- .add/tasks/tests-for-behavior-only.md add-method/tests/test_tests_for_behavior_only.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_tests_for_behavior_only.py` → exit 0 · 5 passed (inside the full run)
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 201 passed; benchmark/tests test_swe_smoke + test_arm_effort + test_arm_models → 56 passed
+consumers: S1 skill tree → three trees byte-identical (C5); READMEs, CHANGELOG and results page carry the re-measure (C4)
+re-measure that drove this (screen3, 101 dev issues, medium): important-tests-only 78 · measured skill 83 · vanilla 80; 2 gained, 7 lost, p = 0.18; $0.154 against $0.164; a test shipped in 76 of 101
+residue: security — text-only; skipped-verification — the skip is limited to changes with no new behavior and leaves a `test: none` line
+probes: none — no security risk
+lens: build=self · refute=self cold reread · found: 0
+verdict: RISK-ACCEPTED — every check held on this commit. The narrowed skill is not re-measured (A1): on bug fixes it asks what the measured skill asked, but the harness prompt no longer says "start from a test". Owner: Tin Dang, who chose "Narrow it, then ship" (2026-10-08).
