@@ -1,7 +1,7 @@
 ---
 type: Task
 title: results a normal user can read — an animated plain-language page, and a plain-words opening for both READMEs
-status: build
+status: done
 kind: docs
 risks: [front-door-claim-truth]
 scope: [add-method/docs/add-results.html, add-method/docs/README.md, README.md, add-method/README.md, add-method/tests/test_plain_results.py, add-method/CHANGELOG.md]
@@ -35,4 +35,12 @@ regression: cd add-method && python3 -m pytest -q
 - C5 covers: R:GUARDS · regression · add-method/tests/ · falsifier: an existing guard red
 
 ## EVIDENCE
-<written once, at verify>
+freeze: 35135e24 · head: ef55cafd
+seal: git diff 35135e24 ef55cafd -- .add/tasks/plain-results.md add-method/tests/test_plain_results.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_plain_results.py` → exit 0 · 5 passed (inside the full run)
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 187 passed; `python3 -m pytest -q benchmark/tests` → exit 0 · 560 passed, 12 skipped
+consumers: none — no `gives:` surface
+residue: front-door truth — "not proven" beside the 226 vs 215; the README guess row narrowed from "every time" to the measured 3 of 3 vs 0 of 3; no statistics vocabulary in the plain texts
+probes: headless Chrome render at 1200 px and in a 390 px frame (reduced motion): no overflow, tiles legible after one layout fix (labels under numbers; money/time bar labels)
+lens: build=self · refute=self cold reread for overclaim and jargon · found: 2 confirmed (the "every time" overclaim, the unlabelled price bars), 0 rejected
+verdict: PASS — every check held on this commit.
