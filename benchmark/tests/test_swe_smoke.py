@@ -76,7 +76,7 @@ class PromptTest(unittest.TestCase):
 
     def test_add_arm_drives_the_4_0_skill(self):
         p = runner.wrap_prompt("x", "add")
-        for phrase in (".claude/skills/add/SKILL.md", "reproduces the issue",
+        for phrase in (".claude/skills/add/SKILL.md",
                        "regression floor", "Never weaken existing tests", "no human"):
             self.assertIn(phrase, p)
         self.assertNotIn("add.py", p, "the 2.0 engine is gone in 4.0")
@@ -88,6 +88,13 @@ class PromptTest(unittest.TestCase):
         self.assertIn("size the work as the skill says", p)
         self.assertNotIn("ONE task", p)
         self.assertNotIn("freeze(", p)
+
+    def test_add_arm_lets_the_skill_decide_on_a_test(self):
+        """important-tests-only: the prompt told every run to start from a reproducing test, so the
+        harness, not the skill, produced part of the 299-of-300 'shipped a test' figure."""
+        p = runner.wrap_prompt("x", "add")
+        self.assertNotIn("Start from a test", p)
+        self.assertNotIn("reproduces the issue", p)
 
     def test_vanilla_arm_is_method_free(self):
         p = runner.wrap_prompt("x", "vanilla")
