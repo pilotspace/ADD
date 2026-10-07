@@ -7,6 +7,11 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 ## [Unreleased]
 
 ### Changed
+- **Run ADD at `--effort medium`.** On a fresh run of all 300 SWE-bench Lite issues with both arms at
+  medium, ADD resolved 226 against vanilla Claude Code's 215 (McNemar p = 0.099; held-out 199: 143
+  against 135), at 1.8× the dollars and 2.5× the seconds per issue. At low effort ADD skipped its own
+  skill in half the runs and resolved 201. The READMEs now recommend medium. The low-effort run stays
+  on the results page as history.
 - **The full SWE-bench Lite result is on the front door, loss included.** On all 300 issues (Sonnet
   5.5, official eval environment), vanilla Claude Code at medium effort resolved 215 and ADD at low
   effort resolved 201 (McNemar p = 0.016), at 1.4× the dollars per issue. ADD saw a passing test run
