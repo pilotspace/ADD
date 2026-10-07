@@ -1,7 +1,7 @@
 ---
 type: Task
 title: publish the fresh 300 at medium effort — ADD 226 vs vanilla 215 — and recommend --effort medium everywhere
-status: build
+status: done
 kind: docs
 risks: [front-door-claim-truth]
 scope: [README.md, add-method/README.md, benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md, benchmark/GAP-TRACK-2026-10-06.md, add-method/CHANGELOG.md, add-method/tests/test_publish_medium.py, add-method/tests/test_publish_300.py, add-method/tests/test_value_final.py]
@@ -37,4 +37,12 @@ regression: cd add-method && python3 -m pytest -q
 - publish-300's README guards now read the results page (its section stays there as history); value-final's README facts move to the medium run (M3).
 
 ## EVIDENCE
-<written once, at verify>
+freeze: a75fcbd0 · head: a65c6672
+seal: git diff a75fcbd0 a65c6672 -- .add/tasks/publish-medium.md add-method/tests/test_publish_medium.py add-method/tests/test_publish_300.py add-method/tests/test_value_final.py → empty
+check: `cd add-method && python3 -m pytest -q tests/test_publish_medium.py tests/test_publish_300.py tests/test_value_final.py` → exit 0 (inside the full run)
+regression: `cd add-method && python3 -m pytest -q` → exit 0 · 181 passed; `python3 -m pytest -q benchmark/tests` → exit 0 · 560 passed, 12 skipped
+consumers: none — no `gives:` surface; README numbers trace to the cited results page (test_docs_value green)
+residue: front-door truth — p = 0.099 worded "at least as many, and probably more … not significantly"; the vanilla-call bullet corrected (it still said vanilla fixed more); human review time named as not measured
+probes: none — docs only
+lens: build=self · refute=self cold reread for overclaim · found: 1 confirmed (stale vanilla-call claim, fixed), 0 rejected
+verdict: PASS — every check held on this commit, and the front door states the confirmed medium result with its price.
