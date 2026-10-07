@@ -61,6 +61,7 @@ section.scene { background: var(--surface-1); border: 1px solid var(--border); b
 h2 { font-size: 26px; margin: 4px 0 8px; line-height: 1.25; }
 .say { color: var(--text-secondary); margin: 0 0 20px; max-width: 700px; }
 .big-take { font-size: 20px; font-weight: 650; margin: 18px 0 0; }
+.note { color: var(--text-secondary); font-size: 14px; margin: 10px 0 0; }
 .honest { border-left: 3px solid var(--axis); padding: 4px 0 4px 12px; color: var(--text-secondary); font-size: 15px; margin-top: 16px; }
 /* bars */
 .bars { display: grid; gap: 14px; }
@@ -92,7 +93,7 @@ h2 { font-size: 26px; margin: 4px 0 8px; line-height: 1.25; }
 .reason { border: 1px solid var(--border); border-left: 4px solid var(--add); border-radius: 12px; padding: 14px 16px; background: var(--page); }
 .reason h3 { margin: 0 0 4px; font-size: 17px; }
 .reason p { margin: 0; color: var(--text-secondary); font-size: 15px; }
-.reason .proof { display: block; margin-top: 8px; color: var(--add); font-weight: 650; font-variant-numeric: tabular-nums; }
+.reason .proof { display: block; margin-top: 4px; color: var(--add); font-weight: 650; font-variant-numeric: tabular-nums; }
 /* cards */
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .card { border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: var(--page); }
@@ -125,7 +126,7 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
   <header class="hero">
     <div class="eyebrow">Measured on Claude Sonnet 5.5 · October 2026</div>
     <h1>Same AI. Same 300 real bugs.<br>One difference: <span class="add">ADD</span>.</h1>
-    <p class="lede">We asked Claude Code to fix 300 real bugs from popular open-source projects — once on its own, and once with the ADD skill installed. Here is what changed, and what it cost.</p>
+    <p class="lede">Claude Code fixed 300 real open-source bugs twice: on its own, and with ADD.</p>
     <div class="legend" aria-hidden="true">
       <span class="key"><span class="sw van"></span>Claude Code on its own</span>
       <span class="key"><span class="sw add"></span>Claude Code + ADD</span>
@@ -136,117 +137,71 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
   <section class="scene" aria-labelledby="s0" id="why">
     <div class="step">THE IDEA</div>
     <h2 id="s0">Why write the plan and the tests first?</h2>
-    <p class="say">An AI can write the code straight away. ADD makes it write two small things first — a short plan and a test that fails — and only then the code. Here is the difference.</p>
-    <div class="lane">
-      <div class="name">Straight to code</div>
-      <div class="flow" id="flow-van"><span class="chip van">Request</span><span class="to" aria-hidden="true">→</span><span class="chip van">Code</span><span class="to" aria-hidden="true">→</span><span class="chip van">“Done”</span></div>
-      <div class="cap">Fast. But what it guessed, and whether the fix really works, stay inside the AI. You find out later.</div>
-    </div>
-    <div class="lane">
-      <div class="name">With ADD</div>
-      <div class="flow" id="flow-add"><span class="chip add">Request</span><span class="to" aria-hidden="true">→</span><span class="chip add">Plan</span><span class="to" aria-hidden="true">→</span><span class="chip add">Failing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Code</span><span class="to" aria-hidden="true">→</span><span class="chip add">Passing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Evidence</span></div>
-      <div class="cap">Slower. But every step leaves something you can open and check.</div>
-    </div>
+    <div class="lane"><div class="name">Straight to code</div><div class="flow" id="flow-van"><span class="chip van">Request</span><span class="to" aria-hidden="true">→</span><span class="chip van">Code</span><span class="to" aria-hidden="true">→</span><span class="chip van">“Done”</span></div></div>
+    <div class="lane"><div class="name">With ADD: every step leaves something you can check</div><div class="flow" id="flow-add"><span class="chip add">Request</span><span class="to" aria-hidden="true">→</span><span class="chip add">Plan</span><span class="to" aria-hidden="true">→</span><span class="chip add">Failing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Code</span><span class="to" aria-hidden="true">→</span><span class="chip add">Passing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Evidence</span></div></div>
     <div class="reasons">
-      <div class="reason"><h3>1 · Gaps get filled either way</h3>
-        <p>No request says everything. Left alone, the AI makes a silent guess and keeps going. The plan writes each guess down, so you fix one line now instead of finding it in production.</p>
-        <span class="proof" id="proof-guess"></span></div>
-      <div class="reason"><h3>2 · A test written first proves the fix</h3>
-        <p>The test fails before the code and passes after it. That shows the change did what was asked — not just something that looks right.</p>
-        <span class="proof" id="proof-checked"></span></div>
-      <div class="reason"><h3>3 · A saved check can't be quietly weakened</h3>
-        <p>The plan and tests are saved before any code exists. If a test is later edited to make it pass, that edit is visible, not hidden.</p>
-        <span class="proof" id="proof-tested"></span></div>
-      <div class="reason"><h3>4 · The next session can read it</h3>
-        <p>A chat is forgotten. Files are not. The plan and tests stay beside the code, so the next session — or the next teammate — reads what was intended instead of guessing.</p>
-        <span class="proof" id="proof-caught"></span></div>
+      <div class="reason"><h3>A silent guess gets written down</h3><span class="proof" id="proof-guess"></span></div>
+      <div class="reason"><h3>A test written first proves the fix</h3><span class="proof" id="proof-checked"></span></div>
+      <div class="reason"><h3>A saved check can't be quietly weakened</h3><span class="proof" id="proof-tested"></span></div>
+      <div class="reason"><h3>The next session can read it</h3><span class="proof" id="proof-caught"></span></div>
     </div>
-    <p class="honest">These artifacts are also where the extra price comes from. You are paying for proof you can open, not for more code.</p>
   </section>
 
   <section class="scene" aria-labelledby="s1">
-    <div class="step">1 · THE FIX</div>
-    <h2 id="s1">Did the bug actually get fixed?</h2>
-    <p class="say">Each fix was checked by the project's own hidden tests — the ones its maintainers wrote. The AI never saw them.</p>
+    <div class="step">1 · BUGS FIXED</div>
+    <h2 id="s1"><span id="take-fixed"></span> Likely real, not proven.</h2>
     <div class="bars" id="bars-fixed"></div>
-    <p class="big-take" id="take-fixed"></p>
-    <p class="honest">A gap of this size is likely real, but it is <strong>not proven</strong>: with 300 bugs, a difference this small could still be luck. The honest reading is "at least as good, probably a little better."</p>
   </section>
 
   <section class="scene" aria-labelledby="s2">
-    <div class="step">2 · CHECKING ITS OWN WORK</div>
-    <h2 id="s2">Did it run the tests before handing the fix back?</h2>
-    <p class="say">Every dot is one bug. A filled dot means the AI ran the project's tests and saw them pass before it said "done".</p>
+    <div class="step">2 · CHECKED BEFORE “DONE”</div>
+    <h2 id="s2">ADD ran the tests and saw them pass on almost every fix.</h2>
     <div class="grids">
       <div class="grid-box"><h3><span>On its own</span><span class="cnt" id="cnt-van-checked">0</span></h3><div class="dots" id="dots-van-checked" role="img"></div></div>
       <div class="grid-box"><h3><span>With ADD</span><span class="cnt" id="cnt-add-checked">0</span></h3><div class="dots" id="dots-add-checked" role="img"></div></div>
     </div>
-    <p class="big-take">Without ADD, most fixes come back unchecked. With ADD, almost all of them were.</p>
+    <p class="note">One dot per bug. Filled: a passing test run was seen before the fix was handed back.</p>
   </section>
 
   <section class="scene" aria-labelledby="s3">
-    <div class="step">3 · LEAVING A TEST BEHIND</div>
-    <h2 id="s3">Did the fix come with a test?</h2>
-    <p class="say">A test shipped with the fix proves what "fixed" means — and stops the same bug from quietly coming back later.</p>
+    <div class="step">3 · SHIPPED WITH A TEST</div>
+    <h2 id="s3">Almost every ADD fix carries its own test.</h2>
     <div class="bars" id="bars-tested"></div>
-    <p class="big-take">Almost every ADD fix carries its own test. On its own, the AI rarely writes one.</p>
   </section>
 
   <section class="scene" aria-labelledby="s4">
-    <div class="step">4 · WHEN THE REQUEST IS UNCLEAR</div>
-    <h2 id="s4">What happens when you forget to say something?</h2>
-    <p class="say">In a smaller test we asked for a booking app but never said <span class="quote">who is allowed to cancel a booking</span>. Real requests are full of gaps like this.</p>
-    <div class="cards">
-      <div class="card van"><h3>On its own</h3><div id="unclear-van"></div>
-        <ul><li>Let anyone cancel anyone's booking.</li><li>Did not mention it made that choice.</li></ul></div>
-      <div class="card add"><h3>With ADD</h3><div id="unclear-add"></div>
-        <ul><li>Chose the safe reading: only the owner may cancel.</li><li>Wrote the choice down, so you can check it in one line.</li></ul></div>
-    </div>
-    <div class="bars" id="bars-caught" style="margin-top:20px"></div>
-    <p class="say" style="margin-top:10px">The bars above: when we planted bugs in each app, how many did the AI's own tests catch?</p>
+    <div class="step">4 · WHEN THE REQUEST HAS A GAP</div>
+    <h2 id="s4">Nobody said who may cancel a booking. ADD chose owner-only and wrote it down.</h2>
+    <div class="bars" id="bars-owner"></div>
+    <p class="note">Runs that kept cancelling to the owner, out of 3.</p>
+    <div class="bars" id="bars-caught" style="margin-top:18px"></div>
+    <p class="note">Planted bugs caught by the AI's own tests.</p>
   </section>
 
   <section class="scene" aria-labelledby="s5">
     <div class="step">5 · THE PRICE</div>
-    <h2 id="s5">What does it cost?</h2>
-    <p class="say">ADD <strong>costs more</strong>. Most of the extra goes on running tests — that is the checking you saw in step 2.</p>
+    <h2 id="s5">ADD costs more: <span id="take-cost"></span></h2>
     <div class="bars" id="bars-cost"></div>
     <div class="bars" id="bars-time" style="margin-top:14px"></div>
-    <p class="big-take" id="take-cost"></p>
   </section>
 
   <section class="scene" aria-labelledby="s6">
     <div class="step">6 · ONE SETTING MATTERS</div>
-    <h2 id="s6">Give it enough effort to read its own instructions</h2>
-    <p class="say" id="say-effort"></p>
+    <h2 id="s6">Run ADD at medium effort. At low it skipped its own instructions half the time.</h2>
     <div class="bars" id="bars-effort"></div>
+    <p class="note" id="say-effort"></p>
     <div class="cmd" aria-label="Recommended command">claude --effort medium</div>
   </section>
 
-  <section class="scene" aria-labelledby="s7">
-    <div class="step">WHICH SHOULD YOU USE?</div>
-    <h2 id="s7">Pick by what happens to the code next</h2>
-    <div class="cards">
-      <div class="card van"><h3>Claude Code on its own</h3>
-        <ul><li>Throwaway scripts and quick experiments.</li><li>Nobody will review or maintain the code.</li><li>Speed and price matter most.</li></ul></div>
-      <div class="card add"><h3>Claude Code + ADD</h3>
-        <ul><li>Code you will keep, change, or share with a team.</li><li>You want to see that it was checked, not just told.</li><li>Your request might have gaps the AI has to fill.</li></ul></div>
-    </div>
-  </section>
-
   <section class="scene" aria-labelledby="s8">
-    <div class="step">THE FINE PRINT</div>
-    <h2 id="s8">What we have not measured yet</h2>
-    <ul class="plain">
-      <li><strong>Whether ADD saves you review time.</strong> Every run was automatic, with no person in the loop. A timed review study is in progress; until then this is not measured.</li>
-      <li><strong>Brand-new bugs.</strong> These 300 bugs are public and older than the AI, so it may have seen some of the real fixes before.</li>
-      <li><strong>Repeat runs.</strong> Each side fixed each bug once. Another run would move the numbers a little.</li>
-    </ul>
+    <div class="step">NOT MEASURED YET</div>
+    <h2 id="s8">Review time · brand-new bugs · repeat runs</h2>
+    <p class="note">Whether ADD saves you review time is not measured: every run was automatic. These 300 bugs are public and older than the AI. Each side fixed each bug once.</p>
   </section>
 
   <footer>
-    How this was measured, with every number and command: <a href="https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md">the full results</a>.
-    The same request run both ways, step by step: <a href="./add-vs-vanilla.html">the two flows</a>.
+    Every number and command: <a href="https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md">the full results</a>.
+    The same request run both ways: <a href="./add-vs-vanilla.html">the two flows</a>.
   </footer>
 </div>
 </div>
@@ -331,8 +286,7 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
   }
   bars("bars-fixed", [{label: "On its own", value: D.fixed.vanilla, cls: "van"}, {label: "With ADD", value: D.fixed.add, cls: "add"}],
        D.fixed.total, function (v) { return Math.round(v) + " / " + D.fixed.total; }, "bugs fixed");
-  document.getElementById("take-fixed").textContent =
-    "ADD fixed " + (D.fixed.add - D.fixed.vanilla) + " more of the 300 bugs (" + D.fixed.add + " against " + D.fixed.vanilla + ").";
+  document.getElementById("take-fixed").textContent = "ADD fixed " + (D.fixed.add - D.fixed.vanilla) + " more bugs.";
   bars("bars-tested", [{label: "On its own", value: D.tested.vanilla, cls: "van"}, {label: "With ADD", value: D.tested.add, cls: "add"}],
        D.tested.total, function (v) { return Math.round(v) + " / " + D.tested.total; }, "fixes with a test");
   bars("bars-caught", [{label: "On its own", value: D.unclear.bugs_caught.vanilla, cls: "van"}, {label: "With ADD", value: D.unclear.bugs_caught.add, cls: "add"}],
@@ -341,25 +295,16 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
        0.2, function (v) { return "$" + v.toFixed(3); }, "per bug");
   bars("bars-time", [{label: "Time, on its own", value: D.cost.seconds.vanilla, cls: "van"}, {label: "Time, with ADD", value: D.cost.seconds.add, cls: "add"}],
        100, function (v) { return Math.round(v) + " s"; }, "per bug");
-  document.getElementById("take-cost").textContent =
-    "About " + D.cost.x_usd + "× the money and " + D.cost.x_time + "× the time per bug: roughly " +
-    Math.round(D.cost.usd.add * 100) + " cents and " + D.cost.seconds.add + " seconds with ADD, against " +
-    Math.round(D.cost.usd.vanilla * 100) + " cents and " + D.cost.seconds.vanilla + " seconds on its own.";
+  document.getElementById("take-cost").textContent = D.cost.x_usd + "× the money, " + D.cost.x_time + "× the time.";
+  bars("bars-owner", [{label: "On its own", value: D.unclear.owner_only.vanilla, cls: "van"}, {label: "With ADD", value: D.unclear.owner_only.add, cls: "add"}],
+       D.unclear.owner_only.runs, function (v) { return Math.round(v) + " of " + D.unclear.owner_only.runs; }, "runs");
   bars("bars-effort", [
       {label: "ADD at low effort", value: D.effort.low, cls: "add"},
       {label: "On its own", value: D.effort.vanilla, cls: "van"},
       {label: "ADD at medium effort", value: D.effort.medium, cls: "add"}],
        D.effort.total, function (v) { return Math.round(v) + " / " + D.effort.total; }, "bugs fixed");
-  document.getElementById("say-effort").textContent =
-    "At the lowest effort setting, ADD skipped reading its own instructions in about half the bugs (it read them in " +
-    D.effort.read_low + " of " + D.effort.runs_low + ") and fixed fewer bugs than Claude Code on its own. At medium effort it read them almost every time (" +
-    D.effort.read_medium + " of " + D.effort.total + ") and pulled ahead. Run ADD at medium.";
-
-  // unclear-request counters
-  [["unclear-van", D.unclear.owner_only.vanilla], ["unclear-add", D.unclear.owner_only.add]].forEach(function (p) {
-    var n = document.getElementById(p[0]);
-    n.textContent = "Kept cancelling to the owner in " + p[1] + " of " + D.unclear.owner_only.runs + " runs.";
-  });
+  document.getElementById("say-effort").textContent = "ADD read its instructions in " + D.effort.read_low + " of " + D.effort.runs_low +
+    " bugs at low effort, and in " + D.effort.read_medium + " of " + D.effort.total + " at medium.";
 
   // dot grids
   function dotGrid(gridId, cntId, on, total, cls, scene) {
@@ -379,10 +324,10 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
   // why: two flows, lit step by step
   function chipsOf(id) { return Array.prototype.slice.call(document.querySelectorAll("#" + id + " .chip")); }
   var fv = chipsOf("flow-van"), fa = chipsOf("flow-add");
-  document.getElementById("proof-guess").textContent = "Guess written down: " + D.unclear.owner_only.add + " of " + D.unclear.owner_only.runs + " with ADD, " + D.unclear.owner_only.vanilla + " of " + D.unclear.owner_only.runs + " without.";
-  document.getElementById("proof-checked").textContent = "Fix seen passing before hand-back: " + D.checked.add + " vs " + D.checked.vanilla + " of " + D.checked.total + ".";
-  document.getElementById("proof-caught").textContent = "Left behind for next time — fix shipped with its test: " + D.tested.add + " vs " + D.tested.vanilla + " of " + D.tested.total + ".";
-  document.getElementById("proof-tested").textContent = "Tests that still bite — planted bugs caught: " + Math.round(D.unclear.bugs_caught.add * 100) + "% vs " + Math.round(D.unclear.bugs_caught.vanilla * 100) + "%.";
+  document.getElementById("proof-guess").textContent = "" + D.unclear.owner_only.add + " of " + D.unclear.owner_only.runs + " with ADD, " + D.unclear.owner_only.vanilla + " of " + D.unclear.owner_only.runs + " without.";
+  document.getElementById("proof-checked").textContent = "" + D.checked.add + " vs " + D.checked.vanilla + " of " + D.checked.total + " fixes seen passing.";
+  document.getElementById("proof-caught").textContent = "" + D.tested.add + " vs " + D.tested.vanilla + " of " + D.tested.total + " fixes kept their test.";
+  document.getElementById("proof-tested").textContent = "" + Math.round(D.unclear.bugs_caught.add * 100) + "% vs " + Math.round(D.unclear.bugs_caught.vanilla * 100) + "% of planted bugs caught.";
   reveals.push({scene: document.getElementById("why"), go: function () {
     function light(chips, gap, done) {
       chips.forEach(function (c) { c.classList.remove("lit"); });

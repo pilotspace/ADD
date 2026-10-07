@@ -68,7 +68,7 @@ it with `--effort medium`. **[See the results animated, in plain words →](http
 - 📜 **Every change leaves its reasoning in your repo** — the rules, the guesses and the checks live in one task file next to the code, so the next session or teammate reads the intent instead of guessing it.
 - 🛡️ **Safer guesses where your spec is silent** — ADD takes the least-privilege reading when nobody said *who* may act, and seals a check for it.
 - 🔒 **Trust rests on evidence, not a plausible diff** — checks are sealed in a `freeze` commit before the build, and every task ends in a verdict you can re-run. Security findings always lead the report.
-- ⚖️ **An honest price** — Measured on ADD 4.1.0 with Claude Sonnet 5.5 on all 300 SWE-bench Lite issues (n = 300, official eval environment, both at `--effort medium`): ADD resolved 226 to vanilla Claude Code's 215, at 1.8× the dollars and 2.5× the seconds per issue. It saw a passing test run before shipping in 274 of 300 fixes (vanilla 53) and shipped a test with 299 (vanilla 17). On small apps it costs 1.3–1.9× the dollars and 1.8–2.4× the minutes; correctness ties, and ADD's own tests catch more seeded bugs on an ambiguous spec (0.81 vs 0.43) ([results](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
+- ⚖️ **An honest price** — Measured on ADD 4.1.0 with Claude Sonnet 5.5 (n = 300 real bugs, both at `--effort medium`): ADD resolved 226 to vanilla Claude Code's 215, at 1.8× the dollars and 2.5× the seconds per bug. On small apps it costs 1.3–1.9× the dollars and 1.8–2.4× the minutes; correctness ties, and its tests catch more seeded bugs (0.81 vs 0.43) ([results](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 - 💸 **Ceremony only where it buys trust** — most changes take the Quick lane: one red→green test, one commit, no task file.
 
 ## What ADD gives your project
@@ -135,11 +135,9 @@ apps at n = 3 per arm, and all 300 SWE-bench Lite issues once per arm ([results]
 At medium it read the skill in 292 of 300 and resolved 226. Whether its tests and reports save a reviewer time is not measured
 yet ([fresh 300 at medium](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 
-On the older Sonnet 5 (rounds 4–5), ADD's own tests caught more seeded bugs (0.68 vs 0.51 and 0.79
-vs 0.53) and vanilla shipped no tests in 2 of 5 runs, at 2.2–2.9× the dollars. Sonnet 5.5 closed
-those gaps on these workloads, and ADD's cost fell from $1.67 to $0.52 a run.
+Earlier rounds, older models and the full method are in [the results history](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md).
 
-<sub>**Fine print:** both arms ran with the operator's `~/.claude` kept out of the session (`--setting-sources project,local`). Earlier rounds loaded it: its `security-guidance` plugin reviewed every `git commit`, so ADD's commits paid 100–185 s each, and that is where the old 4–5× minutes came from. Run ADD at `--effort medium`: at `--effort low` it skipped its own skill in half the SWE runs and resolved 25 fewer issues. Both small workloads saturate at Sonnet 5.5, and n = 3 is direction, not proof.</sub>
+<sub>**Fine print:** both arms ran with the operator's own `~/.claude` kept out of the session; earlier rounds loaded it, and its `security-guidance` plugin slowed every ADD commit. Run ADD at `--effort medium`: at `--effort low` it skipped its own skill in half the SWE runs and resolved 25 fewer issues. The small apps are n = 3: direction, not proof.</sub>
 
 ## When vanilla Claude is the right call
 
