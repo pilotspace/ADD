@@ -100,19 +100,19 @@ apps at n = 3 per arm, and all 300 SWE-bench Lite issues once per arm ([results]
 [both flows, animated](https://pilotspace.github.io/ADD/add-vs-vanilla.html) ·
 [the earlier rounds, animated](https://pilotspace.github.io/ADD/add-value.html)).
 
-| on Sonnet 5.5 (wm1 · amb1) | vanilla Claude Code · effort medium | + ADD 4.0 · effort low |
+| what you get | vanilla Claude Code | Claude Code + ADD |
 |---|---|---|
-| **you pay:** dollars per run | $0.21 · $0.17 | $0.28 · $0.32, **1.3× · 1.9×** |
-| **you pay:** minutes per run | 0.9 · 0.7 min | 1.6 · 1.7 min, **1.8× · 2.4×** |
-| requirement oracle | 1.00 · 1.00 | 1.00 · 1.00, a tie |
-| held-out edge cases passed (wm1) | 22 of 22 | 22 of 22, a tie |
-| seeded bugs its own tests catch (mutation, rounds 8–9 pooled) | 0.78 · 0.43 | 0.86 · **0.81** |
-| planted ambiguities handled right, of 7 (amb1) | 5.0 | 5.3 |
-| "who may cancel?" read as owner-only (amb1) | 0 of 3 | **3 of 3** |
-| **SWE-bench Lite, all 300 issues resolved (both at medium)** | 215 of 300 | **226 of 300** (p = 0.099) |
-| SWE: dollars · seconds per issue | $0.089 · 32 s | $0.162 · 80 s, **1.8× · 2.5×** |
-| SWE: a passing test run seen before shipping | 53 of 300 | **274 of 300** |
-| claimed test count = a fresh rerun | no claim made | **every parsed claim** |
+| **Fixes that land** — SWE-bench Lite, all 300 issues resolved (both at medium) | 215 of 300 | **226 of 300** (p = 0.099) |
+| **Verified before it ships** — a passing test run seen (SWE, 300 issues) | 53 of 300 | **274 of 300** |
+| **Ships with a test** — the fix carries its own test (SWE, 300 issues) | 17 of 300 | **299 of 300** |
+| **Tests that catch bugs** — seeded bugs its own tests catch (wm1 · amb1, rounds 8–9 pooled) | 0.78 · 0.43 | 0.86 · **0.81** |
+| **Guesses you can review** — "who may cancel?" read as owner-only and written down (amb1) | 0 of 3 | **3 of 3** |
+| **Ambiguities handled right** — of 7 planted (amb1) | 5.0 | 5.3 |
+| **Claims you can trust** — claimed test count = a fresh rerun | no claim made | **every parsed claim** |
+| **Correct on small apps** — requirement oracle · held-out edge cases (wm1) | 1.00 · 22 of 22 | 1.00 · 22 of 22, a tie |
+| **you pay:** SWE dollars · seconds per issue (both at medium) | $0.089 · 32 s | $0.162 · 80 s, **1.8× · 2.5×** |
+| **you pay:** small apps, dollars per run (wm1 · amb1; ADD at low) | $0.21 · $0.17 | $0.28 · $0.32, **1.3× · 1.9×** |
+| **you pay:** small apps, minutes per run (wm1 · amb1; ADD at low) | 0.9 · 0.7 min | 1.6 · 1.7 min, **1.8× · 2.4×** |
 
 **Effort matters.** At `--effort low` ADD read its skill in only half its runs and resolved 201 of 300 to vanilla's 215.
 At medium it read the skill in 292 of 300 and resolved 226. Whether its tests and reports save a reviewer time is not measured
