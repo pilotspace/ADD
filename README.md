@@ -105,6 +105,11 @@ apps at n = 3 per arm, and all 300 SWE-bench Lite issues once per arm ([results]
 At medium it read the skill in 292 of 300 and resolved 226. In a blind six-issue review, one reviewer preferred vanilla's shorter output in 6 of 6, while 2 of the 5 vanilla patches
 they approved as is fail the benchmark's tests; timed review is not measured ([fresh 300 at medium](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 
+**What changed after the measurement.** The 300-issue numbers were measured while Quick required a test on every fix.
+The shipped 4.1.0 skill makes a small change directly and writes a new test only when it is important (a plausible wrong fix
+would pass every existing check); the rest is proven by running the repro and the suite. That change is not re-measured:
+expect fewer shipped tests than 299 of 300, and an unknown effect on the fix rate.
+
 Earlier rounds, older models and the full method are in [the results history](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md).
 
 <sub>**Fine print:** both arms ran with the operator's own `~/.claude` kept out of the session; earlier rounds loaded it, and its `security-guidance` plugin slowed every ADD commit. Run ADD at `--effort medium`: at `--effort low` it skipped its own skill in half the SWE runs and resolved 25 fewer issues. The small apps are n = 3: direction, not proof.</sub>

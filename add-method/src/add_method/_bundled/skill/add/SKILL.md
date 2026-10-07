@@ -46,7 +46,7 @@ Every turn re-reads the whole context: cost grows with turns, not words. Keep ev
 
 | the request | lane | what persists |
 |---|---|---|
-| mechanical, or a small behavior: ≤3 adjacent files, one sitting, no unknowns | **Quick** | a red→green test + one commit |
+| mechanical, or a small behavior: ≤3 adjacent files, one sitting, no unknowns | **Quick** | one commit; a test when it is important |
 | one behavior worth a written contract | **Task** | `.add/tasks/<slug>.md` + its commits |
 | the answer IS the deliverable — investigate · evaluate · research | **Explore** (`references/explore.md`) | the task's `## FINDINGS` |
 | a theme, or more than one task | **Milestone** | `.add/milestones/<slug>.md` + its tasks |
@@ -55,16 +55,16 @@ Every turn re-reads the whole context: cost grows with turns, not words. Keep ev
 other code consumes (signature, return, status, format), is at least a Task — never Quick. A fix that
 restores intended behavior without changing its shape is not. When in doubt, size up.
 
-**Quick:** read the nearest tests and sibling code of what you change, and grep every other site that
-calls or emits it: the fix keeps their conventions (inputs not mutated, parallel paths consistent, the
-neighbours' pattern), so the fix the request literally suggests may be the wrong one. Test the request's
-own example and one case the most plausible wrong fix would pass (its falsifier; non-code: the check
-that fits): watch it fail, make it pass, run the suite, review your diff. No suite runs? Run the
-request's repro as written, else import every file you touched and trace its inputs through your edit.
-The last lines of your reply (and any commit body): `lane: quick — <why>` · `intent: <convention → how
-the fix keeps it>` · `red→green: <test> · suite: <cmd> → <result>` (or `suite: unavailable — <why> ·
-ran: <what>`). Floor touched, or a check to weaken? It is a Task now. A security issue you pass by stays
-out of the diff and leads the report: HARD-STOP.
+**Quick:** read the nearest tests and sibling code of what you change, and grep every other site that calls or emits it: the
+fix keeps their conventions (inputs not mutated, parallel paths consistent, the neighbours' pattern), so the fix the request
+literally suggests may be the wrong one. Make the change directly. Write a new test only when it is important: a plausible
+wrong fix would pass every existing check and break something a caller relies on. It tests the request's own example and that
+wrong fix's case (its falsifier; non-code: the check that fits); watch it fail first. Everything else is proven by evidence:
+the request's repro fails before your change and passes after; run the suite, review your diff. No suite? Run the repro as
+written, else import every file you touched and trace its inputs through your edit. The last lines of your reply (and any
+commit body): `lane: quick — <why>` · `intent: <convention → how the fix keeps it>` · `red→green: <test>` or `test: none —
+<what covers it>` · `suite: <cmd> → <result>` (or `suite: unavailable — <why> · ran: <what>`). Floor touched, or a check to
+weaken? It is a Task now. A security issue you pass by stays out of the diff and leads the report: HARD-STOP.
 
 ## The task loop — Direction → Build → Verify
 
