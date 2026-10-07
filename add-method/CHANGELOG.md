@@ -7,6 +7,10 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 ## [Unreleased]
 
 ### Changed
+- **Results anyone can read.** A new animated page, `docs/add-results.html`, tells the 300-bug result
+  in plain words: bugs fixed, fixes checked by a passing test run, fixes shipped with a test, unclear
+  requests, the price, and the effort setting. It also says what is not proven or not measured. Both
+  READMEs now open with an "ADD in plain words" table that links to it.
 - **Run ADD at `--effort medium`.** On a fresh run of all 300 SWE-bench Lite issues with both arms at
   medium, ADD resolved 226 against vanilla Claude Code's 215 (McNemar p = 0.099; held-out 199: 143
   against 135), at 1.8× the dollars and 2.5× the seconds per issue. At low effort ADD skipped its own

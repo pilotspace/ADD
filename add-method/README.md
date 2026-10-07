@@ -46,6 +46,23 @@ The agent sizes the request, writes the task's rules, assumptions and failing ch
 with a `freeze(<slug>)` commit, builds to green, verifies on a fresh run, and hands you a report
 of what it decided and on what evidence. Full walkthrough: the [Quickstart](./GETTING-STARTED.md).
 
+## ADD in plain words
+
+We gave Claude Code the same 300 real bugs from popular open-source projects twice: once on its own,
+and once with ADD installed. Same AI, same bugs, same settings.
+
+| | Claude Code on its own | Claude Code + ADD |
+|---|---|---|
+| 🐛 Bugs fixed | 215 of 300 | **226 of 300** |
+| ✅ Ran the tests and saw them pass before saying "done" | 53 of 300 | **274 of 300** |
+| 🧪 The fix came with its own test | 17 of 300 | **299 of 300** |
+| 📝 Wrote down its guess where the request was silent ("who may cancel a booking?") | 0 of 3 | **3 of 3** |
+| 💰 Price and time per bug | about 9¢ · 32 s | about 16¢ · 80 s (1.8× the money, 2.5× the time) |
+
+**In short:** ADD fixes at least as many bugs, checks and tests almost every fix, and tells you what
+it assumed. It costs more, and the gain in bugs fixed is small enough that it is not yet proven. Run
+it with `--effort medium`. **[See the results animated, in plain words →](https://pilotspace.github.io/ADD/add-results.html)**
+
 ## Highlights
 
 - 📜 **Every change leaves its reasoning in your repo** — the rules, the guesses and the checks live in one task file next to the code, so the next session or teammate reads the intent instead of guessing it.
