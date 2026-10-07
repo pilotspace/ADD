@@ -11,7 +11,7 @@
   --page: #f9f9f7; --surface-1: #fcfcfb;
   --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
   --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
-  --add: #2a78d6; --van: #eb6834; --good: #006300; --empty: #e6e5df;
+  --add: #0a807b; --van: #eb6834; --good: #006300; --empty: #e6e5df; --on-add: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) .viz-root {
@@ -19,7 +19,7 @@
     --page: #0d0d0d; --surface-1: #1a1a19;
     --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
     --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
-    --add: #3987e5; --van: #d95926; --good: #0ca30c; --empty: #2a2a28;
+    --add: #2cc9c0; --van: #e0703f; --good: #0ca30c; --empty: #2a2a28; --on-add: #04201e;
   }
 }
 :root[data-theme="dark"] .viz-root {
@@ -27,7 +27,7 @@
   --page: #0d0d0d; --surface-1: #1a1a19;
   --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
   --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
-  --add: #3987e5; --van: #d95926; --good: #0ca30c; --empty: #2a2a28;
+  --add: #2cc9c0; --van: #e0703f; --good: #0ca30c; --empty: #2a2a28; --on-add: #04201e;
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
@@ -78,6 +78,21 @@ h2 { font-size: 26px; margin: 4px 0 8px; line-height: 1.25; }
 .dots { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; }
 .d { aspect-ratio: 1; border-radius: 50%; background: var(--empty); transition: background-color .25s ease; }
 .d.on.add { background: var(--add); } .d.on.van { background: var(--van); }
+/* why: two flows */
+.lane { margin: 14px 0; }
+.lane .name { font-weight: 650; margin-bottom: 8px; }
+.flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { border: 1px solid var(--axis); border-radius: 999px; padding: 6px 14px; background: var(--page); font-size: 15px; transition: background-color .45s ease, color .45s ease, border-color .45s ease, transform .45s ease; }
+.chip.lit { transform: translateY(-2px); }
+.chip.lit.add { background: var(--add); border-color: var(--add); color: var(--on-add); }
+.chip.lit.van { background: var(--van); border-color: var(--van); color: #fff; }
+.flow .to { color: var(--muted); }
+.lane .cap { color: var(--text-secondary); font-size: 15px; margin-top: 8px; }
+.reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+.reason { border: 1px solid var(--border); border-left: 4px solid var(--add); border-radius: 12px; padding: 14px 16px; background: var(--page); }
+.reason h3 { margin: 0 0 4px; font-size: 17px; }
+.reason p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+.reason .proof { display: block; margin-top: 8px; color: var(--add); font-weight: 650; font-variant-numeric: tabular-nums; }
 /* cards */
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .card { border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: var(--page); }
@@ -90,11 +105,11 @@ ul.plain { padding-left: 20px; } ul.plain li { margin: 6px 0; }
 footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
 @media (max-width: 640px) {
   .brow { grid-template-columns: 1fr; gap: 4px; }
-  .grids, .cards { grid-template-columns: 1fr; }
+  .grids, .cards, .reasons { grid-template-columns: 1fr; }
   section.scene { padding: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fill, .d, section.scene { transition: none !important; }
+  .fill, .d, .chip, section.scene { transition: none !important; }
   .js section.scene:not(.in) { opacity: 1; transform: none; }
 }
 </style>
@@ -117,6 +132,37 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
     </div>
     <div class="tiles" id="tiles"></div>
   </header>
+
+  <section class="scene" aria-labelledby="s0" id="why">
+    <div class="step">THE IDEA</div>
+    <h2 id="s0">Why write the plan and the tests first?</h2>
+    <p class="say">An AI can write the code straight away. ADD makes it write two small things first — a short plan and a test that fails — and only then the code. Here is the difference.</p>
+    <div class="lane">
+      <div class="name">Straight to code</div>
+      <div class="flow" id="flow-van"><span class="chip van">Request</span><span class="to" aria-hidden="true">→</span><span class="chip van">Code</span><span class="to" aria-hidden="true">→</span><span class="chip van">“Done”</span></div>
+      <div class="cap">Fast. But what it guessed, and whether the fix really works, stay inside the AI. You find out later.</div>
+    </div>
+    <div class="lane">
+      <div class="name">With ADD</div>
+      <div class="flow" id="flow-add"><span class="chip add">Request</span><span class="to" aria-hidden="true">→</span><span class="chip add">Plan</span><span class="to" aria-hidden="true">→</span><span class="chip add">Failing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Code</span><span class="to" aria-hidden="true">→</span><span class="chip add">Passing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Evidence</span></div>
+      <div class="cap">Slower. But every step leaves something you can open and check.</div>
+    </div>
+    <div class="reasons">
+      <div class="reason"><h3>1 · Gaps get filled either way</h3>
+        <p>No request says everything. Left alone, the AI makes a silent guess and keeps going. The plan writes each guess down, so you fix one line now instead of finding it in production.</p>
+        <span class="proof" id="proof-guess"></span></div>
+      <div class="reason"><h3>2 · A test written first proves the fix</h3>
+        <p>The test fails before the code and passes after it. That shows the change did what was asked — not just something that looks right.</p>
+        <span class="proof" id="proof-checked"></span></div>
+      <div class="reason"><h3>3 · A saved check can't be quietly weakened</h3>
+        <p>The plan and tests are saved before any code exists. If a test is later edited to make it pass, that edit is visible, not hidden.</p>
+        <span class="proof" id="proof-tested"></span></div>
+      <div class="reason"><h3>4 · The next session can read it</h3>
+        <p>A chat is forgotten. Files are not. The plan and tests stay beside the code, so the next session — or the next teammate — reads what was intended instead of guessing.</p>
+        <span class="proof" id="proof-caught"></span></div>
+    </div>
+    <p class="honest">These artifacts are also where the extra price comes from. You are paying for proof you can open, not for more code.</p>
+  </section>
 
   <section class="scene" aria-labelledby="s1">
     <div class="step">1 · THE FIX</div>
@@ -329,6 +375,22 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
   }
   dotGrid("dots-van-checked", "cnt-van-checked", D.checked.vanilla, D.checked.total, "van");
   dotGrid("dots-add-checked", "cnt-add-checked", D.checked.add, D.checked.total, "add");
+
+  // why: two flows, lit step by step
+  function chipsOf(id) { return Array.prototype.slice.call(document.querySelectorAll("#" + id + " .chip")); }
+  var fv = chipsOf("flow-van"), fa = chipsOf("flow-add");
+  document.getElementById("proof-guess").textContent = "Guess written down: " + D.unclear.owner_only.add + " of " + D.unclear.owner_only.runs + " with ADD, " + D.unclear.owner_only.vanilla + " of " + D.unclear.owner_only.runs + " without.";
+  document.getElementById("proof-checked").textContent = "Fix seen passing before hand-back: " + D.checked.add + " vs " + D.checked.vanilla + " of " + D.checked.total + ".";
+  document.getElementById("proof-caught").textContent = "Left behind for next time — fix shipped with its test: " + D.tested.add + " vs " + D.tested.vanilla + " of " + D.tested.total + ".";
+  document.getElementById("proof-tested").textContent = "Tests that still bite — planted bugs caught: " + Math.round(D.unclear.bugs_caught.add * 100) + "% vs " + Math.round(D.unclear.bugs_caught.vanilla * 100) + "%.";
+  reveals.push({scene: document.getElementById("why"), go: function () {
+    function light(chips, gap, done) {
+      chips.forEach(function (c) { c.classList.remove("lit"); });
+      chips.forEach(function (c, i) { setTimeout(function () { c.classList.add("lit"); if (i === chips.length - 1 && done) done(); }, gap * (i + 1)); });
+    }
+    if (reduce) { fv.concat(fa).forEach(function (c) { c.classList.add("lit"); }); return; }
+    (function loop() { light(fv, 450); light(fa, 450, function () { setTimeout(loop, 4200); }); })();
+  }});
 
   // reveal scenes on scroll
   var scenes = Array.prototype.slice.call(document.querySelectorAll("section.scene"));
