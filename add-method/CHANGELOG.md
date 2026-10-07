@@ -20,6 +20,10 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
   against 135), at 1.8× the dollars and 2.5× the seconds per issue. At low effort ADD skipped its own
   skill in half the runs and resolved 201. The READMEs now recommend medium. The low-effort run stays
   on the results page as history.
+- **A blind review study, published against ADD.** One reviewer (the project owner) judged six
+  issues blind and untimed: they preferred vanilla's output in 6 of 6 and found it easier to decide
+  on in 6 of 6. 2 of the 5 vanilla patches approved as is fail the benchmark's tests. Anecdotal:
+  one reviewer, six issues.
 - **The full SWE-bench Lite result is on the front door, loss included.** On all 300 issues (Sonnet
   5.5, official eval environment), vanilla Claude Code at medium effort resolved 215 and ADD at low
   effort resolved 201 (McNemar p = 0.016), at 1.4× the dollars per issue. ADD saw a passing test run

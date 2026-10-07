@@ -193,10 +193,19 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
     <div class="cmd" aria-label="Recommended command">claude --effort medium</div>
   </section>
 
+  <section class="scene" aria-labelledby="s7">
+    <div class="step">7 · ONE REVIEWER, 6 BUGS, BLIND</div>
+    <h2 id="s7">The reviewer preferred the shorter output every time. Approving it was less safe.</h2>
+    <div class="bars" id="bars-prefer"></div>
+    <p class="note">Which output the reviewer preferred.</p>
+    <div class="bars" id="bars-matched" style="margin-top:18px"></div>
+    <p class="note">Reviewer's verdict agreed with the benchmark's tests. One reviewer, not timed: a hint, not a measurement.</p>
+  </section>
+
   <section class="scene" aria-labelledby="s8">
     <div class="step">NOT MEASURED YET</div>
-    <h2 id="s8">Review time · brand-new bugs · repeat runs</h2>
-    <p class="note">Whether ADD saves you review time is not measured: every run was automatic. These 300 bugs are public and older than the AI. Each side fixed each bug once.</p>
+    <h2 id="s8">Timed review · brand-new bugs · repeat runs</h2>
+    <p class="note">Review time is not measured. These 300 bugs are public and older than the AI. Each side fixed each bug once.</p>
   </section>
 
   <footer>
@@ -214,7 +223,8 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
   "tested": {"vanilla": 17, "add": 299, "total": 300},
   "unclear": {"owner_only": {"vanilla": 0, "add": 3, "runs": 3}, "bugs_caught": {"vanilla": 0.43, "add": 0.81}},
   "cost": {"usd": {"vanilla": 0.089, "add": 0.162}, "seconds": {"vanilla": 32, "add": 80}, "x_usd": 1.8, "x_time": 2.5},
-  "effort": {"low": 201, "medium": 226, "vanilla": 215, "read_low": 134, "runs_low": 270, "read_medium": 292, "total": 300}
+  "effort": {"low": 201, "medium": 226, "vanilla": 215, "read_low": 134, "runs_low": 270, "read_medium": 292, "total": 300},
+  "review": {"prefer": {"vanilla": 6, "add": 0}, "matched": {"vanilla": 3, "add": 5}, "total": 6}
 }
 </script>
 <script>
@@ -296,6 +306,10 @@ footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
   bars("bars-time", [{label: "Time, on its own", value: D.cost.seconds.vanilla, cls: "van"}, {label: "Time, with ADD", value: D.cost.seconds.add, cls: "add"}],
        100, function (v) { return Math.round(v) + " s"; }, "per bug");
   document.getElementById("take-cost").textContent = D.cost.x_usd + "× the money, " + D.cost.x_time + "× the time.";
+  bars("bars-prefer", [{label: "On its own", value: D.review.prefer.vanilla, cls: "van"}, {label: "With ADD", value: D.review.prefer.add, cls: "add"}],
+       D.review.total, function (v) { return Math.round(v) + " of " + D.review.total; }, "preferred");
+  bars("bars-matched", [{label: "On its own", value: D.review.matched.vanilla, cls: "van"}, {label: "With ADD", value: D.review.matched.add, cls: "add"}],
+       D.review.total, function (v) { return Math.round(v) + " of " + D.review.total; }, "verdicts that agreed with the tests");
   bars("bars-owner", [{label: "On its own", value: D.unclear.owner_only.vanilla, cls: "van"}, {label: "With ADD", value: D.unclear.owner_only.add, cls: "add"}],
        D.unclear.owner_only.runs, function (v) { return Math.round(v) + " of " + D.unclear.owner_only.runs; }, "runs");
   bars("bars-effort", [

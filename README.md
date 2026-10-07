@@ -102,8 +102,8 @@ apps at n = 3 per arm, and all 300 SWE-bench Lite issues once per arm ([results]
 | **you pay:** small apps, minutes per run (wm1 · amb1; ADD at low) | 0.9 · 0.7 min | 1.6 · 1.7 min, **1.8× · 2.4×** |
 
 **Effort matters.** At `--effort low` ADD read its skill in only half its runs and resolved 201 of 300 to vanilla's 215.
-At medium it read the skill in 292 of 300 and resolved 226. Whether its tests and reports save a reviewer time is not measured
-yet ([fresh 300 at medium](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
+At medium it read the skill in 292 of 300 and resolved 226. In a blind six-issue review, one reviewer preferred vanilla's shorter output in 6 of 6, while 2 of the 5 vanilla patches
+they approved as is fail the benchmark's tests; timed review is not measured ([fresh 300 at medium](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 
 Earlier rounds, older models and the full method are in [the results history](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md).
 
