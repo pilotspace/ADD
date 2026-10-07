@@ -43,7 +43,7 @@ not-when: <when not to>
 1. **Fingerprint** — from the task you already wrote: the beat (design · build · verify), `kind`,
    and `risks:`. Nothing extra to fill in.
 2. **Candidates** — `.add/personas/` first (project scars beat generic knowledge); nothing there →
-   `personas-index/use-when.md` in the teacher corpus, read the matching source as a lens; nothing
+   `.add/personas-index/use-when.md` in the teacher corpus, read the matching source as a lens; nothing
    fits → proceed with no persona. A wrong lens is worse than none.
 3. **Lead lens** — the candidate whose `flow:` includes the beat and whose `covers-risks:` covers
    the most of the task's `risks:`; ties go to the one with the better yield in past `lens:` lines

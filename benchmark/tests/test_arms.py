@@ -17,8 +17,8 @@ def test_all_arms_validate_with_fairness_parity():
     assert "add-main" in ARM_NAMES
     arms = [load_arm(ARMS_DIR / f"{name}.toml") for name in ARM_NAMES]
     # add-3x / add-4: the ADD 3.7.0-vs-4.0 head-to-head pilot arms; add-4-lean: the two-edit
-    # Sonnet-only skill variant (.add/tasks/bench-sonnet-only.md)
-    assert len(arms) == 9
+    # Sonnet-only skill variant (.add/tasks/bench-sonnet-only.md); add-4-low · add-4-audited-low · add-4-probe-low · vanilla-low: low-effort arms
+    assert len(arms) == 13
     fairness = {(a.same_model, a.token_ceiling, a.turn_ceiling) for a in arms}
     assert len(fairness) == 1, f"fairness fields diverge across arms: {fairness}"
     for a in arms:

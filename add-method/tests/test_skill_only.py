@@ -81,8 +81,10 @@ def test_task_template_carries_risks_and_falsifier():
 def test_round3_gaps_are_stated():
     """benchmark/PILOT-4v3-2026-09-29.md + the task-contract audit: two contracts left a Must with
     no check, `found:` was almost never used, and 5 of 9 apps crashed on a null or number body."""
+    # "check the cheap ones now" (`found:`) was cut by .add/tasks/value-final.md: 0 of 24 task files in
+    # rounds 8-9 used it after this guard added it — a zero-yield control (SKILL.md §Learn).
     text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    for phrase in ("every RULES id", "check the cheap ones now", "malformed or wrong-typed input"):
+    for phrase in ("every RULES id", "malformed or wrong-typed input"):
         assert phrase in text, f"SKILL.md does not state {phrase!r}"
 
 

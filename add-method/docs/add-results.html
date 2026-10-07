@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADD vs plain Claude Code — 300 real bugs</title>
+<meta name="description" content="The same AI fixed the same 300 real bugs twice: once on its own, once with the ADD skill. What changed, in plain words, and what it cost.">
+<style>
+.viz-root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --add: #0a807b; --van: #eb6834; --good: #006300; --empty: #e6e5df; --on-add: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --add: #2cc9c0; --van: #e0703f; --good: #0ca30c; --empty: #2a2a28; --on-add: #04201e;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --add: #2cc9c0; --van: #e0703f; --good: #0ca30c; --empty: #2a2a28; --on-add: #04201e;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh;
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 0 16px; }
+a { color: var(--add); }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; color: var(--text-secondary); font-size: 14px; gap: 12px; }
+.topbar button { font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.hero { padding: 40px 0 16px; }
+.eyebrow { color: var(--text-secondary); font-size: 14px; letter-spacing: .02em; }
+h1 { font-size: clamp(30px, 6vw, 48px); line-height: 1.1; margin: 8px 0 14px; }
+h1 .add { color: var(--add); } h1 .van { color: var(--van); }
+.lede { font-size: 19px; color: var(--text-secondary); max-width: 680px; margin: 0; }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 15px; color: var(--text-secondary); margin: 22px 0 6px; }
+.key { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.sw.add { background: var(--add); } .sw.van { background: var(--van); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 18px 0 8px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.tile .q { color: var(--text-secondary); font-size: 14px; }
+.tile .nums { display: flex; align-items: flex-end; gap: 18px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.tile .cell { display: flex; flex-direction: column; line-height: 1.1; }
+.tile .cell .unit { margin-top: 4px; }
+.tile .a { font-size: 34px; font-weight: 750; color: var(--add); }
+.tile .v { font-size: 20px; font-weight: 650; color: var(--van); }
+.tile .unit { color: var(--muted); font-size: 13px; }
+section.scene { background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 28px; margin: 22px 0; transition: opacity .7s ease, transform .7s ease; }
+.js section.scene:not(.in) { opacity: 0; transform: translateY(24px); }
+.step { color: var(--add); font-weight: 700; font-size: 14px; letter-spacing: .04em; }
+h2 { font-size: 26px; margin: 4px 0 8px; line-height: 1.25; }
+.say { color: var(--text-secondary); margin: 0 0 20px; max-width: 700px; }
+.big-take { font-size: 20px; font-weight: 650; margin: 18px 0 0; }
+.note { color: var(--text-secondary); font-size: 14px; margin: 10px 0 0; }
+.honest { border-left: 3px solid var(--axis); padding: 4px 0 4px 12px; color: var(--text-secondary); font-size: 15px; margin-top: 16px; }
+/* bars */
+.bars { display: grid; gap: 14px; }
+.brow { display: grid; grid-template-columns: 150px 1fr 110px; gap: 12px; align-items: center; }
+.brow .who { font-weight: 600; }
+.track { height: 26px; background: var(--empty); border-radius: 8px; overflow: hidden; }
+.fill { height: 100%; width: 0; border-radius: 8px; transition: width 1.4s cubic-bezier(.2,.7,.2,1); }
+.fill.add { background: var(--add); } .fill.van { background: var(--van); }
+.brow .num { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 650; }
+.brow .num small { color: var(--muted); font-weight: 400; font-size: 13px; }
+/* dot grids */
+.grids { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-box h3 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; }
+.grid-box h3 .cnt { font-variant-numeric: tabular-nums; }
+.dots { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; }
+.d { aspect-ratio: 1; border-radius: 50%; background: var(--empty); transition: background-color .25s ease; }
+.d.on.add { background: var(--add); } .d.on.van { background: var(--van); }
+/* why: two flows */
+.lane { margin: 14px 0; }
+.lane .name { font-weight: 650; margin-bottom: 8px; }
+.flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { border: 1px solid var(--axis); border-radius: 999px; padding: 6px 14px; background: var(--page); font-size: 15px; transition: background-color .45s ease, color .45s ease, border-color .45s ease, transform .45s ease; }
+.chip.lit { transform: translateY(-2px); }
+.chip.lit.add { background: var(--add); border-color: var(--add); color: var(--on-add); }
+.chip.lit.van { background: var(--van); border-color: var(--van); color: #fff; }
+.flow .to { color: var(--muted); }
+.lane .cap { color: var(--text-secondary); font-size: 15px; margin-top: 8px; }
+.reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+.reason { border: 1px solid var(--border); border-left: 4px solid var(--add); border-radius: 12px; padding: 14px 16px; background: var(--page); }
+.reason h3 { margin: 0 0 4px; font-size: 17px; }
+.reason p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+.reason .proof { display: block; margin-top: 4px; color: var(--add); font-weight: 650; font-variant-numeric: tabular-nums; }
+/* cards */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.card { border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: var(--page); }
+.card h3 { margin: 0 0 6px; font-size: 17px; }
+.card.add h3 { color: var(--add); } .card.van h3 { color: var(--van); }
+.card ul { margin: 6px 0 0; padding-left: 18px; color: var(--text-secondary); }
+.quote { font-style: italic; color: var(--text-secondary); }
+.cmd { font: 15px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--page); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 14px; overflow-x: auto; }
+ul.plain { padding-left: 20px; } ul.plain li { margin: 6px 0; }
+footer { color: var(--muted); font-size: 14px; padding: 24px 0 48px; }
+@media (max-width: 640px) {
+  .brow { grid-template-columns: 1fr; gap: 4px; }
+  .grids, .cards, .reasons { grid-template-columns: 1fr; }
+  section.scene { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fill, .d, .chip, section.scene { transition: none !important; }
+  .js section.scene:not(.in) { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <div class="topbar">
+    <span>ADD · AI-Driven Development</span>
+    <button id="theme" type="button" aria-label="Toggle light and dark theme">◐ Theme</button>
+  </div>
+
+  <header class="hero">
+    <div class="eyebrow">Measured on Claude Sonnet 5.5 · October 2026</div>
+    <h1>Same AI. Same 300 real bugs.<br>One difference: <span class="add">ADD</span>.</h1>
+    <p class="lede">Claude Code fixed 300 real open-source bugs twice: on its own, and with ADD.</p>
+    <div class="legend" aria-hidden="true">
+      <span class="key"><span class="sw van"></span>Claude Code on its own</span>
+      <span class="key"><span class="sw add"></span>Claude Code + ADD</span>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </header>
+
+  <section class="scene" aria-labelledby="s0" id="why">
+    <div class="step">THE IDEA</div>
+    <h2 id="s0">Why write the plan and the tests first?</h2>
+    <div class="lane"><div class="name">Straight to code</div><div class="flow" id="flow-van"><span class="chip van">Request</span><span class="to" aria-hidden="true">→</span><span class="chip van">Code</span><span class="to" aria-hidden="true">→</span><span class="chip van">“Done”</span></div></div>
+    <div class="lane"><div class="name">With ADD: every step leaves something you can check</div><div class="flow" id="flow-add"><span class="chip add">Request</span><span class="to" aria-hidden="true">→</span><span class="chip add">Plan</span><span class="to" aria-hidden="true">→</span><span class="chip add">Failing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Code</span><span class="to" aria-hidden="true">→</span><span class="chip add">Passing test</span><span class="to" aria-hidden="true">→</span><span class="chip add">Evidence</span></div></div>
+    <div class="reasons">
+      <div class="reason"><h3>A silent guess gets written down</h3><span class="proof" id="proof-guess"></span></div>
+      <div class="reason"><h3>A test written first proves the fix</h3><span class="proof" id="proof-checked"></span></div>
+      <div class="reason"><h3>A saved check can't be quietly weakened</h3><span class="proof" id="proof-tested"></span></div>
+      <div class="reason"><h3>The next session can read it</h3><span class="proof" id="proof-caught"></span></div>
+    </div>
+  </section>
+
+  <section class="scene" aria-labelledby="s1">
+    <div class="step">1 · BUGS FIXED</div>
+    <h2 id="s1"><span id="take-fixed"></span> Likely real, not proven.</h2>
+    <div class="bars" id="bars-fixed"></div>
+  </section>
+
+  <section class="scene" aria-labelledby="s2">
+    <div class="step">2 · CHECKED BEFORE “DONE”</div>
+    <h2 id="s2">ADD ran the tests and saw them pass on almost every fix.</h2>
+    <div class="grids">
+      <div class="grid-box"><h3><span>On its own</span><span class="cnt" id="cnt-van-checked">0</span></h3><div class="dots" id="dots-van-checked" role="img"></div></div>
+      <div class="grid-box"><h3><span>With ADD</span><span class="cnt" id="cnt-add-checked">0</span></h3><div class="dots" id="dots-add-checked" role="img"></div></div>
+    </div>
+    <p class="note">One dot per bug. Filled: a passing test run was seen before the fix was handed back.</p>
+  </section>
+
+  <section class="scene" aria-labelledby="s3">
+    <div class="step">3 · SHIPPED WITH A TEST</div>
+    <h2 id="s3">Almost every ADD fix carries its own test.</h2>
+    <div class="bars" id="bars-tested"></div>
+  </section>
+
+  <section class="scene" aria-labelledby="s4">
+    <div class="step">4 · WHEN THE REQUEST HAS A GAP</div>
+    <h2 id="s4">Nobody said who may cancel a booking. ADD chose owner-only and wrote it down.</h2>
+    <div class="bars" id="bars-owner"></div>
+    <p class="note">Runs that kept cancelling to the owner, out of 3.</p>
+    <div class="bars" id="bars-caught" style="margin-top:18px"></div>
+    <p class="note">Planted bugs caught by the AI's own tests.</p>
+  </section>
+
+  <section class="scene" aria-labelledby="s5">
+    <div class="step">5 · THE PRICE</div>
+    <h2 id="s5">ADD costs more: <span id="take-cost"></span></h2>
+    <div class="bars" id="bars-cost"></div>
+    <div class="bars" id="bars-time" style="margin-top:14px"></div>
+  </section>
+
+  <section class="scene" aria-labelledby="s6">
+    <div class="step">6 · ONE SETTING MATTERS</div>
+    <h2 id="s6">Run ADD at medium effort. At low it skipped its own instructions half the time.</h2>
+    <div class="bars" id="bars-effort"></div>
+    <p class="note" id="say-effort"></p>
+    <div class="cmd" aria-label="Recommended command">claude --effort medium</div>
+  </section>
+
+  <section class="scene" aria-labelledby="s7">
+    <div class="step">7 · ONE REVIEWER, 6 BUGS, BLIND</div>
+    <h2 id="s7">The reviewer preferred the shorter output every time. Approving it was less safe.</h2>
+    <div class="bars" id="bars-prefer"></div>
+    <p class="note">Which output the reviewer preferred.</p>
+    <div class="bars" id="bars-matched" style="margin-top:18px"></div>
+    <p class="note">Reviewer's verdict agreed with the benchmark's tests. One reviewer, not timed: a hint, not a measurement.</p>
+  </section>
+
+  <section class="scene" aria-labelledby="s8">
+    <div class="step">NOT MEASURED YET</div>
+    <h2 id="s8">Timed review · brand-new bugs · repeat runs</h2>
+    <p class="note">Review time is not measured. These 300 bugs are public and older than the AI. Each side fixed each bug once.</p>
+  </section>
+
+  <footer>
+    Every number and command: <a href="https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md">the full results</a>.
+    The same request run both ways: <a href="./add-vs-vanilla.html">the two flows</a>.
+  </footer>
+</div>
+</div>
+
+<script type="application/json" id="add-data">
+{
+  "meta": {"model": "claude-sonnet-5-5", "source": "benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md", "date": "2026-10-07"},
+  "fixed": {"vanilla": 215, "add": 226, "total": 300},
+  "checked": {"vanilla": 53, "add": 274, "total": 300},
+  "tested": {"vanilla": 17, "add": 299, "total": 300},
+  "unclear": {"owner_only": {"vanilla": 0, "add": 3, "runs": 3}, "bugs_caught": {"vanilla": 0.43, "add": 0.81}},
+  "cost": {"usd": {"vanilla": 0.089, "add": 0.162}, "seconds": {"vanilla": 32, "add": 80}, "x_usd": 1.8, "x_time": 2.5},
+  "effort": {"low": 201, "medium": 226, "vanilla": 215, "read_low": 134, "runs_low": 270, "read_medium": 292, "total": 300},
+  "review": {"prefer": {"vanilla": 6, "add": 0}, "matched": {"vanilla": 3, "add": 5}, "total": 6}
+}
+</script>
+<script>
+(function () {
+  "use strict";
+  var root = document.querySelector(".viz-root");
+  root.classList.add("js");
+  var D = JSON.parse(document.getElementById("add-data").textContent);
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
+
+  // theme toggle
+  document.getElementById("theme").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var dark = cur ? cur === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  // count-up numbers
+  function countUp(node, to, fmt, ms) {
+    if (reduce) { node.textContent = fmt(to); return; }
+    var t0 = null;
+    function f(t) { if (!t0) t0 = t; var k = Math.min(1, (t - t0) / ms); var e = 1 - Math.pow(1 - k, 3);
+      node.textContent = fmt(to * e); if (k < 1) requestAnimationFrame(f); }
+    requestAnimationFrame(f);
+  }
+  var int = function (v) { return Math.round(v).toString(); };
+
+  // hero tiles
+  var tiles = [
+    {q: "Bugs fixed, out of 300", a: D.fixed.add, v: D.fixed.vanilla, fmt: int},
+    {q: "Checked by a passing test run", a: D.checked.add, v: D.checked.vanilla, fmt: int},
+    {q: "Shipped with its own test", a: D.tested.add, v: D.tested.vanilla, fmt: int},
+    {q: "Price per bug, ADD vs on its own", a: D.cost.x_usd, v: D.cost.x_time, fmt: function (x) { return x.toFixed(1) + "×"; }, special: true}
+  ];
+  var tileHost = document.getElementById("tiles");
+  tiles.forEach(function (t) {
+    var box = el("div", "tile"); box.appendChild(el("div", "q", t.q));
+    var nums = el("div", "nums");
+    var a = el("span", "a", "0"), v = el("span", "v", "0");
+    var ca = el("div", "cell"), cv = el("div", "cell");
+    ca.appendChild(a); ca.appendChild(el("span", "unit", t.special ? "the money" : "with ADD"));
+    cv.appendChild(v); cv.appendChild(el("span", "unit", t.special ? "the time" : "on its own"));
+    nums.appendChild(ca); nums.appendChild(cv);
+    box.appendChild(nums); tileHost.appendChild(box);
+    if (t.special) { a.style.color = "var(--text-primary)"; v.style.color = "var(--text-primary)"; }
+    box.setAttribute("aria-label", t.q + ": " + (t.special ? (t.a + " times the money, " + t.v + " times the time") : (t.a + " with ADD, " + t.v + " on its own")));
+    countUp(a, t.a, t.fmt, 1400); countUp(v, t.v, t.fmt, 1400);
+  });
+
+  // bar rows; values revealed when the scene enters
+  var reveals = [];
+  function bars(hostId, rows, max, fmt, unitText) {
+    var host = document.getElementById(hostId);
+    rows.forEach(function (r) {
+      var row = el("div", "brow");
+      row.appendChild(el("div", "who", r.label));
+      var track = el("div", "track"), fill = el("div", "fill " + r.cls);
+      track.appendChild(fill); row.appendChild(track);
+      var num = el("div", "num", "");
+      row.appendChild(num);
+      row.setAttribute("aria-label", r.label + ": " + fmt(r.value) + (unitText ? " " + unitText : ""));
+      host.appendChild(row);
+      reveals.push({scene: host.closest("section"), go: function () {
+        fill.style.width = (100 * r.value / max).toFixed(1) + "%";
+        countUp(num, r.value, fmt, 1300);
+      }});
+    });
+  }
+  bars("bars-fixed", [{label: "On its own", value: D.fixed.vanilla, cls: "van"}, {label: "With ADD", value: D.fixed.add, cls: "add"}],
+       D.fixed.total, function (v) { return Math.round(v) + " / " + D.fixed.total; }, "bugs fixed");
+  document.getElementById("take-fixed").textContent = "ADD fixed " + (D.fixed.add - D.fixed.vanilla) + " more bugs.";
+  bars("bars-tested", [{label: "On its own", value: D.tested.vanilla, cls: "van"}, {label: "With ADD", value: D.tested.add, cls: "add"}],
+       D.tested.total, function (v) { return Math.round(v) + " / " + D.tested.total; }, "fixes with a test");
+  bars("bars-caught", [{label: "On its own", value: D.unclear.bugs_caught.vanilla, cls: "van"}, {label: "With ADD", value: D.unclear.bugs_caught.add, cls: "add"}],
+       1, function (v) { return Math.round(v * 100) + "%"; }, "of planted bugs caught by its own tests");
+  bars("bars-cost", [{label: "Money, on its own", value: D.cost.usd.vanilla, cls: "van"}, {label: "Money, with ADD", value: D.cost.usd.add, cls: "add"}],
+       0.2, function (v) { return "$" + v.toFixed(3); }, "per bug");
+  bars("bars-time", [{label: "Time, on its own", value: D.cost.seconds.vanilla, cls: "van"}, {label: "Time, with ADD", value: D.cost.seconds.add, cls: "add"}],
+       100, function (v) { return Math.round(v) + " s"; }, "per bug");
+  document.getElementById("take-cost").textContent = D.cost.x_usd + "× the money, " + D.cost.x_time + "× the time.";
+  bars("bars-prefer", [{label: "On its own", value: D.review.prefer.vanilla, cls: "van"}, {label: "With ADD", value: D.review.prefer.add, cls: "add"}],
+       D.review.total, function (v) { return Math.round(v) + " of " + D.review.total; }, "preferred");
+  bars("bars-matched", [{label: "On its own", value: D.review.matched.vanilla, cls: "van"}, {label: "With ADD", value: D.review.matched.add, cls: "add"}],
+       D.review.total, function (v) { return Math.round(v) + " of " + D.review.total; }, "verdicts that agreed with the tests");
+  bars("bars-owner", [{label: "On its own", value: D.unclear.owner_only.vanilla, cls: "van"}, {label: "With ADD", value: D.unclear.owner_only.add, cls: "add"}],
+       D.unclear.owner_only.runs, function (v) { return Math.round(v) + " of " + D.unclear.owner_only.runs; }, "runs");
+  bars("bars-effort", [
+      {label: "ADD at low effort", value: D.effort.low, cls: "add"},
+      {label: "On its own", value: D.effort.vanilla, cls: "van"},
+      {label: "ADD at medium effort", value: D.effort.medium, cls: "add"}],
+       D.effort.total, function (v) { return Math.round(v) + " / " + D.effort.total; }, "bugs fixed");
+  document.getElementById("say-effort").textContent = "ADD read its instructions in " + D.effort.read_low + " of " + D.effort.runs_low +
+    " bugs at low effort, and in " + D.effort.read_medium + " of " + D.effort.total + " at medium.";
+
+  // dot grids
+  function dotGrid(gridId, cntId, on, total, cls, scene) {
+    var g = document.getElementById(gridId), c = document.getElementById(cntId), dots = [];
+    g.setAttribute("aria-label", on + " of " + total + " bugs checked by a passing test run");
+    for (var i = 0; i < total; i++) { var d = el("span", "d " + cls); g.appendChild(d); dots.push(d); }
+    reveals.push({scene: g.closest("section"), go: function () {
+      countUp(c, on, function (v) { return Math.round(v) + " of " + total; }, 1600);
+      if (reduce) { for (var j = 0; j < on; j++) dots[j].classList.add("on"); return; }
+      var k = 0, per = Math.max(1, Math.ceil(on / 60));
+      (function tick() { for (var s = 0; s < per && k < on; s++, k++) dots[k].classList.add("on"); if (k < on) setTimeout(tick, 22); })();
+    }});
+  }
+  dotGrid("dots-van-checked", "cnt-van-checked", D.checked.vanilla, D.checked.total, "van");
+  dotGrid("dots-add-checked", "cnt-add-checked", D.checked.add, D.checked.total, "add");
+
+  // why: two flows, lit step by step
+  function chipsOf(id) { return Array.prototype.slice.call(document.querySelectorAll("#" + id + " .chip")); }
+  var fv = chipsOf("flow-van"), fa = chipsOf("flow-add");
+  document.getElementById("proof-guess").textContent = "" + D.unclear.owner_only.add + " of " + D.unclear.owner_only.runs + " with ADD, " + D.unclear.owner_only.vanilla + " of " + D.unclear.owner_only.runs + " without.";
+  document.getElementById("proof-checked").textContent = "" + D.checked.add + " vs " + D.checked.vanilla + " of " + D.checked.total + " fixes seen passing.";
+  document.getElementById("proof-caught").textContent = "" + D.tested.add + " vs " + D.tested.vanilla + " of " + D.tested.total + " fixes kept their test.";
+  document.getElementById("proof-tested").textContent = "" + Math.round(D.unclear.bugs_caught.add * 100) + "% vs " + Math.round(D.unclear.bugs_caught.vanilla * 100) + "% of planted bugs caught.";
+  reveals.push({scene: document.getElementById("why"), go: function () {
+    function light(chips, gap, done) {
+      chips.forEach(function (c) { c.classList.remove("lit"); });
+      chips.forEach(function (c, i) { setTimeout(function () { c.classList.add("lit"); if (i === chips.length - 1 && done) done(); }, gap * (i + 1)); });
+    }
+    if (reduce) { fv.concat(fa).forEach(function (c) { c.classList.add("lit"); }); return; }
+    (function loop() { light(fv, 450); light(fa, 450, function () { setTimeout(loop, 4200); }); })();
+  }});
+
+  // reveal scenes on scroll
+  var scenes = Array.prototype.slice.call(document.querySelectorAll("section.scene"));
+  function fire(sec) {
+    if (sec.classList.contains("in")) return;
+    sec.classList.add("in");
+    reveals.forEach(function (r) { if (r.scene === sec) r.go(); });
+  }
+  if (reduce || !("IntersectionObserver" in window)) { scenes.forEach(fire); return; }
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); } }); }, {threshold: 0.25});
+  scenes.forEach(function (s) { io.observe(s); });
+})();
+</script>
+</body>
+</html>

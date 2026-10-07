@@ -10,6 +10,7 @@ import dataclasses
 import pathlib
 import tomllib
 
+from benchmark.runner.agent import EFFORT_LEVELS
 from benchmark.schema.run_record import BenchError
 
 # add-main: the MAIN-branch control arm (v2-wv1-longitudinal M5 @v2) — first-party,
@@ -17,7 +18,7 @@ from benchmark.schema.run_record import BenchError
 # add-4 / add-3x: the ADD 4.0 (this worktree, skill-only) vs ADD 3.7.0 (pinned engine)
 # head-to-head. `add` stays listed so its archived records still score and report, but
 # it is RETIRED (`retired =` in add.toml): run paths refuse it before any workspace.
-ARM_NAMES = ("add", "add-main", "add-3x", "add-4", "add-4-lean", "vanilla", "plan-mode",
+ARM_NAMES = ("add", "add-main", "add-3x", "add-4", "add-4-lean", "add-4-low", "add-4-audited-low", "add-4-probe-low", "vanilla", "vanilla-low", "plan-mode",
              "gsd", "spec-kit")
 PIN_REQUIRED_ARMS = frozenset({"gsd", "spec-kit"})
 REQUIRED_KEYS = ("name", "setup_steps", "prompt_wrapper", "pin")
@@ -40,6 +41,8 @@ class Arm:
     # empty `model` = the run's `--model`, else the pinned meter model (runner/agent.py).
     model: str = ""
     advisor: str = ""
+    # OPTIONAL. The `--effort` this arm runs at; empty = the run's `--effort`, else medium.
+    effort: str = ""
 
 
 def refuse_retired(arm: Arm) -> None:
@@ -75,6 +78,10 @@ def load_arm(path: pathlib.Path) -> Arm:
     if missing_fairness:
         raise BenchError(f"invalid_arm_recipe: missing fairness key(s) {missing_fairness} in {path.name}")
 
+    effort = str(data.get("effort", ""))
+    if effort and effort not in EFFORT_LEVELS:
+        raise BenchError(f"invalid_arm_recipe: effort {effort!r} not one of {list(EFFORT_LEVELS)} in {path.name}")
+
     return Arm(
         name=name,
         setup_steps=list(data["setup_steps"]),
@@ -86,4 +93,5 @@ def load_arm(path: pathlib.Path) -> Arm:
         retired=str(data.get("retired", "")),
         model=str(data.get("model", "")),
         advisor=str(data.get("advisor", "")),
+        effort=effort,
     )

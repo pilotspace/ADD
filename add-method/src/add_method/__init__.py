@@ -15,4 +15,4 @@ Usage (Python API):
 from add_method._installer import install
 
 __all__ = ["install"]
-__version__ = "4.0.0"
+__version__ = "4.1.0"

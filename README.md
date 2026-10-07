@@ -16,12 +16,29 @@
 
 ---
 
+## ADD in plain words
+
+We gave Claude Code the same 300 real bugs from popular open-source projects twice: once on its own,
+and once with ADD installed. Same AI, same bugs, same settings.
+
+| | Claude Code on its own | Claude Code + ADD |
+|---|---|---|
+| 🐛 Bugs fixed | 215 of 300 | **226 of 300** |
+| ✅ Ran the tests and saw them pass before saying "done" | 53 of 300 | **274 of 300** |
+| 🧪 The fix came with its own test | 17 of 300 | **299 of 300** |
+| 📝 Wrote down its guess where the request was silent ("who may cancel a booking?") | 0 of 3 | **3 of 3** |
+| 💰 Price and time per bug | about 9¢ · 32 s | about 16¢ · 80 s (1.8× the money, 2.5× the time) |
+
+**In short:** ADD fixes at least as many bugs, checks and tests almost every fix, and tells you what
+it assumed. It costs more, and the gain in bugs fixed is small enough that it is not yet proven. Run
+it with `--effort medium`. **[See the results animated, in plain words →](https://pilotspace.github.io/ADD/add-results.html)**
+
 ## ✨ Highlights
 
 - 📜 **Every change leaves its reasoning in your repo** — the rules, the guesses and the checks live in one task file next to the code, so the next session or teammate reads the intent instead of guessing it.
 - 🛡️ **Safer guesses where your spec is silent** — ADD takes the least-privilege reading when nobody said *who* may act, and seals a check for it.
 - 🔒 **Trust rests on evidence, not a plausible diff** — checks are sealed in a `freeze` commit before the build, and every task ends in a verdict you can re-run. Security findings always lead the report.
-- ⚖️ **An honest price** — Measured on ADD 4.0.0 with Claude Sonnet 5.5, n = 3 per arm per workload: 1.7–2.1× the dollars and 4.0–5.1× the minutes of vanilla Claude Code. The code quality ties; ADD gets more of a spec's silences right ([results](./benchmark/results/2026-09-add-4.0-vs-vanilla.md)).
+- ⚖️ **An honest price** — Measured on ADD 4.1.0 with Claude Sonnet 5.5 (n = 300 real bugs, both at `--effort medium`): ADD resolved 226 to vanilla Claude Code's 215, at 1.8× the dollars and 2.5× the seconds per bug. On small apps it costs 1.3–1.9× the dollars and 1.8–2.4× the minutes; correctness ties, and its tests catch more seeded bugs (0.81 vs 0.43) ([results](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 - 💸 **Ceremony only where it buys trust** — most changes take the Quick lane: one red→green test, one commit, no task file.
 
 ## What ADD gives your project
@@ -36,6 +53,7 @@ engine and no CLI, that makes every change leave the reasoning in your repositor
 | 🙋 **Every guess on the record** | each silence in your request becomes an ASSUMPTION: the reading taken and the cost if wrong, costliest first | you review a short list of decisions, not a diff; a wrong guess is one line to correct |
 | 🛡️ **Safer readings of silence** | when nobody said *who* may do something, ADD takes the least-privilege reading and seals a check for it | the booking benchmark never said who may cancel: vanilla let anyone in 8 of 8 runs; ADD chose owner-only in 3 of 3 on Sonnet 5.5 |
 | 🔒 **Checks sealed before the code** | the failing checks are committed as `freeze(<slug>)` before any build | a test weakened to get green shows up in `git diff`; a change of intent is a visible `refreeze` commit |
+| 🧪 **Tests that run, and stay** | ADD runs your repo's own tests and ships its new ones with the change | on all 300 SWE-bench Lite issues ADD saw a passing test run before shipping in 274 of 300 and shipped a test with 299 of 300; vanilla did in 53 of 300 and 17 of 300. ADD's tests also catch more seeded bugs (0.81 vs 0.43, rounds 8–9 pooled) |
 | 🔬 **Evidence you can re-run** | a verdict (`PASS`, `RISK-ACCEPTED` or `HARD-STOP`) with the exact commands and counts, committed as `verify(<slug>)` | the claimed test count matched a fresh rerun in 33 of 33 benchmark runs; security findings always lead the report |
 | 🧠 **Memory that outlives the chat** | state lives on disk, not in the conversation | over six evolving milestones, one long chat's requirement coverage fell .92 → .75, while fresh sessions resuming from disk held 1.0 ([report](./benchmark/results/2026-07-add-2.0-remeasure.md)) |
 
@@ -64,34 +82,41 @@ guesses nobody asked about.
 
 ## Measured on 4.0 — what you get, what you pay
 
-The same Claude Code with and without the ADD skill, on `claude-sonnet-5-5` (Sonnet 5.5), n = 3 per
-arm per workload ([results](./benchmark/results/2026-09-add-4.0-vs-vanilla.md) ·
+The same Claude Code with and without the ADD skill, on `claude-sonnet-5-5` (Sonnet 5.5): two small
+apps at n = 3 per arm, and all 300 SWE-bench Lite issues once per arm ([results](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md) ·
 [both flows, animated](https://pilotspace.github.io/ADD/add-vs-vanilla.html) ·
 [the earlier rounds, animated](https://pilotspace.github.io/ADD/add-value.html)).
 
-| on Sonnet 5.5 (wm1 · amb1) | vanilla Claude Code | + ADD 4.0 |
+| what you get | vanilla Claude Code | Claude Code + ADD |
 |---|---|---|
-| **you pay:** dollars per run | $0.31 · $0.33 | $0.52 · $0.68, **1.7× · 2.1×** |
-| **you pay:** minutes per run | 0.8 · 0.85 min | 4.1 · 3.4 min, **5.1× · 4.0×** |
-| held-out edge cases passed | 19 of 19 · 14 of 14 | 19 of 19 · 14 of 14, a tie |
-| seeded bugs its own tests catch (mutation) | 0.83 · 0.76 | 0.75 · 0.79, within noise |
-| planted ambiguities handled right, of 7 (amb1) | 4.3 | **5.7** |
-| "who may cancel?" read as owner-only (amb1) | 0 of 3 | **3 of 3** |
-| surfaced the spec's contradiction (amb1) | **2 of 3** | 1 of 3 |
-| claimed test count = a fresh rerun | no claim made | **6 of 6** |
+| **Fixes that land** — SWE-bench Lite, all 300 issues resolved (both at medium) | 215 of 300 | **226 of 300** (p = 0.099) |
+| **Verified before it ships** — a passing test run seen (SWE, 300 issues) | 53 of 300 | **274 of 300** |
+| **Ships with a test** — the fix carries its own test (SWE, 300 issues) | 17 of 300 | **299 of 300** |
+| **Tests that catch bugs** — seeded bugs its own tests catch (wm1 · amb1, rounds 8–9 pooled) | 0.78 · 0.43 | 0.86 · **0.81** |
+| **Guesses you can review** — "who may cancel?" read as owner-only and written down (amb1) | 0 of 3 | **3 of 3** |
+| **Ambiguities handled right** — of 7 planted (amb1) | 5.0 | 5.3 |
+| **Claims you can trust** — claimed test count = a fresh rerun | no claim made | **every parsed claim** |
+| **Correct on small apps** — requirement oracle · held-out edge cases (wm1) | 1.00 · 22 of 22 | 1.00 · 22 of 22, a tie |
+| **you pay:** SWE dollars · seconds per issue (both at medium) | $0.089 · 32 s | $0.162 · 80 s, **1.8× · 2.5×** |
+| **you pay:** small apps, dollars per run (wm1 · amb1; ADD at low) | $0.21 · $0.17 | $0.28 · $0.32, **1.3× · 1.9×** |
+| **you pay:** small apps, minutes per run (wm1 · amb1; ADD at low) | 0.9 · 0.7 min | 1.6 · 1.7 min, **1.8× · 2.4×** |
 
-On the older Sonnet 5 (rounds 4–5), ADD's own tests caught more seeded bugs (0.68 vs 0.51 and 0.79
-vs 0.53) and vanilla shipped no tests in 2 of 5 runs, at 2.2–2.9× the dollars. Sonnet 5.5 closed
-those gaps on these workloads, and ADD's cost fell from $1.67 to $0.52 a run.
+**Effort matters.** At `--effort low` ADD read its skill in only half its runs and resolved 201 of 300 to vanilla's 215.
+At medium it read the skill in 292 of 300 and resolved 226. In a blind six-issue review, one reviewer preferred vanilla's shorter output in 6 of 6, while 2 of the 5 vanilla patches
+they approved as is fail the benchmark's tests; timed review is not measured ([fresh 300 at medium](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 
-<sub>**Fine print:** "vanilla" is Claude Code carrying the operator's own `~/.claude` config
-(which already asks for red/green TDD), not bare Claude Code. Both workloads are saturated at
-Sonnet 5.5, and n = 3 is direction, not proof.</sub>
+**Small changes.** A change with no new behavior (a typo, a rename, a comment, a config value) is made without a new test;
+every bug fix keeps its test, as measured. A looser rule (a test only when the AI judged it important) was tried and dropped:
+on 101 of the issues it resolved 78 against 83 for the measured skill, for a 6% saving.
+
+Earlier rounds, older models and the full method are in [the results history](./benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md).
+
+<sub>**Fine print:** both arms ran with the operator's own `~/.claude` kept out of the session; earlier rounds loaded it, and its `security-guidance` plugin slowed every ADD commit. Run ADD at `--effort medium`: at `--effort low` it skipped its own skill in half the SWE runs and resolved 25 fewer issues. The small apps are n = 3: direction, not proof.</sub>
 
 ## When vanilla Claude is the right call
 
-- **Throwaway work** (a script, a spike, a one-shot): use vanilla. It runs 4–5× faster at about
-  half the price, and on a strong model the code is as good.
+- **Throwaway work** (a script, a spike, a one-shot), or a fix you will not review: use vanilla. It
+  runs about 2.5× faster at about half the price, and on SWE-bench Lite it resolved 215 of 300 to ADD's 226.
 - **A product you will still be changing next month** (several milestones, teammates, or anything
   where *who may do this?* matters): use ADD. The decisions outlive the chat, the guesses get
   reviewed, and the checks cannot quietly weaken.

@@ -6,6 +6,74 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [4.1.0] — 2026-10-07
+
+### Changed
+- **The Quick record drops `sites:`.** The model wrote that line in 2 of 30 runs, so it is cut. Quick
+  still greps every other site that calls or emits what it changes.
+- **Results anyone can read.** A new animated page, `docs/add-results.html`, tells the 300-bug result
+  in plain words: bugs fixed, fixes checked by a passing test run, fixes shipped with a test, unclear
+  requests, the price, and the effort setting. It also says what is not proven or not measured. Both
+  READMEs now open with an "ADD in plain words" table that links to it.
+- **Run ADD at `--effort medium`.** On a fresh run of all 300 SWE-bench Lite issues with both arms at
+  medium, ADD resolved 226 against vanilla Claude Code's 215 (McNemar p = 0.099; held-out 199: 143
+  against 135), at 1.8× the dollars and 2.5× the seconds per issue. At low effort ADD skipped its own
+  skill in half the runs and resolved 201. The READMEs now recommend medium. The low-effort run stays
+  on the results page as history.
+- **Quick skips the test only when no behavior changes.** A typo, a rename, a comment, a config value
+  or making an already-failing test pass needs no new test: Quick runs the suite, reviews the diff and
+  records `test: none — <what covers it>`. A change to behavior still gets a test first, so every bug fix
+  keeps its test, as measured. A looser rule (a test only when the AI judged it important) was
+  measured and dropped: on the 101 dev issues it resolved 78 of 101 against 83 for the measured skill
+  and 80 for vanilla, for a 6% saving. The SWE harness prompt no longer tells the ADD arm to start
+  from a test; the skill decides.
+- **A blind review study, published against ADD.** One reviewer (the project owner) judged six
+  issues blind and untimed: they preferred vanilla's output in 6 of 6 and found it easier to decide
+  on in 6 of 6. 2 of the 5 vanilla patches approved as is fail the benchmark's tests. Anecdotal:
+  one reviewer, six issues.
+- **The full SWE-bench Lite result is on the front door, loss included.** On all 300 issues (Sonnet
+  5.5, official eval environment), vanilla Claude Code at medium effort resolved 215 and ADD at low
+  effort resolved 201 (McNemar p = 0.016), at 1.4× the dollars per issue. ADD saw a passing test run
+  before shipping in 255 of 300 (vanilla 42) and shipped a test with 298 (vanilla 14). The READMEs no
+  longer quote the 30-issue slice, where ADD led 23 to 21. Human review time is listed as not measured.
+- **Quick reads the maintainers' conventions first.** Before its test, Quick reads the nearest tests
+  and sibling code, and keeps their conventions: inputs not mutated, parallel paths consistent. It
+  treats the fix an issue literally suggests as a candidate wrong fix. Its record (`lane` · `intent`
+  · `sites` · `red→green`) now ends the reply. On the 22 issues only vanilla resolved, this recovered
+  13 against 11 for the plain skill, at +5% cost with no control lost: directional.
+- **Quick accounts for every site and survives a missing suite.** A Quick fix greps every other site that
+  calls or emits what it changes and records each as `sites: <site → fixed | unaffected: why>`. When no
+  suite runs, it runs the request's repro as written, or else imports every touched file and traces the
+  inputs, and records `suite: unavailable — <why> · ran: <what>`. A Task check that cannot run is never
+  PASS. Round 10's SWE losses included a second site left unfixed (django-13265) and fixes shipped
+  without running (sklearn-14087, and a SyntaxError in matplotlib-24265 at medium effort).
+- **Measured at both effort levels (round 10, Sonnet 5.5).** On 30 SWE-bench Lite issues, ADD at
+  `--effort low` resolved 24, against 20–21 for vanilla Claude Code at either effort and 22 for ADD at
+  medium, at $0.23 per resolved issue against vanilla-medium's $0.14. `--effort low` stays the
+  recommended setting.
+- **A Quick test carries a falsifier:** it covers the request's own example plus one case the most
+  plausible wrong fix would pass. The three SWE-bench issues the lean skill lost were wrong fixes, at
+  1.3 assertions per fix.
+- **Two steps the model never performed are cut or narrowed.** The `found:` verification of cheap
+  guesses appeared in 0 of 24 task files in rounds 8–9. Refute probes appeared in 1 of 24 and are now
+  required for security work only; other tasks record `probes: none — <why>`.
+- **The README value table carries the isolated test discipline:** on 30 SWE-bench Lite issues ADD ran
+  the repo's tests in 30 of 30 runs (vanilla 7 of 30) and shipped tests in 30 of 30 patches (vanilla 2).
+- **The floor is a change of shape, not a touch.** A fix that restores a consumed surface's intended
+  behavior without changing its signature, return, status or format is no longer floor work by itself.
+  In the SWE-bench Lite pilot, 26 of 30 ADD fixes touched three files or fewer, yet every one paid for a
+  full Task (`benchmark/SWE-LITE-PILOT-2026-10-03.md`).
+- **A Quick commit carries its lane and evidence:** its body records `lane: quick — <why>` and
+  `red→green: <test> · suite: <cmd> → <result>`.
+- **ASSUMPTIONS hold only real silences.** A dimension the request settles gets no line, and
+  `- none — <why>` is valid. When two requirements cannot both hold, the reading that leaves the caller
+  in control is the first ASSUMPTION.
+- **The personas index path resolves:** `.add/personas-index/use-when.md`, where the installer puts it.
+- **The READMEs quote the isolated price:** at `--effort low`, ADD costs 1.3–1.9× the dollars and takes
+  1.8–2.4× the minutes of vanilla Claude Code at medium. The earlier 4.0–5.1× minutes were the
+  operator's `security-guidance` plugin reviewing every commit
+  (`benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md`).
+
 ## [4.0.0] — 2026-09-28
 
 **One skill, no engine.** ADD is now a markdown skill the model follows with git and the project's

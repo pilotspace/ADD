@@ -12,7 +12,8 @@ from benchmark.runner import agent, core
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 ARMS_DIR = ROOT / "arms"
-SHIPPED = ROOT.parent / "add-method" / "skill" / "add" / "SKILL.md"
+# the shipped ADD 4.0.0 skill the variants were cut from — the live skill moves on
+SHIPPED = ROOT / "arms" / "variants" / "BASE-4.0.0-SKILL.md"
 VARIANT = ARMS_DIR / "variants" / "add-4-lean" / "SKILL.md"
 SONNET55, HAIKU = "claude-sonnet-5-5", "claude-haiku-4-5-20251001"
 
@@ -79,7 +80,7 @@ def test_run_all_cli_accepts_model(monkeypatch):
 
 def test_lean_arm_loads_and_advisor_arm_retired():
     # .add/tasks/bench-sonnet-only.md M1: the Haiku-main advisor arm retires after round 6
-    assert "add-4-lean" in ARM_NAMES and "add-4-advisor" not in ARM_NAMES and len(ARM_NAMES) == 9
+    assert "add-4-lean" in ARM_NAMES and "add-4-advisor" not in ARM_NAMES and len(ARM_NAMES) == 13
     assert not (ARMS_DIR / "add-4-advisor.toml").exists()
     lean, base = (load_arm(ARMS_DIR / f"{n}.toml") for n in ("add-4-lean", "add-4"))
     for arm in (lean,):

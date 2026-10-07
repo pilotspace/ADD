@@ -1,29 +1,26 @@
 ---
 name: add
 description: >-
-  Use this skill when the user wants AI work they can trust without watching every step: the AI
-  fixes direction first (rules, assumptions, failing checks sealed in git), builds to green, then
-  proves the result with evidence for the human to review. Trigger when a repo has `.add/`, the
-  user says "add", "/add", "start a task", "specify this" or "ADD method", asks for ADD status, or
-  wants to resume ADD work. Also trigger when the user wants rigor instead of vibe-coding: spec-
-  and tests-first work, no editing tests until they pass, and proof before merge. It also covers
-  evidence-first investigations, where cited findings and what they mean are the deliverable
-  before any code changes. Examples: tracing a regression, evaluating options, or researching a
-  question. It fits features, migrations, security- or data-sensitive changes and multi-task
-  milestones. Do not use it for routine one-off edits, plain test writing, quick CI fixes or docs
-  where the user hasn't asked for this kind of rigor.
+  Use this skill when the user wants AI work they can trust without watching every step: the AI fixes
+  direction first (rules, assumptions, failing checks sealed in git), builds to green, then proves the
+  result with evidence for the human to review. Trigger when a repo has `.add/`, the user says "add",
+  "/add", "start a task", "specify this" or "ADD method", asks for ADD status, or wants to resume ADD
+  work. Also trigger when the user wants rigor instead of vibe-coding: spec- and tests-first work, no
+  editing tests until they pass, and proof before merge. It also covers evidence-first investigations
+  (tracing a regression, weighing options), and fits features, migrations, security- or data-sensitive
+  changes and milestones. Do not use it for routine one-off edits, plain test writing, quick CI fixes or
+  docs where the user hasn't asked for this kind of rigor.
 user-invocable: true
 category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, evidence, task, explore, persona]
 argument-hint: "<describe the change or goal> | status"
 license: MIT
-metadata: { author: add, version: "4.0.0", format: ABF-1 }
+metadata: { author: add, version: "4.1.0", format: ABF-1 }
 ---
 
 # ADD — direction · evidence · a durable bundle
 
-You are the planner and the hands: fix direction before the build, trust only evidence you produced,
-leave a bundle (`.add/`) the next session and the reviewer can read. Your tools: files, git, tests.
+You plan and build: fix direction first, trust only evidence you produced, leave a `.add/` bundle.
 
 ## Orient — every session, first, in one command
 
@@ -49,27 +46,33 @@ Every turn re-reads the whole context: cost grows with turns, not words. Keep ev
 
 | the request | lane | what persists |
 |---|---|---|
-| mechanical, or a small behavior: ≤3 adjacent files, one sitting, no unknowns | **Quick** | a red→green test + one commit |
+| mechanical, or a small behavior: ≤3 adjacent files, one sitting, no unknowns | **Quick** | one commit; a test when behavior changes |
 | one behavior worth a written contract | **Task** | `.add/tasks/<slug>.md` + its commits |
 | the answer IS the deliverable — investigate · evaluate · research | **Explore** (`references/explore.md`) | the task's `## FINDINGS` |
 | a theme, or more than one task | **Milestone** | `.add/milestones/<slug>.md` + its tasks |
 
-**Floor:** anything touching security · data · architecture, or a surface other code consumes, is at
-least a Task — never Quick. When in doubt, size up. Nobody approves the route; the human reviews after.
+**Floor:** anything touching security · data · architecture, or that changes the shape of a surface
+other code consumes (signature, return, status, format), is at least a Task — never Quick. A fix that
+restores intended behavior without changing its shape is not. When in doubt, size up.
 
-**Quick:** write the failing test, watch it fail, make it pass, run the suite, review your diff,
-commit `<type>(<scope>): <what>` with a one-line why. If the change turns out to touch the floor, or
-needs a check weakened, it is a Task now: stop and write the task file first. A security issue you
-only pass by (already there, outside the ask) stays out of your diff but leads the report as a HARD-STOP.
+**Quick:** read the nearest tests and sibling code of what you change, and grep every other site that calls or emits it: the
+fix keeps their conventions (inputs not mutated, parallel paths consistent, the neighbours' pattern), so the fix the request
+literally suggests may be the wrong one. A change to behavior (a bug fix, a new case) gets a test: the request's own example
+and one case the most plausible wrong fix would pass (its falsifier; non-code: the check that fits); watch it fail, make it
+pass. No new behavior (a typo, a rename, a comment or docs, a config value, making an already-failing test pass) needs no new
+test. Either way run the suite, review your diff. No suite runs? Run the request's repro as written, else import every file
+you touched and trace its inputs through your edit. The last lines of your reply (and any commit body): `lane: quick — <why>`
+· `intent: <convention → how the fix keeps it>` · `red→green: <test>` or `test: none — <what covers it>` · `suite: <cmd> →
+<result>` (or `suite: unavailable — <why> · ran: <what>`). Floor touched, or a check to weaken? It is a Task now. A security
+issue you pass by stays out of the diff and leads the report: HARD-STOP.
 
 ## The task loop — Direction → Build → Verify
 
 ### 1 · Direction — write the contract, watch it fail, seal it
 
-Ground first: read the code the task touches and the relevant `## Decisions that bind` in
-`.add/specs/`. Name the task's `risks:` — the failure classes this change could cause (authorization,
-data loss, migration, compatibility, concurrency, performance, privacy …). They pick the persona,
-the evidence and the residue lenses. Then write `.add/tasks/<slug>.md`:
+Ground first: read the code the task touches, its nearest tests, and `## Decisions that bind` in `.add/specs/`.
+Name the task's `risks:` — failure classes it could cause (authorization, data loss, migration, concurrency,
+compatibility, privacy …); they pick the persona, evidence and residue lenses. Write `.add/tasks/<slug>.md`:
 
 ```markdown
 ---
@@ -97,11 +100,11 @@ strategy: <how> · check: <this task's tests> · regression: <the full suite | a
 
 - **RULES** — what you were told or what code and specs require, with its source. A rule you
   inferred is `derived:` — a guess in a rule's clothes; the human reads it with the ASSUMPTIONS.
-- **ASSUMPTIONS** — every silence you had to fill, one per line. Sweep each public surface on six
-  dims: *who* may act or see (silent → the least-privilege reading, only the owner: widening later is
-  safe, narrowing breaks callers) · *which* cases are in · *when* (boundaries inclusive?) · *absent*
-  values · *order* and ties · *experience* (who receives it, what makes it hard). Of your guesses,
-  check the cheap ones now — read the code, run it: `· found: <answer> (evidence: <file:line | command>)`.
+- **ASSUMPTIONS** — every real silence you had to fill, one per line; a dimension the request settles
+  gets no line, and `- none — <why>` is valid. Sweep each public surface on six dims: *who* may act or
+  see (silent → the least-privilege reading, only the owner: widening later is safe, narrowing breaks
+  callers) · *which* cases are in · *when* (boundaries inclusive?) · *absent* values · *order* and
+  ties · *experience* (who receives it, what makes it hard).
 - **CHECKS** — at least one per Must and Reject: every RULES id appears on some `covers:` line. Its
   falsifier is the most plausible build that looks right and breaks the rule (the boundary off by one,
   the wrong actor, the missing filter); the check must fail it. Acceptance checks go through the public
@@ -133,15 +136,15 @@ checks, note why under `## LOG`, commit `refreeze(<slug>): <why>`. Other tests a
 
 1. **Seal intact:** `F=$(git log -1 --format=%H --grep='freeze(<slug>)')`, then
    `git diff $F HEAD -- .add/tasks/<slug>.md <check files>` must print nothing.
-2. **Fresh green:** on the committed tree (clean `git status`), run `check:` and `regression:`.
+2. **Fresh green:** on the clean committed tree, run `check:` and `regression:`. A check you cannot run
+   is not green: record the Quick fallback; the verdict is at best RISK-ACCEPTED.
 3. **Consumers:** a changed `gives:` surface → `git grep` its users, run their tests; a broken one blocks PASS.
 4. **Residue** — what passing tests cannot show. Read the diff for **security** (authz, injection,
-   secrets, unsafe input) · **concurrency** · **architecture**; plus each `risks:` item's lens (migration,
-   resource ceilings, privacy, retries, a11y, an agent's side effects: `references/evidence.md`).
-5. **Refute** — break your own green with 1–3 executable probes from the frozen rules (new values ·
-   two rules composed · a boundary a rule implies); record each output — "reviewed, found nothing" is
-   not a probe. Floor work: the counter-lens writes them, task file before diff (a fresh subagent only for
-   security work). A probe that breaks it: back to Build, or refreeze the rule.
+   secrets, unsafe input) · **concurrency** · **architecture** · each `risks:` lens (`references/evidence.md`).
+5. **Refute** — Security work: the counter-lens (a fresh subagent) reads the task file before the diff
+   and breaks your green with 1–3 executable probes from the frozen rules (new values · two rules
+   composed · a boundary a rule implies); record each output. A probe that breaks it: back to Build, or
+   refreeze the rule. Other tasks: `probes: none — <why>`, or the probes you chose to run.
 6. **Verdict** — exactly one, in `## EVIDENCE` with freeze sha, head sha, commands, exit codes,
    counts, consumers, residue, probes, and `lens:` (who looked, what they caught; or `none — why`):
    - `PASS` — seal intact, fresh green, consumers green, residue clean. PASS means every declared
@@ -164,26 +167,23 @@ A control or persona whose yield stays at zero across tasks is a `method` delta:
 ## Milestones and release
 
 A theme becomes `.add/milestones/<slug>.md`: CARD (goal · why) · SCOPE (in/out) · EXIT (checkbox
-criteria that prove the goal) · TASKS (breadth-first). Done when every EXIT box is checked with
-evidence — not when its tasks are. Parallel tasks each get their own worktree and disjoint `scope:`.
-Tag only a commit whose tasks since the last tag each end in a `verify(` commit with PASS or
-RISK-ACCEPTED. A `risks:` task that ships names in PLAN what to watch after:
+criteria that prove the goal) · TASKS (breadth-first). Done when every EXIT box is checked with evidence
+— not when its tasks are. Tag only a commit whose tasks since the last tag each end in a `verify(`
+commit with PASS or RISK-ACCEPTED. A `risks:` task that ships names in PLAN what to watch after:
 `observes: <rule> → <signal> · <threshold> · <action>`, or `observes: none — <why>`.
 
 ## Report — the human's review
 
 End every session with a summary the human can act on: HARD-STOPs and open risks first, then per
 task — goal, verdict, freeze sha, evidence, and **every ASSUMPTION and `derived:` rule you took,
-costliest if wrong first** (the decisions they did not make). Update PROJECT.md's CARD. Open a PR
-when the repo uses them.
+costliest if wrong first**. Update PROJECT.md's CARD; open a PR when the repo uses them.
 
 ## Personas — lenses that pick what must be proven
 
-`.add/personas/<name>.md` holds expert lenses: `flow:` (beats) · `covers-risks:` · `evidence:` (what
-it must see proven) · `counter-lens:` (its orthogonal reader). Lead = best fit on beat and `risks:`;
-one more only for a risk the lead leaves bare. None in the project → `personas-index/use-when.md`;
-none fits → proceed. The second reader and the refuter load the lead's `counter-lens:`. A persona
-advises, never lowers a rule. Routing, `lens:` traces and upkeep: `references/personas.md`.
+`.add/personas/<name>.md` holds expert lenses: `flow:` · `covers-risks:` · `evidence:` · `counter-lens:`.
+Lead = best fit on beat and `risks:`; one more only for a risk the lead leaves bare. None in the project →
+`.add/personas-index/use-when.md`; none fits → proceed. The second reader and the refuter load the lead's
+`counter-lens:`. A persona advises, never lowers a rule. Routing, `lens:` traces and upkeep: `references/personas.md`.
 
 ## Non-negotiable rules
 

@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-from test_docs_value import BRAG, DOCS, PKG, READMES, RESULTS, ROOT, _flat, _section, _values
+from test_docs_value import BRAG, DOCS, PKG, READMES, RESULTS, ROOT, _cited_results, _flat, _section, _values
 
 FLOW = DOCS / "add-vs-vanilla.html"
 R6 = "PILOT-4v3-2026-09-30-r6.md"
@@ -40,9 +40,9 @@ def test_readmes_run_one_request_both_ways():
 
 
 def test_measured_sections_price_every_gain_in_dollars_and_time():
-    known = _values(_flat(RESULTS))
     for path in READMES:
         section = _section(path, "measured on 4.0")
+        known = _values(_flat(_cited_results(section)))
         assert "Sonnet 5.5" in section, f"{path}: the measured section does not quote round 6"
         multiples = set(re.findall(r"(\d+(?:\.\d+)?)×", section))
         assert len(multiples) >= 2, f"{path}: gains are not priced in both dollars and time ({multiples})"
