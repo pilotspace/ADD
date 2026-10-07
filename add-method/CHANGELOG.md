@@ -6,6 +6,8 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
 
 ## [Unreleased]
 
+## [4.1.0] — 2026-10-07
+
 ### Changed
 - **The Quick record drops `sites:`.** The model wrote that line in 2 of 30 runs, so it is cut. Quick
   still greps every other site that calls or emits what it changes.

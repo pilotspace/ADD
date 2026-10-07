@@ -15,7 +15,7 @@ category: workflows
 keywords: [add, aidd, ai-driven-development, spec-first, tdd, contract, evidence, task, explore, persona]
 argument-hint: "<describe the change or goal> | status"
 license: MIT
-metadata: { author: add, version: "4.0.0", format: ABF-1 }
+metadata: { author: add, version: "4.1.0", format: ABF-1 }
 ---
 
 # ADD — direction · evidence · a durable bundle
