@@ -16,18 +16,17 @@ def _between(flat: str, start: str, end: str) -> str:
 
 
 def test_readmes_state_the_300_result_with_the_loss():
-    for path in READMES:
-        measured = _between(_flat(path), "## Measured on 4.0", "## When vanilla Claude")
-        for fact in ("201 of 300", "215 of 300", "p = 0.016"):
-            assert fact in measured, f"{path}: the measured section lacks {fact!r}"
-        assert "vanilla fixes more" in measured, f"{path}: the loss is not said in words"
+    # publish-medium supersedes the README claim; the low-effort loss stays on the results page
+    section = _between(_flat(RESULTS), "## SWE-bench Lite, all 300 issues", "## Round 10")
+    for fact in ("201 of 300", "215 of 300", "p = 0.016", "Vanilla fixes more issues"):
+        assert fact in section, f"the results page lost {fact!r}"
 
 
 def test_value_table_quotes_the_300_test_discipline():
-    for path in READMES:
-        value = _between(_flat(path), "## What ADD gives your project", "## Vanilla Claude vs")
-        for fact in ("255 of 300", "42 of 300", "298 of 300", "14 of 300"):
-            assert fact in value, f"{path}: the value table lacks {fact!r}"
+    # publish-medium moves the README to the medium run; the low-effort figures stay on the results page
+    section = _between(_flat(RESULTS), "## SWE-bench Lite, all 300 issues", "## Round 10")
+    for fact in ("255 of 300", "42 of 300", "298 of 300", "14 of 300"):
+        assert fact in section, f"the results page lost {fact!r}"
 
 
 def test_results_page_leads_with_the_300_and_names_what_was_not_measured():
