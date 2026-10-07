@@ -20,14 +20,13 @@ All notable changes to the ADD method (`@pilotspace/add` on npm,
   against 135), at 1.8× the dollars and 2.5× the seconds per issue. At low effort ADD skipped its own
   skill in half the runs and resolved 201. The READMEs now recommend medium. The low-effort run stays
   on the results page as history.
-- **Quick writes only the important tests.** A small change is now made directly. Quick writes a new
-  test only when it is important: a plausible wrong fix would pass every existing check and break
-  something a caller relies on. Everything else is proven by evidence: the request's repro fails before
-  the change and passes after, the suite runs, the diff is reviewed. The record says which path was
-  taken (`red→green: <test>` or `test: none — <what covers it>`). The floor and the Task loop are
-  unchanged. Why: on the fresh 300, ADD gained nothing on 1–2 line fixes (51 of 63 against 57) at 1.9×
-  the dollars, and the review study preferred the shorter output. The 300-issue numbers above were
-  measured while Quick required a test on every fix; this change is not re-measured.
+- **Quick skips the test only when no behavior changes.** A typo, a rename, a comment, a config value
+  or making an already-failing test pass needs no new test: Quick runs the suite, reviews the diff and
+  records `test: none — <what covers it>`. A change to behavior still gets a test first, so every bug fix
+  keeps its test, as measured. A looser rule (a test only when the AI judged it important) was
+  measured and dropped: on the 101 dev issues it resolved 78 of 101 against 83 for the measured skill
+  and 80 for vanilla, for a 6% saving. The SWE harness prompt no longer tells the ADD arm to start
+  from a test; the skill decides.
 - **A blind review study, published against ADD.** One reviewer (the project owner) judged six
   issues blind and untimed: they preferred vanilla's output in 6 of 6 and found it easier to decide
   on in 6 of 6. 2 of the 5 vanilla patches approved as is fail the benchmark's tests. Anecdotal:

@@ -135,10 +135,9 @@ apps at n = 3 per arm, and all 300 SWE-bench Lite issues once per arm ([results]
 At medium it read the skill in 292 of 300 and resolved 226. In a blind six-issue review, one reviewer preferred vanilla's shorter output in 6 of 6, while 2 of the 5 vanilla patches
 they approved as is fail the benchmark's tests; timed review is not measured ([fresh 300 at medium](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md)).
 
-**What changed after the measurement.** The 300-issue numbers were measured while Quick required a test on every fix.
-The shipped 4.1.0 skill makes a small change directly and writes a new test only when it is important (a plausible wrong fix
-would pass every existing check); the rest is proven by running the repro and the suite. That change is not re-measured:
-expect fewer shipped tests than 299 of 300, and an unknown effect on the fix rate.
+**Small changes.** A change with no new behavior (a typo, a rename, a comment, a config value) is made without a new test;
+every bug fix keeps its test, as measured. A looser rule (a test only when the AI judged it important) was tried and dropped:
+on 101 of the issues it resolved 78 against 83 for the measured skill, for a 6% saving.
 
 Earlier rounds, older models and the full method are in [the results history](https://github.com/pilotspace/ADD/blob/main/benchmark/results/2026-10-add-4.0-low-effort-vs-vanilla.md).
 
