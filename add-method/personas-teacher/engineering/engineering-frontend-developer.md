@@ -96,24 +96,30 @@ export const DataTable = memo<DataTableProps>(({ data, columns, onRowClick }) =>
       role="table"
       aria-label="Data table"
     >
-      {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-        const row = data[virtualItem.index];
-        return (
-          <div
-            key={virtualItem.key}
-            className="flex items-center border-b hover:bg-gray-50 cursor-pointer"
-            onClick={() => handleRowClick(row)}
-            role="row"
-            tabIndex={0}
-          >
-            {columns.map((column) => (
-              <div key={column.key} className="px-4 py-2 flex-1" role="cell">
-                {row[column.key]}
-              </div>
-            ))}
-          </div>
-        );
-      })}
+      <div role="rowgroup" style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+          const row = data[virtualItem.index];
+          return (
+            <div
+              key={virtualItem.key}
+              className="flex items-center border-b hover:bg-gray-50 cursor-pointer"
+              style={{
+                position: 'absolute', top: 0, left: 0, width: '100%',
+                height: virtualItem.size, transform: `translateY(${virtualItem.start}px)`,
+              }}
+              onClick={() => handleRowClick(row)}
+              role="row"
+              tabIndex={0}
+            >
+              {columns.map((column) => (
+                <div key={column.key} className="px-4 py-2 flex-1" role="cell">
+                  {row[column.key]}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 });

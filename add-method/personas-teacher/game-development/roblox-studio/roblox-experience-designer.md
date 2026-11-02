@@ -218,21 +218,22 @@ Steps:
 -- Use AnalyticsService (Roblox's built-in, no third-party required)
 local AnalyticsService = game:GetService("AnalyticsService")
 
-local function trackEvent(player: Player, eventName: string, params: {[string]: any}?)
-    -- Roblox's built-in analytics — visible in Creator Dashboard
-    AnalyticsService:LogCustomEvent(player, eventName, params or {})
+local function trackEvent(player: Player, eventName: string, value: number?)
+    -- Roblox's built-in analytics — visible in Creator Dashboard.
+    -- The third argument is a numeric value used in aggregation (default 1).
+    AnalyticsService:LogCustomEvent(player, eventName, value or 1)
 end
 
 -- Track onboarding completion
-trackEvent(player, "OnboardingCompleted", {time_seconds = elapsedTime})
+trackEvent(player, "OnboardingCompleted", elapsedTime)  -- seconds
 
 -- Track first purchase
-trackEvent(player, "FirstPurchase", {pass_name = passName, price_robux = price})
+trackEvent(player, "FirstPurchase", price)  -- Robux
 
 -- Track session length on leave
 Players.PlayerRemoving:Connect(function(player)
     local sessionLength = os.time() - sessionStartTimes[player.UserId]
-    trackEvent(player, "SessionEnd", {duration_seconds = sessionLength})
+    trackEvent(player, "SessionEnd", sessionLength)  -- seconds
 end)
 ```
 

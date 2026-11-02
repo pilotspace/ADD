@@ -305,9 +305,11 @@ handle_error() {
     local error_message="$1"
     log "ERROR: $error_message"
     
-    # Send notification
+    # Encode the message as JSON data: backup paths can contain quotes or newlines.
+    local payload
+    payload=$(python3 -c 'import json, sys; print(json.dumps({"text": "🚨 Backup Failed: " + sys.argv[1]}))' "$error_message")
     curl -X POST -H 'Content-type: application/json' \
-        --data "{\"text\":\"🚨 Backup Failed: $error_message\"}" \
+        --data "$payload" \
         "$NOTIFICATION_WEBHOOK"
     
     exit 1
@@ -329,7 +331,7 @@ backup_database() {
     fi
     
     # Encrypt backup
-    if ! gpg --cipher-algo AES256 --compress-algo 1 --s2k-mode 3 \
+    if ! gpg --batch --cipher-algo AES256 --compress-algo 1 --s2k-mode 3 \
              --s2k-digest-algo SHA512 --s2k-count 65536 --symmetric \
              --passphrase-file "$ENCRYPTION_KEY" "$backup_file"; then
         handle_error "Database backup encryption failed for $db_name"
@@ -355,7 +357,7 @@ backup_files() {
     
     # Create compressed archive and encrypt
     if ! tar -czf - -C "$source_dir" . | \
-         gpg --cipher-algo AES256 --compress-algo 0 --s2k-mode 3 \
+         gpg --batch --cipher-algo AES256 --compress-algo 0 --s2k-mode 3 \
              --s2k-digest-algo SHA512 --s2k-count 65536 --symmetric \
              --passphrase-file "$ENCRYPTION_KEY" \
              --output "$backup_file"; then
@@ -390,9 +392,17 @@ cleanup_old_backups() {
     find "$BACKUP_ROOT" -name "*.gpg" -mtime +$RETENTION_DAYS -delete
     
     # S3 cleanup (lifecycle policy should handle this, but double-check)
+    # JSON preserves spaces, quotes and newlines in object keys. The AWS CLI
+    # paginates list-objects-v2; pass each full URI as one argv item to rm.
+    local cutoff
+    cutoff=$(python3 -c 'from datetime import datetime, timedelta, timezone; import sys; print((datetime.now(timezone.utc) - timedelta(days=int(sys.argv[1]))).strftime("%Y-%m-%dT%H:%M:%SZ"))' "$RETENTION_DAYS")
     aws s3api list-objects-v2 --bucket "$S3_BUCKET" \
-        --query "Contents[?LastModified<='$(date -d "$RETENTION_DAYS days ago" -u +%Y-%m-%dT%H:%M:%SZ)'].Key" \
-        --output text | xargs -r -n1 aws s3 rm "s3://$S3_BUCKET/"
+        --query "Contents[?LastModified<='$cutoff'].Key" \
+        --output json | python3 -c '
+import json, subprocess, sys
+for key in json.load(sys.stdin) or []:
+    subprocess.run(["aws", "s3", "rm", "s3://" + sys.argv[1] + "/" + key], check=True)
+' "$S3_BUCKET"
     
     log "Cleanup completed"
 }

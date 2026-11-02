@@ -262,7 +262,7 @@ TRAVEL
   Use GSA per diem rates for federal proposals.
 
 INDIRECT COSTS (OVERHEAD)
-  [Negotiated rate or de minimis 10% MTDC] × [direct costs] = $[total]
+  [Negotiated rate or de minimis up to 15%] × [modified total direct costs (MTDC)] = $[total]
   If funder caps indirect: "The funder's indirect cap of [X]% has
   been applied. Our negotiated rate is [Y]%; the [difference]% will
   be contributed as organizational match."
@@ -303,7 +303,7 @@ NARRATIVE COMPLIANCE:
 BUDGET COMPLIANCE:
   □ Budget period matches NOFO specifications
   □ All line items are allowable under 2 CFR Part 200
-  □ Indirect cost rate is negotiated or de minimis (10% MTDC)
+  □ Indirect cost rate is negotiated or de minimis (up to 15% MTDC)
   □ Cost share documented if required
   □ Budget totals match budget narrative
 
