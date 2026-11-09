@@ -348,6 +348,8 @@ IOC enrichment pipeline.
 Takes raw indicators and enriches with context from multiple sources.
 """
 
+import csv
+import io
 import json
 import re
 import uuid
@@ -394,11 +396,18 @@ class IOC:
     def to_stix(self) -> dict:
         """Convert to STIX 2.1 indicator object."""
         pattern_map = {
-            IOCType.IPV4: f"[ipv4-addr:value = '{self.value}']",
-            IOCType.DOMAIN: f"[domain-name:value = '{self.value}']",
-            IOCType.SHA256: f"[file:hashes.'SHA-256' = '{self.value}']",
-            IOCType.URL: f"[url:value = '{self.value}']",
+            IOCType.IPV4: "ipv4-addr:value",
+            IOCType.IPV6: "ipv6-addr:value",
+            IOCType.DOMAIN: "domain-name:value",
+            IOCType.SHA256: "file:hashes.'SHA-256'",
+            IOCType.SHA1: "file:hashes.'SHA-1'",
+            IOCType.MD5: "file:hashes.MD5",
+            IOCType.EMAIL: "email-addr:value",
+            IOCType.URL: "url:value",
         }
+        # STIX string literals escape backslashes and apostrophes separately
+        # from JSON encoding, preserving the exact admitted indicator value.
+        literal = self.value.replace("\\", "\\\\").replace("'", "\\'")
         return {
             "type": "indicator",
             "spec_version": "2.1",
@@ -406,7 +415,7 @@ class IOC:
             "created": self.first_seen.isoformat(),
             "modified": self.last_seen.isoformat(),
             "name": f"{self.ioc_type.value}: {self.value}",
-            "pattern": pattern_map.get(self.ioc_type, f"[artifact:payload_bin = '{self.value}']"),
+            "pattern": f"[{pattern_map[self.ioc_type]} = '{literal}']",
             "pattern_type": "stix",
             "valid_from": self.first_seen.isoformat(),
             "confidence": int(self.confidence * 100),
@@ -463,7 +472,7 @@ class IOCClassifier:
         """Check if an IP is in private/reserved ranges."""
         try:
             addr = ip_address(value)
-            return any(addr in net for net in cls.PRIVATE_RANGES)
+            return addr.is_private or addr.is_loopback or addr.is_link_local
         except ValueError:
             return False
 
@@ -484,17 +493,21 @@ class IOCEnrichmentPipeline:
         results = []
 
         for raw in raw_indicators:
-            ioc_type = self.classifier.classify(raw)
+            value = raw.strip()
+            ioc_type = self.classifier.classify(value)
             if ioc_type is None:
                 continue  # Skip unrecognized indicators
 
             # Skip private IPs
             if ioc_type in (IOCType.IPV4, IOCType.IPV6):
-                if self.classifier.is_private_ip(raw):
+                if self.classifier.is_private_ip(value):
                     continue
 
+            if ioc_type != IOCType.URL:
+                value = value.lower()
+
             ioc = IOC(
-                value=raw.strip().lower(),
+                value=value,
                 ioc_type=ioc_type,
                 first_seen=now,
                 last_seen=now,
@@ -537,13 +550,17 @@ class IOCEnrichmentPipeline:
 
     def export_csv(self) -> str:
         """Export IOCs as CSV for SIEM ingestion."""
-        lines = ["indicator,type,confidence,tags,first_seen,source"]
+        # Indicator URLs and source labels may contain commas, quotes or
+        # newlines. Let the CSV writer preserve field and record boundaries.
+        output = io.StringIO(newline="")
+        writer = csv.writer(output)
+        writer.writerow(["indicator", "type", "confidence", "tags", "first_seen", "source"])
         for ioc in self.enriched:
-            lines.append(
-                f"{ioc.value},{ioc.ioc_type.value},{ioc.confidence},"
-                f"{';'.join(ioc.tags)},{ioc.first_seen.isoformat()},{ioc.source}"
-            )
-        return "\n".join(lines)
+            writer.writerow([
+                ioc.value, ioc.ioc_type.value, ioc.confidence,
+                ";".join(ioc.tags), ioc.first_seen.isoformat(), ioc.source,
+            ])
+        return output.getvalue().removesuffix("\r\n")
 
 
 # Usage:
