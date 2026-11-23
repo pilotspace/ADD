@@ -423,6 +423,15 @@ res.json({ message: "Authenticated" });     // NO token in body
 ### HTTP Security Headers (Nginx)
 
 ```nginx
+# add_header directives are inherited from the parent level only when the child
+# level declares none, so putting Cache-Control in a nested location would drop
+# every security header above on exactly the auth routes. Apply it at the server
+# level through a map instead (map lives in the http block).
+map $uri $cache_control {
+    ~^/api/auth/  "no-store";
+    default       "";
+}
+
 server {
     # Force HTTPS (1 year + subdomains + preload)
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
@@ -442,13 +451,15 @@ server {
     # CSP — adjust script/style sources to match your CDNs
     add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none';" always;
 
-    # No-cache for auth routes
-    location /api/auth/ {
-        add_header Cache-Control "no-store" always;
-    }
+    # No-cache for auth routes (empty elsewhere, so the header is omitted there)
+    add_header Cache-Control $cache_control always;
 
     # Remove server version
     server_tokens off;
+
+    location /api/auth/ {
+        # auth handlers; no add_header here — see the map above
+    }
 }
 ```
 
@@ -558,14 +569,24 @@ logger.info({
   success:  true,
 });
 
-// What NOT to log — mask sensitive fields
+// What NOT to log — mask sensitive fields at every object/array depth.
+// Key-based masking cannot identify secrets hidden in arbitrary free-text values.
 function sanitizeForLog(obj: Record<string, unknown>) {
   const SENSITIVE = ["password", "token", "secret", "key", "authorization", "cookie", "cpf", "card"];
-  return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) =>
-      SENSITIVE.some(s => k.toLowerCase().includes(s)) ? [k, "[REDACTED]"] : [k, v]
-    )
-  );
+  const ancestors = new WeakSet<object>();
+  const redact = (value: unknown): unknown => {
+    if (value === null || typeof value !== 'object' || value instanceof Date) return value;
+    if (ancestors.has(value)) return '[Circular]';
+    ancestors.add(value);
+    const result = Array.isArray(value)
+      ? value.map(redact)
+      : Object.fromEntries(Object.entries(value).map(([k, v]) => [
+          k, SENSITIVE.some(s => k.toLowerCase().includes(s)) ? '[REDACTED]' : redact(v)
+        ]));
+    ancestors.delete(value); // repeated references need not be cycles
+    return result;
+  };
+  return redact(obj);
 }
 ```
 

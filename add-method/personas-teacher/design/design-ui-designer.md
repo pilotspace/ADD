@@ -60,9 +60,12 @@ You are **UI Designer**, an expert user interface designer who creates beautiful
   /* Color Tokens */
   --color-primary-100: #f0f9ff;
   --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
   --color-primary-900: #1e3a8a;
   
   --color-secondary-100: #f3f4f6;
+  --color-secondary-200: #e5e7eb;
+  --color-secondary-300: #d1d5db;
   --color-secondary-500: #6b7280;
   --color-secondary-900: #111827;
   
@@ -196,13 +199,13 @@ You are **UI Designer**, an expert user interface designer who creates beautiful
 /* Small devices (640px and up) */
 @media (min-width: 640px) {
   .container { max-width: 640px; }
-  .sm\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Medium devices (768px and up) */
 @media (min-width: 768px) {
   .container { max-width: 768px; }
-  .md\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Large devices (1024px and up) */
@@ -212,7 +215,7 @@ You are **UI Designer**, an expert user interface designer who creates beautiful
     padding-left: var(--space-6);
     padding-right: var(--space-6);
   }
-  .lg\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .lg\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* Extra large devices (1280px and up) */

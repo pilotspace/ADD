@@ -97,7 +97,16 @@ class WorkflowOptimizer:
     
     def analyze_current_workflow(self, process_steps: List[ProcessStep]) -> WorkflowMetrics:
         """Comprehensive current state analysis"""
+        if not process_steps:
+            raise ValueError("A workflow needs at least one process step")
+        for step in process_steps:
+            duration = step.duration_minutes
+            if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+                    or not np.isfinite(duration) or duration < 0):
+                raise ValueError("Step durations must be finite nonnegative minutes")
         total_duration = sum(step.duration_minutes for step in process_steps)
+        if not np.isfinite(total_duration) or total_duration <= 0:
+            raise ValueError("Total workflow duration must be finite and positive")
         total_cost = sum(
             (step.duration_minutes / 60) * step.cost_per_hour 
             for step in process_steps
@@ -185,8 +194,9 @@ class WorkflowOptimizer:
         
         for opportunity in opportunities:
             step_name = opportunity["step"]
+            # Resolve against original names; earlier improvements rename the copy.
             step_index = next(
-                i for i, step in enumerate(optimized_steps) 
+                i for i, step in enumerate(current_steps)
                 if step.name == step_name
             )
             
@@ -236,7 +246,7 @@ class WorkflowOptimizer:
     
     def calculate_improvement_impact(self, current_metrics: WorkflowMetrics, 
                                    optimized_metrics: WorkflowMetrics) -> Dict:
-        """Calculate quantified improvement impact"""
+        """Calculate impact; a zero cost baseline has no defined percentage."""
         improvements = {
             "cycle_time_reduction": {
                 "absolute": current_metrics.total_cycle_time - optimized_metrics.total_cycle_time,
@@ -245,8 +255,11 @@ class WorkflowOptimizer:
             },
             "cost_reduction": {
                 "absolute": current_metrics.cost_per_execution - optimized_metrics.cost_per_execution,
-                "percentage": ((current_metrics.cost_per_execution - optimized_metrics.cost_per_execution)
-                              / current_metrics.cost_per_execution) * 100
+                "percentage": (
+                    ((current_metrics.cost_per_execution - optimized_metrics.cost_per_execution)
+                     / current_metrics.cost_per_execution) * 100
+                    if current_metrics.cost_per_execution != 0 else None
+                )
             },
             "quality_improvement": {
                 "absolute": current_metrics.error_rate - optimized_metrics.error_rate,
@@ -316,20 +329,45 @@ class WorkflowOptimizer:
                 {
                     "step": step.name,
                     "potential": step.automation_potential,
-                    "estimated_savings_hours_month": (step.duration_minutes / 60) * 22 * step.automation_potential,
+                    "estimated_savings_hours_month": (step.duration_minutes / 60) * 22 * step.automation_potential * 0.8,
                     "recommended_tool": "RPA platform",  # Simplified for example
                     "implementation_effort": "Medium"
                 }
                 for step in automation_candidates
             ],
             "total_monthly_savings": sum(
-                (step.duration_minutes / 60) * 22 * step.automation_potential
+                (step.duration_minutes / 60) * 22 * step.automation_potential * 0.8
                 for step in automation_candidates
             ),
             "roi_timeline_months": 6
         }
         
         return implementation_strategy
+```
+
+Regression check (run after the classes above): estimates use the designer's 80% realization factor and assume 22 executions per month, not measured business savings.
+
+```python
+optimizer = WorkflowOptimizer()
+steps = [
+    ProcessStep("Data entry", 60, 60, 0, 1.0, 1, 8),
+    ProcessStep("Reporting", 30, 60, 0, 0.8, 1, 8),
+    ProcessStep("Manual review", 20, 60, 0, 0.5, 1, 8),
+]
+optimized = optimizer.design_optimized_workflow(
+    steps, optimizer.identify_optimization_opportunities(steps)
+)
+strategy = optimizer.generate_automation_strategy(steps)
+expected_savings = [
+    (before.duration_minutes - after.duration_minutes) / 60 * 22
+    for before, after in zip(steps[:2], optimized[:2])
+]
+assert np.allclose(
+    [item["estimated_savings_hours_month"] for item in strategy["automation_candidates"]],
+    expected_savings,
+)
+assert np.isclose(strategy["total_monthly_savings"], sum(expected_savings))
+assert optimizer.generate_automation_strategy(steps[2:])["total_monthly_savings"] == 0
 ```
 
 ## 🔄 Your Workflow Process

@@ -89,6 +89,8 @@ func _ready() -> void:
     _current_health = max_health
 
 func apply_damage(amount: float) -> void:
+    if _current_health == 0.0:
+        return  # already dead; `died` must not fire again
     _current_health = clampf(_current_health - amount, 0.0, max_health)
     health_changed.emit(_current_health)
     if _current_health == 0.0:
@@ -137,6 +139,8 @@ public partial class HealthComponent : Node
 
     public void ApplyDamage(float amount)
     {
+        if (_currentHealth == 0f)
+            return; // already dead; Died must not fire again
         _currentHealth = Mathf.Clamp(_currentHealth - amount, 0f, MaxHealth);
         EmitSignal(SignalName.HealthChanged, _currentHealth);
         if (_currentHealth == 0f)

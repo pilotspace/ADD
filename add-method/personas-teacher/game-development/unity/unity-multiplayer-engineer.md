@@ -115,6 +115,8 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        // Seed the authoritative position from the spawn point, not Vector3.zero
+        if (IsServer) _serverPosition.Value = transform.position;
         if (!IsOwner) return;
         _clientPredictedPosition = transform.position;
     }

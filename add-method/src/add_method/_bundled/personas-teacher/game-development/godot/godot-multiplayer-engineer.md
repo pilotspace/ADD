@@ -133,9 +133,13 @@ func send_input(direction: Vector2) -> void:
     velocity = direction.normalized() * 200.0
     move_and_slide()
 
-# Server confirms a hit to all clients
-@rpc("authority", "reliable", "call_local")
+# Server confirms a hit to all clients. The node's authority is its owning
+# client, so accept the call from any peer and keep only the server's.
+@rpc("any_peer", "reliable", "call_local")
 func take_damage(amount: float) -> void:
+    var sender_id := multiplayer.get_remote_sender_id()
+    if sender_id != 0 and sender_id != MultiplayerPeer.TARGET_PEER_SERVER:
+        return  # Reject: only the server (peer 1) applies damage
     _health -= amount
     if _health <= 0.0:
         _on_died()
